@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,10 +6,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/style.css' %}">
 </head>
 
 <body>
+    <h1>Bay 50 St</h1>
+    <div id="diagram-container"></div>
+    <button onclick="testHighlight()">Test Highlight</button>
 
+    <button onclick="testDown()">Show Downtown</button>
+    <button onclick="testUp()">Show Uptown</button>
+    <button onclick="testMez()">Show Mezzanine</button>
+    <button onclick="testAll()">Show All</button>
+
+    <script src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
+
+    <script type="text/javascript">
+        // Load the diagram on page load
+        loadDiagram('{% static "platformpathapp/diagrams/Bay50.svg" %}');
+
+        // Hardcoded test — does the highlight work?
+        function testHighlight() {
+            highlightStair('STAIRS');
+        }
+
+        const down = document.getElementById("DOWNTOWN PLATFORM_2");
+        const up = document.getElementById("UPTOWN PLATFORM_2");
+        const mez = document.getElementById("MEZZANINE");
+
+        function testDown() {
+            down.style.opacity = "1.0"
+            up.style.opacity = "0.0"
+            mez.style.opacity = "0.0"
+        }
+        function testUp() {
+            down.style.opacity = "0.0"
+            up.style.opacity = "1.0"
+            mez.style.opacity = "0.0"
+        }
+        function testMez() {
+            down.style.opacity = "0.0"
+            up.style.opacity = "0.0"
+            mez.style.opacity = "1.0"
+        }
+        function testAll() {
+            down.style.opacity = "1.0"
+            up.style.opacity = "1.0"
+            mez.style.opacity = "1.0"
+        }
+    </script>
 </body>
 
 </html>
