@@ -20,6 +20,7 @@
     <button onclick="testAll()">Show All</button>
 
     <script src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
+    <script src="{% static 'platformpathapp/js/async.js' %}"></script>
 
     <script type="text/javascript">
         // Load the diagram on page load
@@ -30,9 +31,14 @@
             highlightStair('STAIRS');
         }
 
-        const down = document.getElementById("DOWNTOWN PLATFORM_2");
-        const up = document.getElementById("UPTOWN PLATFORM_2");
-        const mez = document.getElementById("MEZZANINE");
+        // init the dom elements
+        let down, up, mez;
+        loadDOM();
+        async function loadDOM() {
+            down = await getDOMElement("DOWNTOWN PLATFORM_2", 100);
+            up = await getDOMElement("UPTOWN PLATFORM_2", 100);
+            mez = await getDOMElement("MEZZANINE", 100);
+        }
 
         function testDown() {
             down.style.opacity = "1.0"
