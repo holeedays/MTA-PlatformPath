@@ -3,6 +3,10 @@
     animation: pulse 1.2s ease-in-out infinite;
 }
 
+.highlighted path {
+    fill: #b4ff1b;
+}
+
 @keyframes pulse {
     0% {
         opacity: 0.8;

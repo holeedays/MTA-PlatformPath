@@ -140,17 +140,17 @@ const STATIONS = {
 
 
 
-const stair_harway_av_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance");
-const stair_harway_av_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance");
-const stair_bay_50_st_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance");
-const stair_bay_50_st_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance");
+const stair_harway_av_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance", "HARWAY_AV_STILLWELL_AV_1_STAIRS");
+const stair_harway_av_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance", "HARWAY_AV_STILLWELL_AV_2_STAIRS");
+const stair_bay_50_st_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance", "BAY_50_ST_STILLWELL_AV_1_STAIRS");
+const stair_bay_50_st_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance", "BAY_50_ST_STILLWELL_AV_2_STAIRS");
 
 // Mezzanine level
 const mezz_main = new Node(NodeType.MEZZANINE, "Main Mezzanine", "MEZZANINE");
 
 // Stairs connecting mezzanine to platforms
-const stair_mezz_to_uptown = new Node(NodeType.STAIRS, "Stairs to downtown platform");
-const stair_mezz_to_downtown = new Node(NodeType.STAIRS, "Stairs to uptown platform");
+const stair_mezz_to_uptown = new Node(NodeType.STAIRS, "Stairs to downtown platform", "MEZZ_TO_UPTOWN_STAIRS");
+const stair_mezz_to_downtown = new Node(NodeType.STAIRS, "Stairs to uptown platform", "MEZZ_TO_DOWNTOWN_STAIRS");
 
 // Platform level
 const platform_downtown = new Node("platform", "Downtown D Platform", "DOWNTOWN PLATFORM");
@@ -159,93 +159,77 @@ const platform_uptown = new Node("platform", "Uptown D Platform", "UPTOWN PLATFO
 const edge1 = new Edges(
     stair_harway_av_1_to_mezz, 
     mezz_main, 
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge2 = new Edges(
     mezz_main, 
     stair_harway_av_1_to_mezz, 
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Harway Av exit"
 );
 const edge3 = new Edges(
     stair_harway_av_2_to_mezz, 
     mezz_main, 
-    "HARWAY_AV_STILLWELL_AV_2_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge4 = new Edges(
     mezz_main, 
     stair_harway_av_2_to_mezz, 
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Harway Av exit"
 );
 const edge5 = new Edges(
     stair_bay_50_st_1_to_mezz, 
     mezz_main, 
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge6 = new Edges(
     mezz_main, 
     stair_bay_50_st_1_to_mezz, 
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Bay 50 St exit"
 );
 const edge7 = new Edges(
     stair_bay_50_st_2_to_mezz, 
     mezz_main, 
-    "BAY_50_ST_STILLWELL_AV_2_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge8 = new Edges(
     mezz_main, 
     stair_bay_50_st_2_to_mezz, 
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Bay 50 St exit"
 );
 const edge9 = new Edges(
     mezz_main,
     stair_mezz_to_downtown,
-    "MEZZ_TO_DOWNTOWN_STAIRS",
     "Head to the downtown staircase on the mezzanine"
 );
 const edge10 = new Edges(
     stair_mezz_to_downtown,
     platform_downtown,
-    "MEZZ_TO_DOWNTOWN_STAIRS",
     "Take the stairs up to the downtown platform"
 );
 const edge11 = new Edges(
     platform_downtown,
     stair_mezz_to_downtown,
-    "MEZZ_TO_DOWNTOWN_STAIRS",
     "Head to the stairs on the downtown platform"
 );
 const edge12 = new Edges(
     stair_mezz_to_downtown,
     mezz_main,
-    "MEZZ_TO_DOWNTOWN_STAIRS",
     "Take the stairs down to the mezzanine level"
 );
 const edge13 = new Edges(
     mezz_main,
     stair_mezz_to_uptown,
-    "MEZZ_TO_UPTOWN_STAIRS",
     "Head to the uptown staircase on the mezzanine"
 );
 const edge14 = new Edges(
     stair_mezz_to_uptown,
     platform_uptown,
-    "MEZZ_TO_UPTOWN_STAIRS",
     "Take the stairs up to the uptown platform"
 );
 const edge15 = new Edges(
     platform_uptown,
     stair_mezz_to_uptown,
-    "MEZZ_TO_UPTOWN_STAIRS",
     "Head to the stairs on the uptown platform"
 );
 const edge16 = new Edges(
     stair_mezz_to_uptown,
     mezz_main,
-    "MEZZ_TO_UPTOWN_STAIRS",
     "Take the stairs down to the mezzanine level"
 );
 
