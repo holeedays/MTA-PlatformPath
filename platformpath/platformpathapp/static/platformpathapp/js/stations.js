@@ -54,6 +54,20 @@ const STATIONS = {
                 layer: "MEZZANINE"
             },
 
+            // Stairs connecting platforms to mezzanine
+            "stair_uptown_to_mezz": {
+                type: "stair",
+                label: "Stairs from uptown platform to mezzanine",
+                svgId: "UPTOWN_TO_MEZZ_STAIRS",
+                layer: "UPTOWN PLATFORM_2"
+            },
+            "stair_downtown_to_mezz": {
+                type: "stair",
+                label: "Stairs from downtown platform to mezzanine",
+                svgId: "DOWNTOWN_TO_MEZZ_STAIRS",
+                layer: "DOWNTOWN PLATFORM_2"
+            },
+
             // Platform level
             "platform_downtown": {
                 type: "platform",
@@ -119,6 +133,7 @@ const STATIONS = {
             },
 
             // ─── MEZZANINE <-> DOWNTOWN PLATFORM ───
+            // Going to the train (UP)
             {
                 from: "mezz_main",
                 to: "stair_mezz_to_downtown",
@@ -126,21 +141,33 @@ const STATIONS = {
             },
             {
                 from: "stair_mezz_to_downtown",
-                to: "platform_downtown",
+                to: "stair_downtown_to_mezz",
                 instruction: "Take the stairs up to the downtown platform"
             },
             {
+                from: "stair_downtown_to_mezz",
+                to: "platform_downtown",
+                instruction: "Step off the stairs onto the downtown platform"
+            },
+            // Leaving the train (DOWN)
+            {
                 from: "platform_downtown",
-                to: "stair_mezz_to_downtown",
+                to: "stair_downtown_to_mezz",
                 instruction: "Head to the stairs on the downtown platform"
+            },
+            {
+                from: "stair_downtown_to_mezz",
+                to: "stair_mezz_to_downtown",
+                instruction: "Take the stairs down to the mezzanine level"
             },
             {
                 from: "stair_mezz_to_downtown",
                 to: "mezz_main",
-                instruction: "Take the stairs down to the mezzanine level"
+                instruction: "Step off the stairs onto the main mezzanine"
             },
 
             // ─── MEZZANINE <-> UPTOWN PLATFORM ───
+            // Going to the train (UP)
             {
                 from: "mezz_main",
                 to: "stair_mezz_to_uptown",
@@ -148,20 +175,32 @@ const STATIONS = {
             },
             {
                 from: "stair_mezz_to_uptown",
-                to: "platform_uptown",
+                to: "stair_uptown_to_mezz",
                 instruction: "Take the stairs up to the uptown platform"
             },
             {
+                from: "stair_uptown_to_mezz",
+                to: "platform_uptown",
+                instruction: "Step off the stairs onto the uptown platform"
+            },
+            // Leaving the train (DOWN)
+            {
                 from: "platform_uptown",
-                to: "stair_mezz_to_uptown",
+                to: "stair_uptown_to_mezz",
                 instruction: "Head to the stairs on the uptown platform"
+            },
+            {
+                from: "stair_uptown_to_mezz",
+                to: "stair_mezz_to_uptown",
+                instruction: "Take the stairs down to the mezzanine level"
             },
             {
                 from: "stair_mezz_to_uptown",
                 to: "mezz_main",
-                instruction: "Take the stairs down to the mezzanine level"
+                instruction: "Step off the stairs onto the main mezzanine"
             }
         ]
+
     },
 
 }
@@ -225,7 +264,6 @@ console.log(findPath("bay-50-st", "stair_harway_av_1_to_mezz", "platform_downtow
 
 
 
-<<<<<<< HEAD
 class Node {
     constructor(nodeType, label, svgID = null) {
         this.nodeType = nodeType;
@@ -249,16 +287,10 @@ class NodeType {
     static PLATFORM = "Platform";
 }
 
-const stair_harway_av_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance");
-const stair_harway_av_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance");
-const stair_bay_50_st_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance");
-const stair_bay_50_st_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance");
-=======
 const stair_harway_av_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance", "HARWAY_AV_STILLWELL_AV_1_STAIRS");
 const stair_harway_av_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Harway Av entrance", "HARWAY_AV_STILLWELL_AV_2_STAIRS");
 const stair_bay_50_st_1_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance", "BAY_50_ST_STILLWELL_AV_1_STAIRS");
 const stair_bay_50_st_2_to_mezz = new Node(NodeType.STAIRS, "Stairs at Bay 50 St entrance", "BAY_50_ST_STILLWELL_AV_2_STAIRS");
->>>>>>> e77f80ec2a61476221ace186d1e147c520fdbeaa
 
 // Mezzanine level
 const mezz_main = new Node(NodeType.MEZZANINE, "Main Mezzanine", "MEZZANINE");
@@ -272,83 +304,39 @@ const platform_downtown = new Node("platform", "Downtown D Platform", "DOWNTOWN 
 const platform_uptown = new Node("platform", "Uptown D Platform", "UPTOWN PLATFORM");
 
 const edge1 = new Edges(
-<<<<<<< HEAD
     stair_harway_av_1_to_mezz,
     mezz_main,
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge2 = new Edges(
     mezz_main,
     stair_harway_av_1_to_mezz,
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Harway Av exit"
 );
 const edge3 = new Edges(
     stair_harway_av_2_to_mezz,
     mezz_main,
-    "HARWAY_AV_STILLWELL_AV_2_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge4 = new Edges(
     mezz_main,
     stair_harway_av_2_to_mezz,
-    "HARWAY_AV_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Harway Av exit"
 );
 const edge5 = new Edges(
     stair_bay_50_st_1_to_mezz,
     mezz_main,
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge6 = new Edges(
     mezz_main,
     stair_bay_50_st_1_to_mezz,
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
     "Take the stairs down to the Bay 50 St exit"
 );
 const edge7 = new Edges(
     stair_bay_50_st_2_to_mezz,
     mezz_main,
-    "BAY_50_ST_STILLWELL_AV_2_STAIRS",
     "Take the stairs up to the mezzanine level");
 const edge8 = new Edges(
     mezz_main,
     stair_bay_50_st_2_to_mezz,
-    "BAY_50_ST_STILLWELL_AV_1_STAIRS",
-=======
-    stair_harway_av_1_to_mezz, 
-    mezz_main, 
-    "Take the stairs up to the mezzanine level");
-const edge2 = new Edges(
-    mezz_main, 
-    stair_harway_av_1_to_mezz, 
-    "Take the stairs down to the Harway Av exit"
-);
-const edge3 = new Edges(
-    stair_harway_av_2_to_mezz, 
-    mezz_main, 
-    "Take the stairs up to the mezzanine level");
-const edge4 = new Edges(
-    mezz_main, 
-    stair_harway_av_2_to_mezz, 
-    "Take the stairs down to the Harway Av exit"
-);
-const edge5 = new Edges(
-    stair_bay_50_st_1_to_mezz, 
-    mezz_main, 
-    "Take the stairs up to the mezzanine level");
-const edge6 = new Edges(
-    mezz_main, 
-    stair_bay_50_st_1_to_mezz, 
-    "Take the stairs down to the Bay 50 St exit"
-);
-const edge7 = new Edges(
-    stair_bay_50_st_2_to_mezz, 
-    mezz_main, 
-    "Take the stairs up to the mezzanine level");
-const edge8 = new Edges(
-    mezz_main, 
-    stair_bay_50_st_2_to_mezz, 
->>>>>>> e77f80ec2a61476221ace186d1e147c520fdbeaa
     "Take the stairs down to the Bay 50 St exit"
 );
 const edge9 = new Edges(
