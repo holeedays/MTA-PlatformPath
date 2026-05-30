@@ -7,6 +7,10 @@ function loadDiagram(svgPath) {
 }
 
 function highlightStair(stairId) {
+    document.querySelectorAll('.highlighted').forEach(el => {
+        el.classList.remove('highlighted');
+    });
+
     const el = document.getElementById(stairId);
     if (el) {
         el.classList.add('highlighted');

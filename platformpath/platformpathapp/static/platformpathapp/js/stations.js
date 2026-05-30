@@ -220,8 +220,15 @@ function findPath(stationId, fromNodeId, toNodeId) {
 
     // 1. Capture the starting node as the very first step in our sequence
     const startNode = station.nodes[fromNodeId];
+
+    if (!startNode) { // safety check
+        console.error(`Error: Could not find a node named "${fromNodeId}"`);
+        return null;
+    }
+
     const initialStep = {
         svgId: startNode.svgId,
+        layer: startNode.layer,
         instruction: "Start here"
     };
 
