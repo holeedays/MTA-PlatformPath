@@ -208,11 +208,13 @@ const STATIONS = {
 // Search function
 function findPath(stationId, fromNodeId, toNodeId) {
     const station = STATIONS[stationId];
-    if (!station) return null;
+    if (station === undefined) 
+        return null;
 
     const adjacency = {};
-    station.edges.forEach(edge => {
-        if (!adjacency[edge.from]) adjacency[edge.from] = [];
+    station.edges.forEach((edge) => {
+        if (adjacency[edge.from] === undefined) 
+            adjacency[edge.from] = [];
         adjacency[edge.from].push({ neighbor: edge.to, instruction: edge.instruction });
     });
 
@@ -221,7 +223,7 @@ function findPath(stationId, fromNodeId, toNodeId) {
     // 1. Capture the starting node as the very first step in our sequence
     const startNode = station.nodes[fromNodeId];
 
-    if (!startNode) { // safety check
+    if (startNode === undefined) { // safety check
         console.error(`Error: Could not find a node named "${fromNodeId}"`);
         return null;
     }
@@ -232,20 +234,21 @@ function findPath(stationId, fromNodeId, toNodeId) {
         instruction: "Start here"
     };
 
-    // Queue stores: [currentNodeId, sequentialPathArraySoFar]
+    // Queue stores: [currentNodeId, sequentialPathArraySoFar] - we're building the path here
     const queue = [[fromNodeId, [initialStep]]];
 
     while (queue.length > 0) {
-        const [current, path] = queue.shift();
+        const [currentNodeId, path] = queue.shift();
 
-        if (current === toNodeId) {
-            return path; // Return the flat sequential array!
+        if (currentNodeId === toNodeId) {
+            return path; // Return the entire route
         }
 
-        if (visited.has(current)) continue;
-        visited.add(current);
+        if (visited.has(currentNodeId)) 
+            continue;
+        visited.add(currentNodeId);
 
-        const neighbors = adjacency[current] || [];
+        const neighbors = adjacency[currentNodeId] || [];
         neighbors.forEach(({ neighbor, instruction }) => {
             if (!visited.has(neighbor)) {
 
