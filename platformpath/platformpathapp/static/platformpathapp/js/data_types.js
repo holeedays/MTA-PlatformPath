@@ -1,9 +1,8 @@
 // stations
 export class MasterNode {
-    constructor(name, fName, nodes, edges) {
+    constructor(name, fName, edges) {
         this._name = name || null; 
         this._fName = fName || null;
-        this._nodes = nodes || null;
         this._edges = edges || null;
     }
 
@@ -14,7 +13,7 @@ export class MasterNode {
     set name(newName) {
         if (newName === undefined)
             return console.error("Setting name failed");
-        this._fname = newName;
+        this._name = newName;
     }
 
     get fName() {
@@ -24,15 +23,6 @@ export class MasterNode {
         if (newFName === undefined)
             return console.error("Setting file name failed");
         this._fName = newFName;
-    }
-
-    get nodes() {
-        return this._nodes;
-    }
-    set nodes(newNodesArray) {
-        if (newNodesArray === undefined)
-            return console.error("Setting nodes failed");
-        this._nodes = newNodesArray;
     }
 
     get edges() {
@@ -47,7 +37,7 @@ export class MasterNode {
 
 // all platforms, stairs, ramps, etc
 export class Node {
-    constructor(name, nodeType, label, svgID) {
+    constructor(name, nodeType, layerID, label, svgID) {
         // this is to enforce that the param is indeed using the enum in NodeType at least
         // until we switch to typescript for handling
         this._name = name || null;
@@ -55,6 +45,7 @@ export class Node {
         if (nodeType !== undefined && nodeType instanceof NodeType)
             this._nodeType = nodeType;
 
+        this._layerID = layerID || null;
         this._label = label || null;
         this._svgID = svgID || null;
     }
@@ -75,6 +66,15 @@ export class Node {
         if (newNodeType === undefined || !(newNodeType instanceof NodeType))
             return console.error("Setting new node type failed");
         this._label = newNodeType;
+    }
+
+    get layerID() {
+        return this._layerID;
+    }
+    set layerID(newLayerID) {
+        if (newLayerID === undefined)
+            return console.error("Setting new node type failed");
+        this._layerID = newLayerID;
     }
 
     get label() {
@@ -98,7 +98,7 @@ export class Node {
 
 // adjacent pathways between nodes
 export class Edge {
-    constructor(nodeFrom, nodeTo, svgID, instructions) {
+    constructor(nodeFrom, nodeTo, instructions) {
         this._nodeFrom = null;
         if (nodeFrom !== undefined && nodeFrom instanceof Node)
             this._nodeFrom = nodeFrom;
@@ -107,7 +107,6 @@ export class Edge {
         if (nodeTo !== undefined && nodeTo instanceof Node)
             this._nodeTo = nodeTo;
 
-        this._svgID = svgID || null;
         this._instructions = instructions || null;
     }
 
@@ -139,7 +138,7 @@ export class Edge {
     }
 
     get instructions() {
-        return this._instructionsl
+        return this._instructions
     }
     set instructions(newInstructions) {
         if (newInstructions === undefined)
