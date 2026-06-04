@@ -20,6 +20,7 @@ class Node(models.Model):
     label = models.CharField(max_length=200)
     svg_id = models.CharField(max_length=100)
     layer = models.CharField(max_length=100)
+    is_accessible = models.BooleanField(default=False) 
 
     def __str__(self):
         return f"{self.station.name} - {self.label}"

@@ -21,28 +21,32 @@ def seed(stdout=None, style=None):
             node_type="stair",
             label="Stairs at Harway Av entrance",
             svg_id="HARWAY_AV_STILLWELL_AV_1_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
         stair_harway_2 = Node.objects.create(
             station=station,
             node_type="stair",
             label="Stairs at Harway Av entrance",
             svg_id="HARWAY_AV_STILLWELL_AV_2_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
         stair_bay_50_1 = Node.objects.create(
             station=station,
             node_type="stair",
             label="Stairs at Bay 50 St entrance",
             svg_id="BAY_50_ST_STILLWELL_AV_1_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
         stair_bay_50_2 = Node.objects.create(
             station=station,
             node_type="stair",
             label="Stairs at Bay 50 St entrance",
             svg_id="BAY_50_ST_STILLWELL_AV_2_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
 
         # Mezzanine level
@@ -51,7 +55,8 @@ def seed(stdout=None, style=None):
             node_type="mezzanine",
             label="Main Mezzanine",
             svg_id="MEZZANINE",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
 
         # Stairs connecting mezzanine to platforms
@@ -60,14 +65,16 @@ def seed(stdout=None, style=None):
             node_type="stair",
             label="Stairs to downtown platform", # Note: Kept exact label from JS
             svg_id="MEZZ_TO_UPTOWN_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
         stair_mezz_to_downtown = Node.objects.create(
             station=station,
             node_type="stair",
             label="Stairs to uptown platform", # Note: Kept exact label from JS
             svg_id="MEZZ_TO_DOWNTOWN_STAIRS",
-            layer="MEZZANINE"
+            layer="MEZZANINE",
+            is_accessible=False
         )
 
         # Stairs connecting platforms to mezzanine
@@ -76,14 +83,16 @@ def seed(stdout=None, style=None):
             node_type="stair",
             label="Stairs from uptown platform to mezzanine",
             svg_id="UPTOWN_TO_MEZZ_STAIRS",
-            layer="UPTOWN PLATFORM_2"
+            layer="UPTOWN PLATFORM_2",
+            is_accessible=False
         )
         stair_downtown_to_mezz = Node.objects.create(
             station=station,
             node_type="stair",
             label="Stairs from downtown platform to mezzanine",
             svg_id="DOWNTOWN_TO_MEZZ_STAIRS",
-            layer="DOWNTOWN PLATFORM_2"
+            layer="DOWNTOWN PLATFORM_2",
+            is_accessible=False
         )
 
         # Platform level
@@ -92,14 +101,16 @@ def seed(stdout=None, style=None):
             node_type="platform",
             label="Downtown D Platform",
             svg_id="DOWNTOWN PLATFORM",
-            layer="DOWNTOWN PLATFORM_2"
+            layer="DOWNTOWN PLATFORM_2",
+            is_accessible=False
         )
         platform_uptown = Node.objects.create(
             station=station,
             node_type="platform",
             label="Uptown D Platform",
             svg_id="UPTOWN PLATFORM", # Corrected from svgID in JS to svg_id for model
-            layer="UPTOWN PLATFORM_2"
+            layer="UPTOWN PLATFORM_2",
+            is_accessible=False
         )
 
         # 4. Create edges (Paired from JS directed edges into bidirectional model)
