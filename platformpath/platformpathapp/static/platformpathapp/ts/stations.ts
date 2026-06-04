@@ -1,8 +1,37 @@
-const STATIONS = {
+interface NodeData {
+    type: string;
+    label: string;
+    svgId?: string;
+    svgID?: string; // Some use svgID, some svgId in the original JS
+    layer: string;
+}
+
+interface EdgeData {
+    from: string;
+    to: string;
+    instruction: string;
+}
+
+interface StationData {
+    name: string;
+    lines: string[];
+    diagram: string;
+    nodes: Record<string, NodeData>;
+    edges: EdgeData[];
+}
+
+interface PathStep {
+    svgId: string | undefined;
+    layer: string;
+    instruction: string;
+}
+
+const STATIONS: Record<string, StationData> = {
     "bay-50-st": {
         name: "Bay 50 St",
         lines: ["D"],
         diagram: "/static/platformpathapp/diagrams/Bay50.svg",
+
         // Stairs, Platforms, and Mezzanines are nodes
         nodes: {
             // Street Level Stairs (Exits/Entrances)
@@ -30,6 +59,7 @@ const STATIONS = {
                 svgId: "BAY_50_ST_STILLWELL_AV_2_STAIRS",
                 layer: "MEZZANINE"
             },
+
             // Mezzanine level
             "mezz_main": {
                 type: "mezzanine",
@@ -37,6 +67,7 @@ const STATIONS = {
                 svgId: "MEZZANINE",
                 layer: "MEZZANINE"
             },
+
             // Stairs connecting mezzanine to platforms
             "stair_mezz_to_uptown": {
                 type: "stair",
@@ -50,6 +81,7 @@ const STATIONS = {
                 svgId: "MEZZ_TO_DOWNTOWN_STAIRS",
                 layer: "MEZZANINE"
             },
+
             // Stairs connecting platforms to mezzanine
             "stair_uptown_to_mezz": {
                 type: "stair",
@@ -63,6 +95,7 @@ const STATIONS = {
                 svgId: "DOWNTOWN_TO_MEZZ_STAIRS",
                 layer: "DOWNTOWN PLATFORM_2"
             },
+
             // Platform level
             "platform_downtown": {
                 type: "platform",
@@ -77,6 +110,7 @@ const STATIONS = {
                 layer: "UPTOWN PLATFORM_2"
             },
         },
+
         edges: [
             // ─── HARWAY AV ENTRANCE 1 <-> MEZZANINE ───
             {
@@ -89,6 +123,7 @@ const STATIONS = {
                 to: "stair_harway_av_1_to_mezz",
                 instruction: "Take the stairs down to the Harway Av exit"
             },
+
             // ─── HARWAY AV ENTRANCE 2 <-> MEZZANINE ───
             {
                 from: "stair_harway_av_2_to_mezz",
@@ -100,6 +135,7 @@ const STATIONS = {
                 to: "stair_harway_av_2_to_mezz",
                 instruction: "Take the stairs down to the Harway Av exit"
             },
+
             // ─── BAY 50 ST ENTRANCE 1 <-> MEZZANINE ───
             {
                 from: "stair_bay_50_st_1_to_mezz",
@@ -111,6 +147,7 @@ const STATIONS = {
                 to: "stair_bay_50_st_1_to_mezz",
                 instruction: "Take the stairs down to the Bay 50 St exit"
             },
+
             // ─── BAY 50 ST ENTRANCE 2 <-> MEZZANINE ───
             {
                 from: "stair_bay_50_st_2_to_mezz",
@@ -122,6 +159,7 @@ const STATIONS = {
                 to: "stair_bay_50_st_2_to_mezz",
                 instruction: "Take the stairs down to the Bay 50 St exit"
             },
+
             // ─── MEZZANINE <-> DOWNTOWN PLATFORM ───
             // Going to the train (UP)
             {
@@ -155,6 +193,7 @@ const STATIONS = {
                 to: "mezz_main",
                 instruction: "Step off the stairs onto the main mezzanine"
             },
+
             // ─── MEZZANINE <-> UPTOWN PLATFORM ───
             // Going to the train (UP)
             {
@@ -189,64 +228,79 @@ const STATIONS = {
                 instruction: "Step off the stairs onto the main mezzanine"
             }
         ]
+
     },
-};
+
+}
+
 // Search function
-function findPath(stationId, fromNodeId, toNodeId) {
+function findPath(stationId: string, fromNodeId: string, toNodeId: string): PathStep[] | null {
     const station = STATIONS[stationId];
-    if (station === undefined)
+    if (station === undefined) 
         return null;
-    const adjacency = {};
+
+    const adjacency: Record<string, { neighbor: string; instruction: string }[]> = {};
     station.edges.forEach((edge) => {
-        if (adjacency[edge.from] === undefined)
+        if (adjacency[edge.from] === undefined) 
             adjacency[edge.from] = [];
-        adjacency[edge.from].push({ neighbor: edge.to, instruction: edge.instruction });
+        adjacency[edge.from]!.push({ neighbor: edge.to, instruction: edge.instruction });
     });
-    const visited = new Set();
+
+    const visited = new Set<string>();
+
     // 1. Capture the starting node as the very first step in our sequence
     const startNode = station.nodes[fromNodeId];
+
     if (startNode === undefined) { // safety check
         console.error(`Error: Could not find a node named "${fromNodeId}"`);
         return null;
     }
-    const initialStep = {
+
+    const initialStep: PathStep = {
         svgId: startNode.svgId || startNode.svgID,
         layer: startNode.layer,
         instruction: "Start here"
     };
+
     // Queue stores: [currentNodeId, sequentialPathArraySoFar] - we're building the path here
-    const queue = [[fromNodeId, [initialStep]]];
+    const queue: [string, PathStep[]][] = [[fromNodeId, [initialStep]]];
+
     while (queue.length > 0) {
         const item = queue.shift();
-        if (!item)
-            break;
+        if (!item) break;
         const [currentNodeId, path] = item;
+
         if (currentNodeId === toNodeId) {
             return path; // Return the entire route
         }
-        if (visited.has(currentNodeId))
+
+        if (visited.has(currentNodeId)) 
             continue;
         visited.add(currentNodeId);
+
         const neighbors = adjacency[currentNodeId] || [];
         neighbors.forEach(({ neighbor, instruction }) => {
             if (!visited.has(neighbor)) {
+
                 // 2. Look up the target node we are stepping onto
                 const targetNode = station.nodes[neighbor];
-                if (!targetNode)
-                    return;
+                if (!targetNode) return;
+
                 // 3. Create the next step in the sequence
-                const nextStep = {
+                const nextStep: PathStep = {
                     svgId: targetNode.svgId || targetNode.svgID,
                     layer: targetNode.layer,
                     instruction: instruction
                 };
+
                 queue.push([neighbor, [...path, nextStep]]);
             }
         });
     }
+
     return null;
 }
-window.findPath = findPath;
+
+(window as any).findPath = findPath;
+
 console.log(findPath("bay-50-st", "stair_harway_av_1_to_mezz", "platform_downtown"));
-export {};
-//# sourceMappingURL=stations.js.map

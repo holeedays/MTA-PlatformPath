@@ -19,10 +19,10 @@
     <button onclick="testMez()">Show Mezzanine</button>
     <button onclick="testAll()">Show All</button>
 
-    <script src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
-    <script src="{% static 'platformpathapp/js/async.js' %}"></script>
-    <script src="{% static 'platformpathapp/js/stations.js' %}"></script>
-    <script src="{% static 'platformpathapp/js/app.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/async.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/stations.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
 
     <div id="route-form" style="margin: 20px 0;">
     <label for="start-node">Start:</label>
@@ -54,12 +54,14 @@
         <button id="btn-next" onclick="nextStep()">Next →</button>
     </div>
 
-    <script type="text/javascript">
+    <script type="module">
         // Load the diagram on page load
+        // @ts-ignore
         loadDiagram('{% static "platformpathapp/diagrams/Bay50.svg" %}');
 
         // Hardcoded test — does the highlight work?
-        function testHighlight() {
+        // @ts-ignore
+        window.testHighlight = function() {
             highlightStair('HARWAY_AV_STILLWELL_AV_1_STAIRS');
         }
 
@@ -67,27 +69,34 @@
         let down, up, mez;
         loadDOM();
         async function loadDOM() {
+            // @ts-ignore
             down = await getDOMElement("DOWNTOWN PLATFORM_2", 100);
+            // @ts-ignore
             up = await getDOMElement("UPTOWN PLATFORM_2", 100);
+            // @ts-ignore
             mez = await getDOMElement("MEZZANINE", 100);
         }
 
-        function testDown() {
+        // @ts-ignore
+        window.testDown = function() {
             down.style.opacity = "1.0"
             up.style.opacity = "0.0"
             mez.style.opacity = "0.0"
         }
-        function testUp() {
+        // @ts-ignore
+        window.testUp = function() {
             down.style.opacity = "0.0"
             up.style.opacity = "1.0"
             mez.style.opacity = "0.0"
         }
-        function testMez() {
+        // @ts-ignore
+        window.testMez = function() {
             down.style.opacity = "0.0"
             up.style.opacity = "0.0"
             mez.style.opacity = "1.0"
         }
-        function testAll() {
+        // @ts-ignore
+        window.testAll = function() {
             down.style.opacity = "1.0"
             up.style.opacity = "1.0"
             mez.style.opacity = "1.0"
