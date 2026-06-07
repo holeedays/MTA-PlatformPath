@@ -3,11 +3,11 @@
   "compilerOptions": {
     // File Layout
     // OLD configuration (outside of platformpath folder)
-    "rootDir": "./platformpath/platformpathapp/static/platformpathapp/ts",
-    "outDir": "./platformpath/platformpathapp/static/platformpathapp/js",
+    // "rootDir": "./platformpath/platformpathapp/static/platformpathapp/ts",
+    // "outDir": "./platformpath/platformpathapp/static/platformpathapp/js",
     // NEW configuration 
-    // "rootDir": "./platformpathapp/static/platformpathapp/ts",
-    // "outDir": "./platformpathapp/static/platformpathapp/js",
+    "rootDir": "./platformpathapp/static/platformpathapp/ts",
+    "outDir": "./platformpathapp/static/platformpathapp/js",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
