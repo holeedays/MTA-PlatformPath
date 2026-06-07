@@ -1,4 +1,4 @@
-import {MasterNode, Node, Edge, NodeType} from "./data_types.js";
+import {MasterNode, Node, Edge, NodeType} from "./_data_types.ts";
 
 // MEZZANINE LEVEL
 

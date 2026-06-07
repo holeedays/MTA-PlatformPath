@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{% static 'platformpathapp/css/style.css' %}">
 </head>
 
-<body>
+<!-- <body>
     <h1>Bay 50 St</h1>
     <div id="diagram-container"></div>
     <button onclick="testHighlight()">Test Highlight</button>
@@ -19,10 +19,10 @@
     <button onclick="testMez()">Show Mezzanine</button>
     <button onclick="testAll()">Show All</button>
 
-    <script type="module" src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
-    <script type="module" src="{% static 'platformpathapp/js/async.js' %}"></script>
-    <script type="module" src="{% static 'platformpathapp/js/stations.js' %}"></script>
-    <script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/_highlighter.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/_async.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/_stations.js' %}"></script>
+    <script type="module" src="{% static 'platformpathapp/js/_app.js' %}"></script>
 
     <div id="route-form" style="margin: 20px 0;">
     <label for="start-node">Start:</label>
@@ -102,6 +102,33 @@
             mez.style.opacity = "1.0"
         }
     </script>
+</body> -->
+
+<body>
+    Hello World
+
+    <!-- <div class="slider">
+        <div class="slide" id="slide_1"></div>
+        <div class="slide" id="slide_2"></div>
+        <div class="slide" id="slide_3"></div>
+        <div class="slide" id=""slide_4></div>
+    </div> -->
+    <div>
+        <input type="range" value="0" min="0" max="5" step="1" list="my-detents">
+    </div>
+
+    <!-- allows snap-on on the input grid-->
+    <datalist id="my-detents">
+        <option value="1">
+        <option value="2">
+        <option value="3">
+        <option value="4">
+    </datalist>
+
+
 </body>
+
+
+
 
 </html>
