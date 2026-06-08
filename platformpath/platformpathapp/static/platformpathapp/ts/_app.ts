@@ -1,13 +1,18 @@
+// External functions from other files
+import { loadDiagram, showLayer, highlightStair } from "./_highlighter.ts";
+import { findPath } from "./_stations.ts";
+
 // Global State Variables
 let currentPath: any[] | null = [];   // Will hold the array returned by findPath
 let currentIndex: number = 0;   // Tracks which step the user is on
 
-// External variables/functions from other scripts
-declare function findPath(stationId: string, fromNodeId: string, toNodeId: string): any[] | null;
-declare function highlightStair(stairId: string): void;
-declare const down: HTMLElement;
-declare const up: HTMLElement;
-declare const mez: HTMLElement;
+async function init(): Promise<void> {
+    await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
+
+    document.getElementById("find-route")?.addEventListener("click", startNavigation);
+    document.getElementById("btn-prev")?.addEventListener("click", prevStep);
+    document.getElementById("btn-next")?.addEventListener("click", nextStep);
+}
 
 // 1. Handle Form Submission
 function startNavigation(): void {
@@ -42,25 +47,17 @@ function renderCurrentStep(): void {
     }
 
     // B. Handle Layer Visibility (The Z-Axis Fix)
-    // First, hide everything
-    if (down) down.style.opacity = "0.0";
-    if (up) up.style.opacity = "0.0";
-    if (mez) mez.style.opacity = "0.0";
-
-    // Then, show ONLY the layer specified by the current node
-    const activeLayer = document.getElementById(step.layer || step.layerID);
-    if (activeLayer) {
-        activeLayer.style.opacity = "1.0";
-    }
+    // Show ONLY the layer specified by the current node
+    showLayer(step.layer);
 
     // C. Highlight the Specific Element
     // Note: Ensure highlightStair() removes previous highlights before adding the new one!
-    highlightStair(step.svgId || step.svgID);
+    highlightStair(step.svgId);
 
     // D. Manage Button States (Disable Prev on step 1, Next on last step)
     const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
     const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
-    
+
     if (btnPrev) btnPrev.disabled = (currentIndex === 0);
     if (btnNext) btnNext.disabled = (currentIndex === currentPath.length - 1);
 }
@@ -80,6 +77,7 @@ function prevStep(): void {
     }
 }
 
-(window as any).startNavigation = startNavigation;
-(window as any).nextStep = nextStep;
-(window as any).prevStep = prevStep;
+// initalize page
+document.addEventListener("DOMContentLoaded", () => {
+    void init();
+})

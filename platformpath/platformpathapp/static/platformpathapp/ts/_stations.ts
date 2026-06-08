@@ -234,14 +234,14 @@ const STATIONS: Record<string, StationData> = {
 }
 
 // Search function
-function findPath(stationId: string, fromNodeId: string, toNodeId: string): PathStep[] | null {
+export function findPath(stationId: string, fromNodeId: string, toNodeId: string): PathStep[] | null {
     const station = STATIONS[stationId];
-    if (station === undefined) 
+    if (station === undefined)
         return null;
 
     const adjacency: Record<string, { neighbor: string; instruction: string }[]> = {};
     station.edges.forEach((edge) => {
-        if (adjacency[edge.from] === undefined) 
+        if (adjacency[edge.from] === undefined)
             adjacency[edge.from] = [];
         adjacency[edge.from]!.push({ neighbor: edge.to, instruction: edge.instruction });
     });
@@ -274,7 +274,7 @@ function findPath(stationId: string, fromNodeId: string, toNodeId: string): Path
             return path; // Return the entire route
         }
 
-        if (visited.has(currentNodeId)) 
+        if (visited.has(currentNodeId))
             continue;
         visited.add(currentNodeId);
 
@@ -301,6 +301,4 @@ function findPath(stationId: string, fromNodeId: string, toNodeId: string): Path
     return null;
 }
 
-(window as any).findPath = findPath;
-
-console.log(findPath("bay-50-st", "stair_harway_av_1_to_mezz", "platform_downtown"));
+// (window as any).findPath = findPath;
