@@ -11,7 +11,7 @@ from typing import cast, Any
 from django.db.models import QuerySet
 
 @api_view(["POST"])
-def fetch_station_api(request: HttpRequest) -> HttpResponse:
+def fetch_station(request: HttpRequest) -> HttpResponse:
 
     # dict will be organized like this:
     # {
