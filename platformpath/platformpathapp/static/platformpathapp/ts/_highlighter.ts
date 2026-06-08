@@ -9,16 +9,16 @@ export function loadDiagram(svgPath: string): void {
         });
 }
 
-export function highlightStair(stairId: string): void {
+export function highlightNode(nodeId: string): void {
     document.querySelectorAll('.highlighted').forEach(el => {
         el.classList.remove('highlighted');
     });
 
-    const el = document.getElementById(stairId);
+    const el = document.getElementById(nodeId);
     if (el) {
         el.classList.add('highlighted');
     } else {
-        console.warn('Stair not found:', stairId);
+        console.warn('Node not found:', nodeId);
     }
 }
 

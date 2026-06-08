@@ -1,5 +1,5 @@
 // External functions from other files
-import { loadDiagram, showLayer, highlightStair } from "./_highlighter.ts";
+import { loadDiagram, showLayer, highlightNode } from "./_highlighter.ts";
 import { findPath } from "./_stations.ts";
 
 // Global State Variables
@@ -51,8 +51,8 @@ function renderCurrentStep(): void {
     showLayer(step.layer);
 
     // C. Highlight the Specific Element
-    // Note: Ensure highlightStair() removes previous highlights before adding the new one!
-    highlightStair(step.svgId);
+    // Note: Ensure highlightNode() removes previous highlights before adding the new one!
+    highlightNode(step.svgId);
 
     // D. Manage Button States (Disable Prev on step 1, Next on last step)
     const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
