@@ -12,12 +12,6 @@
 <body>
     <h1>Bay 50 St</h1>
     <div id="diagram-container"></div>
-    <button onclick="testHighlight()">Test Highlight</button>
-
-    <button onclick="testDown()">Show Downtown</button>
-    <button onclick="testUp()">Show Uptown</button>
-    <button onclick="testMez()">Show Mezzanine</button>
-    <button onclick="testAll()">Show All</button>
 
     <script type="module" src="{% static 'platformpathapp/js/_highlighter.js' %}"></script>
     <script type="module" src="{% static 'platformpathapp/js/_async.js' %}"></script>
@@ -45,7 +39,7 @@
             <option value="stair_bay_50_st_2_to_mezz">Bay 50 St Exit 2</option>
         </select>
 
-        <button onclick="find-route">Find Route</button>
+        <button id="find-route">Find Route</button>
     </div>
 
     <div id="step-ui" style="display: none; margin: 20px 0; padding: 10px; background: #eee;">
