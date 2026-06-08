@@ -1,7 +1,7 @@
-class path_finder {
+class PathFinder {
     constructor() {
-
     }
 
+    
 
 }
