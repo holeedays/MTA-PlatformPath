@@ -100,13 +100,13 @@ const STATIONS: Record<string, StationData> = {
             "platform_downtown": {
                 type: "platform",
                 label: "Downtown D Platform",
-                svgId: "DOWNTOWN PLATFORM",
+                svgId: "DOWNTOWN PLATFORM_2",
                 layer: "DOWNTOWN PLATFORM_2"
             },
             "platform_uptown": {
                 type: "platform",
                 label: "Uptown D Platform",
-                svgID: "UPTOWN PLATFORM",
+                svgID: "UPTOWN PLATFORM_2",
                 layer: "UPTOWN PLATFORM_2"
             },
         },

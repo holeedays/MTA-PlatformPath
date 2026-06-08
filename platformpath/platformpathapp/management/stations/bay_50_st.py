@@ -100,7 +100,7 @@ def seed(stdout=None, style=None):
             station=station,
             node_type="platform",
             label="Downtown D Platform",
-            svg_id="DOWNTOWN PLATFORM",
+            svg_id="DOWNTOWN PLATFORM_2",
             layer="DOWNTOWN PLATFORM_2",
             is_accessible=False
         )
@@ -108,7 +108,7 @@ def seed(stdout=None, style=None):
             station=station,
             node_type="platform",
             label="Uptown D Platform",
-            svg_id="UPTOWN PLATFORM", # Corrected from svgID in JS to svg_id for model
+            svg_id="UPTOWN PLATFORM_2", # Corrected from svgID in JS to svg_id for model
             layer="UPTOWN PLATFORM_2",
             is_accessible=False
         )

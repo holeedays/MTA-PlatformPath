@@ -8,16 +8,16 @@ export function loadDiagram(svgPath) {
         }
     });
 }
-export function highlightStair(stairId) {
+export function highlightNode(nodeId) {
     document.querySelectorAll('.highlighted').forEach(el => {
         el.classList.remove('highlighted');
     });
-    const el = document.getElementById(stairId);
+    const el = document.getElementById(nodeId);
     if (el) {
         el.classList.add('highlighted');
     }
     else {
-        console.warn('Stair not found:', stairId);
+        console.warn('Node not found:', nodeId);
     }
 }
 export function showLayer(layerId) {
