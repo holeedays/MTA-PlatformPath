@@ -1,4 +1,4 @@
-class DataFetch {
+export class DataFetch {
     constructor() {
     }
     // get the csrf token embedded in our browser's cookie
@@ -18,8 +18,11 @@ class DataFetch {
         }
         return cookieValue;
     }
-    // fetch our station
-    async fetchStations(stations, fetchURL) {
+    // fetch all relevant stations (ordered) based on an array of line names
+    async fetchStations(lineNames, fetchURL) {
+    }
+    // fetch all relevant nodes and edges from an array of station names
+    async fetchEdgesNodes(stationNames, fetchURL) {
         try {
             const response = await fetch(fetchURL, {
                 // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
@@ -30,14 +33,14 @@ class DataFetch {
                     "Content-Type": "application/json",
                     "X-CSRFToken": this.getCookie("csrftoken")
                 },
-                body: JSON.stringify(stations)
+                body: JSON.stringify(stationNames)
             });
             // see if response is successful
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             // if it is get our json objects
-            console.log("Success!");
+            console.log("Successfully got all nodes and edges!");
             const data = await response.json();
             return data;
         }
@@ -47,5 +50,4 @@ class DataFetch {
         }
     }
 }
-export {};
 //# sourceMappingURL=data_fetch.js.map

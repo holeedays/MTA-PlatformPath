@@ -1,4 +1,4 @@
-from platformpathapp.models import Station, Line, Node, Edge
+from platformpathapp.models import Station, Line, StationLine, Node, Edge
 
 def seed(stdout=None, style=None):
     if stdout and style:
@@ -10,9 +10,14 @@ def seed(stdout=None, style=None):
             diagram_path="/static/platformpathapp/diagrams/Bay50.svg"
         )
 
-        # 2. Create line and attach to station
+        # 2. Create line and attach to station with through metadata
         line_d, _ = Line.objects.get_or_create(name="D")
-        station.lines.add(line_d)
+        # no more doing station.add(line)... create the through object to establish the M2M relationship
+        StationLine.objects.create(
+            station=station,
+            line=line_d,
+            order=1
+        )
 
         # 3. Create nodes
         # Street Level Stairs (Exits/Entrances)

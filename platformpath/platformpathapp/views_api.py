@@ -4,14 +4,43 @@ from django.http import HttpRequest, HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Line, Station, Edge, Node
+from .models import Line, Station, StationLine, Edge, Node
 from .serializers import LineSerializer, StationSerializer, EdgeSerializer, NodeSerializer
 
 from typing import cast, Any
 from django.db.models import QuerySet
 
+
+# for fetching stations (given an array of line names)
 @api_view(["POST"])
-def fetch_station(request: HttpRequest) -> HttpResponse:
+def fetch_stations(request: HttpRequest) -> Response:
+
+    line_names: list[str] = cast(list[str], request.data)
+    line_data: dict[str, Any] = {name: [] for name in line_names}
+
+    lines_queryset: QuerySet[Line] = Line.objects.filter(name__in=line_names)
+    lines_dict: dict[str, Line] = {line.name: line for line in lines_queryset}
+    # checking if all aforementioned lines exist in the database
+    for name in line_names:
+        if (not name in lines_dict):
+            raise Exception(f"Cannot find line {name} in the database")
+    
+    # get our through objects (this gives us crucial metadata between the stations and lines tables)
+    station_line_queryset: QuerySet[StationLine] = (StationLine.objects
+                                                    .filter(line__in=lines_queryset)
+                                                    .select_related("station", "line")
+                                                    .order_by("line__name", "order")) #returns the queryset sorted based on line name and then order (of station relative to the line)
+    
+    for station_line in station_line_queryset:
+        station_model: Station = station_line.station
+        line_data[station_line.line.name].append(StationSerializer(station_model).data)
+    
+    return Response(line_data)
+
+
+# for fetching edges and nodes (given an array of station names)
+@api_view(["POST"])
+def fetch_edges_nodes(request: HttpRequest) -> Response:
 
     # dict will be organized like this:
     # {
@@ -27,7 +56,7 @@ def fetch_station(request: HttpRequest) -> HttpResponse:
     for name in station_names:
         if (not name in stations_dict):
             # will raise an exception on the backend for now
-            raise Exception(f"{name} is not found in the database")
+            raise Exception(f"Cannot find station {name} in the database")
     
     # make another db query call to get all edges (and nodes **avoids more db calls**)
     edge_queryset: QuerySet[Edge] = (
@@ -43,7 +72,7 @@ def fetch_station(request: HttpRequest) -> HttpResponse:
             "station_model": StationSerializer(station_model).data,
             "edge_models": EdgeSerializer(station_edges, many=True).data,
             # django rest framework usually requires an indexable item (sets cannot ofc...)
-            "station_nodes": NodeSerializer(list(station_nodes), many=True).data
+            "node_models": NodeSerializer(list(station_nodes), many=True).data
         }
 
     return Response(station_data)

@@ -1,4 +1,4 @@
-class DataFetch {
+export class DataFetch {
     constructor() {
     }
 
@@ -20,8 +20,14 @@ class DataFetch {
         return cookieValue;
     }
 
-    // fetch our station
-    public async fetchStations(stations: string[], fetchURL: string): Promise<any> {
+    // fetch all relevant stations (ordered) based on an array of line names
+    public async fetchStations(lineNames: string[], fetchURL: string): Promise<any> {
+        
+    }
+
+
+    // fetch all relevant nodes and edges from an array of station names
+    public async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any> {
         try {
             const response = await fetch(fetchURL, {
                 // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
@@ -32,7 +38,7 @@ class DataFetch {
                     "Content-Type": "application/json",
                     "X-CSRFToken": this.getCookie("csrftoken")
                 },
-                body: JSON.stringify(stations)
+                body: JSON.stringify(stationNames)
             });
 
             // see if response is successful
@@ -41,7 +47,7 @@ class DataFetch {
             }
 
             // if it is get our json objects
-            console.log("Success!");
+            console.log("Successfully got all nodes and edges!");
             const data = await response.json();
             return data; 
         } 

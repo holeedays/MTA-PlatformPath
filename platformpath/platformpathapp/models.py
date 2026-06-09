@@ -9,10 +9,32 @@ class Line(models.Model):
 class Station(models.Model):
     name = models.CharField(max_length=200)
     diagram_path = models.CharField(max_length=100)
-    lines = models.ManyToManyField(Line, blank=True)
+    lines = models.ManyToManyField(
+        to=Line, 
+        blank=True,
+        through="StationLine")
 
     def __str__(self):
         return self.name
+    
+class StationLine(models.Model):
+    station = models.ForeignKey(Station, on_delete=models.CASCADE)
+    line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    # position of a station relative to a line (is it the 10th stop..20th stop or last stop??)
+    order = models.IntegerField()
+
+    # include some constraints to prevent the same station and line to have multiple orders
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["station", "line"],
+                name="unique_station_line",
+            ), 
+            models.UniqueConstraint(
+                fields=["line", "order"],
+                name="unique_line_order"
+            )
+        ]
 
 class Node(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
