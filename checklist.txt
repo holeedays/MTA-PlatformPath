@@ -1,0 +1,16 @@
+This is where we add stuff we did and things to do...
+
+Edmond ----
+TO DO:
+Register data fetching functions (frontend and backend) for station line tables
+Finish frontend function to fetch stations, line, and related metadata (see data_fetch.ts)
+
+
+DONE:
+
+
+
+Ivan ----
+TO DO:
+
+DONE:
