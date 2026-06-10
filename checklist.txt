@@ -12,5 +12,11 @@ DONE:
 
 Ivan ----
 TO DO:
+Make the test form for the find path auto generate options based on database
+Replace Old Bay 50 st with new one
+    - change svg path
+    - update seeds for bay 50 st
+Add 25 ave to the seed
 
 DONE:
+Connected fetching function to find path function in the TypeScript
