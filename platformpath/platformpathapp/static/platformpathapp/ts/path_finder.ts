@@ -21,6 +21,7 @@ export interface StationResponse {
     station_model: { name: string; diagram_path: string; };
     edge_models: EdgeData[];
     node_models: NodeData[];
+    unique_layers: string[];
 }
 
 export interface PathStep {

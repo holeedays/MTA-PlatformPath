@@ -22,11 +22,9 @@ export function highlightNode(nodeId: string): void {
     }
 }
 
-export function showLayer(layerId: string): void {
-    // in future layers will be stored in the database for each station
-    const layerIds = ["DOWNTOWN PLATFORM_2", "UPTOWN PLATFORM_2", "MEZZANINE"];
-
-    layerIds.forEach((id) => {
+// Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers
+export function showLayer(layerId: string, uniqueLayers: string[]): void {
+    uniqueLayers.forEach((id) => {
         const layer = document.getElementById(id);
         if (layer) {
             if (id === layerId) {

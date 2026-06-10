@@ -1,4 +1,3 @@
-
 // class for making calls to the django API (to access the database)
 export class DataFetch {
     constructor() {

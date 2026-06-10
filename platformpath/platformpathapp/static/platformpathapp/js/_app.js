@@ -64,7 +64,7 @@ class App {
             instructionText.innerText =
                 `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
         }
-        showLayer(step.layer);
+        showLayer(step.layer, this.station?.unique_layers || []);
         highlightNode(step.svgId);
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');

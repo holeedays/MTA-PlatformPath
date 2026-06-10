@@ -20,10 +20,9 @@ export function highlightNode(nodeId) {
         console.warn('Node not found:', nodeId);
     }
 }
-export function showLayer(layerId) {
+export function showLayer(layerId, uniqueLayers) {
     // in future layers will be stored in the database for each station
-    const layerIds = ["DOWNTOWN PLATFORM_2", "UPTOWN PLATFORM_2", "MEZZANINE"];
-    layerIds.forEach((id) => {
+    uniqueLayers.forEach((id) => {
         const layer = document.getElementById(id);
         if (layer) {
             if (id === layerId) {
