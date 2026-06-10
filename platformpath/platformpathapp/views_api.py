@@ -70,9 +70,7 @@ def fetch_edges_nodes(request: HttpRequest) -> Response:
     #       "station_model": station_json_obj
     #       "edge_models": [edge_1_json_obj, edge_2_json_obj, ...]
     #       "node_models": [node_1_json_obj, node_2_json_obj, ...]
-    
-            # TODO: Add layer field here and update in frontend js
-            # unique_layers = Node.objects.values_list('layer', flat=True).distinct()
+    #       "unique_layers": [layer_1_name, layer_2_name, ...]"
     #   }
     #   ...
     # }
@@ -100,10 +98,12 @@ def fetch_edges_nodes(request: HttpRequest) -> Response:
     for station_name, station_model in stations_dict.items():
         station_edges: list[Edge] = [edge for edge in edge_queryset if edge.station_id == station_model.id]
         station_nodes: set[Node] = {edge.from_node for edge in station_edges} | {edge.to_node for edge in station_edges}
+        unique_layers: set[str] = {node.layer for node in station_nodes}
 
         station_data[station_name] = {
             "station_model": StationSerializer(station_model).data,
             "edge_models": EdgeSerializer(station_edges, many=True).data,
+            "unique_layers": list(unique_layers),
             # django rest framework usually requires an indexable item (sets cannot ofc...)
             "node_models": NodeSerializer(list(station_nodes), many=True).data
         }
