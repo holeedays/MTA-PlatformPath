@@ -69,6 +69,9 @@ def fetch_edges_nodes(request: HttpRequest) -> Response:
     #       "station_model": station_json_obj
     #       "edge_models": [edge_1_json_obj, edge_2_json_obj, ...]
     #       "node_models": [node_1_json_obj, node_2_json_obj, ...]
+    
+            # TODO: Add layer field here and update in frontend js
+            # unique_layers = Node.objects.values_list('layer', flat=True).distinct()
     #   }
     #   ...
     # }
