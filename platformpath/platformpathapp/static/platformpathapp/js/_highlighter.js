@@ -20,8 +20,8 @@ export function highlightNode(nodeId) {
         console.warn('Node not found:', nodeId);
     }
 }
+// Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers
 export function showLayer(layerId, uniqueLayers) {
-    // in future layers will be stored in the database for each station
     uniqueLayers.forEach((id) => {
         const layer = document.getElementById(id);
         if (layer) {
