@@ -66,7 +66,7 @@ export class PathFinder {
         station: StationResponse,
         fromNodeId: number,
         toNodeId: number,
-        accessibleOnly: boolean = false
+        accessible: boolean = false
     ): PathStep[] | null {
 
         // Build node lookup map
@@ -84,11 +84,13 @@ export class PathFinder {
             const fromNode = nodeMap[edge.from_node];
             const toNode   = nodeMap[edge.to_node];
 
+            // checks
             if (!fromNode || !toNode) return;
 
-            if (accessibleOnly && !fromNode.is_accessible) return;
-            if (accessibleOnly && !toNode.is_accessible)   return;
+            if (accessible && !fromNode.is_accessible) return;
+            if (accessible && !toNode.is_accessible)   return;
 
+            // addressing for reverese directions (a -> b, b -> a)
             const fromNeighbors = adjacency[edge.from_node] ?? [];
             const toNeighbors = adjacency[edge.to_node] ?? [];
             adjacency[edge.from_node] = fromNeighbors;
