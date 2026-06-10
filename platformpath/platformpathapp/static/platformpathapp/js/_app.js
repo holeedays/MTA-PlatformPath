@@ -1,73 +1,86 @@
-// External functions from other files
-import { loadDiagram, showLayer, highlightNode } from "./_highlighter.js";
-import { findPath } from "./_stations.js";
-// Global State Variables
-let currentPath = []; // Will hold the array returned by findPath
-let currentIndex = 0; // Tracks which step the user is on
-async function init() {
-    await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
-    document.getElementById("find-route")?.addEventListener("click", startNavigation);
-    document.getElementById("btn-prev")?.addEventListener("click", prevStep);
-    document.getElementById("btn-next")?.addEventListener("click", nextStep);
-}
-// 1. Handle Form Submission
-function startNavigation() {
-    const startId = document.getElementById('start-node').value;
-    const endId = document.getElementById('end-node').value;
-    // Call your BFS function
-    currentPath = findPath('bay-50-st', startId, endId);
-    if (currentPath && currentPath.length > 0) {
-        currentIndex = 0; // Reset to the beginning
-        const stepUI = document.getElementById('step-ui');
-        if (stepUI) {
-            stepUI.style.display = 'block'; // Show the UI
+import { loadDiagram, highlightNode, showLayer } from "./_highlighter.js";
+import { PathFinder } from "./path_finder.js";
+class App {
+    pathFinder;
+    currentPath = null;
+    currentIndex = 0;
+    constructor() {
+        this.pathFinder = new PathFinder();
+    }
+    async init() {
+        await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
+        document.getElementById("find-route")
+            ?.addEventListener("click", () => this.handleFormSubmit());
+        document.getElementById("btn-prev")
+            ?.addEventListener("click", () => this.prevStep());
+        document.getElementById("btn-next")
+            ?.addEventListener("click", () => this.nextStep());
+    }
+    // Reads from the form and delegates to startNavigation
+    async handleFormSubmit() {
+        const fromNodeId = parseInt(document.getElementById('start-node').value);
+        const toNodeId = parseInt(document.getElementById('end-node').value);
+        // const stationName = (
+        //     document.getElementById('station-name') as HTMLSelectElement
+        // ).value;
+        // Currently hardcoding station name
+        const stationName = "Bay 50 St";
+        await this.startNavigation(stationName, fromNodeId, toNodeId);
+    }
+    // Clean reusable function — takes parameters, no DOM reads
+    async startNavigation(stationName, fromNodeId, toNodeId, accessibleOnly = false) {
+        const station = await this.pathFinder.fetchStation(stationName);
+        if (!station) {
+            console.error('Could not load station:', stationName);
+            return;
         }
-        renderCurrentStep(); // Draw the first step
+        this.currentPath = this.pathFinder.findPath(station, fromNodeId, toNodeId, accessibleOnly);
+        this.currentIndex = 0;
+        if (this.currentPath && this.currentPath.length > 0) {
+            const stepUI = document.getElementById('step-ui');
+            if (stepUI)
+                stepUI.style.display = 'block';
+            this.renderCurrentStep();
+        }
+        else {
+            console.warn('No path found');
+        }
     }
-    else {
-        alert("No path found between those points!");
+    renderCurrentStep() {
+        if (!this.currentPath)
+            return;
+        const step = this.currentPath[this.currentIndex];
+        if (!step)
+            return;
+        const instructionText = document.getElementById('instruction-text');
+        if (instructionText) {
+            instructionText.innerText =
+                `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
+        }
+        showLayer(step.layer);
+        highlightNode(step.svgId);
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        if (btnPrev)
+            btnPrev.disabled = (this.currentIndex === 0);
+        if (btnNext)
+            btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
+    }
+    nextStep() {
+        if (this.currentPath && this.currentIndex < this.currentPath.length - 1) {
+            this.currentIndex++;
+            this.renderCurrentStep();
+        }
+    }
+    prevStep() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.renderCurrentStep();
+        }
     }
 }
-// 2. Render the Map based on the currentIndex
-function renderCurrentStep() {
-    if (!currentPath)
-        return;
-    const step = currentPath[currentIndex];
-    // A. Update the Text
-    const instructionText = document.getElementById('instruction-text');
-    if (instructionText) {
-        instructionText.innerText =
-            `Step ${currentIndex + 1} of ${currentPath.length}: ${step.instruction}`;
-    }
-    // B. Handle Layer Visibility (The Z-Axis Fix)
-    // Show ONLY the layer specified by the current node
-    showLayer(step.layer);
-    // C. Highlight the Specific Element
-    // Note: Ensure highlightNode() removes previous highlights before adding the new one!
-    highlightNode(step.svgId);
-    // D. Manage Button States (Disable Prev on step 1, Next on last step)
-    const btnPrev = document.getElementById('btn-prev');
-    const btnNext = document.getElementById('btn-next');
-    if (btnPrev)
-        btnPrev.disabled = (currentIndex === 0);
-    if (btnNext)
-        btnNext.disabled = (currentIndex === currentPath.length - 1);
-}
-// 3. Navigation Controls
-function nextStep() {
-    if (currentPath && currentIndex < currentPath.length - 1) {
-        currentIndex++;
-        renderCurrentStep();
-    }
-}
-function prevStep() {
-    if (currentIndex > 0) {
-        currentIndex--;
-        renderCurrentStep();
-    }
-}
-// initalize page
 document.addEventListener("DOMContentLoaded", () => {
-    void init();
+    const app = new App();
+    void app.init();
 });
 //# sourceMappingURL=_app.js.map

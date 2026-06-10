@@ -7,4 +7,4 @@ const apiURL = "platformPathAPI/fetchEdgesNodes";
 
 const results: any = await df.fetchEdgesNodes(stations, apiURL);
 
-console.log(results["Bay 50 St"].edge_models);
+console.log(results["Bay 50 St"]);
