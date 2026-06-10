@@ -32,14 +32,16 @@ class App {
         const toNodeId = parseInt(document.getElementById('end-node').value);
         await this.startNavigation(fromNodeId, toNodeId);
     }
-    // Clean reusable function — takes parameters, no DOM reads
+    // Uses the PathFinder to get a path and initializes the UI for navigation
     async startNavigation(fromNodeId, toNodeId, accessibleOnly = false) {
         if (!this.station) {
             console.error('No station data available');
             return;
         }
+        // Find the path using the PathFinder
         this.currentPath = this.pathFinder.findPath(this.station, fromNodeId, toNodeId, accessibleOnly);
         this.currentIndex = 0;
+        // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
             const stepUI = document.getElementById('step-ui');
             if (stepUI)
@@ -50,6 +52,7 @@ class App {
             console.warn('No path found');
         }
     }
+    // Renders the current step: updates instructions, highlights nodes/layers, and manages button states
     renderCurrentStep() {
         if (!this.currentPath)
             return;

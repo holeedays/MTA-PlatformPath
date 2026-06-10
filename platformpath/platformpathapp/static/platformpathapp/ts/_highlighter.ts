@@ -1,5 +1,5 @@
-export function loadDiagram(svgPath: string): void {
-    fetch(svgPath)
+export async function loadDiagram(svgPath: string): Promise<void> {
+    await fetch(svgPath)
         .then(r => r.text())
         .then(svgContent => {
             const container = document.getElementById('diagram-container');
