@@ -10,11 +10,32 @@ from .serializers import LineSerializer, StationSerializer, EdgeSerializer, Node
 from typing import cast, Any
 from django.db.models import QuerySet
 
+# for fetching all available lines (the request body doesn't really matter here)
+@api_view(["POST"])
+def fetch_lines(request: HttpRequest) -> Response:
+
+    # line_queryset (when serialized) will be organized like this:
+    # [
+    #   line_1_json_obj,
+    #   line_2_json_obj,
+    #   ...
+    # ]
+
+    lines_queryset: QuerySet[Line] = Line.objects.all()
+
+    return Response(LineSerializer(lines_queryset, many=True).data)
+
 
 # for fetching stations (given an array of line names)
 @api_view(["POST"])
 def fetch_stations(request: HttpRequest) -> Response:
 
+    # line_data will be organized like this:
+    # {
+    #   "line_1_name": [station_1_json_obj, station_2_json_obj, ...],
+    #   "line_2_name": [station_1_json_obj, station_2_json_obj, ...],
+    #   ...
+    # }
     line_names: list[str] = cast(list[str], request.data)
     line_data: dict[str, Any] = {name: [] for name in line_names}
 
@@ -42,9 +63,15 @@ def fetch_stations(request: HttpRequest) -> Response:
 @api_view(["POST"])
 def fetch_edges_nodes(request: HttpRequest) -> Response:
 
-    # dict will be organized like this:
+    # station_data will be organized like this:
     # {
-    # "station_name": {"station_model": ..., "edge_models":..., "node_models": ...}
+    #   "station_name_1": {
+    #       "station_model": station_json_obj
+    #       "edge_models": [edge_1_json_obj, edge_2_json_obj, ...]
+    #       "node_models": [node_1_json_obj, node_2_json_obj, ...]
+    #   }
+    #   ...
+    # }
     station_data: dict[str, Any] = dict()
     station_names: list[str] = cast(list[str], request.data)
 
