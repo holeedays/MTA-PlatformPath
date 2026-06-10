@@ -32,14 +32,14 @@ class NodeSerializer(serializers.ModelSerializer[Node]):
 
 class EdgeSerializer(serializers.ModelSerializer[Edge]):
 
-    from_node = serializers.SlugRelatedField(
-        slug_field="label",
-        read_only=True
-    )
-    to_node = serializers.SlugRelatedField(
-        slug_field="label",
-        read_only=True
-    )
+    # from_node = serializers.SlugRelatedField(
+    #     slug_field="label",
+    #     read_only=True
+    # )
+    # to_node = serializers.SlugRelatedField(
+    #     slug_field="label",
+    #     read_only=True
+    # )
 
     class Meta:
         model = Edge
