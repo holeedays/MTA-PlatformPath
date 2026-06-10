@@ -22,7 +22,7 @@ export class PathFinder {
         this.stationCache[stationName] = station;
         return station;
     }
-    findPath(station, fromNodeId, toNodeId, accessibleOnly = false) {
+    findPath(station, fromNodeId, toNodeId, accessible = false) {
         // Build node lookup map
         const nodeMap = {};
         station.node_models.forEach(node => {
@@ -35,12 +35,14 @@ export class PathFinder {
                 return;
             const fromNode = nodeMap[edge.from_node];
             const toNode = nodeMap[edge.to_node];
+            // checks
             if (!fromNode || !toNode)
                 return;
-            if (accessibleOnly && !fromNode.is_accessible)
+            if (accessible && !fromNode.is_accessible)
                 return;
-            if (accessibleOnly && !toNode.is_accessible)
+            if (accessible && !toNode.is_accessible)
                 return;
+            // addressing for reverese directions (a -> b, b -> a)
             const fromNeighbors = adjacency[edge.from_node] ?? [];
             const toNeighbors = adjacency[edge.to_node] ?? [];
             adjacency[edge.from_node] = fromNeighbors;
