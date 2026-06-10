@@ -17,7 +17,7 @@ interface EdgeData {
     is_active: boolean;
 }
 
-interface StationResponse {
+export interface StationResponse {
     station_model: { name: string; diagram_path: string; };
     edge_models: EdgeData[];
     node_models: NodeData[];

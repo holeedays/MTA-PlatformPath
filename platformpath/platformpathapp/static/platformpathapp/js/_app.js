@@ -4,11 +4,21 @@ class App {
     pathFinder;
     currentPath = null;
     currentIndex = 0;
+    station = null;
     constructor() {
         this.pathFinder = new PathFinder();
     }
-    async init() {
+    // initializes the app: loads diagram, fetches station data, sets up event listeners
+    async init(stationName) {
         await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
+        // Get the station data (nodes/edges) and populate the dropdowns
+        this.station = await this.pathFinder.fetchStation(stationName);
+        console.log('Fetched station data:', this.station);
+        for (const node of this.station?.node_models || []) {
+            document.getElementById('start-node')?.appendChild(new Option(node.label, node.id.toString()));
+            document.getElementById('end-node')?.appendChild(new Option(node.label, node.id.toString()));
+        }
+        // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")
             ?.addEventListener("click", () => this.handleFormSubmit());
         document.getElementById("btn-prev")
@@ -20,21 +30,15 @@ class App {
     async handleFormSubmit() {
         const fromNodeId = parseInt(document.getElementById('start-node').value);
         const toNodeId = parseInt(document.getElementById('end-node').value);
-        // const stationName = (
-        //     document.getElementById('station-name') as HTMLSelectElement
-        // ).value;
-        // Currently hardcoding station name
-        const stationName = "Bay 50 St";
-        await this.startNavigation(stationName, fromNodeId, toNodeId);
+        await this.startNavigation(fromNodeId, toNodeId);
     }
     // Clean reusable function — takes parameters, no DOM reads
-    async startNavigation(stationName, fromNodeId, toNodeId, accessibleOnly = false) {
-        const station = await this.pathFinder.fetchStation(stationName);
-        if (!station) {
-            console.error('Could not load station:', stationName);
+    async startNavigation(fromNodeId, toNodeId, accessibleOnly = false) {
+        if (!this.station) {
+            console.error('No station data available');
             return;
         }
-        this.currentPath = this.pathFinder.findPath(station, fromNodeId, toNodeId, accessibleOnly);
+        this.currentPath = this.pathFinder.findPath(this.station, fromNodeId, toNodeId, accessibleOnly);
         this.currentIndex = 0;
         if (this.currentPath && this.currentPath.length > 0) {
             const stepUI = document.getElementById('step-ui');
@@ -81,6 +85,6 @@ class App {
 }
 document.addEventListener("DOMContentLoaded", () => {
     const app = new App();
-    void app.init();
+    void app.init("Bay 50 St");
 });
 //# sourceMappingURL=_app.js.map

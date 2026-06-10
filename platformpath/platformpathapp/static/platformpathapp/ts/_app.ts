@@ -1,18 +1,36 @@
 import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
-import { PathFinder, type PathStep } from "./path_finder.ts";
+import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
 
 class App {
     private pathFinder: PathFinder;
     private currentPath: PathStep[] | null = null;
     private currentIndex: number = 0;
+    private station: StationResponse | null = null;
 
     constructor() {
         this.pathFinder = new PathFinder();
     }
 
-    public async init(): Promise<void> {
+    // initializes the app: loads diagram, fetches station data, sets up event listeners
+    public async init(stationName: string): Promise<void> {
         await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
+        
+        // Get the station data (nodes/edges) and populate the dropdowns
+        this.station = await this.pathFinder.fetchStation(stationName);
 
+        console.log('Fetched station data:', this.station);
+
+        for (const node of this.station?.node_models || []) {
+            document.getElementById('start-node')?.appendChild(
+                new Option(node.label, node.id.toString())
+            );
+            document.getElementById('end-node')?.appendChild(
+                new Option(node.label, node.id.toString())
+            );
+
+        }
+
+        // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")
             ?.addEventListener("click", () => this.handleFormSubmit());
         document.getElementById("btn-prev")
@@ -29,36 +47,31 @@ class App {
         const toNodeId = parseInt(
             (document.getElementById('end-node') as HTMLSelectElement).value
         );
-        // const stationName = (
-        //     document.getElementById('station-name') as HTMLSelectElement
-        // ).value;
-        // Currently hardcoding station name
-        const stationName = "Bay 50 St";
 
-        await this.startNavigation(stationName, fromNodeId, toNodeId);
+        await this.startNavigation( fromNodeId, toNodeId);
     }
 
-    // Clean reusable function — takes parameters, no DOM reads
+    // Uses the PathFinder to get a path and initializes the UI for navigation
     public async startNavigation(
-        stationName: string,
         fromNodeId: number,
         toNodeId: number,
         accessibleOnly: boolean = false
     ): Promise<void> {
-        const station = await this.pathFinder.fetchStation(stationName);
-        if (!station) {
-            console.error('Could not load station:', stationName);
+        if (!this.station) {
+            console.error('No station data available');
             return;
         }
 
+        // Find the path using the PathFinder
         this.currentPath  = this.pathFinder.findPath(
-            station,
+            this.station,
             fromNodeId,
             toNodeId,
             accessibleOnly
         );
         this.currentIndex = 0;
 
+        // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
             const stepUI = document.getElementById('step-ui');
             if (stepUI) stepUI.style.display = 'block';
@@ -68,6 +81,7 @@ class App {
         }
     }
 
+    // Renders the current step: updates instructions, highlights nodes/layers, and manages button states
     private renderCurrentStep(): void {
         if (!this.currentPath) return;
         const step = this.currentPath[this.currentIndex];
@@ -105,5 +119,5 @@ class App {
 
 document.addEventListener("DOMContentLoaded", () => {
     const app = new App();
-    void app.init();
+    void app.init("Bay 50 St");
 });
