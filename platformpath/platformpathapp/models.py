@@ -18,8 +18,9 @@ class Station(models.Model):
         return self.name
     
 class StationLine(models.Model):
-    station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    # added related name for the foreign keys to allow direct access from Station/Line models to the through model
+    station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="station_line")
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, related_name="line_station")
     # position of a station relative to a line (is it the 10th stop..20th stop or last stop??)
     order = models.IntegerField()
 

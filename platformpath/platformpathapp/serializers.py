@@ -8,22 +8,36 @@ class LineSerializer(serializers.ModelSerializer[Line]):
         fields: list[str] = ["name"]
 
 class StationSerializer(serializers.ModelSerializer[Station]):
-    # helps return the foreign key's - line - name attribute instead of its ID
+
     lines = serializers.SlugRelatedField(
-        many=True, # set true since it is M2M field
-        slug_field="name",
-        read_only=True # means that the client can't write to the database with this information
+        many=True, # set this to true for M2M relationships
+        slug_field="name", # returns the name attribute of lines
+        read_only=True # clients cannot write to the db
     )
+    # create a serializable field that we returns a value from a given method
+    # in our case, it is the station's order
+    station_order = serializers.SerializerMethodField()
 
     class Meta:
         model = Station
-        fields: list[str] = ["name", "diagram_path", "lines"]
+        fields: list[str] = ["name", "diagram_path", "lines", "station_order"]
+
+    # NOTE: get_ prefix has to be linked to the variable name for this to work
+    # obj is the current Station instance; 
+    # station_line is the related_name of station foreign key in StationLine model, allows us to access the through model
+    # directly from the Station model
+    def get_station_order(self, obj: Station) -> int:
+        return obj.station_line.values_list("order", flat=True).first() # values_list returns a queryset of the type of field (str/int/tuple..)
+
 
 class NodeSerializer(serializers.ModelSerializer[Node]):
 
+    # returns the station foreignkey's name
+    # if the variable's name is not the same as the foreign key in the model, you can include the source=""
+    # argument to indicate what column we are referring to in this model
     station = serializers.SlugRelatedField(
-        slug_field="name",
-        read_only=True
+        slug_field="name", 
+        read_only=True 
     )
 
     class Meta:
