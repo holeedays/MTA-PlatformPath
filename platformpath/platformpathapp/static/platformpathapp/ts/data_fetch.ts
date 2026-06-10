@@ -1,3 +1,5 @@
+
+// class for making calls to the django API (to access the database)
 export class DataFetch {
     constructor() {
     }
@@ -20,9 +22,62 @@ export class DataFetch {
         return cookieValue;
     }
 
+    // fetch all available subway lines from the db
+    public async fetchLines(fetchURL: string): Promise<any> {
+        try {
+            // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
+            // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
+            // POST puts all the information in its body
+            const response = await fetch(fetchURL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": this.getCookie("csrftoken")
+                }
+            });
+
+            // see if response is successful
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            console.log("Successfully fetched all subway lines!");
+            const data = await response.json();
+            return data;
+        }
+        catch (err: any) {
+            console.error(`Failed to fetch all subway lines: ${err}`);
+            return null;
+        }
+    }
+
+
     // fetch all relevant stations (ordered) based on an array of line names
     public async fetchStations(lineNames: string[], fetchURL: string): Promise<any> {
-        
+        try {
+            const response = await fetch(fetchURL, {
+                method: "POST", 
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": this.getCookie("csrftoken")
+                },
+                body: JSON.stringify(lineNames)
+            });
+
+            // see if response is successful
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // if it is return our json objects
+            console.log("Successfully got all stations!");
+            const data = await response.json();
+            return data; 
+        }
+        catch (err: any) {
+            console.error("Failed to retrieve the following stations", err);
+            return null;
+        }
     }
 
 
@@ -30,9 +85,6 @@ export class DataFetch {
     public async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any> {
         try {
             const response = await fetch(fetchURL, {
-                // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
-                // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
-                // POST puts all the information in its body
                 method: "POST", 
                 headers: {
                     "Content-Type": "application/json",
