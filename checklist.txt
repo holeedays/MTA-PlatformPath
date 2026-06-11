@@ -17,14 +17,15 @@ Register data fetching functions (frontend and backend) for station line tables
 
 Ivan ----
 TO DO:
+Add 25 ave to the seed
+Create a new test page to navigate between two different stations
+
+DONE:
 Refactor the showLayer to pass in all layers on the station
     - serialize list of all unique layers from database
     - iterate through the StationResponse to find unqiue layers in js
 Replace Old Bay 50 st with new one
     - change svg path
     - update seeds for bay 50 st
-Add 25 ave to the seed
-
-DONE:
 Make the test form for the find path auto generate options based on database
 Connected fetching function to find path function in the TypeScript

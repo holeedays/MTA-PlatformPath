@@ -88,7 +88,7 @@ def seed(stdout=None, style=None):
             node_type="stair",
             label="Stairs from uptown platform to mezzanine",
             svg_id="UPTOWN_TO_MEZZ_STAIRS",
-            layer="UPTOWN PLATFORM_2",
+            layer="UPTOWN PLATFORM",
             is_accessible=False
         )
         stair_downtown_to_mezz = Node.objects.create(
@@ -96,7 +96,7 @@ def seed(stdout=None, style=None):
             node_type="stair",
             label="Stairs from downtown platform to mezzanine",
             svg_id="DOWNTOWN_TO_MEZZ_STAIRS",
-            layer="DOWNTOWN PLATFORM_2",
+            layer="DOWNTOWN PLATFORM",
             is_accessible=False
         )
 
@@ -105,16 +105,16 @@ def seed(stdout=None, style=None):
             station=station,
             node_type="platform",
             label="Downtown D Platform",
-            svg_id="DOWNTOWN PLATFORM_2",
-            layer="DOWNTOWN PLATFORM_2",
+            svg_id="DOWNTOWN PLATFORM",
+            layer="DOWNTOWN PLATFORM",
             is_accessible=False
         )
         platform_uptown = Node.objects.create(
             station=station,
             node_type="platform",
             label="Uptown D Platform",
-            svg_id="UPTOWN PLATFORM_2", # Corrected from svgID in JS to svg_id for model
-            layer="UPTOWN PLATFORM_2",
+            svg_id="UPTOWN PLATFORM",
+            layer="UPTOWN PLATFORM",
             is_accessible=False
         )
 
