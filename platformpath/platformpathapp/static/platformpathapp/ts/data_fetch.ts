@@ -22,7 +22,7 @@ export class DataFetch {
     }
 
     // fetch all available subway lines from the db
-    public async fetchLines(fetchURL: string): Promise<any> {
+    public async fetchLines(fetchURL: string): Promise<any | null> {
         try {
             // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
             // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
@@ -52,7 +52,7 @@ export class DataFetch {
 
 
     // fetch all relevant stations (ordered) based on an array of line names
-    public async fetchStations(lineNames: string[], fetchURL: string): Promise<any> {
+    public async fetchStations(lineNames: string[], fetchURL: string): Promise<any | null> {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST", 
@@ -81,7 +81,7 @@ export class DataFetch {
 
 
     // fetch all relevant nodes and edges from an array of station names
-    public async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any> {
+    public async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any | null> {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST", 
