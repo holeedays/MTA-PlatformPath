@@ -10,7 +10,8 @@ class App {
     }
     // initializes the app: loads diagram, fetches station data, sets up event listeners
     async init(stationName) {
-        await loadDiagram("/static/platformpathapp/diagrams/Bay50.svg");
+        // TODO: Dynamically determine diagram path based on stationName
+        await loadDiagram("/static/platformpathapp/diagrams/25Av.svg");
         // Get the station data (nodes/edges) and populate the dropdowns
         this.station = await this.pathFinder.fetchStation(stationName);
         console.log('Fetched station data:', this.station);
@@ -88,6 +89,6 @@ class App {
 }
 document.addEventListener("DOMContentLoaded", () => {
     const app = new App();
-    void app.init("Bay 50 St");
+    void app.init("25 Av");
 });
 //# sourceMappingURL=_app.js.map

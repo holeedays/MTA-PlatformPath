@@ -3,7 +3,7 @@ from django.db import OperationalError, connection
 from platformpathapp.models import Station, Line, StationLine, Node, Edge
 
 # Import individual stations
-from platformpathapp.management.stations import bay_50_st
+from platformpathapp.management.stations import st_bay_50_st, st_25_av
 
 class Command(BaseCommand):
     help = 'Seed initial station data'
@@ -15,7 +15,8 @@ class Command(BaseCommand):
         self.stdout.write("Starting database seed...\n")
 
         # Seed each station
-        bay_50_st.seed(self.stdout, self.style)
+        st_bay_50_st.seed(self.stdout, self.style)
+        st_25_av.seed(self.stdout, self.style)
 
         self.stdout.write(self.style.SUCCESS("\nAll station data seeded successfully!"))
 

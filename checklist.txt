@@ -17,10 +17,10 @@ Register data fetching functions (frontend and backend) for station line tables
 
 Ivan ----
 TO DO:
-Add 25 ave to the seed
 Create a new test page to navigate between two different stations
 
 DONE:
+Add 25 ave to the seed
 Refactor the showLayer to pass in all layers on the station
     - serialize list of all unique layers from database
     - iterate through the StationResponse to find unqiue layers in js
