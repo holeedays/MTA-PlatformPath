@@ -319,3 +319,51 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* ── Mobile Responsiveness ── */
+@media screen and (max-width: 768px) {
+  
+  /* 1. Reduce overall page padding to give more room for content */
+  .page {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* 2. Switch the main area from a side-by-side grid to a vertical stack */
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: auto; 
+  }
+
+  /* 3. Reduce the diagram height so it doesn't push the sidebar off-screen */
+  .diagram-card {
+    min-height: 250px; 
+    flex: none; /* Prevents it from absorbing all vertical space on mobile */
+  }
+
+  /* 4. Allow the top bar to wrap its text if station names are too long */
+  .top-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+  }
+
+  /* 5. Shrink the phase bar text slightly so all 3 steps fit horizontally */
+  .phase {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+  
+  /* 6. Ensure the sidebar flows naturally under the diagram */
+  .sidebar {
+    flex: none;
+    gap: 8px;
+  }
+  
+  /* 7. Add some margin to the top of the nav buttons to keep them spaced out */
+  .nav-row {
+    margin-top: 8px;
+  }
+}
