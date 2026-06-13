@@ -2,18 +2,18 @@ This is where we add stuff we did and things to do...
 
 Edmond ----
 TO DO:
-Finish frontend function to fetch stations, line, and related metadata (see data_fetch.ts)
-Refactor existing pathfinder/app class
-    - Make the code moore compartmentalized (unspaghetti the spaghetti code)
 Create separate web pages for user input 
     - initial page to show all available subway lines
     - second page to show all available stations given that line selected
     - third page for the pathfinding/navigation at that station
+    - provide proper transfer of data in coresponding pages (via query params and session storage) 
 
 DONE:
 Add additional functions to data_fetch class
 Register data fetching functions (frontend and backend) for station line tables
-
+Refactor existing pathfinder/app class
+    - Make the code moore compartmentalized (unspaghetti the spaghetti code)
+Finish frontend function to fetch stations, line, and related metadata (see data_fetch.ts)
 
 Ivan ----
 TO DO:

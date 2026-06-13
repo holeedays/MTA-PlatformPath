@@ -3,8 +3,8 @@ export class DataFetch {
     constructor() {
     }
 
-    // get the csrf token embedded in our browser's cookie
-    private getCookie(name: string): string {
+    // get the specified cookie based on the string (pulled from django's example code)
+    public static getCookie(name: string): string {
         let cookieValue: string = "";
         if (document.cookie && 
             document.cookie !== "") {
@@ -20,9 +20,13 @@ export class DataFetch {
         }
         return cookieValue;
     }
+    // get the csrf token
+    public static getCSRFToken() {
+        return this.getCookie("csrftoken");
+    }
 
     // fetch all available subway lines from the db
-    public async fetchLines(fetchURL: string): Promise<any | null> {
+    public static async fetchLines(fetchURL: string): Promise<any | null> {
         try {
             // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
             // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
@@ -31,7 +35,7 @@ export class DataFetch {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 }
             });
 
@@ -50,7 +54,6 @@ export class DataFetch {
         }
     }
 
-
     // fetch all relevant stations (ordered) based on an array of line names
     public async fetchStations(lineNames: string[], fetchURL: string): Promise<any | null> {
         try {
@@ -58,7 +61,7 @@ export class DataFetch {
                 method: "POST", 
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 },
                 body: JSON.stringify(lineNames)
             });
@@ -87,7 +90,7 @@ export class DataFetch {
                 method: "POST", 
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 },
                 body: JSON.stringify(stationNames)
             });

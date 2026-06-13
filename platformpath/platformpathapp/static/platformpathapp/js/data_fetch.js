@@ -2,8 +2,8 @@
 export class DataFetch {
     constructor() {
     }
-    // get the csrf token embedded in our browser's cookie
-    getCookie(name) {
+    // get the specified cookie based on the string (pulled from django's example code)
+    static getCookie(name) {
         let cookieValue = "";
         if (document.cookie &&
             document.cookie !== "") {
@@ -19,8 +19,12 @@ export class DataFetch {
         }
         return cookieValue;
     }
+    // get the csrf token
+    static getCSRFToken() {
+        return this.getCookie("csrftoken");
+    }
     // fetch all available subway lines from the db
-    async fetchLines(fetchURL) {
+    static async fetchLines(fetchURL) {
         try {
             // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
             // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
@@ -29,7 +33,7 @@ export class DataFetch {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 }
             });
             // see if response is successful
@@ -52,7 +56,7 @@ export class DataFetch {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 },
                 body: JSON.stringify(lineNames)
             });
@@ -77,7 +81,7 @@ export class DataFetch {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": this.getCookie("csrftoken")
+                    "X-CSRFToken": DataFetch.getCSRFToken()
                 },
                 body: JSON.stringify(stationNames)
             });

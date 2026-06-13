@@ -1,22 +1,24 @@
 import { DataFetch } from "./data_fetch.js";
+import { URLHandler } from "./url_handler.js";
 import { PathFinder } from "./path_finder.js";
-const df = new DataFetch();
-const lines = ["D"];
-const stations = ["Bay 50 St"];
-const linesFetchApiURL = "platformpathAPI/fetchLines";
-const stationsFetchApiURL = "platformpathAPI/fetchStations";
-const edgeNodesFetchApiURL = "platformPathAPI/fetchEdgesNodes";
-const linesFetchResult = await df.fetchLines(linesFetchApiURL);
-const stationsFetchResult = await df.fetchStations(lines, stationsFetchApiURL);
-const edgeNodesFetchResult = await df.fetchEdgesNodes(stations, edgeNodesFetchApiURL);
+// const df: DataFetch = new DataFetch();
+// const lines: string[] = ["D"];
+// const stations: string[] = ["Bay 50 St"];
+// const tempPrefix: string = "/test/";
+// const linesFetchApiURL = tempPrefix + "platformpathAPI/fetchLines";
+// const stationsFetchApiURL = tempPrefix + "platformpathAPI/fetchStations";
+// const edgeNodesFetchApiURL = tempPrefix +"platformPathAPI/fetchEdgesNodes";
+// const linesFetchResult: any = await df.fetchLines(linesFetchApiURL);
+// const stationsFetchResult: any = await df.fetchStations(lines, stationsFetchApiURL);
+// const edgeNodesFetchResult: any = await df.fetchEdgesNodes(stations, edgeNodesFetchApiURL);
 // setting it up like this because console logging text inline with the json objects 
 // does not allow an expandable view of the object (it just returns object[object])
-console.log("These are all available MTA lines currently:");
-console.log(linesFetchResult);
-console.log("These are all available stations for the D:");
-console.log(stationsFetchResult);
-console.log("These are edges and nodes pulled for Bay 50 St:");
-console.log(edgeNodesFetchResult);
+// console.log("These are all available MTA lines currently:");
+// console.log(linesFetchResult);
+// console.log("These are all available stations for the D:");
+// console.log(stationsFetchResult);
+// console.log("These are edges and nodes pulled for Bay 50 St:");
+// console.log(edgeNodesFetchResult); 
 var URLS;
 (function (URLS) {
     URLS["LINES_FETCH_API"] = "platformpathAPI/fetchLines";
@@ -25,18 +27,20 @@ var URLS;
 })(URLS || (URLS = {}));
 class App {
     stationCache;
-    dataFetcher;
     constructor() {
         this.stationCache = {};
-        this.dataFetcher = new DataFetch();
     }
-    init() {
-        switch (this.getCurrentWorkingURLRoute()) {
+    async init() {
+        switch (URLHandler.getCurrentWorkingURLRoute()) {
             case "lines_selection":
                 console.log("We're currently selecting a line...");
-                this.initLineButtons();
+                URLHandler.clearAllQueryParameters();
+                await this.initLineButtons();
+                this.initSubmitButton();
                 break;
             case "stations_selection":
+                const url = new URL(document.URL);
+                url.searchParams.forEach((v, k, p) => console.log(k, v));
                 break;
         }
     }
@@ -49,7 +53,7 @@ class App {
             return;
         }
         // then fetch our lines
-        const lines = await this.dataFetcher.fetchLines(URLS.LINES_FETCH_API);
+        const lines = await DataFetch.fetchLines(URLS.LINES_FETCH_API);
         if (lines === null) {
             return;
         }
@@ -57,21 +61,56 @@ class App {
             lines.forEach((line) => {
                 const lineButton = document.createElement("button");
                 lineButton.textContent = line.name ?? "";
-                lineButton.addEventListener("click", this.directToStationSelection);
+                // aria_label tells us the current state of the button
+                lineButton.setAttribute("aria_label", "not_clicked");
+                // add an onclick function to our event listener
+                lineButton.addEventListener("click", () => {
+                    const ariaLabelValue = lineButton.getAttribute("aria_label");
+                    // if button hasn't been clicked
+                    if (ariaLabelValue !== null && ariaLabelValue === "not_clicked") {
+                        URLHandler.addQueryParameter("selected_line", lineButton.textContent);
+                        lineButton.classList.add("selected");
+                        lineButton.setAttribute("aria_label", "clicked");
+                    }
+                    // if button has been clicked
+                    else {
+                        URLHandler.removeQueryParameter("selected_line", lineButton.textContent);
+                        lineButton.classList.remove("selected");
+                        lineButton.setAttribute("aria_label", "not_clicked");
+                    }
+                });
                 lineButtonsContainer.appendChild(lineButton);
             });
+            ////////////////////////////////// just testing with a psuedo station
+            const lineButton = document.createElement("button");
+            lineButton.textContent = "N";
+            lineButton.setAttribute("aria_label", "not_clicked");
+            lineButton.addEventListener("click", () => {
+                const ariaLabelValue = lineButton.getAttribute("aria_label");
+                // if button hasn't been clicked
+                if (ariaLabelValue !== null && ariaLabelValue === "not_clicked") {
+                    URLHandler.addQueryParameter("selected_line", lineButton.textContent);
+                    lineButton.classList.add("selected");
+                    lineButton.setAttribute("aria_label", "clicked");
+                }
+                // if button has been clicked
+                else {
+                    URLHandler.removeQueryParameter("selected_line", lineButton.textContent);
+                    lineButton.classList.remove("selected");
+                    lineButton.setAttribute("aria_label", "not_clicked");
+                }
+            });
+            lineButtonsContainer.appendChild(lineButton);
         }
     }
-    // direct to station selection
-    directToStationSelection() {
-        window.location.href = "/test/stations_selection";
-    }
-    // get the current working URL path; e.g. https//:thisWebsite/thisPage1/thisPage2 <-- returns thisPage2
-    getCurrentWorkingURLRoute() {
-        const fullURL = document.URL;
-        const URLSubstrings = fullURL.split("/");
-        const currentURLRoute = URLSubstrings[URLSubstrings.length - 1];
-        return currentURLRoute === undefined ? null : currentURLRoute;
+    // create the DOM button that actuall triggers redirection to the next page
+    initSubmitButton() {
+        const submitButton = document.getElementById("submission_button");
+        if (submitButton !== null) {
+            submitButton.addEventListener("click", () => {
+                URLHandler.redirectTo("/test/stations_selection", `${URLHandler.getQueryParameters()}`);
+            });
+        }
     }
 }
 const app = new App();
