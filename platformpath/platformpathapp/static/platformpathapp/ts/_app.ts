@@ -13,6 +13,12 @@ class App {
 
     // initializes the app: loads diagram, fetches station data, sets up event listeners
     public async init(stationName: string): Promise<void> {
+        // Set the station name in the heading
+        const stationHeading = document.getElementById('diagram-name');
+        if (stationHeading) {
+            stationHeading.innerText = `Station: ${stationName}`;
+        }
+
         // TODO: Dynamically determine diagram path based on stationName
         await loadDiagram("/static/platformpathapp/diagrams/25Av.svg");
         
