@@ -10,6 +10,11 @@ class App {
     }
     // initializes the app: loads diagram, fetches station data, sets up event listeners
     async init(stationName) {
+        // Set the station name in the heading
+        const stationHeading = document.getElementById('diagram-name');
+        if (stationHeading) {
+            stationHeading.innerText = `Station: ${stationName}`;
+        }
         // TODO: Dynamically determine diagram path based on stationName
         await loadDiagram("/static/platformpathapp/diagrams/25Av.svg");
         // Get the station data (nodes/edges) and populate the dropdowns
