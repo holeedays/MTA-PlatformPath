@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlatformPath</title>
+  <link rel="stylesheet" href="{% static 'platformpathapp/css/full_path.css' %}">
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- 1. TOP BAR -->
+    <div class="top-bar">
+      <span class="station-label" id="origin-label">Bay 50 St</span>
+      <span class="arrow">→</span>
+      <div class="line-badge">D</div>
+      <span class="arrow">→</span>
+      <span class="station-label" id="destination-label">Coney Island - Stillwell Av</span>
+    </div>
+
+    <!-- 2. PHASE BAR -->
+    <div class="phase-bar">
+      <div class="phase active" id="phase-enter">
+        <div class="phase-dot"></div>
+        <span>Enter Bay 50 St</span>
+      </div>
+      <div class="phase" id="phase-board">
+        <div class="phase-dot"></div>
+        <span>Board D train</span>
+      </div>
+      <div class="phase" id="phase-exit">
+        <div class="phase-dot"></div>
+        <span>Exit Coney Island</span>
+      </div>
+    </div>
+
+    <!-- 3. MAIN CONTENT -->
+    <div class="main">
+
+      <!-- LEFT: Diagram -->
+      <div class="diagram-card">
+        <div class="diagram-label" id="diagram-label">Bay 50 St — Loading...</div>
+        <div id="diagram-container">
+          <!-- SVG loads here -->
+        </div>
+      </div>
+
+      <!-- RIGHT: Sidebar -->
+      <div class="sidebar">
+
+        <!-- Current step -->
+        <div class="step-card">
+          <div class="step-num" id="step-num">Step 1</div>
+          <div class="step-text" id="instruction-text">Loading...</div>
+        </div>
+
+        <!-- Train info -->
+        <div class="train-card">
+          <div class="train-label">Your train</div>
+          <div class="train-name">
+            <div class="line-badge">D</div>
+            <span>toward Coney Island - Stillwell Av</span>
+          </div>
+        </div>
+
+        <!-- Path progress -->
+        <div class="progress-panel">
+          <div class="section-label">Your path</div>
+          <div id="progress-steps">
+            <!-- Steps injected by JS -->
+          </div>
+        </div>
+
+        <!-- Nav buttons -->
+        <div class="nav-row">
+          <button id="btn-prev" disabled>← Prev</button>
+          <button id="btn-next" class="primary">Next →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TRAIN TRANSITION SCREEN (hidden by default) -->
+    <div id="train-screen" class="train-screen hidden">
+      <div class="line-badge large">D</div>
+      <h2>Board the D train</h2>
+      <p>toward Coney Island - Stillwell Av</p>
+      <button id="btn-arrived" class="primary">I've arrived at Coney Island →</button>
+    </div>
+
+  </div>
+
+  <script src="{% static 'platformpathapp/js/data_fetch.js' %}"></script>
+  <script src="{% static 'platformpathapp/js/path_finder.js' %}"></script>
+  <script src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
+  <script src="{% static 'platformpathapp/js/app.js' %}"></script>
+</body>
+</html>

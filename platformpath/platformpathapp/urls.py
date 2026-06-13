@@ -5,6 +5,7 @@ from . import views_api
 urlpatterns = [
     path('', views.index, name='index'),
     path('test/', views.test, name='test'),
+    path('full_path/', views.full_path, name='full_path'),
 
     path('platformpathAPI/fetchLines', views_api.fetch_lines, name='api_request_lines'),
     path('platformpathAPI/fetchStations', views_api.fetch_stations, name='api_request_stations'),
