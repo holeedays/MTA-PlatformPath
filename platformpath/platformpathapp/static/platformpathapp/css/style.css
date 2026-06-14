@@ -3,11 +3,8 @@
     animation: pulse 1.2s ease-in-out infinite;
 }
 
-.highlighted path,
-path.highlighted,
-rect.highlighted,
-circle.highlighted {
-    fill: #b4ff1b !important;
+.highlighted path {
+    fill: #b4ff1b;
 }
 
 @keyframes pulse {
