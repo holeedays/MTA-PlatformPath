@@ -10,6 +10,9 @@ def index(request: HttpRequest) -> HttpResponse:
 def test(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/path_test.html")
 
+def full_path(request:HttpRequest):
+    return render(request, "platformpathapp/full_path_test.html")
+
 def lines_selection_test(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/lines_selection_test.html")
 

@@ -5,6 +5,7 @@ from . import views_api
 urlpatterns = [
     path('', views.index, name='index'),
     path('test/', views.test, name='test'),
+    path('full_path/', views.full_path, name='full_path'),
     path('test/lines_selection', views.lines_selection_test, name='lines_selection_test'),
     path('test/stations_selection', views.stations_selection_test, name='stations_selection_test'),
 

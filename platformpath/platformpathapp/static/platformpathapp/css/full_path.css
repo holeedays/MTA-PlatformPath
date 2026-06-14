@@ -1,0 +1,394 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── NEW: Ensure the base document fills the screen ── */
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: sans-serif;
+  background: #f5f5f5;
+  color: #111;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+  margin: 0 auto;
+  /* ── NEW: Forces the page wrapper to be at least screen height ── */
+  min-height: 100vh; 
+}
+
+/* ── Top bar ── */
+.top-bar {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.station-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.arrow {
+  color: #999;
+  font-size: 14px;
+}
+
+.line-badge {
+  background: #F7622A;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.line-badge.large {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+}
+
+/* ── Phase bar ── */
+.phase-bar {
+  display: flex;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.phase {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  border-right: 1px solid #e0e0e0;
+  cursor: default;
+}
+
+.phase:last-child {
+  border-right: none;
+}
+
+.phase.active {
+  background: #fef6f3;
+  color: #111;
+  font-weight: 500;
+}
+
+.phase.done {
+  color: #bbb;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  margin: 0 auto 4px;
+}
+
+.phase.active .phase-dot { background: #F7622A; }
+.phase.done  .phase-dot  { background: #bbb; }
+
+/* ── Main layout ── */
+.main {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 12px;
+  /* ── NEW: Tells the grid container to absorb remaining vertical space ── */
+  flex: 1; 
+  align-items: stretch;
+}
+
+/* ── Diagram card ── */
+.diagram-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diagram-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* ── NEW: Forces the SVG container to fill the empty vertical space in the card ── */
+#diagram-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#diagram-container svg {
+  width: 100%;
+  height: auto;
+  /* ── NEW: Prevents SVG from overflowing its newly stretched container ── */
+  max-height: 100%; 
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.step-num {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.step-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.train-card {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.train-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.train-name {
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Progress steps ── */
+.progress-panel {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.p-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #999;
+}
+
+.p-step.active {
+  background: #fef6f3;
+  color: #111;
+  font-weight: 500;
+}
+
+.p-step.done {
+  color: #ccc;
+  text-decoration: line-through;
+}
+
+.p-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  flex-shrink: 0;
+}
+
+.p-step.active .p-dot { background: #F7622A; }
+.p-step.done  .p-dot  { background: #ccc; }
+
+/* ── Nav buttons ── */
+.nav-row {
+  display: flex;
+  gap: 8px;
+  /* ── NEW: Pushes the navigation row to the absolute bottom of the sidebar ── */
+  margin-top: auto; 
+}
+
+.nav-row button {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  cursor: pointer;
+}
+
+.nav-row button.primary {
+  background: #F7622A;
+  color: white;
+  border-color: #F7622A;
+}
+
+.nav-row button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Train transition screen ── */
+.train-screen {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.train-screen h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.train-screen p {
+  color: #666;
+  font-size: 15px;
+}
+
+.train-screen button {
+  padding: 12px 24px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+  background: #F7622A;
+  color: white;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* ── Utility ── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Mobile Responsiveness ── */
+@media screen and (max-width: 768px) {
+  
+  /* 1. Reduce overall page padding to give more room for content */
+  .page {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* 2. Switch the main area from a side-by-side grid to a vertical stack */
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: auto; 
+  }
+
+  /* 3. Reduce the diagram height so it doesn't push the sidebar off-screen */
+  .diagram-card {
+    min-height: 250px; 
+    flex: none; /* Prevents it from absorbing all vertical space on mobile */
+  }
+
+  /* 4. Allow the top bar to wrap its text if station names are too long */
+  .top-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+  }
+
+  /* 5. Shrink the phase bar text slightly so all 3 steps fit horizontally */
+  .phase {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+  
+  /* 6. Ensure the sidebar flows naturally under the diagram */
+  .sidebar {
+    flex: none;
+    gap: 8px;
+  }
+  
+  /* 7. Add some margin to the top of the nav buttons to keep them spaced out */
+  .nav-row {
+    margin-top: 8px;
+  }
+}
+
+/* Highlighting styles for diagram paths */
+.highlighted {
+    opacity: 0.1;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.highlighted path {
+    fill: #b4ff1b;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 0.8;
+    }
+}
+
