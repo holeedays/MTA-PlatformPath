@@ -39,7 +39,7 @@ export class URLHandler {
         // if it didn't add it, do this
         if (!regex.test(document.URL)) {
             url.searchParams.append(key, value);
-            window.history.pushState({}, "", url);
+            window.history.replaceState({}, "", url);
         }
     }
 
@@ -50,7 +50,7 @@ export class URLHandler {
         url.searchParams.forEach((value: string, key: string, parent: URLSearchParams) => {
             parent.delete(key, value);
         });
-        window.history.pushState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname);
     }
 
     // clears a specifc query parameter
@@ -58,7 +58,7 @@ export class URLHandler {
         const url = new URL(document.URL);
 
         url.searchParams.delete(key, value);
-        window.history.pushState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname);
     }
 
     // redirect to a new page given the specified url, you can append more values to the string

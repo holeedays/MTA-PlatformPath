@@ -31,11 +31,9 @@ export interface PathStep {
 }
 
 export class PathFinder {
-    private dataFetch: DataFetch;
     private stationCache: Record<string, StationResponse>;
 
     constructor() {
-        this.dataFetch   = new DataFetch();
         this.stationCache = {};
     }
 
@@ -46,7 +44,7 @@ export class PathFinder {
             return cachedStation;
         }
 
-        const data = await this.dataFetch.fetchEdgesNodes(
+        const data = await DataFetch.fetchEdgesNodes(
             [stationName],
             '/platformPathAPI/fetchEdgesNodes'
         );
