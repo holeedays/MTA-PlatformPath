@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="{% static 'platformpathapp/css/full_path.css' %}">
 </head>
 <body>
-
+  
   <div class="page">
 
     <!-- 1. TOP BAR -->
@@ -21,7 +21,7 @@
     </div>
 
     <!-- 2. PHASE BAR -->
-    <div class="phase-bar">
+    <div class="phase-bar" id="phase-bar">
       <div class="phase active" id="phase-enter">
         <div class="phase-dot"></div>
         <span>Enter Bay 50 St</span>
@@ -92,9 +92,6 @@
 
   </div>
 
-  <script src="{% static 'platformpathapp/js/data_fetch.js' %}"></script>
-  <script src="{% static 'platformpathapp/js/path_finder.js' %}"></script>
-  <script src="{% static 'platformpathapp/js/highlighter.js' %}"></script>
-  <script src="{% static 'platformpathapp/js/app.js' %}"></script>
-</body>
+ <!-- Load necessary scripts -->
+  <script type="module" src="{% static 'platformpathapp/js/full_path.js' %}"></script>
 </html>

@@ -1,71 +1,49 @@
-import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
-
-export interface TripPhase {
-    type: 'enter' | 'transfer' | 'exit';
-    stationName: string;
-    diagramPath: string;
-    fromNodeId?: number;
-    toNodeId?: number;
-    label: string;
-}
-
+import { PathFinder } from "./path_finder.js";
 export class TripManager {
-    private phases: TripPhase[];
-    private phaseIndex: number = 0;
-    private pathFinder: PathFinder;
-
+    phases;
+    phaseIndex = 0;
+    pathFinder;
     // Current phase state
-    public currentPath: PathStep[] | null = null;
-    public currentIndex: number = 0;
-    public currentStation: StationResponse | null = null;
-
-    constructor(phases: TripPhase[], pathFinder: PathFinder) {
+    currentPath = null;
+    currentIndex = 0;
+    currentStation = null;
+    constructor(phases, pathFinder) {
         this.phases = phases;
         this.pathFinder = pathFinder;
     }
-
     // Fetch all the stations in the trip
-    public async prefetchStations(): Promise<void> {
+    async prefetchStations() {
         // Get a list of stations in the trip
         const allStationNames = this.phases.map(phase => phase.stationName);
-
         // remove duplicates (NOTE: doesn't seem necessary, might remove later)
         const uniqueStationNames = [...new Set(allStationNames)];
-        
         // Create an array of fetch tasks (Promises) for the PathFinder
         const fetchTasks = uniqueStationNames.map(stationName => {
             return this.pathFinder.fetchStation(stationName);
         });
-
         // Run all the fetch tasks in parallel and wait for them to complete
         const stations = await Promise.all(fetchTasks);
     }
-
-    public get currentPhase(): TripPhase {
+    get currentPhase() {
         const phase = this.phases[this.phaseIndex];
         if (!phase) {
             throw new Error('No current phase found');
         }
         return phase;
     }
-
-    public get isLastPhase(): boolean {
+    get isLastPhase() {
         return this.phaseIndex === this.phases.length - 1;
     }
-
-    public get isLastStep(): boolean {
-        return this.currentPath !== null && 
+    get isLastStep() {
+        return this.currentPath !== null &&
             this.currentIndex === this.currentPath.length - 1;
     }
-
-    public get totalPhases(): number {
+    get totalPhases() {
         return this.phases.length;
     }
-
     // Load the path for the phase that we are on
-    public async loadCurrentPhasePath(): Promise<void> {
+    async loadCurrentPhasePath() {
         const phase = this.currentPhase;
-
         // fetch station which is now cached in the PathFinder
         // since we prefetched all stations at the start of the trip
         const station = await this.pathFinder.fetchStation(phase.stationName);
@@ -73,20 +51,13 @@ export class TripManager {
             console.error('Failed to load station for current phase:', phase.stationName);
             return;
         }
-
         // Store StationResponse for current station
         this.currentStation = station;
-
-        this.currentPath = this.pathFinder.findPath(
-            station,
-            phase.fromNodeId || 0,
-            phase.toNodeId || 0
-        );
+        this.currentPath = this.pathFinder.findPath(station, phase.fromNodeId || 0, phase.toNodeId || 0);
         this.currentIndex = 0;
     }
-
     // Move to next phase, returns false if already on last phase
-    public async advancePhase(): Promise<boolean> {
+    async advancePhase() {
         if (this.isLastPhase) {
             return false; // Can't advance, already on last phase
         }
@@ -94,30 +65,29 @@ export class TripManager {
         await this.loadCurrentPhasePath();
         return true;
     }
-
     // Move to next step in current phase, returns 'step' if moved to 
     // next step, 'end-of-phase' if moved past last step, and 'end-of-trip' if on last step of last phase
-    public nextStep(): 'step' | 'end-of-phase' | 'end-of-trip' {
+    nextStep() {
         if (!this.currentPath) {
             return 'end-of-trip';
         }
-
         if (this.currentIndex < this.currentPath.length - 1) {
             this.currentIndex++;
             return 'step';
-        } else {
+        }
+        else {
             return 'end-of-phase';
         }
     }
-
-    public prevStep(): void {
-        if (this.currentIndex > 0) this.currentIndex--;
+    prevStep() {
+        if (this.currentIndex > 0)
+            this.currentIndex--;
     }
-
-    public getAllPhaseLabels(): { label: string; type: string }[] {
+    getAllPhaseLabels() {
         return this.phases.map(phase => ({
             label: phase.label,
             type: phase.type
         }));
     }
 }
+//# sourceMappingURL=trip_manager.js.map
