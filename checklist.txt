@@ -3,7 +3,7 @@ This is where we add stuff we did and things to do...
 Edmond ----
 TO DO:
 Create separate web pages for user input 
-    - initial page to show all available subway lines
+    - initial page to show all available subway lines (***done at this point)
     - second page to show all available stations given that line selected
     - third page for the pathfinding/navigation at that station
     - provide proper transfer of data in coresponding pages (via query params and session storage) 
