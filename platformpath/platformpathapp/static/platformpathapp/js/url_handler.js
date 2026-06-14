@@ -11,16 +11,21 @@ export class URLHandler {
         }
         return currentURLRoute === undefined ? null : currentURLRoute;
     }
-    // get only the query parameters of the URL
+    // get only the query parameters of the URL (in a suitable URL format)
+    static getQueryParametersURL() {
+        const url = new URL(document.URL);
+        return url.searchParams.toString();
+    }
+    // get all query params in a key value array
     static getQueryParameters() {
-        const fullURL = document.URL;
-        const URLSubstrings = fullURL.split("/");
-        const currentURLRoute = URLSubstrings[URLSubstrings.length - 1];
-        let queryParametersURL = "";
-        if (currentURLRoute !== undefined) {
-            queryParametersURL = currentURLRoute.split("?")[1];
-        }
-        return queryParametersURL === undefined ? "" : queryParametersURL;
+        let queryParamsArray = [];
+        const url = new URL(document.URL);
+        url.searchParams.forEach((value, key, parent) => {
+            // for some reason you have to wrap the key variable for it to be recognized as key
+            // for literals translation, do not wrap the value with []
+            queryParamsArray.push({ [key]: value });
+        });
+        return queryParamsArray;
     }
     // adds a query parameter to our url and reloads it without refreshing the page
     static addQueryParameter(key, value) {

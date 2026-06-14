@@ -42,9 +42,10 @@ def fetch_stations(request: HttpRequest) -> Response:
     lines_queryset: QuerySet[Line] = Line.objects.filter(name__in=line_names)
     lines_dict: dict[str, Line] = {line.name: line for line in lines_queryset}
     # checking if all aforementioned lines exist in the database
+    # will not be raising an exception in this case, but will alert about this on the backend
     for name in line_names:
         if (not name in lines_dict):
-            raise Exception(f"Cannot find line {name} in the database")
+            print(f"Cannot find line {name} in the database")
     
     # get our through objects (this gives us crucial metadata between the stations and lines tables)
     station_line_queryset: QuerySet[StationLine] = (StationLine.objects

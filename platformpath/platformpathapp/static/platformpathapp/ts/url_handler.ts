@@ -16,19 +16,25 @@ export class URLHandler {
         return currentURLRoute === undefined ? null : currentURLRoute;
     }
 
-    // get only the query parameters of the URL
-    public static getQueryParameters(): string {
-        const fullURL: string = document.URL;
-        const URLSubstrings: string[] = fullURL.split("/");
-        const currentURLRoute: string | undefined = URLSubstrings[URLSubstrings.length - 1];
-        let queryParametersURL: string | undefined = "";
-
-        if (currentURLRoute !== undefined) {
-            queryParametersURL = currentURLRoute.split("?")[1];
-        }
-        
-        return queryParametersURL === undefined ? "" : queryParametersURL;
+    // get only the query parameters of the URL (in a suitable URL format)
+    public static getQueryParametersURL(): string {
+        const url = new URL(document.URL);        
+        return url.searchParams.toString();
     }
+
+    // get all query params in a key value array
+    public static getQueryParameters(): Record<string,string>[] {
+        let queryParamsArray: Record<string,string>[] = [];
+        const url = new URL(document.URL);
+        url.searchParams.forEach((value: string, key: string, parent: URLSearchParams) => {
+            // for some reason you have to wrap the key variable for it to be recognized as key
+            // for literals translation, do not wrap the value with []
+            queryParamsArray.push({[key]: value});
+        });
+
+        return queryParamsArray;
+    }
+
 
     // adds a query parameter to our url and reloads it without refreshing the page
     public static addQueryParameter(key: string, value: string): void {

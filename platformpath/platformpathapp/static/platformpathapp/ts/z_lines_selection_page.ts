@@ -89,7 +89,7 @@ export class LinesSelectionPage {
 
         if (submitButton !== null) {
             submitButton.addEventListener("click", () => {
-                URLHandler.redirectTo("/test/stations_selection", `${URLHandler.getQueryParameters()}`);
+                URLHandler.redirectTo("/test/stations_selection", `${URLHandler.getQueryParametersURL()}`);
             });
         }
     }

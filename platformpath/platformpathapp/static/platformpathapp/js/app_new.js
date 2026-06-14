@@ -1,6 +1,7 @@
 import { DataFetch } from "./data_fetch.js";
 import { URLHandler } from "./url_handler.js";
 import { LinesSelectionPage } from "./z_lines_selection_page.js";
+import { StationsSelectionPage } from "./z_stations_selection_page.js";
 import { PathFinder } from "./path_finder.js";
 // const df: DataFetch = new DataFetch();
 // const lines: string[] = ["D"];
@@ -29,9 +30,11 @@ var URLS;
 class App {
     stationCache;
     linesSelectionPage;
+    stationsSelectionPage;
     constructor() {
         this.stationCache = {};
         this.linesSelectionPage = new LinesSelectionPage();
+        this.stationsSelectionPage = new StationsSelectionPage();
     }
     async init() {
         switch (URLHandler.getCurrentWorkingURLRoute()) {
@@ -39,8 +42,9 @@ class App {
                 this.linesSelectionPage.init();
                 break;
             case "stations_selection":
-                const url = new URL(document.URL);
-                url.searchParams.forEach((v, k, p) => console.log(k, v));
+                // const url: URL = new URL(document.URL);
+                // url.searchParams.forEach((v: string, k: string, p: URLSearchParams) => console.log(k, v));
+                this.stationsSelectionPage.init();
                 break;
         }
     }

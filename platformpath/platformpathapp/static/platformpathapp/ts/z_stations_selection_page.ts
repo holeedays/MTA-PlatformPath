@@ -16,7 +16,41 @@ export class StationsSelectionPage {
 
     // add our selection elements corresponding to each subway line selected
     private async initSelectionElements(): Promise<void> {
-        // DataFetch.fetchStations();
+        const lines: string[] = [];
+        URLHandler.getQueryParameters().forEach((pair: Record<string,string>) => {
+            const line: string | undefined = pair["selected_line"];
+            if (line !== undefined)
+                lines.push(line);
+        });
+
+        // might store this in app later...
+        // fetching data for each line
+        const stationsData: {[key: string]: any[]} = await DataFetch.fetchStations(lines, URLS.STATIONS_FETCH_API);
+
+        try {
+             const stationsSelectionContainer: HTMLElement | null = document.getElementById("stations_selection_container");
+
+            if (stationsSelectionContainer === null)
+                throw Error("The station selection container div doesn't exist");
+
+            // iterating through each line
+            for (const line in stationsData) {      
+                const selectionForm: HTMLElement = document.createElement("select");
+                stationsSelectionContainer.appendChild(selectionForm);
+
+                stationsData[line]?.forEach((stationObj: any) => {
+                    const option: HTMLElement = document.createElement("option");
+                    option.setAttribute("value", stationObj.name);
+                    option.textContent = stationObj.name;
+                    selectionForm.appendChild(option);
+
+                    console.log(stationObj);
+                });
+            }
+        }
+        catch (err: any) {
+            console.warn(err);
+        }
     }
 
 }
