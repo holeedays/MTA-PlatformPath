@@ -66,47 +66,18 @@ export class PathFinder {
         station: StationResponse,
         fromNodeId: number,
         toNodeId: number,
-        accessible: boolean = false
+        isAccessible: boolean = false
     ): PathStep[] | null {
 
-        // Build node lookup map
-        const nodeMap: Record<number, NodeData> = {};
-        station.node_models.forEach(node => {
-            nodeMap[node.id] = node;
-        });
+        const adjAndNode = this.getAdjacencyAndNodeMap(station, isAccessible);
+        // check if something went wrong retrieving the adjacency and node maps (should return null)
+        if (adjAndNode === null)
+            return null;
 
-        // Build adjacency map
-        const adjacency: Record<number, { neighbor: number; instruction: string }[]> = {};
+        const adjacency = adjAndNode[0];
+        const nodeMap = adjAndNode[1];
 
-        station.edge_models.forEach((edge) => {
-            if (!edge.is_active) return;
-
-            const fromNode = nodeMap[edge.from_node];
-            const toNode   = nodeMap[edge.to_node];
-
-            // checks
-            if (!fromNode || !toNode) return;
-
-            if (accessible && !fromNode.is_accessible) return;
-            if (accessible && !toNode.is_accessible)   return;
-
-            // addressing for reverese directions (a -> b, b -> a)
-            const fromNeighbors = adjacency[edge.from_node] ?? [];
-            const toNeighbors = adjacency[edge.to_node] ?? [];
-            adjacency[edge.from_node] = fromNeighbors;
-            adjacency[edge.to_node] = toNeighbors;
-
-            fromNeighbors.push({
-                neighbor:    edge.to_node,
-                instruction: edge.instruction_forward
-            });
-            toNeighbors.push({
-                neighbor:    edge.from_node,
-                instruction: edge.instruction_backward
-            });
-        });
-
-        // BFS
+        // BFS for pathfinding paths
         const visited   = new Set<number>();
         const startNode = nodeMap[fromNodeId];
 
@@ -151,4 +122,49 @@ export class PathFinder {
         console.warn(`No path found from ${fromNodeId} to ${toNodeId}`);
         return null;
     }
+
+    // get adjacency and Nodemap
+    private getAdjacencyAndNodeMap(
+        station: StationResponse,
+        isAccessible: boolean = false
+    ): [Record<number, {neighbor: number; instruction: string}[]>, Record<number, NodeData>] | null {
+          // Build node lookup map
+        const nodeMap: Record<number, NodeData> = {};
+        station.node_models.forEach(node => {
+            nodeMap[node.id] = node;
+        });
+
+        // Build adjacency map
+        const adjacency: Record<number, { neighbor: number; instruction: string }[]> = {};
+
+        station.edge_models.forEach((edge) => {
+            if (!edge.is_active) return null;
+
+            const fromNode = nodeMap[edge.from_node];
+            const toNode   = nodeMap[edge.to_node];
+
+            // checks
+            if (!fromNode || !toNode) return null;
+
+            if (isAccessible && !fromNode.is_accessible) return null;
+            if (isAccessible && !toNode.is_accessible)   return null;
+
+            // addressing for reverese directions (a -> b, b -> a)
+            const fromNeighbors = adjacency[edge.from_node] ?? [];
+            const toNeighbors = adjacency[edge.to_node] ?? [];
+            adjacency[edge.from_node] = fromNeighbors;
+            adjacency[edge.to_node] = toNeighbors;
+
+            fromNeighbors.push({
+                neighbor:    edge.to_node,
+                instruction: edge.instruction_forward
+            });
+            toNeighbors.push({
+                neighbor:    edge.from_node,
+                instruction: edge.instruction_backward
+            });
+        });
+
+        return [adjacency, nodeMap];
+    }   
 }
