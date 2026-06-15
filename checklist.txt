@@ -18,6 +18,13 @@ Finish frontend function to fetch stations, line, and related metadata (see data
 Ivan ----
 TO DO:
 Create a new test page to navigate between two different stations
+    - Highlight on svg not working
+    - Phase bar doesn't include boarding train (might be fine)
+    - Unable to go back after boarding the train to next station
+    - At the end of final station, it shows the board train thing when
+      it shouldn't since the trip has ended
+    - Need to make the image of the svg interactable to zoom in and out
+      along with moving around in the map
 
 DONE:
 Add 25 ave to the seed
