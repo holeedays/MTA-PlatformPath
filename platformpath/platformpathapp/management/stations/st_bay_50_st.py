@@ -1,6 +1,9 @@
+from django.core.management.base import OutputWrapper # for type hint checks
+from django.core.management.color import Style # for type hint checks
 from platformpathapp.models import Station, Line, StationLine, Node, Edge
 
-def seed(stdout=None, style=None):
+
+def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
     if stdout and style:
         stdout.write("Seeding Bay 50 St...")
 

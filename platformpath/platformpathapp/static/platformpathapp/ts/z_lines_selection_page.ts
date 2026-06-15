@@ -59,27 +59,27 @@ export class LinesSelectionPage {
                 lineButtonsContainer.appendChild(lineButton);
             });
 
-            ////////////////////////////////// just testing with a psuedo station
-            const lineButton: HTMLElement = document.createElement("button");
-            lineButton.textContent = "N";
-            lineButton.setAttribute("aria_label", "not_clicked");
-            lineButton.addEventListener("click", () => {
-                const ariaLabelValue: string | null = lineButton.getAttribute("aria_label");
+            ////////////////////////////////// just testing with a psuedo line
+            // const lineButton: HTMLElement = document.createElement("button");
+            // lineButton.textContent = "N";
+            // lineButton.setAttribute("aria_label", "not_clicked");
+            // lineButton.addEventListener("click", () => {
+            //     const ariaLabelValue: string | null = lineButton.getAttribute("aria_label");
 
-                // if button hasn't been clicked
-                if (ariaLabelValue !== null && ariaLabelValue === "not_clicked") {
-                    URLHandler.addQueryParameter("selected_line", lineButton.textContent);
-                    lineButton.classList.add("selected");
-                    lineButton.setAttribute("aria_label", "clicked");
-                }
-                // if button has been clicked
-                else {
-                    URLHandler.removeQueryParameter("selected_line", lineButton.textContent);
-                    lineButton.classList.remove("selected");
-                    lineButton.setAttribute("aria_label", "not_clicked");
-                }
-            });
-            lineButtonsContainer.appendChild(lineButton);
+            //     // if button hasn't been clicked
+            //     if (ariaLabelValue !== null && ariaLabelValue === "not_clicked") {
+            //         URLHandler.addQueryParameter("selected_line", lineButton.textContent);
+            //         lineButton.classList.add("selected");
+            //         lineButton.setAttribute("aria_label", "clicked");
+            //     }
+            //     // if button has been clicked
+            //     else {
+            //         URLHandler.removeQueryParameter("selected_line", lineButton.textContent);
+            //         lineButton.classList.remove("selected");
+            //         lineButton.setAttribute("aria_label", "not_clicked");
+            //     }
+            // });
+            // lineButtonsContainer.appendChild(lineButton);
         }
     }
 

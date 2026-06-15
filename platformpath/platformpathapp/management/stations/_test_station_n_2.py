@@ -2,21 +2,24 @@ from django.core.management.base import OutputWrapper # for type hint checks
 from django.core.management.color import Style # for type hint checks
 from platformpathapp.models import Station, Line, Node, Edge, StationLine
 
+# NOTE: THIS IS JUST FOR TESTING PURPOSES, THIS STATION IS AN EXACT REPLICA OF THE 25 AV STATION WITH SOME NAME CHANGES
+
 def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
     if stdout and style:
-        stdout.write("Seeding 25 Av...")
+        stdout.write("Seeding N test station 2...")
 
         # 1. Create station
         station = Station.objects.create(
-            name="25 Av",
+            name="Test Station 2",
             diagram_path="/static/platformpathapp/diagrams/25Av.svg"
         )
 
         # 2. Create line and attach to station
-        line_d, _ = Line.objects.get_or_create(name="D")
+        line_n, _ = Line.objects.get_or_create(name="N")
+        # no more doing station.add(line)... create the through object to establish the M2M relationship
         StationLine.objects.create(
             station=station,
-            line=line_d,
+            line=line_n,
             order=2
         )
 
@@ -207,4 +210,4 @@ def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
         )
 
         if stdout and style:
-            stdout.write(style.SUCCESS("Successfully seeded 25 Av!"))
+            stdout.write(style.SUCCESS("Successfully seeded N test station 2!"))

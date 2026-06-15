@@ -2,13 +2,14 @@ from django.core.management import BaseCommand
 from django.db import OperationalError, connection
 from platformpathapp.models import Station, Line, StationLine, Node, Edge
 
+from typing import Any
 # Import individual stations
-from platformpathapp.management.stations import st_bay_50_st, st_25_av
+from platformpathapp.management.stations import st_bay_50_st, st_25_av, _test_station_n_1, _test_station_n_2
 
 class Command(BaseCommand):
     help = 'Seed initial station data'
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args: Any, **kwargs: Any):
         # clear old data first if any
         self.clear_old_db_data()
 
@@ -17,6 +18,10 @@ class Command(BaseCommand):
         # Seed each station
         st_bay_50_st.seed(self.stdout, self.style)
         st_25_av.seed(self.stdout, self.style)
+
+        # NOTE: FOR TESTING PURPOSES... REMOVE LATER!
+        _test_station_n_1.seed(self.stdout, self.style)
+        _test_station_n_2.seed(self.stdout, self.style)
 
         self.stdout.write(self.style.SUCCESS("\nAll station data seeded successfully!"))
 
@@ -45,7 +50,8 @@ class Command(BaseCommand):
         self.reset_sequence("platformpathapp_station")
         self.reset_sequence("platformpathapp_line")
     
-    def reset_sequence(self,table_name):
+    # to make a true reset of the database (resetting id increments etc), we have to reset all tables within the database we use
+    def reset_sequence(self, table_name: str):
         with connection.cursor() as cursor:
             # Determine the database engine to run the correct SQL
             engine = connection.vendor

@@ -34,15 +34,20 @@ export class StationsSelectionPage {
                 throw Error("The station selection container div doesn't exist");
 
             // iterating through each line
-            for (const line in stationsData) {      
-                const selectionForm: HTMLElement = document.createElement("select");
-                stationsSelectionContainer.appendChild(selectionForm);
+            for (const line in stationsData) { 
+                // this create a select dropdown form while allowing user typing as well     
+                const datalistForm: HTMLElement = document.createElement("datalist");
+                datalistForm.setAttribute("id", `dropdown_for_${line}`);
+                const inputForm: HTMLElement = document.createElement("input");
+                inputForm.setAttribute("list", `dropdown_for_${line}`);
+
+                stationsSelectionContainer.append(datalistForm, inputForm);
 
                 stationsData[line]?.forEach((stationObj: any) => {
                     const option: HTMLElement = document.createElement("option");
                     option.setAttribute("value", stationObj.name);
                     option.textContent = stationObj.name;
-                    selectionForm.appendChild(option);
+                    datalistForm.appendChild(option);
 
                     console.log(stationObj);
                 });
