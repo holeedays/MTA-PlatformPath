@@ -2,6 +2,7 @@
 import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
 import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
 import { TripManager, type TripPhase } from "./trip_manager.ts";
+import panzoom from 'panzoom'
 
 const DEMO_PHASES: TripPhase[] = [
     {

@@ -20,5 +20,8 @@
   "homepage": "https://github.com/holeedays/MTA-PlatformPath#readme",
   "devDependencies": {
     "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "panzoom": "^9.4.4"
   }
 }
