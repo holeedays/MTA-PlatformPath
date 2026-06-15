@@ -62,6 +62,42 @@ class App {
         this.setupDiagramControls();
     }
 
+    // Helper function to zoom on on a node based on svgId
+    private centerOnNode(svgId: string, zoom: number = 2): void {
+        const container = document.getElementById('diagram-container');
+        const svg = container?.querySelector('svg') as SVGSVGElement | null;
+        const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
+
+        if (!container || !svg || !target || !this.currentPanZoom) return;
+
+        // Get the bounding box of the target element in SVG coordinate space
+        const bbox = target.getBBox();
+        const targetCenterX = bbox.x + bbox.width / 2;
+        const targetCenterY = bbox.y + bbox.height / 2;
+
+        // Get the SVG's own viewBox scale factor (SVG coords → pixel coords)
+        const viewBox = svg.viewBox.baseVal;
+        const svgPixelWidth = svg.clientWidth;
+        const svgPixelHeight = svg.clientHeight;
+        const scaleX = svgPixelWidth / viewBox.width;
+        const scaleY = svgPixelHeight / viewBox.height;
+
+        // Convert SVG coords to pixel coords
+        const targetPixelX = targetCenterX * scaleX;
+        const targetPixelY = targetCenterY * scaleY;
+
+        // Compute the pan offset to center the target in the container
+        const containerCenterX = container.clientWidth / 2;
+        const containerCenterY = container.clientHeight / 2;
+
+        // Apply zoom first (zooming around the target point), then pan to center
+        this.currentPanZoom.zoomAbs(targetPixelX, targetPixelY, zoom);
+        this.currentPanZoom.moveTo(
+            containerCenterX - targetPixelX * zoom,
+            containerCenterY - targetPixelY * zoom
+        );
+    }
+
     // initializes the app: loads diagram, fetches station data, sets up event listeners
     public async init(): Promise<void> {
         // Currently hardcoded to demo phases, but could be dynamic based on user input or URL params
@@ -169,6 +205,7 @@ class App {
         const uniqueLayers = this.tripManager.currentStation?.unique_layers || [];
         showLayer(step.layer, uniqueLayers);
         highlightNode(step.svgId);
+        this.centerOnNode(step.svgId);
 
         // Update button states
         const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
