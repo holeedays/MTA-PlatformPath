@@ -23,8 +23,35 @@ const DEMO_PHASES = [
 class App {
     pathFinder;
     tripManager;
+    currentPanZoom = null;
     constructor() {
         this.pathFinder = new PathFinder();
+    }
+    // Pan, zoom, and scroll controls for the station diagram
+    setupDiagramControls() {
+        const svg = document.querySelector('#diagram-container svg');
+        if (!svg)
+            return;
+        // Cleanup the old even listener if we are loading a new station diagram
+        if (this.currentPanZoom) {
+            this.currentPanZoom.dispose();
+        }
+        // Apply panzoom to the new SVG
+        this.currentPanZoom = panzoom(svg, {
+            maxZoom: 4,
+            minZoom: 0.3,
+            smoothScroll: false
+        });
+        // Double click to reset view
+        svg.addEventListener('dblclick', () => {
+            this.currentPanZoom.moveTo(0, 0);
+            this.currentPanZoom.zoomAbs(0, 0, 1);
+        });
+    }
+    // Helper method to load the diagram and immediately attach controls
+    async loadDiagramWithControls(diagramPath) {
+        await loadDiagram(diagramPath);
+        this.setupDiagramControls();
     }
     // initializes the app: loads diagram, fetches station data, sets up event listeners
     async init() {
@@ -34,7 +61,7 @@ class App {
         await this.tripManager.prefetchStations();
         // Load the first phase and its corresponding SVG diagram
         await this.tripManager.loadCurrentPhasePath();
-        await loadDiagram(this.tripManager.currentPhase.diagramPath);
+        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
         this.renderPhaseBar();
         this.renderCurrentStep();
         // Set up event listeners for navigation buttons
@@ -66,14 +93,14 @@ class App {
         }
         const result = await this.tripManager.prevStep();
         if (result === 'phase-changed') {
-            await loadDiagram(this.tripManager.currentPhase.diagramPath);
+            await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
             this.renderPhaseBar();
         }
         this.renderCurrentStep();
     }
     async handleBoardTrain() {
         await this.tripManager.advancePhase();
-        await loadDiagram(this.tripManager.currentPhase.diagramPath);
+        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
         this.hideTrainScreen();
         this.renderPhaseBar();
         this.renderCurrentStep();

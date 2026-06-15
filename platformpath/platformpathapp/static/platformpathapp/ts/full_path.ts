@@ -2,7 +2,7 @@
 import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
 import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
 import { TripManager, type TripPhase } from "./trip_manager.ts";
-import panzoom from 'panzoom'
+declare const panzoom: any;
 
 const DEMO_PHASES: TripPhase[] = [
     {
@@ -26,9 +26,40 @@ const DEMO_PHASES: TripPhase[] = [
 class App {
     private pathFinder: PathFinder;
     private tripManager!: TripManager;
+    private currentPanZoom: any = null;
 
     constructor() {
         this.pathFinder = new PathFinder();
+    }
+
+    // Pan, zoom, and scroll controls for the station diagram
+    private setupDiagramControls(): void {
+        const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
+        if (!svg) return;
+
+        // Cleanup the old even listener if we are loading a new station diagram
+        if (this.currentPanZoom) {
+            this.currentPanZoom.dispose();
+        }
+
+        // Apply panzoom to the new SVG
+        this.currentPanZoom = panzoom(svg, {
+            maxZoom: 4,
+            minZoom: 0.3,
+            smoothScroll: false
+        });
+
+        // Double click to reset view
+        svg.addEventListener('dblclick', () => {
+            this.currentPanZoom.moveTo(0, 0);
+            this.currentPanZoom.zoomAbs(0, 0, 1);
+        });
+    }
+
+    // Helper method to load the diagram and immediately attach controls
+    private async loadDiagramWithControls(diagramPath: string): Promise<void> {
+        await loadDiagram(diagramPath);
+        this.setupDiagramControls();
     }
 
     // initializes the app: loads diagram, fetches station data, sets up event listeners
@@ -41,7 +72,7 @@ class App {
 
         // Load the first phase and its corresponding SVG diagram
         await this.tripManager.loadCurrentPhasePath();
-        await loadDiagram(this.tripManager.currentPhase.diagramPath);
+        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
 
         this.renderPhaseBar();
         this.renderCurrentStep();
@@ -82,7 +113,7 @@ class App {
         const result = await this.tripManager.prevStep()
 
         if (result === 'phase-changed') {
-            await loadDiagram(this.tripManager.currentPhase.diagramPath);
+            await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
             this.renderPhaseBar();
         }
 
@@ -91,7 +122,7 @@ class App {
 
     private async handleBoardTrain(): Promise<void> {
         await this.tripManager.advancePhase();
-        await loadDiagram(this.tripManager.currentPhase.diagramPath);
+        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
         
         this.hideTrainScreen();
         this.renderPhaseBar();
