@@ -46,7 +46,7 @@ export class PathFinder {
 
         const data = await DataFetch.fetchEdgesNodes(
             [stationName],
-            '/platformPathAPI/fetchEdgesNodes'
+            '/test/platformPathAPI/fetchEdgesNodes'
         );
 
         if (!data || !data[stationName]) {

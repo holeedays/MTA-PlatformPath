@@ -10,7 +10,7 @@ export class PathFinder {
         if (cachedStation) {
             return cachedStation;
         }
-        const data = await DataFetch.fetchEdgesNodes([stationName], '/platformPathAPI/fetchEdgesNodes');
+        const data = await DataFetch.fetchEdgesNodes([stationName], '/test/platformPathAPI/fetchEdgesNodes');
         if (!data || !data[stationName]) {
             console.error('Station not found in response:', stationName);
             return null;
