@@ -50,7 +50,7 @@ export class DataFetch {
         }
     }
     // fetch all relevant stations (ordered) based on an array of line names
-    async fetchStations(lineNames, fetchURL) {
+    static async fetchStations(lineNames, fetchURL) {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST",
@@ -75,7 +75,7 @@ export class DataFetch {
         }
     }
     // fetch all relevant nodes and edges from an array of station names
-    async fetchEdgesNodes(stationNames, fetchURL) {
+    static async fetchEdgesNodes(stationNames, fetchURL) {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST",

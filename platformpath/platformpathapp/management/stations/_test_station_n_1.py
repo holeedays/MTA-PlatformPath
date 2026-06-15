@@ -1,61 +1,64 @@
 from django.core.management.base import OutputWrapper # for type hint checks
 from django.core.management.color import Style # for type hint checks
-from platformpathapp.models import Station, Line, Node, Edge, StationLine
+from platformpathapp.models import Station, Line, StationLine, Node, Edge
+
+# NOTE: THIS IS JUST FOR TESTING PURPOSES, THIS STATION IS AN EXACT REPLICA OF THE BAY 50 ST STATION WITH SOME NAME CHANGES
 
 def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
     if stdout and style:
-        stdout.write("Seeding 25 Av...")
+        stdout.write("Seeding N test station 1...")
 
         # 1. Create station
         station = Station.objects.create(
-            name="25 Av",
-            diagram_path="/static/platformpathapp/diagrams/25Av.svg"
+            name="Test Station 1",
+            diagram_path="/static/platformpathapp/diagrams/Bay50.svg"
         )
 
-        # 2. Create line and attach to station
-        line_d, _ = Line.objects.get_or_create(name="D")
+        # 2. Create line and attach to station with through metadata
+        line_n, _ = Line.objects.get_or_create(name="N")
+        # no more doing station.add(line)... create the through object to establish the M2M relationship
         StationLine.objects.create(
             station=station,
-            line=line_d,
-            order=2
+            line=line_n,
+            order=1
         )
 
         # 3. Create nodes
-        # --- Street Level Stairs (Exits/Entrances) ---
-        stair_se = Node.objects.create(
+        # Street Level Stairs (Exits/Entrances)
+        stair_harway_1 = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs at SE corner of 25th Av and 86th St",
-            svg_id="25_AV_86_ST_SE_STAIRS",
+            label="Stairs at Harway Av entrance",
+            svg_id="HARWAY_AV_STILLWELL_AV_1_STAIRS",
             layer="MEZZANINE",
             is_accessible=False
         )
-        stair_sw = Node.objects.create(
+        stair_harway_2 = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs at SW corner of 25th Av and 86th St",
-            svg_id="25_AV_86_ST_SW_STAIRS",
+            label="Stairs at Harway Av entrance",
+            svg_id="HARWAY_AV_STILLWELL_AV_2_STAIRS",
             layer="MEZZANINE",
             is_accessible=False
         )
-        stair_ne = Node.objects.create(
+        stair_bay_50_1 = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs at NE corner of 25th Av and 86th St",
-            svg_id="25_AV_86_ST_NE_STAIRS",
+            label="Stairs at Bay 50 St entrance",
+            svg_id="BAY_50_ST_STILLWELL_AV_1_STAIRS",
             layer="MEZZANINE",
             is_accessible=False
         )
-        stair_nw = Node.objects.create(
+        stair_bay_50_2 = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs at NW corner of 25th Av and 86th St",
-            svg_id="25_AV_86_ST_NW_STAIRS",
+            label="Stairs at Bay 50 St entrance",
+            svg_id="BAY_50_ST_STILLWELL_AV_2_STAIRS",
             layer="MEZZANINE",
             is_accessible=False
         )
 
-        # --- Mezzanine level ---
+        # Mezzanine level
         mezz_main = Node.objects.create(
             station=station,
             node_type="mezzanine",
@@ -65,33 +68,25 @@ def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
             is_accessible=False
         )
 
-        # --- Stairs connecting mezzanine to platforms ---
-        stair_mezz_to_downtown = Node.objects.create(
-            station=station,
-            node_type="stair",
-            label="Stairs to downtown platform",
-            svg_id="MEZZ_TO_DOWNTOWN_STAIRS",
-            layer="MEZZANINE",
-            is_accessible=False
-        )
+        # Stairs connecting mezzanine to platforms
         stair_mezz_to_uptown = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs to uptown platform",
+            label="Stairs to downtown platform", # Note: Kept exact label from JS
             svg_id="MEZZ_TO_UPTOWN_STAIRS",
             layer="MEZZANINE",
             is_accessible=False
         )
-
-        # --- Stairs connecting platforms to mezzanine ---
-        stair_downtown_to_mezz = Node.objects.create(
+        stair_mezz_to_downtown = Node.objects.create(
             station=station,
             node_type="stair",
-            label="Stairs from downtown platform to mezzanine",
-            svg_id="DOWNTOWN_TO_MEZZ_STAIRS",
-            layer="DOWNTOWN PLATFORM",
+            label="Stairs to uptown platform", # Note: Kept exact label from JS
+            svg_id="MEZZ_TO_DOWNTOWN_STAIRS",
+            layer="MEZZANINE",
             is_accessible=False
         )
+
+        # Stairs connecting platforms to mezzanine
         stair_uptown_to_mezz = Node.objects.create(
             station=station,
             node_type="stair",
@@ -100,8 +95,16 @@ def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
             layer="UPTOWN PLATFORM",
             is_accessible=False
         )
+        stair_downtown_to_mezz = Node.objects.create(
+            station=station,
+            node_type="stair",
+            label="Stairs from downtown platform to mezzanine",
+            svg_id="DOWNTOWN_TO_MEZZ_STAIRS",
+            layer="DOWNTOWN PLATFORM",
+            is_accessible=False
+        )
 
-        # --- Platform level ---
+        # Platform level
         platform_downtown = Node.objects.create(
             station=station,
             node_type="platform",
@@ -119,38 +122,38 @@ def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
             is_accessible=False
         )
 
-        # 4. Create edges (Paired directed edges into bidirectional model)
+        # 4. Create edges (Paired from JS directed edges into bidirectional model)
         # --- Entrances to Mezzanine ---
         Edge.objects.create(
             station=station,
-            from_node=stair_se,
+            from_node=stair_harway_1,
             to_node=mezz_main,
             instruction_forward="Take the stairs up to the mezzanine level",
-            instruction_backward="Take the stairs down to the SE corner of 25th Av and 86th St",
+            instruction_backward="Take the stairs down to the Harway Av exit",
             is_active=True
         )
         Edge.objects.create(
             station=station,
-            from_node=stair_sw,
+            from_node=stair_harway_2,
             to_node=mezz_main,
             instruction_forward="Take the stairs up to the mezzanine level",
-            instruction_backward="Take the stairs down to the SW corner of 25th Av and 86th St",
+            instruction_backward="Take the stairs down to the Harway Av exit",
             is_active=True
         )
         Edge.objects.create(
             station=station,
-            from_node=stair_ne,
+            from_node=stair_bay_50_1,
             to_node=mezz_main,
             instruction_forward="Take the stairs up to the mezzanine level",
-            instruction_backward="Take the stairs down to the NE corner of 25th Av and 86th St",
+            instruction_backward="Take the stairs down to the Bay 50 St exit",
             is_active=True
         )
         Edge.objects.create(
             station=station,
-            from_node=stair_nw,
+            from_node=stair_bay_50_2,
             to_node=mezz_main,
             instruction_forward="Take the stairs up to the mezzanine level",
-            instruction_backward="Take the stairs down to the NW corner of 25th Av and 86th St",
+            instruction_backward="Take the stairs down to the Bay 50 St exit",
             is_active=True
         )
 
@@ -207,4 +210,4 @@ def seed(stdout: OutputWrapper | None=None, style: Style | None=None):
         )
 
         if stdout and style:
-            stdout.write(style.SUCCESS("Successfully seeded 25 Av!"))
+            stdout.write(style.SUCCESS("Successfully seeded N test station 1!"))

@@ -55,7 +55,7 @@ export class DataFetch {
     }
 
     // fetch all relevant stations (ordered) based on an array of line names
-    public async fetchStations(lineNames: string[], fetchURL: string): Promise<any | null> {
+    public static async fetchStations(lineNames: string[], fetchURL: string): Promise<any | null> {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST", 
@@ -84,7 +84,7 @@ export class DataFetch {
 
 
     // fetch all relevant nodes and edges from an array of station names
-    public async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any | null> {
+    public static async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any | null> {
         try {
             const response = await fetch(fetchURL, {
                 method: "POST", 

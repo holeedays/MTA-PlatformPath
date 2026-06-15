@@ -1,9 +1,7 @@
 import { DataFetch } from "./data_fetch.js";
 export class PathFinder {
-    dataFetch;
     stationCache;
     constructor() {
-        this.dataFetch = new DataFetch();
         this.stationCache = {};
     }
     async fetchStation(stationName) {
@@ -12,7 +10,7 @@ export class PathFinder {
         if (cachedStation) {
             return cachedStation;
         }
-        const data = await this.dataFetch.fetchEdgesNodes([stationName], '/platformPathAPI/fetchEdgesNodes');
+        const data = await DataFetch.fetchEdgesNodes([stationName], '/platformPathAPI/fetchEdgesNodes');
         if (!data || !data[stationName]) {
             console.error('Station not found in response:', stationName);
             return null;

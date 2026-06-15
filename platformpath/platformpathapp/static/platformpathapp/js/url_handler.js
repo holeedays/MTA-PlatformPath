@@ -11,16 +11,21 @@ export class URLHandler {
         }
         return currentURLRoute === undefined ? null : currentURLRoute;
     }
-    // get only the query parameters of the URL
+    // get only the query parameters of the URL (in a suitable URL format)
+    static getQueryParametersURL() {
+        const url = new URL(document.URL);
+        return url.searchParams.toString();
+    }
+    // get all query params in a key value array
     static getQueryParameters() {
-        const fullURL = document.URL;
-        const URLSubstrings = fullURL.split("/");
-        const currentURLRoute = URLSubstrings[URLSubstrings.length - 1];
-        let queryParametersURL = "";
-        if (currentURLRoute !== undefined) {
-            queryParametersURL = currentURLRoute.split("?")[1];
-        }
-        return queryParametersURL === undefined ? "" : queryParametersURL;
+        let queryParamsArray = [];
+        const url = new URL(document.URL);
+        url.searchParams.forEach((value, key, parent) => {
+            // for some reason you have to wrap the key variable for it to be recognized as key
+            // for literals translation, do not wrap the value with []
+            queryParamsArray.push({ [key]: value });
+        });
+        return queryParamsArray;
     }
     // adds a query parameter to our url and reloads it without refreshing the page
     static addQueryParameter(key, value) {
@@ -30,7 +35,7 @@ export class URLHandler {
         // if it didn't add it, do this
         if (!regex.test(document.URL)) {
             url.searchParams.append(key, value);
-            window.history.pushState({}, "", url);
+            window.history.replaceState({}, "", url);
         }
     }
     // clears all existing query parameters, if any
@@ -39,13 +44,13 @@ export class URLHandler {
         url.searchParams.forEach((value, key, parent) => {
             parent.delete(key, value);
         });
-        window.history.pushState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname);
     }
     // clears a specifc query parameter
     static removeQueryParameter(key, value) {
         const url = new URL(document.URL);
         url.searchParams.delete(key, value);
-        window.history.pushState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname);
     }
     // redirect to a new page given the specified url, you can append more values to the string
     static redirectTo(baseURL, ...queryParams) {
