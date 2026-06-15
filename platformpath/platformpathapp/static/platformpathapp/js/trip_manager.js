@@ -41,6 +41,9 @@ export class TripManager {
     get totalPhases() {
         return this.phases.length;
     }
+    get isFirstStepOfTrip() {
+        return this.phaseIndex === 0 && this.currentIndex === 0;
+    }
     // Load the path for the phase that we are on
     async loadCurrentPhasePath() {
         const phase = this.currentPhase;
@@ -79,9 +82,28 @@ export class TripManager {
             return 'end-of-phase';
         }
     }
-    prevStep() {
-        if (this.currentIndex > 0)
+    // Move to previous step, or previous phase if
+    // at the start of a phase that is not the first one
+    async prevStep() {
+        if (this.currentIndex > 0) { // Within a phase
             this.currentIndex--;
+            return 'step';
+        }
+        else if (this.phaseIndex > 0) { // At the start of a phase with a previous phase
+            this.phaseIndex--;
+            await this.loadCurrentPhasePath();
+            // Set index to the last step of newly loaded previous phase
+            if (this.currentPath) {
+                this.currentIndex = this.currentPath.length - 1;
+            }
+            else {
+                this.currentIndex = 0;
+            }
+            return 'phase-changed';
+        }
+        else { // At the very start
+            return 'at-start';
+        }
     }
     getAllPhaseLabels() {
         return this.phases.map(phase => ({

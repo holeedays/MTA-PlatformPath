@@ -55,8 +55,20 @@ class App {
         }
     }
     // Uses the PathFinder to get a path and initializes the UI for navigation
-    handlePrev() {
-        this.tripManager.prevStep();
+    async handlePrev() {
+        const trainScreen = document.getElementById('train-screen');
+        const isTrainScreenOpen = trainScreen && !trainScreen.classList.contains('hidden');
+        // If train screen is open, pressing prev simply hides it a keeps you on the last step
+        if (isTrainScreenOpen) {
+            this.hideTrainScreen();
+            this.renderCurrentStep();
+            return;
+        }
+        const result = await this.tripManager.prevStep();
+        if (result === 'phase-changed') {
+            await loadDiagram(this.tripManager.currentPhase.diagramPath);
+            this.renderPhaseBar();
+        }
         this.renderCurrentStep();
     }
     async handleBoardTrain() {
@@ -107,7 +119,7 @@ class App {
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
         if (btnPrev)
-            btnPrev.disabled = (this.tripManager.currentIndex === 0);
+            btnPrev.disabled = this.tripManager.isFirstStepOfTrip;
         if (btnNext) {
             btnNext.disabled = false;
             // Change text if it's the last step in the current phase
