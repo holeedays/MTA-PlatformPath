@@ -79,6 +79,9 @@ export class TripManager {
             return 'step';
         }
         else {
+            if (this.isLastPhase) {
+                return 'end-of-trip';
+            }
             return 'end-of-phase';
         }
     }
