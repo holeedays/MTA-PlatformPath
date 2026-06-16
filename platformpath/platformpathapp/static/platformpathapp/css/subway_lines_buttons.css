@@ -1,0 +1,222 @@
+:root {
+    --blue_lines: #0039A6;
+    --orange_lines: #FF6319;
+    --yellow_lines: #FCCC0A;
+    --lime_green_lines: #6CBE45;
+    --light_green_lines: #A7A9AC;
+    --gray_lines: #808183;
+    --brown_lines: #996633;
+    --red_lines: #EE352E;
+    --green_lines: #00933C;
+    --purple_lines: #B933AD;
+}
+
+
+.subway_line button {
+        /* The first four are same to Helvetica Mono 24 */
+
+    display: inline-block;
+    font-family: Helvetica;
+    font-weight: bold;
+    font-size: 30px;
+    text-align: center;
+
+    /* Background and foreground colors */
+
+    color: white;
+
+    /* The next one sets up the circle */
+
+    border-radius: 50%;
+    border-color: transparent;
+
+    /* Try varying these styles, and/or others, for your Subway font */
+
+    width: 64px;
+    height: 64px;
+    line-height: 64px;
+    padding: 0px;
+    margin: 5px;
+}
+
+
+.blue button {
+    background-color: var(--blue_lines);
+}
+.blue button:hover {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.blue button.selected {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.blue button.not_available {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.orange button {
+    background-color: var(--orange_lines);
+}
+.orange button:hover {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.orange button.selected {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.orange button.not_available {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.yellow button {
+    color: #000000;
+    background-color: var(--yellow_lines);
+}
+.yellow button:hover {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
+    color: #000000;
+    transition: 0.25s ease-in-out;
+}
+.yellow button.selected {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.yellow button.not_available {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.lime_green button {
+    background-color: var(--lime_green_lines);
+}
+.lime_green button:hover {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.lime_green button.selected {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.lime_green button.not_available {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.light_green button {
+    background-color: var(--light_green_lines);
+}
+.light_green button:hover {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.light_green button.selected {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.light_green button.not_available {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.gray button {
+    background-color: var(--gray_lines);
+}
+.gray button:hover {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.gray button.selected {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.gray button.not_available {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.brown button {
+    background-color: var(--brown_lines);
+}
+.brown button:hover {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.brown button.selected {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.brown button.not_available {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.red button {
+    background-color: var(--red_lines);
+}
+.red button:hover {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.red button.selected {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.red button.not_available {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.green button {
+    background-color: var(--green_lines);
+}
+.green button:hover {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.green button.selected {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.green button.not_available {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.purple button {
+    background-color: var(--purple_lines);
+}
+.purple button:hover {
+    background-color: color-mix(in srgb, ar(--purple_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.purple button.selected {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.purple button.not_available {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}

@@ -53,6 +53,7 @@ class App {
         await loadDiagram(diagramPath);
         this.setupDiagramControls();
     }
+    // Helper function to zoom on on a node based on svgId
     centerOnNode(svgId, zoom = 2) {
         const container = document.getElementById('diagram-container');
         const svg = container?.querySelector('svg');

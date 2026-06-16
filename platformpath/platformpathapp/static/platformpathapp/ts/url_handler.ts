@@ -23,13 +23,14 @@ export class URLHandler {
     }
 
     // get all query params in a key value array
-    public static getQueryParameters(): Record<string,string>[] {
-        let queryParamsArray: Record<string,string>[] = [];
+    public static getQueryParameters(): Record<string,string[]> {
+        let queryParamsArray: Record<string,string[]> = {};
         const url = new URL(document.URL);
         url.searchParams.forEach((value: string, key: string, parent: URLSearchParams) => {
-            // for some reason you have to wrap the key variable for it to be recognized as key
-            // for literals translation, do not wrap the value with []
-            queryParamsArray.push({[key]: value});
+            if (queryParamsArray[key] === undefined) 
+                queryParamsArray[key] = [value];
+            else
+                queryParamsArray[key].push(value);
         });
 
         return queryParamsArray;
@@ -49,22 +50,12 @@ export class URLHandler {
         }
     }
 
-    // clears all existing query parameters, if any
-    public static clearAllQueryParameters(): void {
-        const url = new URL(document.URL);
-
-        url.searchParams.forEach((value: string, key: string, parent: URLSearchParams) => {
-            parent.delete(key, value);
-        });
-        window.history.replaceState({}, "", url.pathname);
-    }
-
     // clears a specifc query parameter
     public static removeQueryParameter(key: string, value?: string): void {
         const url = new URL(document.URL);
 
         url.searchParams.delete(key, value);
-        window.history.replaceState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname + url.search);
     }
 
     // redirect to a new page given the specified url, you can append more values to the string

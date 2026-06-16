@@ -18,12 +18,13 @@ export class URLHandler {
     }
     // get all query params in a key value array
     static getQueryParameters() {
-        let queryParamsArray = [];
+        let queryParamsArray = {};
         const url = new URL(document.URL);
         url.searchParams.forEach((value, key, parent) => {
-            // for some reason you have to wrap the key variable for it to be recognized as key
-            // for literals translation, do not wrap the value with []
-            queryParamsArray.push({ [key]: value });
+            if (queryParamsArray[key] === undefined)
+                queryParamsArray[key] = [value];
+            else
+                queryParamsArray[key].push(value);
         });
         return queryParamsArray;
     }
@@ -38,19 +39,11 @@ export class URLHandler {
             window.history.replaceState({}, "", url);
         }
     }
-    // clears all existing query parameters, if any
-    static clearAllQueryParameters() {
-        const url = new URL(document.URL);
-        url.searchParams.forEach((value, key, parent) => {
-            parent.delete(key, value);
-        });
-        window.history.replaceState({}, "", url.pathname);
-    }
     // clears a specifc query parameter
     static removeQueryParameter(key, value) {
         const url = new URL(document.URL);
         url.searchParams.delete(key, value);
-        window.history.replaceState({}, "", url.pathname);
+        window.history.replaceState({}, "", url.pathname + url.search);
     }
     // redirect to a new page given the specified url, you can append more values to the string
     static redirectTo(baseURL, ...queryParams) {
