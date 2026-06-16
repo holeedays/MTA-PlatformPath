@@ -24,6 +24,9 @@ export class TripManager {
         // Run all the fetch tasks in parallel and wait for them to complete
         const stations = await Promise.all(fetchTasks);
     }
+    get allPhases() {
+        return this.phases;
+    }
     get currentPhase() {
         const phase = this.phases[this.phaseIndex];
         if (!phase) {
