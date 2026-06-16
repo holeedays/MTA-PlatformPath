@@ -89,6 +89,7 @@ class App {
         // Load the first phase and its corresponding SVG diagram
         await this.tripManager.loadCurrentPhasePath();
         await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
+        this.renderTopBar();
         this.renderPhaseBar();
         this.renderCurrentStep();
         // Set up event listeners for navigation buttons
@@ -132,7 +133,22 @@ class App {
         this.renderPhaseBar();
         this.renderCurrentStep();
     }
-    // Render the top phase tracking bar
+    // Renders the top bar with origin and destination labels (Ex: Origin -> Destination)
+    renderTopBar() {
+        const phases = this.tripManager.allPhases;
+        if (!phases || phases.length === 0)
+            return;
+        // Get the name of the starting station and ending station
+        const origin = phases[0]?.stationName;
+        const destination = phases[phases.length - 1]?.stationName;
+        const originLabel = document.getElementById('origin-label');
+        const destLabel = document.getElementById('destination-label');
+        if (originLabel && origin)
+            originLabel.innerText = origin;
+        if (destLabel && destination)
+            destLabel.innerText = destination;
+    }
+    // Render the phase tracking bar
     renderPhaseBar() {
         const container = document.getElementById('phase-bar');
         if (!container)

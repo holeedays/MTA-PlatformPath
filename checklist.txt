@@ -20,20 +20,22 @@ Create separate web pages for user input
 Ivan ----
 TO DO:
 Create a new test page to navigate between two different stations
-    - Top bar doesn't work (need to dynamically modify based on stations that
-      are being shown)
     - The next button doesn't work when boarding the train. (Might want to change the
         appearance of the next button at this stage or make the button do the same 
         the board train button)
+(Potential) Make the phase tracker interactable to move to different phases
 
 DONE:
 Create a new test page to navigate between two different stations
+    Issues Fixed:
     - Highlight on svg not working
     - Unable to go back after boarding the train to next station
     - At the end of final station, it shows the board train thing when
       it shouldn't since the trip has ended
     - Need to make the image of the svg interactable to zoom in and out
       along with moving around in the map
+    - Top bar doesn't work (need to dynamically modify based on stations that
+      are being shown)
 Add 25 ave to the seed
 Refactor the showLayer to pass in all layers on the station
     - serialize list of all unique layers from database

@@ -41,6 +41,10 @@ export class TripManager {
         const stations = await Promise.all(fetchTasks);
     }
 
+    public get allPhases(): TripPhase[] {
+        return this.phases
+    }
+
     public get currentPhase(): TripPhase {
         const phase = this.phases[this.phaseIndex];
         if (!phase) {
