@@ -135,9 +135,14 @@ class App {
     }
     // Renders the top bar with origin and destination labels (Ex: Origin -> Destination)
     renderTopBar() {
+        // TODO: when train icons are added and train data are added,
+        // we can dynamically load the train icon between the stations
+        // in the top bar
         const phases = this.tripManager.allPhases;
         if (!phases || phases.length === 0)
             return;
+        // TODO: can iterate through the phases and can show each part of the
+        // journey including the transfers
         // Get the name of the starting station and ending station
         const origin = phases[0]?.stationName;
         const destination = phases[phases.length - 1]?.stationName;

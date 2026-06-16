@@ -87,11 +87,11 @@
 }
 .yellow button.selected {
     background-color: color-mix(in srgb, var(--yellow_lines), #000000 30%);
-    color: #8a8a8a;
+    color: black;
 }
 .yellow button.not_available {
     background-color: color-mix(in srgb, var(--yellow_lines), #000000 80%);
-    color: #555555;
+    color: black;
     opacity: 85%;
 }
 
