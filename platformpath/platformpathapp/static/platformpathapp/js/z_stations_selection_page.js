@@ -33,6 +33,9 @@ export class StationsSelectionPage {
                 throw Error("The station selection container div doesn't exist");
             // iterating through each line
             for (const line in stationsData) {
+                // create a parent div to house all the forms we'll be creating
+                const formContainer = document.createElement("div");
+                formContainer.innerHTML = line;
                 // this create a select dropdown form while allowing user typing as well     
                 const datalistForm = document.createElement("datalist");
                 datalistForm.setAttribute("id", `dropdown_for_${line}`);
@@ -69,13 +72,16 @@ export class StationsSelectionPage {
                     }
                     previous_value = inputForm.value;
                 });
-                stationsSelectionContainer.append(datalistForm, inputForm);
+                // create all the dropdown options of available stations
                 stationsData[line]?.forEach((stationObj) => {
                     const option = document.createElement("option");
                     option.setAttribute("value", stationObj.name);
                     option.textContent = stationObj.name;
                     datalistForm.appendChild(option);
                 });
+                // configure all these items so they are grouped up properly in the html
+                formContainer.append(datalistForm, inputForm);
+                stationsSelectionContainer.appendChild(formContainer);
             }
         }
         catch (err) {

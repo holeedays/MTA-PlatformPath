@@ -34,13 +34,16 @@ export class StationsSelectionPage {
         const stationsData: {[key: string]: any[]} = await DataFetch.fetchStations(lines, URLS.STATIONS_FETCH_API);
 
         try {
-             const stationsSelectionContainer: HTMLElement | null = document.getElementById("stations_selection_container");
+            const stationsSelectionContainer: HTMLElement | null = document.getElementById("stations_selection_container");
 
             if (stationsSelectionContainer === null)
                 throw Error("The station selection container div doesn't exist");
 
             // iterating through each line
             for (const line in stationsData) { 
+                // create a parent div to house all the forms we'll be creating
+                const formContainer: HTMLElement = document.createElement("div");
+                formContainer.innerHTML = line;
                 // this create a select dropdown form while allowing user typing as well     
                 const datalistForm: HTMLDataListElement = document.createElement("datalist");
                 datalistForm.setAttribute("id", `dropdown_for_${line}`);
@@ -83,14 +86,17 @@ export class StationsSelectionPage {
                     previous_value = inputForm.value;
                 });
 
-                stationsSelectionContainer.append(datalistForm, inputForm);
-
+                // create all the dropdown options of available stations
                 stationsData[line]?.forEach((stationObj: any) => {
                     const option: HTMLElement = document.createElement("option");
                     option.setAttribute("value", stationObj.name);
                     option.textContent = stationObj.name;
                     datalistForm.appendChild(option);
                 });
+
+                // configure all these items so they are grouped up properly in the html
+                formContainer.append(datalistForm, inputForm);
+                stationsSelectionContainer.appendChild(formContainer);
             }
         }
         catch (err: any) {

@@ -5,57 +5,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'platformpathapp/css/subway_lines_buttons.css' %}">
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/lines_selection.css' %}">
     <title>Document</title>
 </head>
 <body>
-    <div id="line_buttons_container">
-        <div id="blue_lines" class="subway_line blue">
-            <button id="A_button" value="A">A</button>
-            <button id="C_button" value="C">C</button>
-            <button id="E_button" value="E">E</button>
+    <div id="header" class="header">
+
+        <div id="title" class="title">
+            <img src="{% static 'platformpathapp/decals/mta_logo.png' %}">
+            MTA PLATFORM PATH
         </div>
-        <div id="orange_lines" class="subway_line orange">
-            <button id="B_button" value="B">B</button>
-            <button id="D_button" value="D">D</button>
-            <button id="F_button" value="F">F</button>
-            <button id="M_button" value="M">M</button>
-        </div>
-        <div id="yellow_lines" class="subway_line yellow">
-            <button id="N_button" value="N">N</button>
-            <button id="Q_button" value="Q">Q</button>
-            <button id="R_button" value="R">R</button>
-            <button id="W_button" value="W">W</button>
-        </div>
-        <div id="lime_green_lines" class="subway_line lime_green">
-            <button id="G_button" value="G">G</button>
-        </div>
-        <div id="light_green_lines" class="subway_line light_green">
-            <buttoN id="L_button" value="L">L</buttoN>
-        </div>
-        <div id="gray_lines" class="subway_line gray">
-            <button id="S_button" value="S">S</button>
-        </div>
-        <div id="brown_lines" class="subway_line brown">
-            <button id="J_button" value="J">J</button>
-            <button id ="Z_button" value="Z">Z</button>
-        </div>
-        <div id="red_lines" class="subway_line red">
-            <button id="1_button" value="1">1</button>
-            <button id="2_button" value="2">2</button>
-            <button id="3_button" value="3">3</button>
-        </div>
-        <div id="green_lines" class="subway_line green">
-            <button id="4_button" value="4">4</button>
-            <button id="5_button" value="5">5</button>
-            <button id="6_button" value="6">6</button>
-        </div>
-        <div id="purple_lines" class="subway_line purple">
-            <button id="7_button" value="7">7</button>
+        <div id="sub_title" class="sub_title">
+            SELECT A SUBWAY LINE(S)
         </div>
     </div>
 
-    <button id="submission_button"> Submit </button>
+    <div id="line_buttons_container">
+        <div id="blue_lines" class="subway_line blue">
+            <div id="A_button_container">
+                <button value="A">A</button>
+            </div>
+            <div id="C_button_container">
+                <button value="C">C</button>
+            </div>
+            <div id="E_button_container">
+                <button value="E">E</button>
+            </div>
+        </div>
+        <div id="orange_lines" class="subway_line orange">
+            <div id="B_button_container">
+                <button value="B">B</button>
+            </div>
+            <div id="D_button_container">
+                <button value="D">D</button>
+            </div>
+            <div id="F_button_container">
+                <button value="F">F</button>
+            </div>
+            <div id="M_button_container">
+                <button value="M">M</button>
+            </div>
+        </div>
+
+        <div id="yellow_lines" class="subway_line yellow">
+            <div id="N_button_container"> 
+                <button value="N">N</button>
+            </div>
+            <div id="Q_button_container">
+                <button value="Q">Q</button>
+            </div>
+            <div id="R_button_container">
+                <button value="R">R</button>
+            </div>
+            <div id="W_button_container">
+                <button value="W">W</button>
+            </div>
+        </div>
+    
+        <div id="lime_green_lines" class="subway_line lime_green">
+            <div id="G_button_container"> 
+                <button value="G">G</button>
+            </div>
+        </div>
+        <div id="light_green_lines" class="subway_line light_green">
+            <div id="L_button_container">
+                <button value="L">L</button>
+            </div>
+        </div>
+        <div id="gray_lines" class="subway_line gray">
+            <div id="S_button_container"> 
+                <button value="S">S</button>
+            </div>
+        </div>
+        <div id="brown_lines" class="subway_line brown">
+            <div id="J_button_container">
+                <button value="J">J</button>
+            </div>
+            <div id="Z_button_container">
+                <button value="Z">Z</button>
+            </div>
+        </div>
+        <div id="red_lines" class="subway_line red">
+            <div id="1_button_container">
+                <button value="1">1</button>
+            </div>
+            <div id="2_button_container">
+                <button value="2">2</button>
+            </div>
+            <div id="3_button_container">
+                <button value="3">3</button>
+            </div>
+        </div>
+        <div id="green_lines" class="subway_line green">
+            <div id="4_button_container">
+                <button value="4">4</button>
+            </div>
+            <div id="5_button_container">
+                <button value="5">5</button>
+            </div>
+            <div id="6_button_container">
+                <button value="6">6</button>
+            </div>
+        </div>
+        <div id="purple_lines" class="subway_line purple">
+            <div id="7_button_container">
+                <button value="7">7</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="submission_button_container" class="submission_button_container">
+        <button id="submission_button">SUBMIT</button>
+    </div>
 
     <script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
 </body>

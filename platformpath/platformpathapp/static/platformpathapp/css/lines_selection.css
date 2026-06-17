@@ -1,0 +1,458 @@
+:root {
+    --blue_lines: #0039A6;
+    --orange_lines: #FF6319;
+    --yellow_lines: #FCCC0A;
+    --lime_green_lines: #6CBE45;
+    --light_green_lines: #A7A9AC;
+    --gray_lines: #808183;
+    --brown_lines: #996633;
+    --red_lines: #EE352E;
+    --green_lines: #00933C;
+    --purple_lines: #B933AD;
+}
+
+* {
+    font-family: Helvetica;
+}
+
+/* HEADER STYLING */
+
+.header .title {
+    display: flex;
+    align-items: center;
+
+    font-weight: bold;
+    font-size: 5vw;
+
+    margin: 0 0 0.5vw 0;
+}
+.header .sub_title {
+    font-weight: bold;
+    font-size: 1vw;
+
+    margin: 0 0 1vw 0;
+}
+.header img {
+    width: auto;
+    height: 5vw;
+
+    margin: 0 0.2vw 0 0;
+}
+
+/* STYLING FOR SUBMISSION BUTTON */
+
+.submission_button_container {
+    /* we're making this a static item so that it's fixed relative to our viewport */
+    position: fixed;
+
+    bottom: 5vw;
+    right: 5vw;
+}
+
+.submission_button_container button{
+    width: 10vw;
+    height: 4vw;
+
+    /* setting border-radius larger than the height will give you a pill shape */
+    border-radius: 5vw;
+    border: #000000 solid 0.2vw;
+    
+    font-size: 1.5vw;
+    font-weight: bold;
+
+    background-color: #0039A6;
+    color: #FFFFFF;
+}
+.submission_button_container button:hover {
+    background-color: color-mix(in srgb, #0039A6, #000000 20%);
+    transform: scale(0.95);
+    color: #d4d4d4;
+    transition: 0.25s ease-in-out;
+}
+.submission_button_container button:active {
+    background-color: color-mix(in srgb, #0039A6, #000000 20%);
+    transform: scale(0.95);
+    color: #d4d4d4;
+    transition: 0.25s ease-in-out;
+}
+
+
+/* GENERAL STYLING FOR SUBWAY LINE BUTTONS */
+
+.subway_line {
+    display: flex;
+}
+
+.subway_line button {
+    /* The first four are same to Helvetica Mono 24 */
+
+    font-weight: bold;
+    font-size: 3vw; 
+    text-align: center;
+
+    /* Background and foreground colors */
+
+    color: white;
+
+    /* The next one sets up the circle */
+
+    border-radius: 50%;
+    border-color: transparent;
+
+    /* Try varying these styles, and/or others, for your Subway font */
+
+    width: 5vw;
+    height: 5vw;
+    /* aspect-ratio: 1/1; */
+    line-height: 5vw;
+    padding: 0px;
+    margin: 0px;
+
+    /* display settings */
+    flex-shrink: 0;
+}
+
+.subway_line div {
+    /* div acts as the anchor */
+    position: relative;
+    display: inline-flex;
+
+    margin: 0.5vw;
+}
+
+/* TEXTBOX LOGIC AND STYLING */
+
+.subway_line .notification_textbox {
+    /* detaches the item from flex space*/
+    position: absolute;
+    /* control the positioning of our textbox */
+    bottom: 3vw;
+    left: 3vw;
+
+    width: 8vw;
+    padding: 0.2vw;
+    /* make sure text box is on top */
+    z-index: 99;
+
+    background-color: #00cf53;
+    opacity: 0%;
+    font-size: 0.7vw;
+    font-weight: bold;
+
+    border-radius: 2%;
+    border: #000000 solid;
+}
+/* + denotes application to siblings (vs children, which doesn't use any symbol) */
+/* might keep sticky focus for this since it functions like a click function... */ 
+.subway_line button:hover + .notification_textbox {
+    opacity: 100%;
+    transition: 0.25s ease-in-out;
+}
+.subway_line button:active + .notification_textbox {
+    opacity: 100%;
+    transition: 0.25s ease-in-out;
+}
+
+/* BUTTON COLORS AND VISUAL LOGIC STATES*/
+
+.blue button {
+    background-color: var(--blue_lines);
+}
+/* this @media wrapper only allows hover for devices that support hover (prevents sticky focus) on mobile/touch devices */
+@media (hover: hover) { 
+    .blue button:hover {
+        background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+/* this works for both desktop and mobile */
+.blue button:active { 
+        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+}
+.blue button.selected {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.blue button.not_available {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.orange button {
+    background-color: var(--orange_lines);
+}
+@media (hover: hover) { 
+    .orange button:hover {
+        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.orange button:active { 
+        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+}
+.orange button.selected {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.orange button.not_available {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.yellow button {
+    color: #000000;
+    background-color: var(--yellow_lines);
+}
+@media (hover: hover) {  
+    .yellow button:hover {
+        background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
+        color: #000000;
+        transition: 0.25s ease-in-out;
+    }
+}
+.yellow button:active {
+        background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
+        color: #000000;
+        transition: 0.25s ease-in-out;
+    }
+.yellow button.selected {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 30%);
+    color: black;
+}
+.yellow button.not_available {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 80%);
+    color: black;
+    opacity: 85%;
+}
+
+.lime_green button {
+    background-color: var(--lime_green_lines);
+}
+@media (hover: hover) {  
+    .lime_green button:hover {
+        background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.lime_green button:active {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.lime_green button.selected {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.lime_green button.not_available {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.light_green button {
+    background-color: var(--light_green_lines);
+}
+@media (hover: hover) {
+    .light_green button:hover {
+        background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.light_green button:active {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.light_green button.selected {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.light_green button.not_available {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.gray button {
+    background-color: var(--gray_lines);
+}
+@media (hover: hover) {
+    .gray button:hover {
+        background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.gray button:active {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.gray button.selected {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.gray button.not_available {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.brown button {
+    background-color: var(--brown_lines);
+}
+@media (hover: hover) {
+    .brown button:hover {
+        background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.brown button:active {
+        background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+}
+.brown button.selected {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.brown button.not_available {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.red button {
+    background-color: var(--red_lines);
+}
+@media (hover: hover) {
+    .red button:hover {
+        background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.red button:active {
+        background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+}
+.red button.selected {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.red button.not_available {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.green button {
+    background-color: var(--green_lines);
+}
+@media (hover: hover) {
+    .green button:hover {
+        background-color: color-mix(in srgb, var(--green_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.green button:active {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.green button.selected {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.green button.not_available {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+.purple button {
+    background-color: var(--purple_lines);
+}
+@media (hover: hover) {
+    .purple button:hover {
+        background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
+        color: #b3b3b3;
+        transition: 0.25s ease-in-out;
+    }
+}
+.purple button:active {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
+    color: #b3b3b3;
+    transition: 0.25s ease-in-out;
+}
+.purple button.selected {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 30%);
+    color: #8a8a8a;
+}
+.purple button.not_available {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 80%);
+    color: #555555;
+    opacity: 85%;
+}
+
+/* --- MOBILE RESPONSIVENESS OVERRIDES --- */
+@media screen and (max-width: 768px) {
+    
+    /* Make the header larger on mobile */
+    .header .title {
+        font-size: 7.5vw;
+        margin: 0 0 1.5vw 0;
+    }
+    .header .sub_title {
+        font-size: 3vw;
+        margin: 0 0 3vw 0;
+    }
+    .header img {
+        height: 12vw;
+        margin: 0 3vw 0 0;
+    }
+
+    /* Make subway buttons much larger for fingers */
+    .subway_line button {
+        width: 16vw;
+        height: 16vw;
+        line-height: 16vw;
+        font-size: 8vw;
+        margin: 1vw;
+    }
+
+    /* Reposition and enlarge the info textbox */
+    .subway_line .notification_textbox {
+        bottom: 12vw;
+        left: 10vw;
+        width: 18vw;
+        font-size: 3vw;
+
+        padding: 0.5vw;
+    }
+
+    /* Make the Submission button easier to hit */
+    .submission_button_container {
+        bottom: 8vw;
+        right: 4vw;
+    }
+    .submission_button_container button {
+        width: 32vw;
+        height: 12vw;
+        font-size: 5vw;
+        border-radius: 10vw;
+    }
+}
