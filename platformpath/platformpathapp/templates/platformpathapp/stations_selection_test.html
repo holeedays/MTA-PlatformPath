@@ -6,14 +6,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/lines_selection.css' %}">
 </head>
 <body>
-    Select your stations...
+     <div id="header" class="header">
 
-    <div id="stations_selection_container">
+        <div id="title" class="title">
+            <img src="{% static 'platformpathapp/decals/mta_logo.png' %}">
+            MTA PLATFORM PATH
+        </div>
+        <div id="sub_title" class="sub_title">
+            SELECT YOUR STATIONS...
+        </div>
     </div>
 
-    <button id="submission_button"> Submit </button>
+    <div id="stations_selection_container">
+        <div id="blue_lines" class="subway_line blue">
+            <div id="A_line_container">
+                <div class="logo">A</div>
+                <input list="A_datalist">
+                <datalist id="A_datalist"></datalist>
+            </div>
+            <div id="C_line_container">
+                <div class="logo">C</div>
+                <input list="C_datalist">
+                <datalist id="C_datalist"></datalist>
+            </div>
+            <div id="E_line_container">
+                <div class="logo">E</div>
+                <input list="E_datalist">
+                <datalist id="E_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="orange_lines" class="subway_line orange">
+            <div id="B_line_container">
+                <div class="logo">B</div>
+                <input list="B_datalist">
+                <datalist id="B_datalist"></datalist>
+            </div>
+            <div id="D_line_container">
+                <div class="logo">D</div>
+                <input list="D_datalist">
+                <datalist id="D_datalist"></datalist>
+            </div>
+            <div id="F_line_container">
+                <div class="logo">F</div>
+                <input list="F_datalist">
+                <datalist id="F_datalist"></datalist>
+            </div>
+            <div id="M_line_container">
+                <div class="logo">M</div>
+                <input list="M_datalist">
+                <datalist id="M_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="yellow_lines" class="subway_line yellow">
+            <div id="N_line_container">
+                <div class="logo">N</div>
+                <input list="N_datalist">
+                <datalist id="N_datalist"></datalist>
+            </div>
+            <div id="Q_line_container">
+                <div class="logo">Q</div>
+                <input list="Q_datalist">
+                <datalist id="Q_datalist"></datalist>
+            </div>
+            <div id="R_line_container">
+                <div class="logo">R</div>
+                <input list="R_datalist">
+                <datalist id="R_datalist"></datalist>
+            </div>
+            <div id="W_line_container">
+                <div class="logo">W</div>
+                <input list="W_datalist">
+                <datalist id="W_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="lime_green_lines" class="subway_line lime_green">
+            <div id="G_line_container">
+                <div class="logo">G</div>
+                <input list="G_datalist">
+                <datalist id="G_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="light_green_lines" class="subway_line light_green">
+            <div id="L_line_container">
+                <div class="logo">L</div>
+                <input list="L_datalist">
+                <datalist id="L_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="gray_lines" class="subway_line gray">
+            <div id="S_line_container">
+                <div class="logo">S</div>
+                <input list="S_datalist">
+                <datalist id="S_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="brown_lines" class="subway_line brown">
+            <div id="J_line_container">
+                <div class="logo">J</div>
+                <input list="J_datalist">
+                <datalist id="J_datalist"></datalist>
+            </div>
+            <div id="Z_line_container">
+                <div class="logo">Z</div>
+                <input list="Z_datalist">
+                <datalist id="Z_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="red_lines" class="subway_line red">
+            <div id="1_line_container">
+                <div class="logo">1</div>
+                <input list="1_datalist">
+                <datalist id="1_datalist"></datalist>
+            </div>
+            <div id="2_line_container">
+                <div class="logo">2</div>
+                <input list="2_datalist">
+                <datalist id="2_datalist"></datalist>
+            </div>
+            <div id="3_line_container">
+                <div class="logo">3</div>
+                <input list="3_datalist">
+                <datalist id="3_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="green_lines" class="subway_line green">
+            <div id="4_line_container">
+                <div class="logo">4</div>
+                <input list="4_datalist">
+                <datalist id="4_datalist"></datalist>
+            </div>
+            <div id="5_line_container">
+                <div class="logo">5</div>
+                <input list="5_datalist">
+                <datalist id="5_datalist"></datalist>
+            </div>
+            <div id="6_line_container">
+                <div class="logo">6</div>
+                <input list="6_datalist">
+                <datalist id="6_datalist"></datalist>
+            </div>
+        </div>
+
+        <div id="purple_lines" class="purple_line purple">
+            <div id="7_line_container">
+                <div class="logo">7</div>
+                <input list="7_datalist">
+                <datalist id="7_datalist"></datalist>
+            </div>
+        </div>
+    </div>
+
+    <div id="submission_button_container" class="submission_button_container">
+        <button id="submission_button"> 
+            SUBMIT
+        </button>
+    </div>   
 
     <script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
 </body>

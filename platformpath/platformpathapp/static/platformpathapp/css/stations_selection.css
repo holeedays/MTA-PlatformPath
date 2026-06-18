@@ -1,0 +1,62 @@
+/* HEADER STYLING */
+
+.header .title {
+    display: flex;
+    align-items: center;
+
+    font-weight: bold;
+    font-size: 5vw;
+
+    margin: 0 0 0.5vw 0;
+}
+.header .sub_title {
+    font-weight: bold;
+    font-size: 1vw;
+
+    margin: 0 0 1vw 0;
+}
+.header img {
+    width: auto;
+    height: 5vw;
+
+    margin: 0 0.2vw 0 0;
+}
+
+/* STYLING FOR SUBMISSION BUTTON */
+
+.submission_button_container {
+    /* we're making this a static item so that it's fixed relative to our viewport */
+    position: fixed;
+
+    bottom: 5vw;
+    right: 5vw;
+}
+
+.submission_button_container button{
+    width: 10vw;
+    height: 4vw;
+
+    /* setting border-radius larger than the height will give you a pill shape */
+    border-radius: 5vw;
+    border: #000000 solid 0.2vw;
+    
+    font-size: 1.5vw;
+    font-weight: bold;
+
+    background-color: #0039A6;
+    color: #FFFFFF;
+}
+.submission_button_container button:hover {
+    background-color: color-mix(in srgb, #0039A6, #000000 20%);
+    transform: scale(0.95);
+    color: #d4d4d4;
+    transition: 0.25s ease-in-out;
+}
+.submission_button_container button:active {
+    background-color: color-mix(in srgb, #0039A6, #000000 20%);
+    transform: scale(0.95);
+    color: #d4d4d4;
+    transition: 0.25s ease-in-out;
+}
+
+/* STYLING FOR SUBWAY LOGOS */
