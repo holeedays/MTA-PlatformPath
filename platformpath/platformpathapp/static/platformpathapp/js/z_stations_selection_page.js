@@ -48,31 +48,67 @@ export class StationsSelectionPage {
             // make sure they exist
             if (inputForm === undefined || inputForm === null || dataList === undefined || dataList === null)
                 throw new Error(`Input form status: ${inputForm}. DataList status: ${dataList}`);
-            // set all the available options for each station
-            stationsData[line]?.forEach((stationObj) => {
-                const option = document.createElement("option");
-                option.setAttribute("value", stationObj.name);
-                option.textContent = stationObj.name;
-                dataList.appendChild(option);
-            });
-            // add additional logic to input form to prevent users for filling answers that don't exist
-            inputForm.addEventListener("change", () => {
-                // if an option was selected or form was filled
-                if (inputForm.value !== "") {
-                    // check if the value put in the input form exists within the datalist
-                    // this is only used in the cases where the user types a value instead of checking an option
-                    let isValidValue = false;
-                    for (const option of dataList.options) {
-                        if (inputForm.value === option.value) {
-                            URLHandler.addQueryParameter("selected_station", inputForm.value);
-                            isValidValue = true;
-                        }
-                    }
-                    if (!isValidValue)
-                        inputForm.value = "";
-                }
-            });
+            // create the options (stations) for our data list
+            this.createOptions(stationsData, line, dataList);
+            // configure the callback logic of input form for this subway line
+            this.configureInputFormLogic(inputForm, line, dataList);
         }
+    }
+    // create the options for the data list based off the current line selected
+    createOptions(stationsData, line, dataList) {
+        // set all the available options for each station
+        stationsData[line]?.forEach((stationObj) => {
+            const option = document.createElement("option");
+            option.setAttribute("value", stationObj.name);
+            // we need this for the actual text to be visible to the user
+            option.textContent = stationObj.name;
+            dataList.appendChild(option);
+        });
+    }
+    // create the callback logic for our input form (of the specified line) when a value is filled in
+    configureInputFormLogic(inputForm, line, dataList) {
+        // get our container for selected options
+        const selectedOptionsContainer = document.getElementById(`${line}_selected_options_container`);
+        if (selectedOptionsContainer === undefined || selectedOptionsContainer === null)
+            throw new Error(`Selected stations container for ${line} line doesn't exist`);
+        // again we use a hashmap/set to track which options we have selected to avoid repeats
+        const usedOptions = new Set();
+        // create the event listener for our input form
+        // we'll use oninput vs onchange since oninput occurs everytime the value is changed while onchange only occurs when focus
+        // is lost...
+        inputForm.addEventListener("input", () => {
+            for (const option of dataList.options) {
+                // if the input is a valid station
+                if (inputForm.value === option.value && !usedOptions.has(option.value)) {
+                    usedOptions.add(option.value);
+                    // create a label-like container and create all the necessary children for it
+                    const selectedOptionContainer = document.createElement("div");
+                    const selectedOptionText = document.createElement("div");
+                    const deleteStationButton = document.createElement("button");
+                    const deleteButtonImage = document.createElement("img");
+                    selectedOptionContainer.classList.add("selected_option_container");
+                    selectedOptionText.classList.add("selected_option_text");
+                    deleteStationButton.classList.add("delete_button");
+                    deleteButtonImage.src = ""; // to be filled...
+                    selectedOptionText.innerHTML = option.value;
+                    deleteStationButton.addEventListener("click", () => {
+                        // delete the item in our hashmap/set
+                        usedOptions.delete(option.value);
+                        // remove the selected options container
+                        selectedOptionContainer.remove();
+                        // remove it from our query params
+                        URLHandler.removeQueryParameter(`${line}_8selected_station`, option.value);
+                    });
+                    deleteStationButton.appendChild(deleteButtonImage);
+                    selectedOptionContainer.append(selectedOptionText, deleteStationButton);
+                    selectedOptionsContainer.appendChild(selectedOptionContainer);
+                    // add it to our query params
+                    URLHandler.addQueryParameter(`${line}_selected_station`, option.value);
+                    // remove the current text in our input form
+                    inputForm.value = "";
+                }
+            }
+        });
     }
     // remove the line input forms the users didn't select
     initUnselectedLinesInputForms(stationsData) {
