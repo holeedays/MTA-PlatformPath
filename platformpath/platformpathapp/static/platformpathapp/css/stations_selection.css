@@ -44,6 +44,8 @@
 .subway_line_container {
     display: flex;
     flex-direction: column;
+    max-width: 24vw; /* for desktop... limit the size of our selected_options_container + input_form_container to 
+    about ~1/4 the screen width */
 }
 
 /* STYLING FOR SELECTED OPTIONS CONTAINER AND RELATED ELEMENTS */
@@ -51,19 +53,21 @@
 .selected_options_container {
     display: flex;
     flex-direction: column;
-
+    width: 100%;
+    /* box-sizing: border-box; */
     margin: 0 0.25vw 0 0;
 }
 
 .selected_options_container .selected_option_container {
     flex-wrap: wrap;
 
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    width: 15.5vw;
+    width: 100%;
     height: 3vw;
+    box-sizing: border-box;
 
     margin: 0 0 0.25vw 0;
 }
@@ -72,7 +76,7 @@
     flex: 1; /* makes item take up all of its alloted space in the flex container */
     text-align: center;
 
-    font-size: 0.8w;
+    font-size: 0.8vw;
     font-weight: bold;
 }
 
@@ -277,12 +281,14 @@
 
 .input_form_container {
     display: flex;
+    width: 100%;
     margin: 0.2vw 0 0.5vw 0;
 }
 
 .input_form_container input {
     font-weight: bold;
-    font-size: 1vw;;
+    font-size: 1vw;
+    flex: 1; /* expand all the way given its alloted size */
 }
 
 /* ...subway line logos structure... */
