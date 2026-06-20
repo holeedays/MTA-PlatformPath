@@ -84,8 +84,6 @@
 }
 
 .subway_line button {
-    /* The first four are same to Helvetica Mono 24 */
-
     font-weight: bold;
     font-size: 3vw; 
     text-align: center;
@@ -105,8 +103,8 @@
     height: 5vw;
     /* aspect-ratio: 1/1; */
     line-height: 5vw;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
 
     /* display settings */
     flex-shrink: 0;

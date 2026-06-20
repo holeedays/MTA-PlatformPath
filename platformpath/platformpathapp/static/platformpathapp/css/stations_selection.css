@@ -1,3 +1,20 @@
+:root {
+    --blue_lines: #0039A6;
+    --orange_lines: #FF6319;
+    --yellow_lines: #FCCC0A;
+    --lime_green_lines: #6CBE45;
+    --light_green_lines: #A7A9AC;
+    --gray_lines: #808183;
+    --brown_lines: #996633;
+    --red_lines: #EE352E;
+    --green_lines: #00933C;
+    --purple_lines: #B933AD;
+}
+
+* {
+    font-family: Helvetica;
+}
+
 /* HEADER STYLING */
 
 .header .title {
@@ -20,6 +37,315 @@
     height: 5vw;
 
     margin: 0 0.2vw 0 0;
+}
+
+/* STYLING FOR PARENT CONTAINERS FOR EACH SUBWAY LINE */
+
+.subway_line_container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* STYLING FOR SELECTED OPTIONS CONTAINER AND RELATED ELEMENTS */
+
+.selected_options_container {
+    display: flex;
+    flex-direction: column;
+
+    margin: 0 0.25vw 0 0;
+}
+
+.selected_options_container .selected_option_container {
+    flex-wrap: wrap;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 15.5vw;
+    height: 3vw;
+
+    margin: 0 0 0.25vw 0;
+}
+
+.selected_options_container .selected_option_container .selected_option_text {
+    flex: 1; /* makes item take up all of its alloted space in the flex container */
+    text-align: center;
+
+    font-size: 0.8w;
+    font-weight: bold;
+}
+
+.selected_options_container .selected_option_container button {
+    position: relative;
+    left: 0.2vw;
+    bottom: 0.5vw;
+
+    background-color: transparent;
+    border: none;
+}
+
+@media (hover: hover) {
+    .selected_options_container .selected_option_container button:hover img { /* we won't change the actual size of button, only img */
+        transform: scale(0.9); /* scale down our button */
+        filter: brightness(0.8);
+
+        transition: 0.25s ease-in-out;
+    }
+}
+.selected_options_container .selected_option_container button:active img { /* for mobile */
+        transform: scale(0.8); /* scale down our button */
+        filter: brightness(0.9);
+
+        transition: 0.25s ease-in-out;
+}
+.selected_options_container .selected_option_container:has(button:active) { /* for mobile */
+        color: white;
+
+        transition: 0.25s ease-in-out;
+}
+
+.selected_options_container .selected_option_container button img{
+    width: 1.5vw;
+    height: auto;
+}
+
+/* ...color specific changes for seleciton option containers based on subway line */
+
+.blue .selected_options_container .selected_option_container {
+    background-color: var(--blue_lines);
+}
+@media (hover: hover) {
+    .blue .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.blue .selected_options_container .selected_option_container:has(button:active) {
+    background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.orange .selected_options_container .selected_option_container {
+    background-color: var(--orange_lines);
+}
+@media (hover: hover) {
+    .orange .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.orange .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.yellow .selected_options_container .selected_option_container {
+    background-color: var(--yellow_lines);
+}
+@media (hover: hover) {
+    .yellow .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.yellow .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.lime_green .selected_options_container .selected_option_container {
+    background-color: var(--lime_green_lines);
+}
+@media (hover: hover) {
+    .lime_green .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.lime_green .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.light_green .selected_options_container .selected_option_container {
+    background-color: var(--light_green_lines);
+}
+@media (hover: hover) {
+    .light_green .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.light_green .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+
+.gray .selected_options_container .selected_option_container {
+    background-color: var(--gray_lines);
+}
+@media (hover: hover) {
+    .gray .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.gray .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.brown .selected_options_container .selected_option_container {
+    background-color: var(--brown_lines);
+}
+@media (hover: hover) {
+    .brown .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.brown .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.red .selected_options_container .selected_option_container {
+    background-color: var(--red_lines);
+}
+@media (hover: hover) {
+    .red .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.red .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.green .selected_options_container .selected_option_container {
+    background-color: var(--green_lines);
+}
+@media (hover: hover) {
+    .green .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--green_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.green .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--green_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+.purple .selected_options_container .selected_option_container {
+    background-color: var(--purple_lines);
+}
+@media (hover: hover) {
+    .purple .selected_options_container .selected_option_container:has(button:hover) {
+        background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
+        color: #ffffff;
+        transition: 0.25s ease-in-out;
+    }
+}
+.purple .selected_options_container .selected_option_container:has(button:hover) {
+    background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
+    color: #ffffff;
+    transition: 0.25s ease-in-out;
+}
+
+/* STYLING FOR INPUT FORM CONTAINER AND RELATED ITEMS */
+
+.input_form_container {
+    display: flex;
+    margin: 0.2vw 0 0.5vw 0;
+}
+
+.input_form_container input {
+    font-weight: bold;
+    font-size: 1vw;;
+}
+
+/* ...subway line logos structure... */
+
+.input_form_container .logo {
+    font-weight: bold;
+    font-size: 1.5vw; 
+    text-align: center;
+
+    /* Background and foreground colors */
+
+    color: white;
+
+    /* The next one sets up the circle */
+
+    border-radius: 50%;
+    border-color: transparent;
+
+    /* Try varying these styles, and/or others, for your Subway font */
+
+    width: 3vw;
+    height: 3vw;
+    /* aspect-ratio: 1/1; */
+    line-height: 3vw;
+    padding: 0;
+    margin: 0 1vw 0 0;
+
+    /* display settings */
+    flex-shrink: 0;
+}
+
+/* ...color of the logos in the input form container... */
+
+.blue .input_form_container .logo {
+    background-color: var(--blue_lines);
+}
+.orange .input_form_container .logo {
+    background-color: var(--orange_lines);
+}
+.yellow .input_form_container .logo {
+    color: #000000;
+    background-color: var(--yellow_lines);
+}
+.lime_green .input_form_container .logo {
+    background-color: var(--lime_green_lines);
+}
+.light_green .input_form_container .logo {
+    background-color: var(--light_green_lines);
+}
+.gray .input_form_container .logo {
+    background-color: var(--gray_lines);
+}
+.brown .input_form_container .logo {
+    background-color: var(--brown_lines);
+}
+.red .input_form_container .logo {
+    background-color: var(--red_lines);
+}
+.green .input_form_container .logo {
+    background-color: var(--green_lines);
+}
+.purple .input_form_container .logo {
+    background-color: var(--purple_lines);
 }
 
 /* STYLING FOR SUBMISSION BUTTON */
@@ -59,4 +385,124 @@
     transition: 0.25s ease-in-out;
 }
 
-/* STYLING FOR SUBWAY LOGOS */
+/* --- MOBILE RESPONSIVENESS OVERRIDES --- */
+@media screen and (max-width: 768px) {
+    /* Make the header larger on mobile */
+    .header .title {
+        font-size: 7.5vw;
+        margin: 0 0 1.5vw 0;
+    }
+    .header .sub_title {
+        font-size: 3vw;
+        margin: 0 0 3vw 0;
+    }
+    .header img {
+        height: 12vw;
+        margin: 0 3vw 0 0;
+    }
+
+    /* Row layout on mobile using color classes present in the HTML */
+    .blue, .orange, .yellow, .lime_green, .light_green, .gray, .brown, .red, .green, .purple {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 2vw;
+        width: 100%;
+        margin-bottom: 4vw;
+    }
+
+    /* Subway line container - dynamically resizes to fill space depending on sibling count */
+    .subway_line_container {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 22vw; /* Occupies ~1/4 viewport width, but expands to fill space if fewer items exist */
+        min-width: 22vw;
+        max-width: 100%;
+    }
+
+    /* Selected options container - matches width of parent subway_line_container */
+    .selected_options_container {
+        width: 100%;
+        margin: 0 0 1vw 0;
+    }
+
+    .selected_options_container .selected_option_container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%; /* Mirrors the width of the input form container */
+        height: 6vw;
+        margin: 0 0 1vw 0;
+        border-radius: 1vw;
+    }
+
+    .selected_options_container .selected_option_container .selected_option_text {
+        flex: 1;
+        text-align: center;
+        font-size: 2vw;
+        font-weight: bold;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .selected_options_container .selected_option_container button {
+        position: relative;
+        top: 0; /* since we shifted the position of the button before, we just have to set the positional shifts to 0 
+        while in relative position*/
+        bottom: 0;
+        left: 0;
+        right: 0;
+
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .selected_options_container .selected_option_container button img {
+        width: 5vw;
+        height: auto;
+    }
+
+    /* Input form container - matches width of parent subway_line_container */
+    .input_form_container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin: 0.5vw 0;
+    }
+
+    .input_form_container .logo {
+        width: 6vw;
+        height: 6vw;
+        line-height: 6vw;
+        font-size: 3vw;
+        margin: 0 1.5vw 0 0;
+        flex-shrink: 0;
+    }
+
+    .input_form_container input {
+        flex-grow: 1; /* Grows to occupy all remaining space next to the logo */
+        width: 0;
+        min-width: 0;
+        height: 6vw;
+        font-size: 2vw;
+        padding: 0.5vw;
+        box-sizing: border-box;
+    }
+
+    /* Make the Submission button easier to hit on mobile */
+    .submission_button_container {
+        bottom: 8vw;
+        right: 4vw;
+    }
+
+    .submission_button_container button {
+        width: 32vw;
+        height: 12vw;
+        font-size: 5vw;
+        border-radius: 10vw;
+    }
+}
+
+

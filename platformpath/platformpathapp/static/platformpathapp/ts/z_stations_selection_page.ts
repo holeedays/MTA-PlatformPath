@@ -49,9 +49,9 @@ export class StationsSelectionPage {
         // iterate through each line object in the data we fetched
         for (const line in stationsData) {
             // access the following DOM elements in our template
-            const lineContainer: HTMLElement | null = document.getElementById(`${line}_line_container`);
-            const inputForm: HTMLInputElement | null | undefined = lineContainer?.querySelector("input");
-            const dataList: HTMLDataListElement | null | undefined = lineContainer?.querySelector("datalist");
+            const inputContainer: HTMLElement | null = document.getElementById(`${line}_input_container`);
+            const inputForm: HTMLInputElement | null | undefined = inputContainer?.querySelector("input");
+            const dataList: HTMLDataListElement | null | undefined = inputContainer?.querySelector("datalist");
 
             // make sure they exist
             if (inputForm === undefined || inputForm === null || dataList === undefined || dataList === null)
@@ -102,7 +102,7 @@ export class StationsSelectionPage {
                     selectedOptionContainer.classList.add("selected_option_container");
                     selectedOptionText.classList.add("selected_option_text");
                     deleteStationButton.classList.add("delete_button");
-                    deleteButtonImage.src = ""; // to be filled...
+                    deleteButtonImage.src = "/static/platformpathapp/decals/delete_button_logo.svg"; // to be filled...
 
                     selectedOptionText.innerHTML = option.value;
                     deleteStationButton.addEventListener("click", () => {
@@ -111,7 +111,7 @@ export class StationsSelectionPage {
                         // remove the selected options container
                         selectedOptionContainer.remove();
                         // remove it from our query params
-                        URLHandler.removeQueryParameter(`${line}_8selected_station`, option.value);
+                        URLHandler.removeQueryParameter("selected_station", option.value + `_${line}`);
                     });
 
                     deleteStationButton.appendChild(deleteButtonImage);
@@ -119,7 +119,7 @@ export class StationsSelectionPage {
                     selectedOptionsContainer.appendChild(selectedOptionContainer);
 
                     // add it to our query params
-                    URLHandler.addQueryParameter(`${line}_selected_station`, option.value);
+                    URLHandler.addQueryParameter("selected_station", option.value + `_${line}`);
 
                     // remove the current text in our input form
                     inputForm.value = "";
