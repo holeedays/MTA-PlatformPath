@@ -51,7 +51,7 @@ def fetch_stations(request: HttpRequest) -> Response:
     station_line_queryset: QuerySet[StationLine] = (StationLine.objects
                                                     .filter(line__in=lines_queryset)
                                                     .select_related("station", "line")
-                                                    .prefetch_related("station__lines", "station__station_line") # prefetches assocaited line objects + stationline objects from station model POV
+                                                    .prefetch_related("station__lines", "station__station_line") # prefetches associated line objects + stationline objects from station model POV
                                                     .order_by("line__name", "order")) #returns the queryset sorted based on line name and then order (of station relative to the line)
     
     for station_line in station_line_queryset:
@@ -81,7 +81,7 @@ def fetch_edges_nodes(request: HttpRequest) -> Response:
     # do a single db call to fetch all stations
     station_queryset: QuerySet[Station] = (Station.objects
                                            .filter(name__in=station_names)
-                                           .prefetch_related("lines", "station_line")) # prefetch the M2M foreign keys to avoid N+1 queries
+                                           .prefetch_related("lines", "station_line")) # prefetch the M2M foreign keys to avoid N+1 queries    
     stations_dict: dict[str, Station] = {station.name: station for station in station_queryset}
     
     # check if all station names are found within the database
