@@ -58,3 +58,7 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
     class Meta:
         model = Edge
         fields: list[str] = ["station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
+
+class CompoundEdgesNodesSerializer(serializers.Serializer[EdgeSerializer | NodeSerializer]):
+    edges = EdgeSerializer()
+    nodes = NodeSerializer()
