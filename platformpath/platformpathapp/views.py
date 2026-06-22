@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse
 
 # Create your views here.
 # ALL PAGES BELOW ARE FOR TESTING
@@ -10,11 +10,14 @@ def index(request: HttpRequest) -> HttpResponse:
 def test(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/path_test.html")
 
-def full_path(request:HttpRequest):
+def full_path(request:HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/full_path_test.html")
 
-def lines_selection_test(request: HttpRequest) -> HttpResponse:
+def lines_selection(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/lines_selection_test.html")
 
-def stations_selection_test(request: HttpRequest) -> HttpResponse:
+def stations_selection(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/stations_selection_test.html")
+
+def interactive_map(response: HttpRequest) -> HttpResponse:
+    return HttpResponse("Hello World")

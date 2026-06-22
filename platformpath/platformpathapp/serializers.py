@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import QuerySet
 from .models import Line, Station, Edge, Node
 
 class LineSerializer(serializers.ModelSerializer[Line]):
@@ -14,7 +15,7 @@ class StationSerializer(serializers.ModelSerializer[Station]):
         slug_field="name", # returns the name attribute of lines
         read_only=True # clients cannot write to the db
     )
-    # create a serializable field that we returns a value from a given method
+    # create a serializable field that returns a value from a given method
     # in our case, it is the station's order
     station_order = serializers.SerializerMethodField()
 
@@ -24,10 +25,11 @@ class StationSerializer(serializers.ModelSerializer[Station]):
 
     # NOTE: get_ prefix has to be linked to the variable name for this to work
     # obj is the current Station instance; 
-    # station_line is the related_name of station foreign key in StationLine model, allows us to access the through model
+    # station_line is the related_name (reverse relation) of station foreign key in StationLine model, allows us to access the through model
     # directly from the Station model
     def get_station_order(self, obj: Station) -> int:
-        return obj.station_line.values_list("order", flat=True).first() # values_list returns a queryset of the type of field (str/int/tuple..)
+        # NOTE: this is an added parameter
+        return obj.station_order_value
 
 
 class NodeSerializer(serializers.ModelSerializer[Node]):
@@ -42,7 +44,7 @@ class NodeSerializer(serializers.ModelSerializer[Node]):
 
     class Meta:
         model = Node
-        fields: list[str] = ["id","station", "node_type", "label", "svg_id", "layer", "is_accessible"]
+        fields: list[str] = ["id", "station", "node_type", "label", "svg_id", "layer", "is_accessible"]
 
 class EdgeSerializer(serializers.ModelSerializer[Edge]):
 
@@ -57,8 +59,13 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
 
     class Meta:
         model = Edge
+        # station will be returned as an ID as well as from_node and to_node, which is fine for our case
         fields: list[str] = ["station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
 
-class CompoundEdgesNodesSerializer(serializers.Serializer[EdgeSerializer | NodeSerializer]):
-    edges = EdgeSerializer()
-    nodes = NodeSerializer()
+# ignore the dict-like obj... it just represents the dict-like object that the serializer will take to serialize
+class CompoundEdgesNodesSerializer(serializers.Serializer[dict[str, QuerySet[Edge] | list[Node]]]):
+    # serializer class that serializes multiple models (in this case... edges and nodes)
+
+    # we use the many=True param because we're passing a collection of objects versus singular objects
+    edges = EdgeSerializer(many=True) 
+    nodes = NodeSerializer(many=True)
