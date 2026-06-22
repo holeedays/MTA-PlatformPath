@@ -2,6 +2,8 @@ This is where we add stuff we did and things to do...
 
 Edmond ----
 TO DO:
+(VERY IMPORTANT RIGHT NOW) Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
+with slugs and ids together or just use ids in the API routing + user routing.
 Connect second page (station selections page) seamlessly to the third page (ivan's page)
 Find a way to properly cache requested database data to avoid excessive queries 
 Do a visual rework and logical refactor of the first and second page (almost done with first page ~90%)

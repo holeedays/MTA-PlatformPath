@@ -8,12 +8,12 @@ export class LinesSelectionPage {
     // this is the function we'll run on app_new.ts
     async init() {
         console.log("We're currently selecting subway lines...");
-        // clear query parameters with the key "selected_line" (in case of page refreshes)
-        URLHandler.removeQueryParameter("selected_line");
-        // initiate the subway line buttons
-        await this.initLineButtons();
-        // initiate the submit button after everything is done
-        this.initSubmitButton();
+        // // clear query parameters with the key "selected_line" (in case of page refreshes)
+        // URLHandler.removeQueryParameter("selected_line");
+        // // initiate the subway line buttons
+        // await this.initLineButtons();
+        // // initiate the submit button after everything is done
+        // this.initSubmitButton();        
     }
     // create the DOM line buttons for the start page
     async initLineButtons() {
