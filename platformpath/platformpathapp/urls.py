@@ -16,7 +16,7 @@ urlpatterns = [
     # api panel for discover panel
     path('api/lines/', views_api_new.LinesFetchAPI.as_view(), name='lines_fetch'),
     path('api/lines/<slug:line_slug>/stations/', views_api_new.StationsFetchAPI.as_view(), name='stations_fetch'),
-    path('api/lines/<slug:line_slug>/stations/<slug:station_slug>/', views_api_new.EdgesNodesFetchAPI.as_view(), name='edges_nodes_fetch'),
+    path('api/lines/<slug:line_slug>/stations/<slug:station_slug>/edges_nodes', views_api_new.EdgesNodesFetchAPI.as_view(), name='edges_nodes_fetch'),
 
 
     # will change these later, currently, using nested routes causes the api path to route weirdly
