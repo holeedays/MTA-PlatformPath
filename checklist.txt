@@ -19,11 +19,20 @@ Create separate web pages for user input
 
 Ivan ----
 TO DO:
-Create a new test page to navigate between two different stations
+Make the third page for displaying individual stations
+    - Show a zoomable and movable station map
+    - On the side there should be a vertical bar with segments
+    matching the number of layers that the station have. Each segment
+    corresponds to a layer and click on the section toggles it and shows
+    that specific layer of the map
+    - Users can generate a path between two nodes within the station
+Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
         appearance of the next button at this stage or make the button do the same 
         the board train button)
-(Potential) Make the phase tracker interactable to move to different phases
+    - (Potential) Make the phase tracker interactable to move to different phases
+Need to think about how edges work since there are escalators that only go one direction. Additionally
+elevators go to multiple layers.
 
 DONE:
 Create a new test page to navigate between two different stations
