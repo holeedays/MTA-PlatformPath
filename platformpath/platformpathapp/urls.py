@@ -11,12 +11,12 @@ urlpatterns = [
     # discover panel... users can individually interact with maps by themselves
     path('discover/lines/', views.lines_selection, name='lines_selection'),
     path('discover/lines/<slug:line_slug>/stations/', views.stations_selection, name='stations_selection'),
-    path('discover/lines/<slug:line_slug>/stations/<slug:station_slug/', views.interactive_map, name='interactive_map'),
+    path('discover/lines/<slug:line_slug>/stations/<slug:station_slug>/map', views.interactive_map, name='interactive_map'),
 
     # api panel for discover panel
     path('api/lines/', views_api_new.LinesFetchAPI.as_view(), name='lines_fetch'),
     path('api/lines/<slug:line_slug>/stations/', views_api_new.StationsFetchAPI.as_view(), name='stations_fetch'),
-    path('api/lines/<slug:line_slug>/stations/<slug:station_slug/', views_api_new.EdgesNodesFetchAPI.as_view(), name='edges_nodes_fetch'),
+    path('api/lines/<slug:line_slug>/stations/<slug:station_slug>/', views_api_new.EdgesNodesFetchAPI.as_view(), name='edges_nodes_fetch'),
 
 
     # will change these later, currently, using nested routes causes the api path to route weirdly
