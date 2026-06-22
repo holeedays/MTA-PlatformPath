@@ -25,6 +25,84 @@ export class DataFetch {
         return this.getCookie("csrftoken");
     }
 
+    // fetch all available subway lines in the database
+    public static async fetchLinesNew(): Promise<any | null> {
+        const fetchURL: string = "/api/lines/";
+
+        try {
+            const response = await fetch(fetchURL, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
+                }
+            }); 
+
+            if (!response.ok) 
+                throw new Error("Failed to fetch lines");
+
+            const data: any = await response.json();
+            return data;
+        }
+        catch(err: any) {
+            console.warn(err);
+            return null;
+        }
+    }
+
+    // fetch stations based on the given line name
+    public static async fetchStationsNew(lineSlug: string): Promise<any | null> {
+        const fetchURL: string = `/api/lines/${lineSlug}/stations/`;
+
+        try {
+            const response = await fetch(fetchURL, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
+                }
+            }); 
+
+            if (!response.ok) 
+                throw new Error(`Failed to fetch stations for the ${lineSlug} subway line`);
+
+            const data: any = await response.json();
+            return data;
+        }
+        catch(err: any) {
+            console.warn(err);
+            return null;
+        }
+    }
+
+    public static async fetchEdgesNodesNew(lineSlug: string, stationSlug: string): Promise<any | null> {
+        const fetchURL: string = `/api/lines/${lineSlug}/stations/${stationSlug}/edges_nodes/`;
+
+        try {
+            const response = await fetch(fetchURL, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
+                }
+            }); 
+
+            if (!response.ok) 
+                throw new Error(`Failed to fetch the edges and nodes for the station ${stationSlug} of the ${lineSlug} subway line`);
+
+            const data: any = await response.json();
+            return data;
+        }
+        catch(err: any) {
+            console.warn(err);
+            return null;
+        }
+    }
+
+
+
+    ///////////////////////////////////////////////////////////// ANTIQUATED WILL REMOVE LATER ON...
+
     // fetch all available subway lines from the db
     public static async fetchLines(fetchURL: string): Promise<any | null> {
         try {
