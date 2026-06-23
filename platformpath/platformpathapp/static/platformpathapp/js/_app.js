@@ -5,6 +5,7 @@ class App {
     currentPath = null;
     currentIndex = 0;
     station = null;
+    currentPanZoom = null;
     constructor() {
         this.pathFinder = new PathFinder();
     }
@@ -16,7 +17,7 @@ class App {
             stationHeading.innerText = `Station: ${stationName}`;
         }
         // TODO: Dynamically determine diagram path based on stationName
-        await loadDiagram("/static/platformpathapp/diagrams/25Av.svg");
+        await this.loadDiagramWithControls("/static/platformpathapp/diagrams/25Av.svg");
         // Get the station data (nodes/edges) and populate the dropdowns
         this.station = await this.pathFinder.fetchStation(stationName);
         console.log('Fetched station data:', this.station);
@@ -31,6 +32,34 @@ class App {
             ?.addEventListener("click", () => this.prevStep());
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
+    }
+    // Pan, zoom, and scroll controls for the station diagram
+    setupDiagramControls() {
+        const svg = document.querySelector('#diagram-container svg');
+        if (!svg)
+            console.log("SVG not found");
+        if (!svg)
+            return;
+        // Cleanup the old even listener if we are loading a new station diagram
+        if (this.currentPanZoom) {
+            this.currentPanZoom.dispose();
+        }
+        // Apply panzoom to the new SVG
+        this.currentPanZoom = panzoom(svg, {
+            maxZoom: 4,
+            minZoom: 0.3,
+            smoothScroll: false
+        });
+        // Double click to reset view
+        svg.addEventListener('dblclick', () => {
+            this.currentPanZoom.moveTo(0, 0);
+            this.currentPanZoom.zoomAbs(0, 0, 1);
+        });
+    }
+    // Helper method to load the diagram and immediately attach controls
+    async loadDiagramWithControls(diagramPath) {
+        await loadDiagram(diagramPath);
+        this.setupDiagramControls();
     }
     // Reads from the form and delegates to startNavigation
     async handleFormSubmit() {

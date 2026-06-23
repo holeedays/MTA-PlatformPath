@@ -1,11 +1,14 @@
 import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
 import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
+declare const panzoom: any;
+
 
 class App {
     private pathFinder: PathFinder;
     private currentPath: PathStep[] | null = null;
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
+    private currentPanZoom: any = null;
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -20,7 +23,7 @@ class App {
         }
 
         // TODO: Dynamically determine diagram path based on stationName
-        await loadDiagram("/static/platformpathapp/diagrams/25Av.svg");
+        await this.loadDiagramWithControls("/static/platformpathapp/diagrams/25Av.svg");
         
         // Get the station data (nodes/edges) and populate the dropdowns
         this.station = await this.pathFinder.fetchStation(stationName);
@@ -45,6 +48,37 @@ class App {
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
     }
+
+        // Pan, zoom, and scroll controls for the station diagram
+        private setupDiagramControls(): void {
+            const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
+            if (!svg) console.log("SVG not found");
+            if (!svg) return;
+    
+            // Cleanup the old even listener if we are loading a new station diagram
+            if (this.currentPanZoom) {
+                this.currentPanZoom.dispose();
+            }
+    
+            // Apply panzoom to the new SVG
+            this.currentPanZoom = panzoom(svg, {
+                maxZoom: 4,
+                minZoom: 0.3,
+                smoothScroll: false
+            });
+    
+            // Double click to reset view
+            svg.addEventListener('dblclick', () => {
+                this.currentPanZoom.moveTo(0, 0);
+                this.currentPanZoom.zoomAbs(0, 0, 1);
+            });
+        }
+    
+        // Helper method to load the diagram and immediately attach controls
+        private async loadDiagramWithControls(diagramPath: string): Promise<void> {
+            await loadDiagram(diagramPath);
+            this.setupDiagramControls();
+        }
 
     // Reads from the form and delegates to startNavigation
     private async handleFormSubmit(): Promise<void> {

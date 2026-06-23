@@ -1,0 +1,47 @@
+html, body {
+  height: 100%;
+}
+
+
+/* ── Interactive SVG Station Map ── */
+.diagram-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 400px;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.diagram-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* ── NEW: Forces the SVG container to fill the empty vertical space in the card ── */
+#diagram-container {
+    overflow: hidden; /* This is the magic bullet that stops the leaking */
+    position: relative;
+    /* Ensure your container has a specific height/width defined here! */
+    width: 100%; 
+    height: 100%; /* Or whatever height fits your layout */
+    touch-action: none;
+    z-index: 0;
+    isolation: isolate;
+}
+
+#diagram-container svg {
+  width: 100%; 
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+#diagram-container svg:active {
+    cursor: grabbing; /* Updates cursor while dragging */
+}
