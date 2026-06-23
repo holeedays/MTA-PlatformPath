@@ -27,7 +27,9 @@ Make the third page for displaying individual stations
     matching the number of layers that the station have. Each segment
     corresponds to a layer and click on the section toggles it and shows
     that specific layer of the map
-    - Users can generate a path between two nodes within the station
+    - Users can generate a path between two nodes within the stations
+    - Highlighted nodes are centered on (need to port from full_path.ts or make
+    a new ts file so both pages import from the same page?)
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
         appearance of the next button at this stage or make the button do the same 
