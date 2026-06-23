@@ -39,44 +39,6 @@
     margin: 0 0.2vw 0 0;
 }
 
-/* STYLING FOR SUBMISSION BUTTON */
-
-.submission_button_container {
-    /* we're making this a static item so that it's fixed relative to our viewport */
-    position: fixed;
-
-    bottom: 5vw;
-    right: 5vw;
-}
-
-.submission_button_container button{
-    width: 10vw;
-    height: 4vw;
-
-    /* setting border-radius larger than the height will give you a pill shape */
-    border-radius: 5vw;
-    border: #000000 solid 0.2vw;
-    
-    font-size: 1.5vw;
-    font-weight: bold;
-
-    background-color: #0039A6;
-    color: #FFFFFF;
-}
-.submission_button_container button:hover {
-    background-color: color-mix(in srgb, #0039A6, #000000 20%);
-    transform: scale(0.95);
-    color: #d4d4d4;
-    transition: 0.25s ease-in-out;
-}
-.submission_button_container button:active {
-    background-color: color-mix(in srgb, #0039A6, #000000 20%);
-    transform: scale(0.95);
-    color: #d4d4d4;
-    transition: 0.25s ease-in-out;
-}
-
-
 /* GENERAL STYLING FOR SUBWAY LINE BUTTONS */
 
 .subway_line {
@@ -170,10 +132,6 @@
         color: #b3b3b3;
         transition: 0.25s ease-in-out;
 }
-.blue button.selected {
-    background-color: color-mix(in srgb, var(--blue_lines), #000000 30%);
-    color: #8a8a8a;
-}
 .blue button.not_available {
     background-color: color-mix(in srgb, var(--blue_lines), #000000 80%);
     color: #555555;
@@ -194,10 +152,6 @@
         background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
         color: #b3b3b3;
         transition: 0.25s ease-in-out;
-}
-.orange button.selected {
-    background-color: color-mix(in srgb, var(--orange_lines), #000000 30%);
-    color: #8a8a8a;
 }
 .orange button.not_available {
     background-color: color-mix(in srgb, var(--orange_lines), #000000 80%);
@@ -220,10 +174,6 @@
         background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
         color: #000000;
         transition: 0.25s ease-in-out;
-    }
-.yellow button.selected {
-    background-color: color-mix(in srgb, var(--yellow_lines), #000000 30%);
-    color: black;
 }
 .yellow button.not_available {
     background-color: color-mix(in srgb, var(--yellow_lines), #000000 80%);
@@ -246,10 +196,6 @@
     color: #b3b3b3;
     transition: 0.25s ease-in-out;
 }
-.lime_green button.selected {
-    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 30%);
-    color: #8a8a8a;
-}
 .lime_green button.not_available {
     background-color: color-mix(in srgb, var(--lime_green_lines), #000000 80%);
     color: #555555;
@@ -270,10 +216,6 @@
     background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
     color: #b3b3b3;
     transition: 0.25s ease-in-out;
-}
-.light_green button.selected {
-    background-color: color-mix(in srgb, var(--light_green_lines), #000000 30%);
-    color: #8a8a8a;
 }
 .light_green button.not_available {
     background-color: color-mix(in srgb, var(--light_green_lines), #000000 80%);
@@ -296,10 +238,6 @@
     color: #b3b3b3;
     transition: 0.25s ease-in-out;
 }
-.gray button.selected {
-    background-color: color-mix(in srgb, var(--gray_lines), #000000 30%);
-    color: #8a8a8a;
-}
 .gray button.not_available {
     background-color: color-mix(in srgb, var(--gray_lines), #000000 80%);
     color: #555555;
@@ -320,10 +258,6 @@
         background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
         color: #b3b3b3;
         transition: 0.25s ease-in-out;
-}
-.brown button.selected {
-    background-color: color-mix(in srgb, var(--brown_lines), #000000 30%);
-    color: #8a8a8a;
 }
 .brown button.not_available {
     background-color: color-mix(in srgb, var(--brown_lines), #000000 80%);
@@ -346,10 +280,6 @@
         color: #b3b3b3;
         transition: 0.25s ease-in-out;
 }
-.red button.selected {
-    background-color: color-mix(in srgb, var(--red_lines), #000000 30%);
-    color: #8a8a8a;
-}
 .red button.not_available {
     background-color: color-mix(in srgb, var(--red_lines), #000000 80%);
     color: #555555;
@@ -371,10 +301,6 @@
     color: #b3b3b3;
     transition: 0.25s ease-in-out;
 }
-.green button.selected {
-    background-color: color-mix(in srgb, var(--green_lines), #000000 30%);
-    color: #8a8a8a;
-}
 .green button.not_available {
     background-color: color-mix(in srgb, var(--green_lines), #000000 80%);
     color: #555555;
@@ -395,10 +321,6 @@
     background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
     color: #b3b3b3;
     transition: 0.25s ease-in-out;
-}
-.purple button.selected {
-    background-color: color-mix(in srgb, var(--purple_lines), #000000 30%);
-    color: #8a8a8a;
 }
 .purple button.not_available {
     background-color: color-mix(in srgb, var(--purple_lines), #000000 80%);

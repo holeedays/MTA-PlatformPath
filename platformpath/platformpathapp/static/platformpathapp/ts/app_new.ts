@@ -1,8 +1,7 @@
-import { DataFetch } from "./data_fetch.ts";
-import { URLHandler } from "./url_handler.ts";
+import { DataFetch } from "./data_fetch_new.ts";
 import { LinesSelectionPage } from "./z_lines_selection_page.ts";
 import { StationsSelectionPage } from "./z_stations_selection_page.ts";
-import { PathFinder } from "./path_finder.ts";
+import { URLHandler } from "./url_handler.ts";
 
 class App {
     public stationCache: any;
@@ -17,24 +16,29 @@ class App {
 
     public async init(): Promise<void> {
         // switch(URLHandler.getCurrentWorkingURLRoute()) {
-        //     case "lines_selection":
+        //     case "lines":
         //         this.linesSelectionPage.init();
         //         break;
-        //     case "stations_selection":
-        //         // const url: URL = new URL(document.URL);
-        //         // url.searchParams.forEach((v: string, k: string, p: URLSearchParams) => console.log(k, v));
+        //     case "stations":
         //         this.stationsSelectionPage.init();
         //         break;
         // }
 
-        const lines: any[] = await DataFetch.fetchLinesNew();
-        const stations: any[] = await DataFetch.fetchStationsNew(lines[0].name);
+        const lines: any[] = await DataFetch.fetchLines();
+        const stations: any[] = await DataFetch.fetchStations(lines[0].id);
 
-        const targetLine: string = lines[0].name;
-        const targetStation: string = stations[1].name;
-        // this don't work right now
-        const edgesNodes: any = await DataFetch.fetchEdgesNodesNew(targetLine, targetStation);
+        const targetStationID: number = stations[1].id;
+        const edgesNodes: any = await DataFetch.fetchEdgesNodes(targetStationID);
         console.log(edgesNodes);
+
+        // const someString: string = "YOMOMMA SO FAT* LOL XD XD FART ON YOU";
+        // const someOtherString: string = "WACHANG GULI%20GULI%20 WACHANG GU WACHANG GU!";
+
+        // const slugifier = new Slugifier();
+        // let res: string = slugifier.slugify(someString, someOtherString);
+        // console.log(res);
+        // let terms: string[] = slugifier.deslugify(res);
+        // console.log(terms);
     }
 }
 

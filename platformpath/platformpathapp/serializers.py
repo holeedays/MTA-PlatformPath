@@ -6,7 +6,7 @@ class LineSerializer(serializers.ModelSerializer[Line]):
     # here we state what information we want the API to serialize and send
     class Meta:
         model = Line
-        fields: list[str] = ["name"]
+        fields: list[str] = ["name", "id"]
 
 class StationSerializer(serializers.ModelSerializer[Station]):
 
@@ -21,7 +21,7 @@ class StationSerializer(serializers.ModelSerializer[Station]):
 
     class Meta:
         model = Station
-        fields: list[str] = ["name", "diagram_path", "lines", "station_order"]
+        fields: list[str] = ["name", "id", "diagram_path", "lines", "station_order"]
 
     # NOTE: get_ prefix has to be linked to the variable name for this to work
     # obj is the current Station instance; 
@@ -56,11 +56,15 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
     #     slug_field="label",
     #     read_only=True
     # )
+    station = serializers.SlugRelatedField(
+        slug_field="name", 
+        read_only=True 
+    )
 
     class Meta:
         model = Edge
-        # station will be returned as an ID as well as from_node and to_node, which is fine for our case
-        fields: list[str] = ["station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
+        # from_node and to_node will be returned as ids, which is fine for our case
+        fields: list[str] = ["id", "station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
 
 # ignore the dict-like obj... it just represents the dict-like object that the serializer will take to serialize
 class CompoundEdgesNodesSerializer(serializers.Serializer[dict[str, QuerySet[Edge] | list[Node]]]):

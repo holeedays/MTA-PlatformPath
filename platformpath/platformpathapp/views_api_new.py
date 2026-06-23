@@ -27,27 +27,26 @@ class StationsFetchAPI(ListAPIView[Station]):
     def get_queryset(self) -> QuerySet[Station, Station]:
         # pull out our line_slug param from the URL request... we can also directly access the value as a param
         # in the get() method
-        line_slug: str = self.kwargs["line_slug"]
+        line_id: int = self.kwargs["line_id"]
 
         # get all our stations...
-        station_data: QuerySet[Station] = (Station.objects.filter(station_line__line__name=line_slug)
-                                           .prefetch_related("lines")
-                                           # add an extra custom field that returns extra metadata
-                                           # btw, F means "refer to a database field value inside the SQL query"
-                                           .annotate(station_order_value=F("station_line__order"))
-                                           # order the stations chronologically
-                                           .order_by("station_line__order"))
-        
-        return station_data
+        stations_data: QuerySet[Station] = (Station.objects.filter(lines__id=line_id)
+                                            .prefetch_related("lines")
+                                            # add an extra custom field that returns extra metadata
+                                            # btw, F means "refer to a database field value inside the SQL query"
+                                            .annotate(station_order_value=F("station_line__order"))
+                                            # order the stations chronologically
+                                            .order_by("station_line__order"))
+                    
+        return stations_data
     
 # fetch all edges and nodes corresponding to the selected station and line
 class EdgesNodesFetchAPI(APIView):
     
-    def get(self, request: Request, line_slug: str, station_slug: str) -> Response:
+    def get(self, request: Request, station_id: int) -> Response:
         # get the station that has the right name and line with the right name
         target_station: Station = get_object_or_404(Station,
-                                                     name=station_slug,
-                                                     lines__name=line_slug)
+                                                     id=station_id)
 
         # get all edges related to our target station
         edges: QuerySet[Edge] = (Edge.objects.filter(station=target_station)

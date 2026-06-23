@@ -14,10 +14,10 @@ def full_path(request:HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/full_path_test.html")
 
 def lines_selection(request: HttpRequest) -> HttpResponse:
-    return render(request, "platformpathapp/lines_selection_test.html")
+    return render(request, "platformpathapp/lines_selection.html")
 
 def stations_selection(request: HttpRequest, line_slug: str) -> HttpResponse:
-    return render(request, "platformpathapp/stations_selection_test.html")
+    return render(request, "platformpathapp/stations_selection.html")
 
 def interactive_map(response: HttpRequest, line_slug: str, station_slug: str) -> HttpResponse:
     return HttpResponse("Hello World")

@@ -7,13 +7,28 @@ export class URLHandler {
     public static getCurrentWorkingURLRoute(): string | null {
         const fullURL: string = document.URL;
         const URLSubstrings: string[] = fullURL.split("/");
-        let currentURLRoute: string | undefined = URLSubstrings[URLSubstrings.length - 1];
 
-        if (currentURLRoute !== undefined) {
-            currentURLRoute = currentURLRoute.split("?")[0];
+        // if the url has a / at the end, the last item of the string is an empty string
+        // hence we check for the item that's not empty
+        for (let i=URLSubstrings.length; i>0; i--) {
+            // get the entire sub string
+            const subString: string | undefined = URLSubstrings[i];
+            if (subString === undefined)
+                continue;
+            // check the substring without query params (if it has any) --> should yield a string array like this ["actualURL", "queryParams"]
+            const subStringWithoutQueryParams: string | undefined = subString.split("?")[0];
+            // if it yields not an empty string, then we return that 
+            if (subStringWithoutQueryParams !== undefined && subStringWithoutQueryParams !== "") {
+                return subStringWithoutQueryParams;
+            }            
         }
-        
-        return currentURLRoute === undefined ? null : currentURLRoute;
+
+        return null;
+    }
+
+    // returns the current entire url
+    public static getFullURLRoute(): string {
+        return document.URL;
     }
 
     // get only the query parameters of the URL (in a suitable URL format)
@@ -64,6 +79,7 @@ export class URLHandler {
         let fullURL: string = baseURL;
         // check if we have any valid query params
         let questionMarkAppended: boolean = false;
+        // add query params if they exist
         for (const param of queryParams) {
             if (param != "" && !questionMarkAppended) {
                 fullURL += "?";

@@ -1,126 +1,112 @@
-import { DataFetch } from "./data_fetch.ts";
+import { DataFetch } from "./data_fetch_new.ts";
 import { URLHandler } from "./url_handler.ts";
-import { URLS } from "./statics.ts";
+import { Slugifier } from "./slugifier.ts";
 
 // this class will handle the line selections route
 export class LinesSelectionPage {
+    private slugifier: Slugifier;
     constructor() {
+        this.slugifier = new Slugifier();
     }
 
     // this is the function we'll run on app_new.ts
     public async init(): Promise<void> {
         console.log("We're currently selecting subway lines...");
 
-        // // clear query parameters with the key "selected_line" (in case of page refreshes)
-        // URLHandler.removeQueryParameter("selected_line");
-        // // initiate the subway line buttons
-        // await this.initLineButtons();
-        // // initiate the submit button after everything is done
-        // this.initSubmitButton();        
+        // clear query parameters with the key "selected_line" (in case of page refreshes)
+        URLHandler.removeQueryParameter("selected_line");
+        // initiate the subway line buttons
+        await this.initLineButtons(); 
     }
 
-    // create the DOM line buttons for the start page
+    // master funcion to set up all the buttons in the lines selection page template
     private async initLineButtons(): Promise<void> {
-        // get our div that will contain our buttons
-        try {
-            const lineButtonsContainer: HTMLElement | null = document.getElementById("line_buttons_container");
-            if (lineButtonsContainer === null) {
-                throw new Error("There is no container to hold the subway line buttons");
-            }
-            // then fetch our lines
-            const lines: Record<string,string>[] = await DataFetch.fetchLines(URLS.LINES_FETCH_API);
-            // check if any subway lines exist in our database
-            if (lines === null) {
-                throw new Error("There are no lines currently in the database");
-            }
-            else {
-                // init the buttons that represent lines that actually exist in our database
-                // and return a hashmap (more a set, but get the idea) of it
-                const availableLinesHashMap: Set<string> = this.initAvailableLineButtons(lines);
-                // using our returned hashmap, init the other buttons that represent lines not within our database
-                this.initUnavailableLineButtons(availableLinesHashMap);
-            }
+        const lines: {name: string, id: number}[] = await DataFetch.fetchLines();
+        if (lines === null) {
+            console.warn("There are no subway lines in the database");
+        }   
+
+        // reorder the data into a lines hash map with the key being denoted by the button container element
+        const linesHashMap: Record<string, {name: string, id: number}> = {};
+        for (const line of lines) {
+            linesHashMap[`${line.name}_button_container`] = {name: line.name, id: line.id};
         }
-        catch (err: any) {
-            console.error(`The following error has occurred: ${err}`);
-        }
-    }
 
-    // configures the buttons for lines that do have data
-    private initAvailableLineButtons(lines: Record<string,string>[]): Set<string> {
-        // create a hash map for use later in checking if a subway line has accessible data in the database and 
-        // can subsequently be used later <-- this is our return value by the way
-        const availableLinesHashMap: Set<string> = new Set();
-        lines.forEach((line: Record<string,string>) => {
-            // add the id to our hashmap
-            availableLinesHashMap.add(`${line.name}_button_container`);
-            // add some miscellaneous logic to the buttons that exist
-            const lineButtonContainer: HTMLElement | null = document.getElementById(`${line.name}_button_container`);
-            const lineButton: HTMLButtonElement | null | undefined = lineButtonContainer?.querySelector("button");
+        // create arrays to hold the button references for the buttons that references lines that exist/don't exist within
+        // the database
+        const availableLineButtons: HTMLButtonElement[] = [];
+        const unavailableLineButtons: HTMLButtonElement[] = [];
 
-            // NOTE: if the element doesn't exist in our template, any additional lines from our db will not be configured
-            // even if the button exists b/c of this error
-            if (lineButton === null || lineButton === undefined) {
-                throw new Error(`This specified line button with the id - ${line.name}_button - does not exist`);
-            }
+        // recursively get the button container elements from the html template and the buttons within it
+        const linesButtonContainer: HTMLDivElement | null = document.getElementById("line_buttons_container") as HTMLDivElement;
+        const subwayLinesColorGroups: HTMLCollection = linesButtonContainer.children;
+        for (const colorGroup of subwayLinesColorGroups) {
+            for (const lineButtonContainer of colorGroup.children) {
+                // get the button
+                const lineButton: HTMLButtonElement | null = lineButtonContainer.querySelector("button");
 
-            // aria_label tells us the current state of the button
-            lineButton.setAttribute("aria_label", "not_clicked");
-            // add an onclick function to our event listener
-            lineButton.addEventListener("click", () => {
-                const ariaLabelValue: string | null = lineButton.getAttribute("aria_label");
-
-                // clicking logic for the button...
-
-                // if button hasn't been clicked
-                if (ariaLabelValue !== null && ariaLabelValue === "not_clicked") {
-                    URLHandler.addQueryParameter("selected_line", lineButton.textContent);
-                    lineButton.classList.add("selected");
-                    lineButton.setAttribute("aria_label", "clicked");
+                if (lineButton === null) {
+                    console.warn(`${lineButtonContainer.id} doesn't have a button`);
+                    continue;
                 }
-                // if button has been clicked
+                // check whether the button corresponds to a line that exists and organize it appropriately
+                if (lineButtonContainer.id in linesHashMap) {
+                    availableLineButtons.push(lineButton);
+                }
                 else {
-                    URLHandler.removeQueryParameter("selected_line", lineButton.textContent);
-                    lineButton.classList.remove("selected");
-                    lineButton.setAttribute("aria_label", "not_clicked");
+                    unavailableLineButtons.push(lineButton);
                 }
-            });
-        });
+            }
+        }
 
-        // return our hashmap (used in initUnavailableLineButtons)
-        return availableLinesHashMap;
+        this.initAvailableButtons(availableLineButtons, linesHashMap);
+        this.initUnavailableButtons(unavailableLineButtons);
     }
 
-    // configures the buttons for lines that don't have any data: adds additional html tags and items
-    private initUnavailableLineButtons(availableLinesHashMap: Set<string>): void {
-        // using our hashmap, checks the buttons on our page whether to allow them to be interacted with (visually)
-        for (const button of document.getElementsByTagName("button")) {
-            const lineButtonContainer: HTMLElement | null = button.parentElement;
-            // check if a line button container exists for this button
-            if (lineButtonContainer === null)
-                throw new Error(`There's no lines button container for the button with value ${button.value}`);
+    // add event listeners for the array of button elements and fill them with necessary metadata from lines hash map
+    private initAvailableButtons(
+        availableLineButtons: HTMLButtonElement[], 
+        linesHashMap: Record<string, {name: string, id: number}>): void {
+        // loop through all lines of available lines
+        for (const lineButton of availableLineButtons) {
+            // add our event listener
+            lineButton.addEventListener("click", () => {
+                const currentURL: string = URLHandler.getFullURLRoute();
+                // get the right id to pass through the hash map
+                const lineButtonContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
+                let currentLine: {name: string, id: number} | undefined | null = null;
+                if (lineButtonContainer !== null) {
+                    currentLine = linesHashMap[lineButtonContainer.id];
+                }
 
-            // check if we've already mentioned this line button container (meaning it is in the database)
-            if (!availableLinesHashMap.has(lineButtonContainer.id) && button.id !== "submission_button") {
-                // if not mark it the button as not available
-                button.classList.add("not_available");
-                // and add a text box telling the user this train line is not available
-                const textBox: HTMLElement = document.createElement("div");
-                textBox.innerHTML = "This line is currently unavailable";
-                textBox.classList.add("notification_textbox");
-                lineButtonContainer.appendChild(textBox);
-            }
+                // when the button is clicked, just route the url to the next page and add a slug for the metadata
+                // that we need
+                if (currentLine !== undefined && currentLine !== null) {
+                    const slugifiedString: string = this.slugifier.slugify(currentLine.name, currentLine.id);
+                    URLHandler.redirectTo(currentURL + slugifiedString + "/stations/");
+                }
+            });
         }
     }
 
-    // create the DOM button that actuall triggers redirection to the next page
-    private initSubmitButton(): void {
-        const submitButton: HTMLElement | null = document.getElementById("submission_button");
+    // apply appropriate classes for the buttons of the lines that don't exist in the database and add any other
+    // miscellaneous UI elements
+    private initUnavailableButtons(unavailableLineButtons: HTMLButtonElement[]): void {
+        // iterate through each line button
+        for (const lineButton of unavailableLineButtons) {
+            // get our parent so we can add a textbox to it (this will notify users the line isn't available)
+            const lineButtonContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
 
-        if (submitButton !== null) {
-            submitButton.addEventListener("click", () => {
-                URLHandler.redirectTo("/test/stations_selection", `${URLHandler.getQueryParametersURL()}`);
-            });
+            if (lineButtonContainer !== null) {
+                // creating out text box
+                const notificationTextBox: HTMLDivElement = document.createElement("div");
+                notificationTextBox.innerHTML = "This line is currently unavailable";
+                // configuring classes for the textbox and our line button
+                notificationTextBox.classList.add("notification_textbox");
+                lineButton.classList.add("not_available");
+                // append the textbox to our button container
+                lineButtonContainer.appendChild(notificationTextBox);
+            }
         }
     }
 }
