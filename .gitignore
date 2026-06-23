@@ -190,3 +190,5 @@ pnpm-lock.yaml
 platformpath/platformpathapp/static/platformpathapp/js/*.js.map
 platformpath/platformpathapp/static/platformpathapp/js/*.d.ts
 platformpath/platformpathapp/static/platformpathapp/js/*.d.ts.map
+
+platformpath/platformpathapp/static/platformpathapp/js/*.js
