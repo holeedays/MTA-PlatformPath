@@ -39,6 +39,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Created a landing page on index view that you can get to discover/lines from
 Make the third page for displaying individual stations
     - Show a zoomable and movable station map
     - Uses new fetching api from the database

@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 # ALL PAGES BELOW ARE FOR TESTING
 
 def index(request: HttpRequest) -> HttpResponse:
-    return render(request, "platformpathapp/index_test.html")
+    return render(request, "platformpathapp/index.html")
 
 def test(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/path_test.html")
