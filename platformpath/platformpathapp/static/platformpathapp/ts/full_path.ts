@@ -1,8 +1,7 @@
 // Copy of _app.ts with logic that displays movement between stations
-import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
+import { SvgRenderer } from "./svg_renderer.ts";
 import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
 import { TripManager, type TripPhase } from "./trip_manager.ts";
-declare const panzoom: any;
 
 const DEMO_PHASES: TripPhase[] = [
     {
@@ -26,76 +25,11 @@ const DEMO_PHASES: TripPhase[] = [
 class App {
     private pathFinder: PathFinder;
     private tripManager!: TripManager;
-    private currentPanZoom: any = null;
+    private svgRenderer: SvgRenderer;
 
     constructor() {
         this.pathFinder = new PathFinder();
-    }
-
-    // Pan, zoom, and scroll controls for the station diagram
-    private setupDiagramControls(): void {
-        const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
-        if (!svg) return;
-
-        // Cleanup the old even listener if we are loading a new station diagram
-        if (this.currentPanZoom) {
-            this.currentPanZoom.dispose();
-        }
-
-        // Apply panzoom to the new SVG
-        this.currentPanZoom = panzoom(svg, {
-            maxZoom: 4,
-            minZoom: 0.3,
-            smoothScroll: false
-        });
-
-        // Double click to reset view
-        svg.addEventListener('dblclick', () => {
-            this.currentPanZoom.moveTo(0, 0);
-            this.currentPanZoom.zoomAbs(0, 0, 1);
-        });
-    }
-
-    // Helper method to load the diagram and immediately attach controls
-    private async loadDiagramWithControls(diagramPath: string): Promise<void> {
-        await loadDiagram(diagramPath);
-        this.setupDiagramControls();
-    }
-
-    // Helper function to zoom on on a node based on svgId
-    private centerOnNode(svgId: string, zoom: number = 2): void {
-        const container = document.getElementById('diagram-container');
-        const svg = container?.querySelector('svg') as SVGSVGElement | null;
-        const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
-
-        if (!container || !svg || !target || !this.currentPanZoom) return;
-
-        // Get the bounding box of the target element in SVG coordinate space
-        const bbox = target.getBBox();
-        const targetCenterX = bbox.x + bbox.width / 2;
-        const targetCenterY = bbox.y + bbox.height / 2;
-
-        // Get the SVG's own viewBox scale factor (SVG coords → pixel coords)
-        const viewBox = svg.viewBox.baseVal;
-        const svgPixelWidth = svg.clientWidth;
-        const svgPixelHeight = svg.clientHeight;
-        const scaleX = svgPixelWidth / viewBox.width;
-        const scaleY = svgPixelHeight / viewBox.height;
-
-        // Convert SVG coords to pixel coords
-        const targetPixelX = targetCenterX * scaleX;
-        const targetPixelY = targetCenterY * scaleY;
-
-        // Compute the pan offset to center the target in the container
-        const containerCenterX = container.clientWidth / 2;
-        const containerCenterY = container.clientHeight / 2;
-
-        // Apply zoom first (zooming around the target point), then pan to center
-        this.currentPanZoom.zoomAbs(targetPixelX, targetPixelY, zoom);
-        this.currentPanZoom.moveTo(
-            containerCenterX - targetPixelX * zoom,
-            containerCenterY - targetPixelY * zoom
-        );
+        this.svgRenderer = new SvgRenderer();
     }
 
     // initializes the app: loads diagram, fetches station data, sets up event listeners
@@ -108,7 +42,7 @@ class App {
 
         // Load the first phase and its corresponding SVG diagram
         await this.tripManager.loadCurrentPhasePath();
-        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
+        await this.svgRenderer.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
 
         this.renderTopBar();
         this.renderPhaseBar();
@@ -150,7 +84,7 @@ class App {
         const result = await this.tripManager.prevStep()
 
         if (result === 'phase-changed') {
-            await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
+            await this.svgRenderer.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
             this.renderPhaseBar();
         }
 
@@ -159,7 +93,7 @@ class App {
 
     private async handleBoardTrain(): Promise<void> {
         await this.tripManager.advancePhase();
-        await this.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
+        await this.svgRenderer.loadDiagramWithControls(this.tripManager.currentPhase.diagramPath);
         
         this.hideTrainScreen();
         this.renderPhaseBar();
@@ -228,9 +162,9 @@ class App {
 
         // Visual updates to the SVG
         const uniqueLayers = this.tripManager.currentStation?.unique_layers || [];
-        showLayer(step.layer, uniqueLayers);
-        highlightNode(step.svgId);
-        this.centerOnNode(step.svgId);
+        this.svgRenderer.showLayer(step.layer, uniqueLayers);
+        this.svgRenderer.highlightNode(step.svgId);
+        this.svgRenderer.centerOnNode(step.svgId);
 
         // Update button states
         const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
