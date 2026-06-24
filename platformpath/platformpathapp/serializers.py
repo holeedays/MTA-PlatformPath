@@ -65,11 +65,3 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
         model = Edge
         # from_node and to_node will be returned as ids, which is fine for our case
         fields: list[str] = ["id", "station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
-
-# ignore the dict-like obj... it just represents the dict-like object that the serializer will take to serialize
-class CompoundEdgesNodesSerializer(serializers.Serializer[dict[str, QuerySet[Edge] | list[Node]]]):
-    # serializer class that serializes multiple models (in this case... edges and nodes)
-
-    # we use the many=True param because we're passing a collection of objects versus singular objects
-    edges = EdgeSerializer(many=True) 
-    nodes = NodeSerializer(many=True)

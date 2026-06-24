@@ -1,32 +1,41 @@
-import { loadDiagram, highlightNode, showLayer } from "./_highlighter.ts";
-import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
-declare const panzoom: any;
-
+import { SvgRenderer } from "./svg_renderer.ts";
+import { PathFinder, type PathStep } from "./path_finder.ts";
+import { StationData, type StationResponse } from "./station_data.ts";
+import { Slugifier } from "./slugifier.ts"
+import { URLHandler } from "./url_handler.ts";
 
 class App {
     private pathFinder: PathFinder;
+    private stationData: StationData;
     private currentPath: PathStep[] | null = null;
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
-    private currentPanZoom: any = null;
+    private svgRenderer: SvgRenderer;
 
     constructor() {
         this.pathFinder = new PathFinder();
+        this.stationData = new StationData();
+        this.svgRenderer = new SvgRenderer();
     }
 
-    // initializes the app: loads diagram, fetches station data, sets up event listeners
-    public async init(stationName: string): Promise<void> {
+    // initializes the page: loads diagram, fetches station data, sets up event listeners
+    public async init(stationID: number): Promise<void> {
+
+        // Load the station information from database (The station's edges and nodes)
+        this.station = await this.stationData.fetchStation(stationID);
+        if (!this.station) {
+            console.error('Failed to fetch station data');
+            return;
+        }
+
         // Set the station name in the heading
         const stationHeading = document.getElementById('diagram-name');
         if (stationHeading) {
-            stationHeading.innerText = `Station: ${stationName}`;
+            stationHeading.innerText = `Station: ${this.station?.station_model.name}`;
         }
 
-        // TODO: Dynamically determine diagram path based on stationName
-        await this.loadDiagramWithControls("/static/platformpathapp/diagrams/25Av.svg");
-        
-        // Get the station data (nodes/edges) and populate the dropdowns
-        this.station = await this.pathFinder.fetchStation(stationName);
+        // Load the station diagram
+        await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
 
         console.log('Fetched station data:', this.station);
 
@@ -48,38 +57,7 @@ class App {
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
     }
-
-        // Pan, zoom, and scroll controls for the station diagram
-        private setupDiagramControls(): void {
-            const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
-            if (!svg) console.log("SVG not found");
-            if (!svg) return;
     
-            // Cleanup the old even listener if we are loading a new station diagram
-            if (this.currentPanZoom) {
-                this.currentPanZoom.dispose();
-            }
-    
-            // Apply panzoom to the new SVG
-            this.currentPanZoom = panzoom(svg, {
-                maxZoom: 4,
-                minZoom: 0.3,
-                smoothScroll: false
-            });
-    
-            // Double click to reset view
-            svg.addEventListener('dblclick', () => {
-                this.currentPanZoom.moveTo(0, 0);
-                this.currentPanZoom.zoomAbs(0, 0, 1);
-            });
-        }
-    
-        // Helper method to load the diagram and immediately attach controls
-        private async loadDiagramWithControls(diagramPath: string): Promise<void> {
-            await loadDiagram(diagramPath);
-            this.setupDiagramControls();
-        }
-
     // Reads from the form and delegates to startNavigation
     private async handleFormSubmit(): Promise<void> {
         const fromNodeId = parseInt(
@@ -134,8 +112,9 @@ class App {
                 `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
         }
 
-        showLayer(step.layer, this.station?.unique_layers || []);
-        highlightNode(step.svgId);
+        this.svgRenderer.showLayer(step.layer, this.station?.unique_layers || []);
+        this.svgRenderer.highlightNode(step.svgId);
+        this.svgRenderer.centerOnNode(step.svgId);
 
         const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
         const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
@@ -159,6 +138,29 @@ class App {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+
+    const slugifier: Slugifier = new Slugifier();
+
+    // Get the station id based on the URL
+    const currentURL: string = URLHandler.getFullURLRoute();
+    const urlSplit: string[] = currentURL.split('/');
+    const stationSlug: string | undefined = urlSplit[urlSplit.length - 3]
+    
+    let stationName: string | null = null;
+    let stationID: number | null = null;
+    if (stationSlug) {
+        stationName = slugifier.deslugify(stationSlug)[0] as string ?? null;
+        stationID = slugifier.deslugify(stationSlug)[1] as number ?? null;
+    } else {
+        console.error("Invalid station slug in URL");
+        return
+    }
+
+    if (!stationName || !stationID) {
+        console.error("Failed to initialize station data");
+        return;
+    }
+
     const app = new App();
-    void app.init("25 Av");
+    app.init(stationID);
 });

@@ -1,5 +1,5 @@
 from .models import Line, Station, Edge, Node
-from .serializers import LineSerializer, StationSerializer, CompoundEdgesNodesSerializer
+from .serializers import EdgeSerializer, LineSerializer, NodeSerializer, StationSerializer
 
 from django.db.models import QuerySet, F
 from django.shortcuts import get_object_or_404
@@ -45,8 +45,8 @@ class EdgesNodesFetchAPI(APIView):
     
     def get(self, request: Request, station_id: int) -> Response:
         # get the station that has the right name and line with the right name
-        target_station: Station = get_object_or_404(Station,
-                                                     id=station_id)
+        target_station: Station = (Station.objects.filter(id=station_id)
+                                            .annotate(station_order_value=F("station_line__order"))).first()
 
         # get all edges related to our target station
         edges: QuerySet[Edge] = (Edge.objects.filter(station=target_station)
@@ -54,16 +54,19 @@ class EdgesNodesFetchAPI(APIView):
         # get all possible unique nodes -- do union with from & to nodes of the edge model to avoid missing any nodes
         # then cast it back to a list because remember, non-indexable stuff for serializers are a big no no
         nodes: list[Node] = list({edge.from_node for edge in edges} | {edge.to_node for edge in edges})
+
+        unique_layers: set[str] = {node.layer for node in nodes}
         
         # get our data arranged in a structure that we can fit into our compound model serializer
-        edges_nodes_data: dict[str, QuerySet[Edge] | list[Node]] = {
-            "edges": edges,
-            "nodes": nodes
+        edges_nodes_data = {
+            "station_model": StationSerializer(target_station).data,
+            "edge_models": EdgeSerializer(edges, many=True).data,
+            "unique_layers": list(unique_layers),
+            # django rest framework usually requires an indexable item (sets cannot ofc...)
+            "node_models": NodeSerializer(list(nodes), many=True).data
         }
-        # then serialize it
-        serialized_edges_nodes_data: ReturnDict[str, Any] = CompoundEdgesNodesSerializer(edges_nodes_data).data 
 
-        return Response(serialized_edges_nodes_data)
+        return Response(edges_nodes_data)
 
 
 
