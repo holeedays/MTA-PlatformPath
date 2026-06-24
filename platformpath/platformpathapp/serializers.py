@@ -1,12 +1,29 @@
+from typing import Any
+
 from rest_framework import serializers
 from django.db.models import QuerySet
 from .models import Line, Station, Edge, Node
 
 class LineSerializer(serializers.ModelSerializer[Line]):
     # here we state what information we want the API to serialize and send
+
+    # annotation field denoting whether the line has any available stations in the db
+    num_of_available_stations = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Line
-        fields: list[str] = ["name", "id"]
+        fields: list[str] = ["name", "color", "id", "num_of_available_stations"]
+
+    # this deals with annotations that may or may not exist when queried, we're overriding it currently
+    def to_representation(self, instance: Line) -> dict[str, Any]:
+        # get the default serialized dictionary data
+        data: dict[str, Any] = super().to_representation(instance)
+        # check if our current Line model instance actually has this field (e.g. we did .annotate with this custom property)
+        # if not, remove it from our serialization data
+        if (not hasattr(instance, "num_of_available_stations")):
+            data.pop("num_of_available_stations", None)
+        
+        return data
 
 class StationSerializer(serializers.ModelSerializer[Station]):
 
@@ -15,21 +32,23 @@ class StationSerializer(serializers.ModelSerializer[Station]):
         slug_field="name", # returns the name attribute of lines
         read_only=True # clients cannot write to the db
     )
-    # create a serializable field that returns a value from a given method
-    # in our case, it is the station's order
-    station_order = serializers.SerializerMethodField()
+    # create a serializable field that is annotated (doesn't exist in the model)
+    station_order = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Station
         fields: list[str] = ["name", "id", "diagram_path", "lines", "station_order"]
 
-    # NOTE: get_ prefix has to be linked to the variable name for this to work
-    # obj is the current Station instance; 
-    # station_line is the related_name (reverse relation) of station foreign key in StationLine model, allows us to access the through model
-    # directly from the Station model
-    def get_station_order(self, obj: Station) -> int:
-        # NOTE: this is an added parameter
-        return obj.station_order_value
+    # this deals with annotations that may or may not exist when queried, we're overriding it currently
+    def to_representation(self, instance: Station) -> dict[str, Any]:
+        # get the default serialized dictionary data
+        data: dict[str, Any] = super().to_representation(instance)
+        # check if our current Station model instance actually has this field (e.g. we did .annotate with this custom property)
+        # if not, remove it from our serialization data
+        if (not hasattr(instance, "station_order")):
+            data.pop("station_order", None)
+        
+        return data
 
 
 class NodeSerializer(serializers.ModelSerializer[Node]):
