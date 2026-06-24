@@ -18,7 +18,7 @@ export interface EdgeData {
 }
 
 export interface StationResponse {
-    station_model: { name: string; id: number; diagram_path: string; lines: string[]; station_order: number };
+    station_model: { name: string; id: number; diagram_path: string; lines: string[]; };
     edge_models: EdgeData[];
     node_models: NodeData[];
     unique_layers: string[];
