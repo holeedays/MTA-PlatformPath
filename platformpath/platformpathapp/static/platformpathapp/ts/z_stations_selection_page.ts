@@ -88,6 +88,28 @@ export class StationsSelectionPage {
         this.initAvailableLineSelectionContainer(targetLineSelectionContainer, stations);
         // configure the logic for our unavailable input forms
         this.initUnavailableLineSelectionContainers(unselectedLinesSelectionContainers, targetLineSelectionContainer);
+
+        if (stationsSelectionContainer !== null) {
+            this.capStationsSelectionOffset(stationsSelectionContainer);
+            window.addEventListener("resize", () => this.capStationsSelectionOffset(stationsSelectionContainer));
+            stationsSelectionContainer.classList.add("loaded");
+        }
+    }
+
+    // keeps the container page-centered unless it would collide with the header
+    private capStationsSelectionOffset(stationsSelectionContainer: HTMLDivElement): void {
+        const header: HTMLElement | null = document.querySelector(".header");
+        if (header === null) {
+            return;
+        }
+
+        const headerBottom: number = header.getBoundingClientRect().bottom;
+        const containerHeight: number = stationsSelectionContainer.getBoundingClientRect().height;
+        const centeredContainerTop: number = (window.innerHeight - containerHeight) / 2;
+        const headerGap: number = window.innerHeight * 0.03;
+        const offset: number = Math.max(0, headerBottom + headerGap - centeredContainerTop);
+
+        stationsSelectionContainer.style.setProperty("--stations-center-offset", `${offset}px`);
     }
 
     // provide the event listener and callback logic of the input form and selections list in the target container
@@ -101,6 +123,10 @@ export class StationsSelectionPage {
             diagram_path: string
         }[]): void {
 
+        // the css has these containers set invisible to avoid a visual glitch where all items on the template are
+        // deleted
+        targetLineSelectionContainer.style.visibility = "visible";
+
         const inputForm: HTMLInputElement | null = targetLineSelectionContainer.querySelector("input");
         const stationsList: HTMLOListElement | null = targetLineSelectionContainer.querySelector("ol");
 
@@ -113,16 +139,26 @@ export class StationsSelectionPage {
             return;
         }
 
-        // create another array to hold all the button elements we will create and add to to our ordered list
-        const stationListButtons: HTMLButtonElement[] = [];
+        // create another array to hold all the list & button elements (tuples) we will create and add to to our list
+        const listElements: [HTMLLIElement, HTMLButtonElement][] = [];
 
         // create our buttons and add even listeners for each one
         for (const station of stations) {
             const button: HTMLButtonElement = document.createElement("button");
+            // this items will contain the button and will be appended to our list
+            const listItemWrapper: HTMLLIElement = document.createElement("li");
+            // also add this div to contain the order number (it'll be custom over the original ordered list)
+            const orderIdentifier: HTMLDivElement = document.createElement("div");
+
             button.innerHTML = station.name;
             button.value = station.name;
-            stationsList.append(button);
-            stationListButtons.push(button);
+            // we'll use this ordering over the ordered list's default numbering style
+            orderIdentifier.innerHTML = `${station.station_order}`;
+            orderIdentifier.classList.add("order_identifier");
+
+            listItemWrapper.append(orderIdentifier, button);
+            stationsList.appendChild(listItemWrapper);
+            listElements.push([listItemWrapper, button]);
 
             button.addEventListener("click", () => {
                 const currentURL: string = URLHandler.getFullURLRoute();
@@ -136,13 +172,13 @@ export class StationsSelectionPage {
             // create a regexp that tests whether any string matches with the current input form value (case insensitive)
             const userInputRegex: RegExp = new RegExp(`${inputForm.value}`, "i");
             // iterate through each button amd check whether the user input value matches with their value
-            for (const button of stationListButtons) {
+            for (const [listElement, buttonElement] of listElements) {
                 // if it doesn't have the value, add a class to make it "hidden" from the container (CSS will handle it)
-                if (!userInputRegex.test(button.value)) {
-                    button.classList.add("hidden");
+                if (!userInputRegex.test(buttonElement.value)) {
+                    listElement.classList.add("hidden");
                 }
                 else {
-                    button.classList.remove("hidden");
+                    listElement.classList.remove("hidden");
                 }
             }
         });
