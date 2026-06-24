@@ -4,7 +4,7 @@ import { StationData, type StationResponse } from "./station_data.ts";
 import { Slugifier } from "./slugifier.ts"
 import { URLHandler } from "./url_handler.ts";
 
-class App {
+class StationMap {
     private pathFinder: PathFinder;
     private stationData: StationData;
     private currentPath: PathStep[] | null = null;
@@ -161,6 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const app = new App();
-    app.init(stationID);
+    const stationMap = new StationMap();
+    stationMap.init(stationID);
 });
