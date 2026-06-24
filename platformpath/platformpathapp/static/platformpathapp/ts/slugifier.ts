@@ -4,6 +4,9 @@ export class Slugifier {
 
     constructor() {
         this.cache = {};
+
+        this.setupCache();
+        console.log(this.cache);
     }
 
     // slugify a list of terms to be URL slug friendly
@@ -26,21 +29,13 @@ export class Slugifier {
             fullSlugifiedterm += termSlugified.toLowerCase();
         }
 
-        // saves the slug so we can deslugify the term if we wanted to later
-        if (!(fullSlugifiedterm in this.cache)) {
-            this.cache[fullSlugifiedterm] = terms;
-        }
-        // in the case the key already exists, we will just append those values to the existing array of strings
-        else {
-            for (const term in terms) {
-                this.cache[fullSlugifiedterm]?.push(term);
-            }
-        }
+        // cache this term into our cache
+        this.cacheTerms(fullSlugifiedterm, terms);
 
         return fullSlugifiedterm;
     }
 
-    // NOTE: You can only deslugify terms that you've used previously with this slugifier class instance
+    // NOTE: You can only deslugify terms that you've used previously with this slugifier class instance 
     // deslugifies a slugifiedTerms (if it exists within this current class instance)
     public deslugify(slugfiedTerm: string): (string | number)[] {
         const originalTerms: (string | number)[] | undefined = this.cache[slugfiedTerm];
@@ -52,5 +47,30 @@ export class Slugifier {
         else {
             return originalTerms;
         }
+    }
+
+    // saves a slug so we can deslugify the term if we wanted to later, used in slugify()
+    private cacheTerms(slugifiedTerm: string, terms: (string | number)[]): void {
+        this.cache[slugifiedTerm] = terms;
+        // besides saving it to our local cache, save it to our session storage cache
+        sessionStorage.setItem("slugifierCache", JSON.stringify(this.cache));
+    }
+
+    // sets up the logic for our slugifier cache
+    private setupCache(): void {
+        // retrieve any previously uploaded cache data in our session, if any
+        const cacheStringified: string | null = sessionStorage.getItem("slugifierCache");
+        if (cacheStringified !== null) {
+            this.cache = JSON.parse(cacheStringified);
+        }
+
+        // Keep the cache updated if restored from bfcache (e.g. sometimes browsers like to store javascript states in
+        // memory when backtracking a page, this deals with that)
+        window.addEventListener("pageshow", () => {
+            const cacheStringified: string | null = sessionStorage.getItem("slugifierCache");
+            if (cacheStringified !== null) {
+               this.cache = JSON.parse(cacheStringified);
+            }
+        });
     }
 }

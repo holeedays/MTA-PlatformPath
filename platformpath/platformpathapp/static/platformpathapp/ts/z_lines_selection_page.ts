@@ -39,7 +39,7 @@ export class LinesSelectionPage {
 
         // recursively get the button container elements from the html template and the buttons within it
         const linesButtonContainer: HTMLDivElement | null = document.getElementById("line_buttons_container") as HTMLDivElement;
-        const subwayLinesColorGroups: HTMLCollection = linesButtonContainer.children;
+        const subwayLinesColorGroups: HTMLCollection = linesButtonContainer?.children;
         for (const colorGroup of subwayLinesColorGroups) {
             for (const lineButtonContainer of colorGroup.children) {
                 // get the button
