@@ -19,5 +19,5 @@ def lines_selection(request: HttpRequest) -> HttpResponse:
 def stations_selection(request: HttpRequest, line_slug: str) -> HttpResponse:
     return render(request, "platformpathapp/stations_selection.html")
 
-def interactive_map(response: HttpRequest, line_slug: str, station_slug: str) -> HttpResponse:
-    return HttpResponse("Hello World")
+def interactive_map(request: HttpRequest, line_slug: str, station_slug: str) -> HttpResponse:
+    return render(request, "platformpathapp/path_test.html")

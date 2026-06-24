@@ -1,6 +1,6 @@
 // Copy of _app.ts with logic that displays movement between stations
 import { SvgRenderer } from "./svg_renderer.ts";
-import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
+import { PathFinder } from "./path_finder.ts";
 import { TripManager, type TripPhase } from "./trip_manager.ts";
 
 const DEMO_PHASES: TripPhase[] = [

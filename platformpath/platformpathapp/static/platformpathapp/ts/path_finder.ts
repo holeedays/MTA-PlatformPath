@@ -1,28 +1,5 @@
 import { DataFetch } from "./data_fetch.ts";
-
-interface NodeData {
-    id: number;
-    node_type: string;
-    label: string;
-    svg_id: string;
-    layer: string;
-    is_accessible: boolean;
-}
-
-interface EdgeData {
-    from_node: number;
-    to_node: number;
-    instruction_forward: string;
-    instruction_backward: string;
-    is_active: boolean;
-}
-
-export interface StationResponse {
-    station_model: { name: string; diagram_path: string; };
-    edge_models: EdgeData[];
-    node_models: NodeData[];
-    unique_layers: string[];
-}
+import { type StationResponse, type NodeData } from "./station_data.ts"
 
 export interface PathStep {
     svgId: string;
@@ -37,6 +14,8 @@ export class PathFinder {
         this.stationCache = {};
     }
 
+    // FIX: fetchStation should probably be taking in a station ID instead of a name and will
+    // probably have to move to using data_fetch_new instead of data_fetch
     public async fetchStation(stationName: string): Promise<StationResponse | null> {
         // Return cached version if we already have it
         const cachedStation = this.stationCache[stationName];
@@ -58,6 +37,23 @@ export class PathFinder {
         const station = data[stationName] as StationResponse;
         this.stationCache[stationName] = station;
         return station;
+    }
+
+    // FIX: ok this method below to get svg feels super out of place. In fact fetch stations
+    // should not be in this class at all. There should be a centralized place (maybe another class)
+    // to get station information and store it so that it is available to the classes that need it
+    // For now this is a place holder to as a way to load the svg based on the station name
+    
+    // additionally this function also assumes that fetch station for the station that we need the svg
+    // for is already called and will return an error otherwise. It will not make another fetch request.
+    // not the best but it is just a placeholder
+    public fetchStationSVG(stationName: string): string {
+        const station = this.stationCache[stationName];
+        if (!station) {
+            console.error('Station not found in cache:', stationName);
+            return '';
+        }
+        return station.station_model.diagram_path;
     }
 
     public findPath(

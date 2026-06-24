@@ -1,10 +1,12 @@
 import { SvgRenderer } from "./svg_renderer.ts";
-import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
-declare const panzoom: any;
-
+import { PathFinder, type PathStep } from "./path_finder.ts";
+import { StationData, type StationResponse } from "./station_data.ts";
+import { Slugifier } from "./slugifier.ts"
+import { URLHandler } from "./url_handler.ts";
 
 class App {
     private pathFinder: PathFinder;
+    private stationData: StationData;
     private currentPath: PathStep[] | null = null;
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
@@ -12,22 +14,28 @@ class App {
 
     constructor() {
         this.pathFinder = new PathFinder();
+        this.stationData = new StationData();
         this.svgRenderer = new SvgRenderer();
     }
 
-    // initializes the app: loads diagram, fetches station data, sets up event listeners
-    public async init(stationName: string): Promise<void> {
+    // initializes the page: loads diagram, fetches station data, sets up event listeners
+    public async init(stationID: number): Promise<void> {
+
+        // Load the station information from database (The station's edges and nodes)
+        this.station = await this.stationData.fetchStation(stationID);
+        if (!this.station) {
+            console.error('Failed to fetch station data');
+            return;
+        }
+
         // Set the station name in the heading
         const stationHeading = document.getElementById('diagram-name');
         if (stationHeading) {
-            stationHeading.innerText = `Station: ${stationName}`;
+            stationHeading.innerText = `Station: ${this.station?.station_model.name}`;
         }
 
-        // TODO: Dynamically determine diagram path based on stationName
-        await this.svgRenderer.loadDiagramWithControls("/static/platformpathapp/diagrams/25Av.svg");
-
-        // Get the station data (nodes/edges) and populate the dropdowns
-        this.station = await this.pathFinder.fetchStation(stationName);
+        // Load the station diagram
+        await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
 
         console.log('Fetched station data:', this.station);
 
@@ -130,6 +138,29 @@ class App {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+
+    const slugifier: Slugifier = new Slugifier();
+
+    // Get the station id based on the URL
+    const currentURL: string = URLHandler.getFullURLRoute();
+    const urlSplit: string[] = currentURL.split('/');
+    const stationSlug: string | undefined = urlSplit[urlSplit.length - 3]
+    
+    let stationName: string | null = null;
+    let stationID: number | null = null;
+    if (stationSlug) {
+        stationName = slugifier.deslugify(stationSlug)[0] as string ?? null;
+        stationID = slugifier.deslugify(stationSlug)[1] as number ?? null;
+    } else {
+        console.error("Invalid station slug in URL");
+        return
+    }
+
+    if (!stationName || !stationID) {
+        console.error("Failed to initialize station data");
+        return;
+    }
+
     const app = new App();
-    void app.init("25 Av");
+    app.init(stationID);
 });

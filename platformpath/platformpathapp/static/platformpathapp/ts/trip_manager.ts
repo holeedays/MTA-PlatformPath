@@ -1,4 +1,5 @@
-import { PathFinder, type PathStep, type StationResponse } from "./path_finder.ts";
+import { PathFinder, type PathStep } from "./path_finder.ts";
+import { type StationResponse } from "./station_data.ts";
 
 export interface TripPhase {
     type: 'enter' | 'transfer' | 'exit';
