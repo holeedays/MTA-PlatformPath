@@ -21,8 +21,8 @@ Create separate web pages for user input
 
 Ivan ----
 TO DO:
+Fix Center node to work on any viewport size not just on the full_path page
 Make the third page for displaying individual stations
-    - Show a zoomable and movable station map
     - On the side there should be a vertical bar with segments
     matching the number of layers that the station have. Each segment
     corresponds to a layer and click on the section toggles it and shows
@@ -39,7 +39,10 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
-Create a new test page to navigate between two different stations
+Make the third page for displaying individual stations
+    - Show a zoomable and movable station map
+    - Uses new fetching api from the database
+Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     Issues Fixed:
     - Highlight on svg not working
     - Unable to go back after boarding the train to next station
