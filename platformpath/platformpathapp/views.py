@@ -1,5 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
+
+from .services.slug_verifier import SlugVerifier
+from .models import Line, Station
 
 # Create your views here.
 # ALL PAGES BELOW ARE FOR TESTING
@@ -14,7 +17,22 @@ def lines_selection(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/lines_selection.html")
 
 def stations_selection(request: HttpRequest, line_slug: str) -> HttpResponse:
+    if (not SlugVerifier.check_line_slug(line_slug)):
+        raise Http404
+
     return render(request, "platformpathapp/stations_selection.html")
 
 def interactive_map(request: HttpRequest, line_slug: str, station_slug: str) -> HttpResponse:
+    line_model: Line | None = SlugVerifier.check_line_slug(line_slug)
+    station_model: Station | None = SlugVerifier.check_station_slug(station_slug)
+
+    if (line_model is None or station_model is None):
+        raise Http404
+    
+    # in our slug verifier, we have prefetched the corresponding line and station models already so we can just compare as is
+    # we just have to check if these line and station models are related
+    if (not line_model in station_model.lines.all()):
+        raise Http404
+    
+
     return render(request, "platformpathapp/station_map.html")

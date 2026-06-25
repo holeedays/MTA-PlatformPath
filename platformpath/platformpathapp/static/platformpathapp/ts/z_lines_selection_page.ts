@@ -4,7 +4,9 @@ import { Slugifier } from "./slugifier.ts";
 
 // this class will handle the line selections route
 export class LinesSelectionPage {
+
     private slugifier: Slugifier;
+
     constructor() {
         this.slugifier = new Slugifier();
     }
@@ -13,77 +15,144 @@ export class LinesSelectionPage {
     public async init(): Promise<void> {
         console.log("We're currently selecting subway lines...");
 
-        // clear query parameters with the key "selected_line" (in case of page refreshes)
-        URLHandler.removeQueryParameter("selected_line");
         // initiate the subway line buttons
-        await this.initLineButtons(); 
+        await this.initElements(); 
     }
 
-    // master funcion to set up all the buttons in the lines selection page template
-    private async initLineButtons(): Promise<void> {
-        const lines: {name: string, id: number}[] = await DataFetch.fetchLines();
-        if (lines === null) {
-            console.warn("There are no subway lines in the database");
-        }   
-
-        // reorder the data into a lines hash map with the key being denoted by the button container element
-        const linesHashMap: Record<string, {name: string, id: number}> = {};
-        for (const line of lines) {
-            linesHashMap[`${line.name}_button_container`] = {name: line.name, id: line.id};
+    // master function to set up all the elements (primarily buttons) on the line selection page
+    private async initElements(): Promise<void> {
+      
+        const linesHashMap: Record<string, {
+            name: string, 
+            id: number,
+            color: string,
+            num_of_available_stations: number
+        }> | null = await this.fetchAndProcessLineData();
+        if (linesHashMap === null) {
+            console.warn("There is no data. Aborting initiating elements on this page");
+            return;
         }
 
-        // create arrays to hold the button references for the buttons that references lines that exist/don't exist within
-        // the database
+        // create arrays to hold the button references for the buttons that references lines that do/don't have stations
+        // in the database assocaited with them
         const availableLineButtons: HTMLButtonElement[] = [];
         const unavailableLineButtons: HTMLButtonElement[] = [];
+        // create an iterable hash map that maps the color of the line to the html div element
+        const subwayColorHashMap: Map<string, HTMLDivElement> = new Map<string, HTMLDivElement>;
 
-        // recursively get the button container elements from the html template and the buttons within it
-        const linesButtonContainer: HTMLDivElement | null = document.getElementById("line_buttons_container") as HTMLDivElement;
-        const subwayLinesColorGroups: HTMLCollection = linesButtonContainer?.children;
-        for (const colorGroup of subwayLinesColorGroups) {
-            for (const lineButtonContainer of colorGroup.children) {
+        // recursively get the individual line container elements and the buttons in them
+        const subwayLinesMasterContainer: HTMLDivElement | null = document.getElementById("subway_lines_master_container") as HTMLDivElement;
+        const subwayLinesContainerGroups: HTMLCollection = subwayLinesMasterContainer?.children;
+        for (const subwayLinesContainerGroup of subwayLinesContainerGroups) {
+            for (const subwayLineContainer of subwayLinesContainerGroup.children) {
                 // get the button
-                const lineButton: HTMLButtonElement | null = lineButtonContainer.querySelector("button");
-
-                if (lineButton === null) {
-                    console.warn(`${lineButtonContainer.id} doesn't have a button`);
+                const lineButton: HTMLButtonElement | null = subwayLineContainer.querySelector("button");
+                // also retrieve the line corresponding to this container
+                const line: {
+                    name: string, 
+                    id: number, 
+                    color: string, 
+                    num_of_available_stations: number} | undefined = linesHashMap[subwayLineContainer.id];
+                // make sure neither the item in the hashmap or the button does not exist
+                if (lineButton === null || line === undefined) {
+                    console.warn(
+                        `${subwayLineContainer.id} may not have a button or the container id may be spelled in the wrong way`,
+                        `Line container status: ${line}; Button status: ${lineButton}`
+                    );
                     continue;
                 }
-                // check whether the button corresponds to a line that exists and organize it appropriately
-                if (lineButtonContainer.id in linesHashMap) {
+                
+                // add the color class to the subway line container group (which groups all related-color lines together)
+                // this hash map will be fed to the initSubwayLineContainerGroup function to add the class
+                subwayColorHashMap.set(line.color, subwayLinesContainerGroup as HTMLDivElement);
+                // determine which array our line buttons belong to based on how many stations they have in the db
+                if (line.num_of_available_stations > 0)
                     availableLineButtons.push(lineButton);
-                }
-                else {
+                else 
                     unavailableLineButtons.push(lineButton);
-                }
             }
         }
 
         this.initAvailableButtons(availableLineButtons, linesHashMap);
         this.initUnavailableButtons(unavailableLineButtons);
+        this.initSubwayLineContainerGroups(subwayColorHashMap);
+    }
+
+    // fetches all subway line data and reorganizes it to usable data for init element
+    private async fetchAndProcessLineData(): Promise<Record<string, {
+            name: string,
+            id: number,
+            color: string,
+            num_of_available_stations: number
+        }> | null> {
+        const lines: {
+            name: string, 
+            id: number, 
+            color: string,
+            num_of_available_stations: number
+        }[] = await DataFetch.fetchLines();
+
+        // check if there is any data pulled, if not return null
+        if (lines === null)
+            return null;
+
+        // reconfigure the data to a hashmap where the specific id of the container belonging to that specific line is the
+        // key.... the key looks like: "D_line_container"
+        const linesHashMap: Record<string, {
+            name: string,
+            id: number,
+            color: string,
+            num_of_available_stations: number
+        }> = {};
+        lines.forEach((line: {name: string, id: number, color: string, num_of_available_stations: number}) => {
+            linesHashMap[`${line.name}_line_container`] = {
+                name: line.name, 
+                id: line.id, color: 
+                line.color, 
+                num_of_available_stations: line.num_of_available_stations};
+        });
+
+        return linesHashMap;
+    }
+
+    // configure the line container groups (mainly for adding classes like the color of the lines it is holding)
+    private initSubwayLineContainerGroups(subwayColorHashMap: Map<string, HTMLDivElement>): void {
+        for (const [color, subwayLineContainerGroup] of subwayColorHashMap) {
+            subwayLineContainerGroup.classList.add(color);
+        }
     }
 
     // add event listeners for the array of button elements and fill them with necessary metadata from lines hash map
     private initAvailableButtons(
         availableLineButtons: HTMLButtonElement[], 
-        linesHashMap: Record<string, {name: string, id: number}>): void {
+        linesHashMap: Record<string, {
+            name: string, 
+            id: number, 
+            color: string, 
+            num_of_available_stations: number
+        }>): void {
         // loop through all lines of available lines
         for (const lineButton of availableLineButtons) {
             // add our event listener
             lineButton.addEventListener("click", () => {
                 const currentURL: string = URLHandler.getFullURLRoute();
                 // get the right id to pass through the hash map
-                const lineButtonContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
-                let currentLine: {name: string, id: number} | undefined | null = null;
-                if (lineButtonContainer !== null) {
-                    currentLine = linesHashMap[lineButtonContainer.id];
+                const subwayLineContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
+                let currentLine: {
+                    name: string, 
+                    id: number,
+                    color: string,
+                    num_of_available_stations: number
+                } | undefined | null = null;
+                if (subwayLineContainer !== null) {
+                    currentLine = linesHashMap[subwayLineContainer.id];
                 }
 
                 // when the button is clicked, just route the url to the next page and add a slug for the metadata
                 // that we need
                 if (currentLine !== undefined && currentLine !== null) {
-                    const slugifiedString: string = this.slugifier.slugify(currentLine.name, currentLine.id);
-                    URLHandler.redirectTo(currentURL + slugifiedString + "/stations/");
+                    const lineSlug: string = this.slugifier.slugify(currentLine.color, currentLine.name, currentLine.id);
+                    URLHandler.redirectTo(currentURL + lineSlug + "/stations/");
                 }
             });
         }

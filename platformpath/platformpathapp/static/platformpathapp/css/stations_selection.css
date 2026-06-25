@@ -17,26 +17,41 @@
     font-family: Helvetica;
 }
 
+/* Add a page load animation to make it look more immersive than it actually is */
+
+@keyframes page_load_in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 body {
     --header-clearance: 8vw;
     --header-gap: 3vh;
 
     /* Using display grid here to allow dynamic centering of singular elements within the page */
     display: grid;
-    grid-template-areas: "page";
-    place-items: center;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    align-content: start;
     min-height: 100vh;
     margin: 0;             
+
+    animation: page_load_in 0.5s ease-in-out both;
 }
 
 /* HEADER STYLING */
 
 .header {
+    grid-row: 1;
     display: flex;
     flex-direction: column;
-    grid-area: page;
     align-items: center;
-    align-self: start;
+    margin-top: 2vh;
 }
 .header .title {
     display: flex;
@@ -60,45 +75,19 @@ body {
     margin: 0 0.2vw 0 0;
 }
 
-/* STYLING FOR MASTER CONTAINER FOR ALL SUBWAY LINES */
+/* STYLING FOR PARENT CONTAINER */
 
 .stations_selection_container {
-    grid-area: page;
-
-    box-sizing: border-box;
-    width: clamp(20rem, 50vw, calc(100vw - 2rem));
-    transform: translateY(var(--stations-center-offset, 0px));
-    opacity: 0;
-    max-height: calc(100vh - var(--header-clearance) - var(--header-gap));
-    overflow: visible;
-}
-
-@keyframes page_load_in {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-.stations_selection_container.loaded {
-    animation: page_load_in 0.25s ease-in-out forwards;
-}
-
-/* STYLING FOR PARENT CONTAINERS FOR EACH SUBWAY LINE */
-
-.subway_line_container {
+    grid-row: 2;
+    margin-top: 5vh;
     display: flex;
     flex-direction: column;
 
     align-items: center;
-    visibility: hidden;
 }
 
 /* LOGO INPUT CONTAINER STYLING */
-.subway_line_container .logo_input_container {
+.logo_input_container {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -109,26 +98,26 @@ body {
 
 /* SUBWAY LOGO STYLING */
 
-.subway_line_container .logo {
+.logo {
     font-weight: bold;
     font-size: 3vw; 
-    text-align: center;
+
+    /* Bulletproof flexbox centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     /* Background and foreground colors */
-
-    color: white;
+    color: var(--text-color, white);
+    background-color: var(--line-color);
 
     /* The next one sets up the circle */
-
     border-radius: 50%;
     border-color: transparent;
 
     /* Try varying these styles, and/or others, for your Subway font */
-
     width: 5vw;
     height: 5vw;
-    /* aspect-ratio: 1/1; */
-    line-height: 5vw;
     padding: 0;
     margin: 0;
 
@@ -136,39 +125,18 @@ body {
     flex-shrink: 0;
 }
 
-/* colors of each respective subway line group */
+/* Colors of each respective subway line group (DRY custom properties) */
 
-.blue .subway_line_container .logo {
-    background-color: var(--blue_lines);
-}
-.orange .subway_line_container .logo {
-    background-color: var(--orange_lines);
-}
-.yellow .subway_line_container .logo {
-    background-color: var(--yellow_lines);
-    color: #000000;
-}
-.lime_green .subway_line_container .logo {
-    background-color: var(--lime_green_lines);
-}
-.light_green .subway_line_container .logo {
-    background-color: var(--light_green_lines);
-}
-.gray .subway_line_container .logo {
-    background-color: var(--gray_lines);
-}
-.brown .subway_line_container .logo {
-    background-color: var(--brown_lines);
-}
-.red .subway_line_container .logo {
-    background-color: var(--red_lines);
-}
-.green .subway_line_container .logo {
-    background-color: var(--green_lines);
-}
-.purple .subway_line_container .logo {
-    background-color: var(--purple_lines);
-}
+.BLUE { --line-color: var(--blue_lines); }
+.ORANGE { --line-color: var(--orange_lines); }
+.YELLOW  { --line-color: var(--yellow_lines); --text-color: #000000; }
+.LIME_GREEN  { --line-color: var(--lime_green_lines); }
+.LIGHT_GREEN { --line-color: var(--light_green_lines); }
+.GRAY { --line-color: var(--gray_lines); }
+.BROWN { --line-color: var(--brown_lines); }
+.RED { --line-color: var(--red_lines); }
+.GREEN { --line-color: var(--green_lines); }
+.PURPLE { --line-color: var(--purple_lines); }
 
 /* INPUT FORM */
 
@@ -184,7 +152,7 @@ body {
 
 /* ORDERED LIST STYLING */
 
-.subway_line_container ol {
+ol.stations {
     align-items: center;
     justify-content: center;
 
@@ -195,7 +163,7 @@ body {
     width: 100%;
 }
 
-.subway_line_container ol li {
+ol.stations li {
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -215,19 +183,23 @@ body {
 li .order_identifier {
     font-weight: bold;
     font-size: 1vw; 
-    text-align: center;
+    
+    /* Bulletproof flexbox centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Dynamic local variables color mapping */
+    background-color: var(--line-color);
+    color: var(--text-color, #ffffff);
 
     /* The next one sets up the circle */
-
     border-radius: 50%;
     border: ridge black 0.2vw;
 
     /* Try varying these styles, and/or others, for your Subway font */
-
     width: 2vw;
     height: 2vw;
-    /* aspect-ratio: 1/1; */
-    line-height: 2vw;
     padding: 0;
     margin: 0;
 
@@ -244,272 +216,125 @@ li button {
     font-weight: bold;
 
     border: inset black 0.2vw;
+    
+    background-color: var(--line-color);
+    color: var(--text-color, #ffffff);
 }
 
-.subway_line_container ol li.hidden {
+ol.stations li.hidden {
     display: none;
 }
 
-/* color styling + interaction logic for the button and order identifier */
+/* color styling + interaction logic for the button and order identifier (Refactored cleanly) */
 
-.blue .order_identifier {
-    background-color: var(--blue_lines);
-    color: #ffffff;
-}
-.blue button {
-    background-color: var(--blue_lines);
-    color: #ffffff;
-}
 @media (hover:hover) {
-    .blue button:hover {
-        background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
+    li button:hover {
+        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
         transition: 0.25s ease-in-out;
     }
-    .blue li:has(button:hover) .order_identifier {
+    li:has(button:hover) .order_identifier {
         transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--blue_lines), #000000 10%);
+        background-color: color-mix(in srgb, var(--line-color), #000000 10%);
         transition: 0.25s ease-in-out;
     }
 }
-.blue button:active {
-        background-color: color-mix(in srgb, var(--blue_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.blue li:has(button:active) .order_identifier {
+li button:active {
+    background-color: color-mix(in srgb, var(--line-color), #000000 20%);
+    transition: 0.25s ease-in-out;
+}
+li:has(button:active) .order_identifier {
     transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--blue_lines), #000000 10%);
+    background-color: color-mix(in srgb, var(--line-color), #000000 10%);
     transition: 0.25s ease-in-out;
 }
 
-.orange .order_identifier {
-    background-color: var(--orange_lines);
-    color: #ffffff;
-}
-.orange button {
-    background-color: var(--orange_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .orange button:hover {
-        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+/* On viewports with plenty of height, allow perfect centering at exactly 50% of the entire display */
+@media (min-height: 650px) {
+    body {
+        grid-template-rows: 1fr;
+        grid-template-areas: "page";
+        align-content: stretch;
+        place-items: center;
     }
-    .orange li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--orange_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
+
+    .header {
+        grid-area: page;
+        align-self: start;
+        margin-top: 2vh;
     }
-}
-.orange button:active {
-        background-color: color-mix(in srgb, var(--orange_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+
+    .stations_selection_container {
+        grid-area: page;
+        align-self: center; /* Exactly 50% vertical center of the entire 100vh display */
+        margin-top: 0;
     }
-.orange li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--orange_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
 }
 
-.yellow .order_identifier {
-    background-color: var(--yellow_lines);
-    color: #000000;
-}
-.yellow button {
-    background-color: var(--yellow_lines);
-    color: #000000;
-}
-@media (hover:hover) {
-    .yellow button:hover {
-        background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-    .yellow li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--yellow_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.yellow button:active {
-        background-color: color-mix(in srgb, var(--yellow_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.yellow li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--yellow_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
+/* MOBILE FRIENDLY STYLING */
 
-.lime_green .order_identifier {
-    background-color: var(--lime_green_lines);
-    color: #ffffff;
-}
-.lime_green button {
-    background-color: var(--lime_green_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .lime_green button:hover {
-        background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+@media (max-width: 768px) {
+    /* Scale up font-sizes and layout spacing for small mobile screens */
+    
+    .header .title {
+        font-size: 8vw;
+        margin-bottom: 1vw;
     }
-    .lime_green li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--lime_green_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.lime_green button:active {
-        background-color: color-mix(in srgb, var(--lime_green_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.lime_green li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--lime_green_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
-.light_green .order_identifier {
-    background-color: var(--light_green_lines);
-    color: #ffffff;
-}
-.light_green button {
-    background-color: var(--light_green_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .light_green button:hover {
-        background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+    .header img {
+        height: 8vw;
     }
-    .light_green li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--light_green_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.light_green button:active {
-        background-color: color-mix(in srgb, var(--light_green_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.light_green li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--light_green_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
-.gray .order_identifier {
-    background-color: var(--gray_lines);
-    color: #ffffff;
-}
-.gray button {
-    background-color: var(--gray_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .gray button:hover {
-        background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+    .header .sub_title {
+        font-size: 3vw;
+        margin-bottom: 4vw;
     }
-    .gray li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--gray_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.gray button:active {
-        background-color: color-mix(in srgb, var(--gray_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.gray li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--gray_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
-.brown .order_identifier {
-    background-color: var(--brown_lines);
-    color: #ffffff;
-}
-.brown button {
-    background-color: var(--brown_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .brown button:hover {
-        background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+    /* Scale up input and line logo */
+    
+    .logo {
+        width: 14vw;
+        height: 14vw;
+        font-size: 8vw;
     }
-    .brown li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--brown_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.brown button:active {
-        background-color: color-mix(in srgb, var(--brown_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.brown li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--brown_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
-.red .order_identifier {
-    background-color: var(--red_lines);
-    color: #ffffff;
-}
-.red button {
-    background-color: var(--red_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .red button:hover {
-        background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+    .logo_input_container {
+        gap: 3vw;
+        padding: 0 4vw;
+        box-sizing: border-box;
     }
-    .red li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--red_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.red button:active {
-        background-color: color-mix(in srgb, var(--red_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.red li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--red_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
-.purple .order_identifier {
-    background-color: var(--purple_lines);
-    color: #ffffff;
-}
-.purple button {
-    background-color: var(--purple_lines);
-    color: #ffffff;
-}
-@media (hover:hover) {
-    .purple button:hover {
-        background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
+    .logo_input_container input {
+        font-size: 4.5vw;
+        border-width: 0.8vw;
+        padding: 1.5vw 2.5vw;
+        height: auto;
     }
-    .purple li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--purple_lines), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-.purple button:active {
-        background-color: color-mix(in srgb, var(--purple_lines), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-.purple li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--purple_lines), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
 
+    /* Scale up the station items for standard touch-target friendliness */
+    
+    ol.stations {
+        margin-top: 4vw;
+        padding: 0 4vw;
+        box-sizing: border-box;
+    }
+
+    ol.stations li {
+        gap: 2vw;
+        min-height: 10vw;
+        margin-bottom: 2vw;
+        font-size: 3.5vw;
+    }
+
+    li .order_identifier {
+        width: 7vw;
+        height: 7vw;
+        font-size: 3.5vw;
+        border-width: 0.4vw;
+    }
+
+    li button {
+        font-size: 3.5vw;
+        border-width: 0.4vw;
+        padding: 2vw;
+    }
+}

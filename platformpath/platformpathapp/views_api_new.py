@@ -1,7 +1,7 @@
 from .models import Line, Station, Edge, Node, StationLine
 from .serializers import EdgeSerializer, LineSerializer, NodeSerializer, StationSerializer
 
-from django.db.models import QuerySet, Count, OuterRef, Subquery
+from django.db.models import QuerySet, Count, OuterRef, Subquery, F
 from django.shortcuts import get_object_or_404
 from typing import Any
 
@@ -20,6 +20,8 @@ class LinesFetchAPI(ListAPIView[Line]):
         return (Line.objects.all()
                 # NOTE: since we specify related names in the stationline through model for the line and station model,
                 # django changed the reverse relation from "station_set" to "station" to avoid namespace collision
+                # NOTE: fetching by station only works for raw SQL (prefetch and other methods that dont involve double underscore
+                # usually means it's a python object)
                 .annotate(num_of_available_stations=Count("station")))
     
 # fetch all stations based on a selected line
