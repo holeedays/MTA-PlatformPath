@@ -37,10 +37,23 @@ export class SvgRenderer {
             const layer = document.getElementById(id);
             if (layer) {
                 if (id === layerId) {
-                    layer.style.opacity = "1.0"
+                    layer.style.opacity = "1.0";
+                    layer.style.pointerEvents = "auto";
                 } else {
-                    layer.style.opacity = "0.0"
+                    layer.style.opacity = "0.0";
+                    layer.style.pointerEvents = "none";
                 }
+            }
+        });
+    }
+
+    // Shows the entire map
+    public showAllLayers(uniqueLayers: string[]): void {
+        uniqueLayers.forEach((id) => {
+            const layer = document.getElementById(id);
+            if (layer) {
+                layer.style.opacity = "1.0";
+                layer.style.pointerEvents = "auto";
             }
         });
     }

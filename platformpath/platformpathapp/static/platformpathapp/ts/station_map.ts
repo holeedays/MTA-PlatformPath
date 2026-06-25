@@ -36,6 +36,7 @@ class StationMap {
 
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
+        this.initLayerControls();
 
         console.log('Fetched station data:', this.station);
 
@@ -56,6 +57,61 @@ class StationMap {
             ?.addEventListener("click", () => this.prevStep());
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
+    }
+
+    private initLayerControls(): void {
+        if (!this.station) return;
+
+        const layerOptions = document.getElementById("layer-options");
+        if (!layerOptions) return;
+
+        layerOptions.innerHTML = "";
+
+        const allLayersButton = this.createLayerButton("Entire map", true);
+        allLayersButton.addEventListener("click", () => {
+            this.svgRenderer.showAllLayers(this.station?.unique_layers || []);
+            this.setActiveLayerButton(allLayersButton);
+        });
+        layerOptions.appendChild(allLayersButton);
+
+        for (const layerId of this.station.unique_layers) {
+            const layerButton = this.createLayerButton(layerId);
+            layerButton.addEventListener("click", () => {
+                this.svgRenderer.showLayer(layerId, this.station?.unique_layers || []);
+                this.setActiveLayerButton(layerButton);
+            });
+            layerOptions.appendChild(layerButton);
+        }
+
+        this.svgRenderer.showAllLayers(this.station.unique_layers);
+    }
+
+    private createLayerButton(label: string, isActive: boolean = false): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("layer-option");
+        if (isActive) {
+            button.classList.add("active");
+        }
+        button.innerText = label;
+        return button;
+    }
+
+    private setActiveLayerButton(activeButton: HTMLButtonElement): void {
+        document.querySelectorAll(".layer-option").forEach((button) => {
+            button.classList.remove("active");
+        });
+        activeButton.classList.add("active");
+    }
+
+    private setActiveLayerButtonByLayer(layerId: string): void {
+        const layerButtons = document.querySelectorAll<HTMLButtonElement>(".layer-option");
+        for (const button of layerButtons) {
+            if (button.innerText === layerId) {
+                this.setActiveLayerButton(button);
+                return;
+            }
+        }
     }
     
     // Reads from the form and delegates to startNavigation
@@ -113,6 +169,7 @@ class StationMap {
         }
 
         this.svgRenderer.showLayer(step.layer, this.station?.unique_layers || []);
+        this.setActiveLayerButtonByLayer(step.layer);
         this.svgRenderer.highlightNode(step.svgId);
         this.svgRenderer.centerOnNode(step.svgId);
 
