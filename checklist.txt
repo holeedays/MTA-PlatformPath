@@ -21,15 +21,7 @@ Create separate web pages for user input
 
 Ivan ----
 TO DO:
-Fix Center node to work on any viewport size not just on the full_path page
-Make the third page for displaying individual stations
-    - On the side there should be a vertical bar with segments
-    matching the number of layers that the station have. Each segment
-    corresponds to a layer and click on the section toggles it and shows
-    that specific layer of the map
-    - Users can generate a path between two nodes within the stations
-    - Highlighted nodes are centered on (need to port from full_path.ts or make
-    a new ts file so both pages import from the same page?)
+The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
         appearance of the next button at this stage or make the button do the same 
@@ -39,10 +31,18 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Fix Center node to work on any viewport size not just on the full_path page
 Created a landing page on index view that you can get to discover/lines from
 Make the third page for displaying individual stations
+    - On the top there is a horizontal bar with radio buttons matching the 
+    number of layers (plus a button for the whole map) that the station have. Each segment
+    corresponds to a layer and click on the section toggles it and shows
+    that specific layer of the map
     - Show a zoomable and movable station map
     - Uses new fetching api from the database
+    - Users can generate a path between two nodes within the stations
+    - Highlighted nodes are centered on (need to port from full_path.ts or make
+    a new ts file so both pages import from the same page?)
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     Issues Fixed:
     - Highlight on svg not working
