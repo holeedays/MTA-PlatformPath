@@ -57,7 +57,6 @@ class EdgesNodesFetchAPI(APIView):
     def get(self, request: Request, station_id: int) -> Response:
         # get the station that has the right id and add a custom attribute
         target_station: Station = get_object_or_404(Station.objects.filter(id=station_id)
-                                                    .annotate(station_order=F("station_line__order"))
                                                     .prefetch_related("lines"))
 
         # get all edges related to our target station

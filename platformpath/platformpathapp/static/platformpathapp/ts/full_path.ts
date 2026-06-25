@@ -1,8 +1,9 @@
-// Copy of _app.ts with logic that displays movement between stations
+/*
 import { SvgRenderer } from "./svg_renderer.ts";
 import { PathFinder } from "./path_finder.ts";
 import { TripManager, type TripPhase } from "./trip_manager.ts";
 
+// TODO: Need to resolve the issue in TripManager
 const DEMO_PHASES: TripPhase[] = [
     {
         type: 'enter',
@@ -225,3 +226,4 @@ document.addEventListener("DOMContentLoaded", () => {
     const app = new App();
     void app.init();
 });
+*/

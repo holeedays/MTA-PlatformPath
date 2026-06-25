@@ -45,3 +45,69 @@ html, body {
 #diagram-container svg:active {
     cursor: grabbing; /* Updates cursor while dragging */
 }
+
+/* Highlighting styles for diagram paths */
+.highlighted {
+    opacity: 0.1;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.highlighted path {
+    fill: #b4ff1b;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 0.8;
+    }
+}
+
+.layer-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+}
+
+.layer-bar-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.layer-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.layer-option {
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 999px;
+  background: white;
+  color: #111;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.layer-option:hover,
+.layer-option.active {
+  background: #0039a6;
+  border-color: #0039a6;
+  color: white;
+}

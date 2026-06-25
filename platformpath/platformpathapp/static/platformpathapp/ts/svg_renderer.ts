@@ -37,10 +37,23 @@ export class SvgRenderer {
             const layer = document.getElementById(id);
             if (layer) {
                 if (id === layerId) {
-                    layer.style.opacity = "1.0"
+                    layer.style.opacity = "1.0";
+                    layer.style.pointerEvents = "auto";
                 } else {
-                    layer.style.opacity = "0.0"
+                    layer.style.opacity = "0.0";
+                    layer.style.pointerEvents = "none";
                 }
+            }
+        });
+    }
+
+    // Shows the entire map
+    public showAllLayers(uniqueLayers: string[]): void {
+        uniqueLayers.forEach((id) => {
+            const layer = document.getElementById(id);
+            if (layer) {
+                layer.style.opacity = "1.0";
+                layer.style.pointerEvents = "auto";
             }
         });
     }
@@ -76,38 +89,33 @@ export class SvgRenderer {
     }
 
     // Helper function to zoom on on a node based on svgId
-    public centerOnNode(svgId: string, zoom: number = 2): void {
-        const container = document.getElementById('diagram-container');
-        const svg = container?.querySelector('svg') as SVGSVGElement | null;
-        const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
+public centerOnNode(svgId: string, zoom: number = 2): void {
+    const container = document.getElementById("diagram-container");
+    const svg = container?.querySelector("svg") as SVGSVGElement | null;
+    const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
 
-        if (!container || !svg || !target || !this.currentPanZoom) return;
+    if (!container || !svg || !target || !this.currentPanZoom) return;
 
-        // Get the bounding box of the target element in SVG coordinate space
-        const bbox = target.getBBox();
-        const targetCenterX = bbox.x + bbox.width / 2;
-        const targetCenterY = bbox.y + bbox.height / 2;
+    this.currentPanZoom.moveTo(0, 0);
+    this.currentPanZoom.zoomAbs(0, 0, 1);
 
-        // Get the SVG's own viewBox scale factor (SVG coords → pixel coords)
-        const viewBox = svg.viewBox.baseVal;
-        const svgPixelWidth = svg.clientWidth;
-        const svgPixelHeight = svg.clientHeight;
-        const scaleX = svgPixelWidth / viewBox.width;
-        const scaleY = svgPixelHeight / viewBox.height;
+    requestAnimationFrame(() => {
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
 
-        // Convert SVG coords to pixel coords
-        const targetPixelX = targetCenterX * scaleX;
-        const targetPixelY = targetCenterY * scaleY;
+        const targetCenterX =
+            targetRect.left - containerRect.left + targetRect.width / 2;
+        const targetCenterY =
+            targetRect.top - containerRect.top + targetRect.height / 2;
 
-        // Compute the pan offset to center the target in the container
-        const containerCenterX = container.clientWidth / 2;
-        const containerCenterY = container.clientHeight / 2;
+        const containerCenterX = containerRect.width / 2;
+        const containerCenterY = containerRect.height / 2;
 
-        // Apply zoom first (zooming around the target point), then pan to center
-        this.currentPanZoom.zoomAbs(targetPixelX, targetPixelY, zoom);
+        this.currentPanZoom.zoomAbs(0, 0, zoom);
         this.currentPanZoom.moveTo(
-            containerCenterX - targetPixelX * zoom,
-            containerCenterY - targetPixelY * zoom
+            containerCenterX - targetCenterX * zoom,
+            containerCenterY - targetCenterY * zoom
         );
-    }
+    });
+}
 }

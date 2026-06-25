@@ -6,13 +6,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'platformpathapp/css/style.css' %}">
     <link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
 </head>
 
 <body>
     <div class="main">
         <h1 id="diagram-name"></h1>
+        <div class="layer-bar" aria-label="Station map layers">
+            <span class="layer-bar-label">Layers</span>
+            <div id="layer-options" class="layer-options"></div>
+        </div>
         <div class="diagram-card">
             <div id="diagram-container">
             <!-- SVG loads here -->
