@@ -32,6 +32,7 @@ class StationSerializer(serializers.ModelSerializer[Station]):
         slug_field="name", # returns the name attribute of lines
         read_only=True # clients cannot write to the db
     )
+
     # create a serializable field that is annotated (doesn't exist in the model)
     station_order = serializers.IntegerField(read_only=True)
 

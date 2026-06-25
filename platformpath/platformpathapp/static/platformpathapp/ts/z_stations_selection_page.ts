@@ -1,14 +1,10 @@
 import { DataFetch } from "./data_fetch_new.ts";
-import { Slugifier } from "./slugifier.ts";
+import { slugify } from "./slugs.ts";
 import { URLHandler } from "./url_handler.ts";
 
 // this class will handle the stations selections route
 export class StationsSelectionPage {
-
-    private slugifier: Slugifier;
-
     constructor() {
-        this.slugifier = new Slugifier();
     }
 
     // this is the function we'll run on app.ts
@@ -21,23 +17,31 @@ export class StationsSelectionPage {
     // umbrella function to init all elements in the html page, available or unavailable
     private async initElements(): Promise<void> {
         // retrieve the metadata embedded in our url
-        const slugData: {lineColor: string, lineName: string, lineID: number} | null = this.getDataFromSlug();
-        if (slugData === null) {
-            console.warn("Cannot extract data from the URL. Aborting initializing this page.");
+        const lineID: number | null = this.getLineIDFromSlug();
+        if (lineID === null) {
+            console.warn("Cannot extract the ID from the URL. Aborting initializing this page.");
             return;
         }
         // get our stations data using the corresponding line id from our slug data
         const stations: {
-            name: string, 
-            id: number, 
-            station_order: number, 
-            lines: string[], 
-            diagram_path: string
-            }[] | null = await this.fetchData(slugData.lineID);
+            line_reference: {
+                name: string,
+                color: string, 
+                id: number
+            },
+            stations: {
+                name: string, 
+                id: number, 
+                station_order: number, 
+                lines: string[], 
+                diagram_path: string
+            }[]
+            } | null = await this.fetchData(lineID);
         if (stations === null) {
             console.warn("Cannot fetch station data. Aborting initializing this page.");
             return;
         }
+        console.log(stations);
         
         // get the main elements we'll be modifying
         const stationsSelectionContainer: HTMLDivElement | null = (
@@ -58,67 +62,45 @@ export class StationsSelectionPage {
         }
 
         // configure these elements
-        this.initStationSelectionContainer(stationsSelectionContainer, slugData.lineColor);
-        const stationListElements: [HTMLLIElement, HTMLButtonElement][] = this.initStationsList(stationsList, stations);
+        this.initStationSelectionContainer(stationsSelectionContainer, stations.line_reference.color);
+        const stationListElements: [HTMLLIElement, HTMLButtonElement][] = this.initStationsList(stationsList, stations.stations);
         this.initInputForm(inputForm, stationListElements);
-        this.initLogoDiv(logoDiv, slugData.lineName);
+        this.initLogoDiv(logoDiv, stations.line_reference.name);
     }
     
     // get data from the slug in our url
-    private getDataFromSlug(): {lineColor: string, lineName: string, lineID: number} | null {
+    private getLineIDFromSlug(): number | null {
         // extract the line slug from the URL and get the necessary data from it
         // the url currently is: discover/lines/some_line_slug/stations/
         const currentURL: string = URLHandler.getFullURLRoute();
         const urlSplit: string[] = currentURL.split("/");
         
         const lineSlug: string | undefined = urlSplit[urlSplit.length - 3];
-        // init items that we need 
-        let lineColor: string | null = null;
-        let lineName: string | null = null;
-        let lineID: number | null = null;
-
-        // deslugify our value
-        if (lineSlug !== undefined) {
-            const deslugifiedSlug: (string | number)[] =  this.slugifier.deslugify(lineSlug);
-
-            lineColor = deslugifiedSlug[0] as string ?? null;
-            lineName = deslugifiedSlug[1] as string ?? null;
-            lineID = deslugifiedSlug[2] as number ?? null;
-
-            // will add a manual check later in case the slugifier doesn't work...
-        }
-
-        // check if the line slug actually yields valid results
-        if (lineColor === null || lineName === null || lineID === null) {
-            console.warn(
-                "Cannot init the page because either lineColor/lineName/lineID from the lineSlug is undefined",
-                `lineColor status: ${lineColor}; lineName status: ${lineName}; lineID status: ${lineID}`
-            );
-            return null;
-        }
+        const lineSlugSplit: string[] | undefined = lineSlug?.split("-");
+        const lineID: number | undefined = Number(lineSlugSplit?.at(-1));
         
-        return {lineColor: lineColor, lineName: lineName, lineID: lineID};
+        if (lineID !== undefined && !Number.isNaN(lineID))
+            return lineID;
+        else 
+            return null;
     }
 
     // fetch the stations data given our our line ID
-    private async fetchData(lineID: number): Promise<{    
-        name: string, 
-        id: number, 
-        station_order: number,
-        lines: string[],
-        diagram_path: string
-        }[] | null> {
-
-        // make the fetch request and retrieve the station data
-        const stations: {
+    private async fetchData(lineID: number): Promise<{ 
+        line_reference: {
+            name: string,
+            color: string, 
+            id: number
+        },
+        stations: {
             name: string, 
             id: number, 
-            station_order: number,
-            lines: string[],
+            station_order: number, 
+            lines: string[], 
             diagram_path: string
-        }[] | null = await DataFetch.fetchStations(lineID);
+        }[]} | null> {
 
-        return stations;
+        return await(DataFetch.fetchStations(lineID));
     }
 
     // configure our stations selection container (the parent container of our input form/selection container)
@@ -162,7 +144,7 @@ export class StationsSelectionPage {
             // add the event listener logic for our buttons (redirecting to another part of our url)
             button.addEventListener("click", () => {
                 const currentURL: string = URLHandler.getFullURLRoute();
-                const stationSlug: string = this.slugifier.slugify(station.name, station.id);
+                const stationSlug: string = slugify(station.name, station.id);
                 window.location.href = currentURL + stationSlug + "/map/";
             });
         }

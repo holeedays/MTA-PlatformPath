@@ -1,14 +1,10 @@
 import { DataFetch } from "./data_fetch_new.ts";
 import { URLHandler } from "./url_handler.ts";
-import { Slugifier } from "./slugifier.ts";
+import { slugify } from "./slugs.ts";
 
 // this class will handle the line selections route
 export class LinesSelectionPage {
-
-    private slugifier: Slugifier;
-
     constructor() {
-        this.slugifier = new Slugifier();
     }
 
     // this is the function we'll run on app_new.ts
@@ -151,7 +147,7 @@ export class LinesSelectionPage {
                 // when the button is clicked, just route the url to the next page and add a slug for the metadata
                 // that we need
                 if (currentLine !== undefined && currentLine !== null) {
-                    const lineSlug: string = this.slugifier.slugify(currentLine.color, currentLine.name, currentLine.id);
+                    const lineSlug: string = slugify(currentLine.color, currentLine.name, currentLine.id);
                     URLHandler.redirectTo(currentURL + lineSlug + "/stations/");
                 }
             });

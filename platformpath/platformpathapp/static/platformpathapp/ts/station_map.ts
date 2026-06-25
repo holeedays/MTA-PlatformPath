@@ -1,7 +1,7 @@
 import { SvgRenderer } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
 import { StationData, type StationResponse } from "./station_data.ts";
-import { Slugifier } from "./slugifier.ts"
+import { slugify } from "./slugs.ts"
 import { URLHandler } from "./url_handler.ts";
 
 class StationMap {
@@ -195,25 +195,21 @@ class StationMap {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    const slugifier: Slugifier = new Slugifier();
-
     // Get the station id based on the URL
     const currentURL: string = URLHandler.getFullURLRoute();
     const urlSplit: string[] = currentURL.split('/');
     const stationSlug: string | undefined = urlSplit[urlSplit.length - 3]
     
-    let stationName: string | null = null;
-    let stationID: number | null = null;
+    let stationID: number | null | undefined = null;
     if (stationSlug) {
-        stationName = slugifier.deslugify(stationSlug)[0] as string ?? null;
-        stationID = slugifier.deslugify(stationSlug)[1] as number ?? null;
+        const stationSlugSplit: string[] = stationSlug.split("-");
+        stationID = Number(stationSlug.at(-1));
     } else {
         console.error("Invalid station slug in URL");
         return
     }
 
-    if (!stationName || !stationID) {
+    if (!stationID) {
         console.error("Failed to initialize station data");
         return;
     }

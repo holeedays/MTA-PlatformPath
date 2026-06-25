@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, Http404
 
-from .services.slug_verifier import SlugVerifier
+from .services.slugs import slugify, check_line_slug, check_station_slug
 from .models import Line, Station
 
 # Create your views here.
@@ -17,14 +17,14 @@ def lines_selection(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/lines_selection.html")
 
 def stations_selection(request: HttpRequest, line_slug: str) -> HttpResponse:
-    if (not SlugVerifier.check_line_slug(line_slug)):
+    if (not check_line_slug(line_slug)):
         raise Http404
 
     return render(request, "platformpathapp/stations_selection.html")
 
 def interactive_map(request: HttpRequest, line_slug: str, station_slug: str) -> HttpResponse:
-    line_model: Line | None = SlugVerifier.check_line_slug(line_slug)
-    station_model: Station | None = SlugVerifier.check_station_slug(station_slug)
+    line_model: Line | None = check_line_slug(line_slug)
+    station_model: Station | None = check_station_slug(station_slug)
 
     if (line_model is None or station_model is None):
         raise Http404

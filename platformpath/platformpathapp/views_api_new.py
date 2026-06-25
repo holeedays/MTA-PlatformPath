@@ -25,31 +25,38 @@ class LinesFetchAPI(ListAPIView[Line]):
                 .annotate(num_of_available_stations=Count("station")))
     
 # fetch all stations based on a selected line
-class StationsFetchAPI(ListAPIView[Station]):
+class StationsFetchAPI(APIView):
     serializer_class = StationSerializer
 
-    def get_queryset(self) -> QuerySet[Station, Station]:
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         # pull out our line_slug param from the URL request... we can also directly access the value as a param
         # in the get() method
         line_id: int = self.kwargs["line_id"]
+
+        target_line: Line = get_object_or_404(Line, id=line_id)
 
         # since we're filtering by stations and calling StationLine, this creates an unneccessary JOIN since StationLine
         # is many to one with the Station model; as such creating a secondary query avoid this join (or we can call
         # StationLine and filter that way BUT we wouldn't be able to get a queryset of Stations)
         order_subquery: QuerySet[StationLine, dict[str, Any]] = StationLine.objects.filter(
             station=OuterRef("id"),
-            line_id=line_id
+            line_id=target_line
         ).values("order")[:1] # the list slice is required and forces the query to only fetch 1 row
 
         # get all our stations...
-        stations_data: QuerySet[Station] = (Station.objects.filter(lines__id=line_id)
-                                            .prefetch_related("lines")
-                                            # add an extra custom field that denotes order
-                                            .annotate(station_order=Subquery(order_subquery))
-                                            # order the stations chronologically
-                                            .order_by("station_order"))
+        stations: QuerySet[Station] = (Station.objects.filter(lines=target_line)
+                                       .prefetch_related("lines")
+                                       # add an extra custom field that denotes order
+                                       .annotate(station_order=Subquery(order_subquery))
+                                       # order the stations chronologically
+                                       .order_by("station_order"))
+        
+        stations_data: dict[str, Any] = {
+            "line_reference": LineSerializer(target_line).data,
+            "stations": StationSerializer(stations, many=True).data
+        }
                     
-        return stations_data
+        return Response(stations_data)
     
 # fetch all edges and nodes corresponding to the selected station and line
 class EdgesNodesFetchAPI(APIView):
@@ -69,7 +76,7 @@ class EdgesNodesFetchAPI(APIView):
         unique_layers: set[str] = {node.layer for node in nodes}
         
         # get our data arranged in a structure that we can fit into our compound model serializer
-        edges_nodes_data = {
+        edges_nodes_data: dict[str, Any] = {
             "station_model": StationSerializer(target_station).data,
             "edge_models": EdgeSerializer(edges, many=True).data,
             "unique_layers": list(unique_layers),

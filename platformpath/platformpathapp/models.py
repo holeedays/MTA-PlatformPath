@@ -1,14 +1,23 @@
 from django.db import models
+from .services.slugs import slugify
 
 class Line(models.Model):
     name = models.CharField(max_length=10, unique=True)
+    slug_name = models.CharField(max_length=10, unique=True, null=True)
     color = models.CharField(max_length=50, default="")
 
     def __str__(self):
         return self.name
 
+    # whenever we save a new instance, we ovverride the save method to slugify the name
+    def save(self, *args, **kwargs):
+        if not self.slug_name:
+            self.slug_name = slugify(self.name)
+        super().save(*args, **kwargs)
+
 class Station(models.Model):
     name = models.CharField(max_length=200)
+    slug_name = models.CharField(max_length=200, null=True, blank=True)
     diagram_path = models.CharField(max_length=100)
     lines = models.ManyToManyField(
         to=Line, 
@@ -17,6 +26,12 @@ class Station(models.Model):
 
     def __str__(self):
         return self.name
+    
+    # whenever we save a new instance, we ovverride the save method to slugify the name
+    def save(self, *args, **kwargs):
+        if not self.slug_name:
+            self.slug_name = slugify(self.name)
+        super().save(*args, **kwargs)
     
 class StationLine(models.Model):
     # added related name for the foreign keys to allow direct access from Station/Line models to the through model
