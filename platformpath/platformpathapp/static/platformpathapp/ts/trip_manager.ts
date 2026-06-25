@@ -10,6 +10,9 @@ export interface TripPhase {
     label: string;
 }
 
+/* 
+// TODO: Need to port the fetchStation to using the StationData class to get a station response using fetchStation(stationID)
+
 export class TripManager {
     private phases: TripPhase[];
     private phaseIndex: number = 0;
@@ -152,3 +155,4 @@ export class TripManager {
         }));
     }
 }
+    */
