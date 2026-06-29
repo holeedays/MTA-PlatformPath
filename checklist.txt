@@ -1,5 +1,11 @@
 This is where we add stuff we did and things to do...
 
+TO DO FOR EVERYONE:
+- Alter the svg files of the maps so that each section is compartmentalized into different nodes (for instance, mezzanine is broken into
+different nodes based on exits and wall separations, platforms are broken to different nodes relative to the head/middle/rear of train)
+- Simplify nodes selection to include only exit stairs (remove other stairs) and the mezzanine/platform nodes
+
+
 Edmond ----
 TO DO:
 (VERY IMPORTANT RIGHT NOW) Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
