@@ -28,10 +28,9 @@ Create separate web pages for user input
 Ivan ----
 TO DO:
 (Priority)
-Create new model for station layers
-    - Fields: id, name, layerOrder (lowest is on the bottom), color, stationId, svgId
-    - Modify nodes model to contain layerId rather than layer svgId as a foreign key
-Port new station maps to the database with more nodes
+Update data retrieval for stations
+    - update how layers are retrieved and sent 
+    - potential make a layerResponse object in the frontend??
 Edit station map page to show layers selection as a side panel instead of horizontal bar
 When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
 
@@ -46,6 +45,10 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Create new model for station layers
+    - Fields: id, name, layerOrder (lowest is on the bottom), color, stationId, svgId
+    - Modify nodes model to contain layerId rather than layer svgId as a foreign key
+Port new station maps to the database with more nodes
 Fix Center node to work on any viewport size not just on the full_path page
 Created a landing page on index view that you can get to discover/lines from
 Make the third page for displaying individual stations
