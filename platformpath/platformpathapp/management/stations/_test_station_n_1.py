@@ -13,10 +13,10 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         )
 
         # 2. Create line and attach to station
-        line_d, _ = Line.objects.get_or_create(name="D")
+        line_n, _ = Line.objects.get_or_create(name="N")
         StationLine.objects.create(
             station=station,
-            line=line_d,
+            line=line_n,
             order=1
         )
 
