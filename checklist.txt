@@ -8,9 +8,9 @@ different nodes based on exits and wall separations, platforms are broken to dif
 
 Edmond ----
 TO DO:
-(VERY IMPORTANT RIGHT NOW) Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
-with slugs and ids together or just use ids in the API routing + user routing.
-Connect second page (station selections page) seamlessly to the third page (ivan's page)
+(PRIORITY)
+Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity)
+(The items below are stalled for now)
 Find a way to properly cache requested database data to avoid excessive queries 
 Do a visual rework and logical refactor of the first and second page (almost done with first page ~90%)
 
@@ -24,6 +24,9 @@ Create separate web pages for user input
     - initial page to show all available subway lines (***done at this point)
     - second page to show all available stations given that line selected (**)
     - provide proper transfer of data in coresponding pages (via query params and session storage) 
+Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
+with slugs and ids together or just use ids in the API routing + user routing.
+Connect second page (station selections page) seamlessly to the third page (ivan's page)
 
 Ivan ----
 TO DO:

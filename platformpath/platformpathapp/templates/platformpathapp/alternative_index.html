@@ -1,0 +1,242 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/alternative_index.css' %}">
+</head>
+<body>
+
+  <!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="#">
+        <img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+        <span class="brand__name">PLATFORMPATH</span>
+      </a>
+      <nav class="site-header__nav">
+        <a href="#about">ABOUT US</a>
+        <a href="/discover/lines">DISCOVER</a>
+        <a href="#navigate">NAVIGATE</a>
+      </nav>
+    </div>
+  </header>
+ 
+  <!-- Spacer so fixed header doesn't overlap content -->
+  <div class="header-spacer"></div>
+ 
+  <main class="page">
+ 
+    <!-- ================= HERO =================
+         Intentionally empty — holds a cropped background video. -->
+    <section class="hero">
+      <video class="hero__video" autoplay muted loop playsinline>
+        <source src="{% static 'platformpathapp/videos/MTA_PlatformPath_HomePage_Display.mp4' %}" type="video/mp4">
+      </video>
+    </section>
+ 
+    <!-- ================= INTRO ================= -->
+    <section class="intro">
+      <h1 class="intro__title">
+        Navigating the MTA subway system is hard. <br>
+        Let us do it for you.
+      </h1>
+    </section>
+ 
+    <hr class="divider">
+ 
+    <!-- ================= PICK A LINE ================= -->
+    <section class="lines">
+      <h2 class="section-title">Pick a line</h2>
+ 
+      <div class="lines__grid">
+        <div class="lines__macro_group">
+          <div class="line-group">
+            <span class="line-badge line--red">1</span>
+            <span class="line-badge line--red">2</span>
+            <span class="line-badge line--red">3</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--green">4</span>
+            <span class="line-badge line--green">5</span>
+            <span class="line-badge line--green">6</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--purple">7</span>
+          </div>
+        </div>
+
+        <div class="lines__macro_group">
+          <div class="line-group">
+            <span class="line-badge line--blue">A</span>
+            <span class="line-badge line--blue">C</span>
+            <span class="line-badge line--blue">E</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--orange">B</span>
+            <span class="line-badge line--orange line--selected cursor-parent">D
+              <img class="cursor-icon" src="{% static 'platformpathapp/decals/cursor.svg' %}" alt="">
+            </span>
+            <span class="line-badge line--orange">F</span>
+            <span class="line-badge line--orange">M</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--gold">N</span>
+            <span class="line-badge line--gold">Q</span>
+            <span class="line-badge line--gold">R</span>
+            <span class="line-badge line--gold">W</span>
+          </div>
+        </div>
+        
+        <div class="lines__macro_group">
+          <div class="line-group">
+            <span class="line-badge line--brown">J</span>
+            <span class="line-badge line--brown">Z</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--lime">G</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--gray">L</span>
+          </div>
+          <div class="line-group">
+            <span class="line-badge line--gray-dark">S</span>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <hr class="divider">
+ 
+    <!-- ================= SELECT STATION ================= -->
+    <section class="station">
+      <h2 class="section-title">Select Your Station</h2>
+ 
+      <div class="station__body">
+        <span class="line-badge line--orange line-badge--jumbo">D</span>
+ 
+        <ul class="station__list">
+          <li class="station-btn">20 Av</li>
+          <li class="station-btn station-btn--active cursor-parent">
+            Bay Pkwy
+            <img class="cursor-icon" src="{% static 'platformpathapp/decals/cursor.svg' %}" alt="">
+          </li>
+          <li class="station-btn">25 Av</li>
+          <li class="station-btn">Bay 50 St</li>
+          <li class="station-btn">Coney Island-Stillwell Av</li>
+        </ul>
+      </div>
+    </section>
+ 
+    <hr class="divider">
+ 
+    <!-- ================= EXPLORE STATION ================= -->
+    <section class="explore">
+      <h2 class="section-title">Explore The Station And Get Route Suggestions</h2>
+ 
+      <div class="tabs">
+        <div class="tab">FULL MAP</div>
+        <div class="tab">MEZZANINE</div>
+        <div class="tab tab--active">UPTOWN PLATFORM</div>
+        <div class="tab">DOWNTOWN PLATFORM</div>
+      </div>
+
+      <!-- ================= STATION MAP DIAGRAM =================
+      Placeholder container — drop your own map PNG/SVG in as
+      assets/station-map, sized to fill this box. -->
+
+      <div class="map-diagram">
+        <img class="map-diagram__img" src="{% static 'platformpathapp/diagrams/BayParkway.svg' %}" alt="Station platform map">
+      </div>
+
+      <!-- ================= FROM / TO ================= -->
+
+      <div class="route-picker">
+        <div class="route-picker__fields">
+          <div class="field-col">
+            <div class="field field--from">FROM</div>
+            <ul class="route-picker__list">
+              <li class="cursor-parent">
+                UPTOWN PLATFORM
+                <img class="cursor-icon cursor-icon--inline" src="{% static 'platformpathapp/decals/cursor.svg' %}" alt="">
+              </li>
+              <li>DOWNTOWN PLATFORM</li>
+              <li>MEZZANINE</li>
+              <li>BAY PKWY NORTH SIDE 86 ST</li>
+            </ul>
+          </div>
+          <div class="field-col">
+            <div class="field field--to">TO</div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ================= STATION MAP DIAGRAM =================
+         Placeholder container — drop your own map PNG/SVG in as
+         assets/station-map, sized to fill this box. -->
+    <!-- <section class="map-diagram">
+      <img class="map-diagram__img" src="{% static 'platformpathapp/diagrams/BayParkway.svg' %}" alt="Station platform map">
+    </section> -->
+ 
+    <!-- ================= FROM / TO ================= -->
+    <!-- <section class="route-picker">
+      <div class="route-picker__fields">
+        <div class="field-col">
+          <div class="field field--from">FROM</div>
+          <ul class="route-picker__list">
+            <li class="cursor-parent">
+              UPTOWN PLATFORM
+              <img class="cursor-icon cursor-icon--inline" src="{% static 'platformpathapp/decals/cursor.svg' %}" alt="">
+            </li>
+            <li>DOWNTOWN PLATFORM</li>
+            <li>MEZZANINE</li>
+            <li>BAY PKWY NORTH SIDE 86 ST</li>
+          </ul>
+        </div>
+        <div class="field-col">
+          <div class="field field--to">TO</div>
+        </div>
+      </div>
+    </section> -->
+ 
+    <hr class="divider">
+ 
+    <!-- ================= GOOGLE MAPS CTA ================= -->
+    <section class="maps-cta">
+      <img class="maps-cta__pin" src="{% static 'platformpathapp/decals/google_maps_logo.svg' %}" alt="Google Maps Logo 2026">
+      <h2 class="section-title">Or Use It With Google Maps...</h2>
+      <p class="maps-cta__copy">
+        Skip station selections entirely.<br>
+        Let us integrate with google maps to show you where<br>
+        to go from start to end.
+      </p>
+    </section>
+ 
+    <!-- ================= FINAL CTA ================= -->
+    <section class="final-cta">
+      <h2 class="final-cta__title">
+        Stupid simple. Seamless. Intuitive.<br>
+        Use PlatformPath now.
+      </h2>
+    </section>
+ 
+  </main>
+ 
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="brand brand--footer">
+      <img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+      <span class="brand__name brand__name--sm">PLATFORMPATH</span>
+    </div>
+    <div class="site-footer__legal">
+      <span>2026 All rights reserved.</span>
+      <span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
+    </div>
+  </footer>
+
+</body>
+</html>

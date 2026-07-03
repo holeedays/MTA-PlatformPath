@@ -1,0 +1,523 @@
+/* =========================================================
+   Base
+   ========================================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #1b1b1b;
+    color: #ffffff;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+ul {
+    list-style: none;
+}
+
+.divider {
+    border: none;
+    border-top: 3px solid #a8a8a8;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* =========================================================
+   Brand / logo mark (reused in header, hero, footer)
+   ========================================================= */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand__logo {
+    /* Sized off the adjacent brand name's line-height so it stays
+    proportional to the text no matter where the brand mark is used. */
+    height: 1.6em;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.brand__logo--sm {
+    height: 1.6em;
+}
+
+.brand__name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a4fd6;
+    letter-spacing: 0.5px;
+}
+
+.brand__name--lg {
+    font-size: 42px;
+}
+
+.brand__name--sm {
+    font-size: 14px;
+}
+
+/* =========================================================
+   Header — fixed, absolutely-positioned inner bar
+   ========================================================= */
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #000000;
+    z-index: 1000;
+}
+
+.site-header__inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 100px 0 10px;
+}
+
+.site-header__nav {
+    display: flex;
+    gap: 36px;
+}
+
+.site-header__nav a {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+}
+@media (hover:hover) {
+    .site-header__nav a:hover {
+        color: #1a4fd6;
+        transition: 0.25s ease-in-out;
+    }
+}
+.site-header__nav a:active {
+    color: #5400a3;
+    transition: 0.25s ease-in-out;
+}
+
+
+.header-spacer {
+    height: 60px;
+}
+
+/* =========================================================
+   Hero
+   ========================================================= */
+.hero {
+    display: flex;
+    height: 640px;
+    width: 100%;
+    background: #6e6e6e;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+.hero__video {
+    width: 100%;
+    height: 100%;
+    opacity: 75%;
+    object-fit: cover;
+}
+
+/* =========================================================
+   Page wrapper / generic section rhythm
+   ========================================================= */
+.page {
+    display: flex;
+    flex-direction: column;
+}
+
+.page > section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 50px;
+    padding: 100px 24px;
+}
+
+/* =========================================================
+   Intro
+   ========================================================= */
+.intro {
+    padding: 220px 0 !important;
+}
+
+.intro__title {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   Lines
+   ========================================================= */
+.lines__grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px 0;
+    max-width: 900px;
+}
+
+.lines__macro_group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.line-group {
+    display: flex;
+    gap: 12px;
+}
+
+.line-badge {
+    position: relative;   
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.line-badge--jumbo {
+    width: 108px;
+    height: 108px;
+    font-size: 64px;
+}
+
+.line--red     { background: #a8222f; }
+.line--green   { background: #0b8a4b; }
+.line--purple  { background: #5d2d61; }
+.line--blue    { background: #114576; }
+.line--orange  { background: #d86203; }
+.line--gold    { background: #fccc0a; color: #000000; }
+.line--brown   { background: #7b5233; }
+.line--lime    { background: #6e9b39; }
+.line--gray    { background: #64686c; }
+.line--gray-dark { background: #585858; }
+
+.line--selected {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+}
+
+.cursor-icon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.cursor-parent {
+    position: relative;
+}
+
+/* =========================================================
+   Select station
+   ========================================================= */
+.station__body {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.station__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 320px;
+}
+
+.station-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: #3a3a3a;
+    color: #b3b3b3;
+    font-size: 14px;
+    text-align: center;
+}
+
+.station-btn--active {
+    transform: scale(1.1);
+    background: #e8e8e8;
+    color: #000000;
+    font-weight: 700;
+}
+
+/* =========================================================
+   Explore / tabs
+   ========================================================= */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.tab {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    background: #3a3a3a;
+    color: #9a9a9a;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    /* cursor: pointer; */
+}
+
+.tab--active {
+    background: #e8e8e8;
+    color: #000000;
+}
+
+/* =========================================================
+   Station map diagram (stylised reconstruction)
+   ========================================================= */
+.map-diagram {
+    display: flex;
+    width: 100%;
+    height: 300px;
+    border: 3px solid #ffffff;
+    /* border-bottom: 3px solid #ffffff; */
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden;
+}
+
+.map-diagram__img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+}
+
+/* =========================================================
+   From / To route picker
+   ========================================================= */
+.route-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+}
+
+.route-picker__fields {
+    display: flex;
+    gap: 16px;
+    width: 80%;
+}
+
+.field-col {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+}
+
+.field {
+    padding: 12px 18px;
+    border-radius: 6px;
+    background: #3a3a3a;
+    color: #cfcfcf;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.route-picker__list {
+    display: flex;
+    flex-direction: column;
+    /* gap: 20px; */
+    width: 100%;
+    background: #262626;
+    /* padding: 20px; */
+    border-radius: 6px;
+}
+
+.route-picker__list li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    color: #cfcfcf;
+    text-align: center;
+    height: 35px;
+}
+
+.route-picker__list li:first-child {
+    color: #7a7a7a;
+    background: #1a1a1a;
+}
+
+/* =========================================================
+   Google Maps CTA
+   ========================================================= */
+.maps-cta {
+    padding-top: 70px !important;
+    padding-bottom: 70px !important;
+}
+
+.maps-cta__pin {
+    width: 56px;
+    height: 56px;
+}
+
+.maps-cta__copy {
+    font-size: 14px;
+    color: #b3b3b3;
+    text-align: center;
+    line-height: 1.7;
+    max-width: 520px;
+}
+
+/* =========================================================
+   Final CTA
+   ========================================================= */
+.final-cta {
+    padding: 220px 0 !important;
+}
+
+.final-cta__title {
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   Footer
+   ========================================================= */
+.site-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px 24px;
+    background: #050505;
+}
+
+.site-footer__legal {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    color: #7a7a7a;
+    text-align: center;
+}
+
+/* =========================================================
+   Mobile/Tablet (<420px & <768px)
+   ========================================================= */
+@media (max-width: 420px) {
+    .line-group {
+        min-width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) { 
+    .site-header {
+        height: 100px;
+    }
+
+    .site-header__inner {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        padding: 8px 20px;
+    }
+
+    .site-header__nav {
+        align-items: center;
+        justify-content: center;
+        gap: 60px;
+        width: 100%;
+    }
+
+    .header-spacer {
+        height: 76px;
+    }
+
+    .hero {
+        height: 260px;
+    }
+
+    .line-badge {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+    }
+
+    .line-badge--jumbo {
+        width: 70px;
+        height: 70px;
+        font-size: 30px;
+    }
+
+    .station__body {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .station__list {
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .tabs {
+        flex-direction: column;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .route-picker__fields {
+        max-width: 100%;
+    }
+
+    .site-footer__legal {
+        flex-direction: column;
+        gap: 4px;
+    }
+}

@@ -5,6 +5,7 @@ from . import views_api # antiquated
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('alternative_index', views.alternative_index, name='alternative_index'),
     path('full_path/', views.full_path, name='full_path'),
 
     # discover panel... users can individually interact with maps by themselves
