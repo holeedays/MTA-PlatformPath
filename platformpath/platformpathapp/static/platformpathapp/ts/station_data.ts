@@ -1,11 +1,19 @@
 import { DataFetch } from "./data_fetch_new.ts";
 
+export interface LayerData {
+    id: number;
+    name: string;
+    layerOrder: number;
+    color: string;
+    svg_id: string;
+}
+
 export interface NodeData {
     id: number;
     node_type: string;
     label: string;
     svg_id: string;
-    layer: string;
+    layer: number;
     is_accessible: boolean;
 }
 
@@ -21,7 +29,7 @@ export interface StationResponse {
     station_model: { name: string; id: number; diagram_path: string; lines: string[]; };
     edge_models: EdgeData[];
     node_models: NodeData[];
-    unique_layers: string[];
+    layer_models: LayerData[];
 }
 
 export class StationData {

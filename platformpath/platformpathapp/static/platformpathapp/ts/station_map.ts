@@ -67,23 +67,25 @@ class StationMap {
 
         layerOptions.innerHTML = "";
 
+        // Setup button to display all layers of the station map
         const allLayersButton = this.createLayerButton("Entire map", true);
         allLayersButton.addEventListener("click", () => {
-            this.svgRenderer.showAllLayers(this.station?.unique_layers || []);
+            this.svgRenderer.showAllLayers(this.station?.layer_models || []);
             this.setActiveLayerButton(allLayersButton);
         });
         layerOptions.appendChild(allLayersButton);
 
-        for (const layerId of this.station.unique_layers) {
-            const layerButton = this.createLayerButton(layerId);
+        // Setup buttons to show individual layers of the map of the station
+        for (const layer of this.station.layer_models) {
+            const layerButton = this.createLayerButton(layer.name);
             layerButton.addEventListener("click", () => {
-                this.svgRenderer.showLayer(layerId, this.station?.unique_layers || []);
+                this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
                 this.setActiveLayerButton(layerButton);
             });
             layerOptions.appendChild(layerButton);
         }
 
-        this.svgRenderer.showAllLayers(this.station.unique_layers);
+        this.svgRenderer.showAllLayers(this.station.layer_models);
     }
 
     private createLayerButton(label: string, isActive: boolean = false): HTMLButtonElement {
@@ -168,7 +170,7 @@ class StationMap {
                 `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
         }
 
-        this.svgRenderer.showLayer(step.layer, this.station?.unique_layers || []);
+        this.svgRenderer.showLayer(step.layer, this.station?.layer_models || []);
         this.setActiveLayerButtonByLayer(step.layer);
         this.svgRenderer.highlightNode(step.svgId);
         this.svgRenderer.centerOnNode(step.svgId);
@@ -194,6 +196,7 @@ class StationMap {
     }
 }
 
+// Creates and initializes StationMap object for the page
 document.addEventListener("DOMContentLoaded", () => {
     // Get the station id based on the URL
     const currentURL: string = URLHandler.getFullURLRoute();

@@ -25,6 +25,17 @@ export class PathFinder {
         const adjacency = adjAndNode[0];
         const nodeMap = adjAndNode[1];
 
+        // Build a layer lookup map to translate integer Layer IDs to string svg
+        const layerMap: Record<number, string> = {};
+        if (station.layer_models) {
+            station.layer_models.forEach(layer => {
+                layerMap[layer.id] = layer.svg_id;
+            });
+        } else {
+            console.error('Layer models not found in station data');
+            return null;
+        }
+
         // BFS for pathfinding paths
         const visited   = new Set<number>();
         const startNode = nodeMap[fromNodeId];
@@ -36,7 +47,7 @@ export class PathFinder {
 
         const initialStep: PathStep = {
             svgId:       startNode.svg_id,
-            layer:       startNode.layer,
+            layer:       layerMap[startNode.layer] || "",
             instruction: 'Start here'
         };
 
@@ -60,7 +71,7 @@ export class PathFinder {
 
                     queue.push([neighbor, [...path, {
                         svgId:       targetNode.svg_id,
-                        layer:       targetNode.layer,
+                        layer:       layerMap[targetNode.layer] || "",
                         instruction: instruction
                     }]]);
                 }

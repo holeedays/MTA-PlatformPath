@@ -1,5 +1,7 @@
 // Contains all functions related to rendering the svg diagrams
 
+import { type LayerData } from "./station_data.ts"
+
 declare const panzoom: any;
 
 export class SvgRenderer {
@@ -32,28 +34,28 @@ export class SvgRenderer {
     }
 
     // Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers
-    public showLayer(layerId: string, uniqueLayers: string[]): void {
-        uniqueLayers.forEach((id) => {
-            const layer = document.getElementById(id);
-            if (layer) {
-                if (id === layerId) {
-                    layer.style.opacity = "1.0";
-                    layer.style.pointerEvents = "auto";
+    public showLayer(layerSvgId: string, layers: LayerData[]): void {
+        layers.forEach((layer) => {
+            const layerElement = document.getElementById(layer.svg_id);
+            if (layerElement) {
+                if (layer.svg_id === layerSvgId) {
+                    layerElement.style.opacity = "1.0";
+                    layerElement.style.pointerEvents = "auto";
                 } else {
-                    layer.style.opacity = "0.0";
-                    layer.style.pointerEvents = "none";
+                    layerElement.style.opacity = "0.0";
+                    layerElement.style.pointerEvents = "none";
                 }
             }
         });
     }
 
     // Shows the entire map
-    public showAllLayers(uniqueLayers: string[]): void {
-        uniqueLayers.forEach((id) => {
-            const layer = document.getElementById(id);
-            if (layer) {
-                layer.style.opacity = "1.0";
-                layer.style.pointerEvents = "auto";
+    public showAllLayers(layers: LayerData[]): void {
+        layers.forEach((layer) => {
+            const layerElement = document.getElementById(layer.svg_id);
+            if (layerElement) {
+                layerElement.style.opacity = "1.0";
+                layerElement.style.pointerEvents = "auto";
             }
         });
     }
