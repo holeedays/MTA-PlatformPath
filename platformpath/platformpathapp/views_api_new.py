@@ -77,10 +77,8 @@ class EdgesNodesFetchAPI(APIView):
                                                  "to_node__layer"))
         # get all possible unique nodes -- do union with from & to nodes of the edge model to avoid missing any nodes
         # then cast it back to a list because remember, non-indexable stuff for serializers are a big no no
-        nodes: list[Node] = list({edge.from_node for edge in edges} | {edge.to_node for edge in edges})
-
-        unique_layers: set[str] = {node.layer for node in nodes}
-
+        nodes: list[Node] = list({edge.from_node for edge in edges} | {edge.to_node for edge in edges})\
+        
         layers = Layer.objects.filter(station=target_station).order_by('layerOrder')
         
         # get our data arranged in a structure that we can fit into our compound model serializer
