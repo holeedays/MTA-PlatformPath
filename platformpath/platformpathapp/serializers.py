@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 from django.db.models import QuerySet
-from .models import Line, Station, Edge, Node
+from .models import Line, Station, Edge, Node, Layer
 
 class LineSerializer(serializers.ModelSerializer[Line]):
     # here we state what information we want the API to serialize and send
@@ -85,3 +85,8 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
         model = Edge
         # from_node and to_node will be returned as ids, which is fine for our case
         fields: list[str] = ["id", "station", "from_node", "to_node", "instruction_forward", "instruction_backward", "is_active"]
+
+class LayerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Layer
+        fields = '__all__'

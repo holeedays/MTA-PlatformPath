@@ -1,5 +1,5 @@
-from .models import Line, Station, Edge, Node, StationLine
-from .serializers import EdgeSerializer, LineSerializer, NodeSerializer, StationSerializer
+from .models import Layer, Line, Station, Edge, Node, StationLine
+from .serializers import EdgeSerializer, LineSerializer, NodeSerializer, StationSerializer, LayerSerializer
 
 from django.db.models import QuerySet, Count, OuterRef, Subquery, F
 from django.shortcuts import get_object_or_404
@@ -68,18 +68,26 @@ class EdgesNodesFetchAPI(APIView):
 
         # get all edges related to our target station
         edges: QuerySet[Edge] = (Edge.objects.filter(station=target_station)
-                                 .select_related("station", "from_node", "to_node", "from_node__station", "to_node__station"))
+                                 .select_related("station",
+                                                 "from_node",
+                                                 "to_node",
+                                                 "from_node__station",
+                                                 "to_node__station",
+                                                 "from_node__layer",
+                                                 "to_node__layer"))
         # get all possible unique nodes -- do union with from & to nodes of the edge model to avoid missing any nodes
         # then cast it back to a list because remember, non-indexable stuff for serializers are a big no no
         nodes: list[Node] = list({edge.from_node for edge in edges} | {edge.to_node for edge in edges})
 
         unique_layers: set[str] = {node.layer for node in nodes}
+
+        layers = Layer.objects.filter(station=target_station).order_by('layerOrder')
         
         # get our data arranged in a structure that we can fit into our compound model serializer
         edges_nodes_data: dict[str, Any] = {
             "station_model": StationSerializer(target_station).data,
             "edge_models": EdgeSerializer(edges, many=True).data,
-            "unique_layers": list(unique_layers),
+            "layer_models": LayerSerializer(layers, many=True).data,
             # django rest framework usually requires an indexable item (sets cannot ofc...)
             "node_models": NodeSerializer(list(nodes), many=True).data
         }
