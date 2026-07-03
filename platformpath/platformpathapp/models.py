@@ -53,12 +53,25 @@ class StationLine(models.Model):
             )
         ]
 
+
+class Layer(models.Model):
+    # stations do not share layers
+    # each station will have its own set of layers
+    name = models.CharField(max_length=100)
+    layerOrder = models.IntegerField()
+    color = models.CharField(max_length=7)  # For hex color codes (e.g., "#FF0000")
+    station = models.ForeignKey(Station, on_delete=models.CASCADE)
+    svg_id = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 class Node(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     node_type = models.CharField(max_length=20)
     label = models.CharField(max_length=200)
     svg_id = models.CharField(max_length=100)
-    layer = models.CharField(max_length=100)
+    layer = models.ForeignKey(Layer, on_delete=models.CASCADE)
     is_accessible = models.BooleanField(default=False) 
 
     def __str__(self):
