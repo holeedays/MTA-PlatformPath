@@ -10,6 +10,9 @@ from .models import Line, Station
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/index.html")
 
+def alternative_index(request: HttpRequest) -> HttpResponse:
+    return render(request, "platformpathapp/alternative_index.html")
+
 def full_path(request:HttpRequest) -> HttpResponse:
     return render(request, "platformpathapp/full_path_test.html")
 
