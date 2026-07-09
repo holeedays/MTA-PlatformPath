@@ -36,6 +36,10 @@
       <video class="hero__video" autoplay muted loop playsinline>
         <source src="{% static 'platformpathapp/videos/MTA_PlatformPath_HomePage_Display.mp4' %}" type="video/mp4">
       </video>
+      <div class="brand brand__hero">
+        <img class="brand__logo brand__logo--lg" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+        <div class="brand__name brand__name--lg">PLATFORMPATH</div>
+      </div>
     </section>
  
     <!-- ================= INTRO ================= -->
@@ -53,7 +57,7 @@
       <h2 class="section-title">Pick a line</h2>
  
       <div class="lines__grid">
-        <div class="lines__macro_group">
+        <div class="lines__macro-group">
           <div class="line-group">
             <span class="line-badge line--red">1</span>
             <span class="line-badge line--red">2</span>
@@ -69,7 +73,7 @@
           </div>
         </div>
 
-        <div class="lines__macro_group">
+        <div class="lines__macro-group">
           <div class="line-group">
             <span class="line-badge line--blue">A</span>
             <span class="line-badge line--blue">C</span>
@@ -84,26 +88,26 @@
             <span class="line-badge line--orange">M</span>
           </div>
           <div class="line-group">
-            <span class="line-badge line--gold">N</span>
-            <span class="line-badge line--gold">Q</span>
-            <span class="line-badge line--gold">R</span>
-            <span class="line-badge line--gold">W</span>
+            <span class="line-badge line--yellow">N</span>
+            <span class="line-badge line--yellow">Q</span>
+            <span class="line-badge line--yellow">R</span>
+            <span class="line-badge line--yellow">W</span>
           </div>
         </div>
         
-        <div class="lines__macro_group">
+        <div class="lines__macro-group">
           <div class="line-group">
             <span class="line-badge line--brown">J</span>
             <span class="line-badge line--brown">Z</span>
           </div>
           <div class="line-group">
-            <span class="line-badge line--lime">G</span>
+            <span class="line-badge line--lime-green">G</span>
           </div>
           <div class="line-group">
             <span class="line-badge line--gray">L</span>
           </div>
           <div class="line-group">
-            <span class="line-badge line--gray-dark">S</span>
+            <span class="line-badge line--dark-gray">S</span>
           </div>
         </div>
       </div>
@@ -174,34 +178,6 @@
         </div>
       </div>
     </section>
- 
-    <!-- ================= STATION MAP DIAGRAM =================
-         Placeholder container — drop your own map PNG/SVG in as
-         assets/station-map, sized to fill this box. -->
-    <!-- <section class="map-diagram">
-      <img class="map-diagram__img" src="{% static 'platformpathapp/diagrams/BayParkway.svg' %}" alt="Station platform map">
-    </section> -->
- 
-    <!-- ================= FROM / TO ================= -->
-    <!-- <section class="route-picker">
-      <div class="route-picker__fields">
-        <div class="field-col">
-          <div class="field field--from">FROM</div>
-          <ul class="route-picker__list">
-            <li class="cursor-parent">
-              UPTOWN PLATFORM
-              <img class="cursor-icon cursor-icon--inline" src="{% static 'platformpathapp/decals/cursor.svg' %}" alt="">
-            </li>
-            <li>DOWNTOWN PLATFORM</li>
-            <li>MEZZANINE</li>
-            <li>BAY PKWY NORTH SIDE 86 ST</li>
-          </ul>
-        </div>
-        <div class="field-col">
-          <div class="field field--to">TO</div>
-        </div>
-      </div>
-    </section> -->
  
     <hr class="divider">
  

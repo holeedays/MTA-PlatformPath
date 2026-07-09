@@ -38,9 +38,20 @@ export class LinesSelectionPage {
 
         // recursively get the individual line container elements and the buttons in them
         const subwayLinesMasterContainer: HTMLDivElement | null = document.getElementById("subway_lines_master_container") as HTMLDivElement;
-        const subwayLinesContainerGroups: HTMLCollection = subwayLinesMasterContainer?.children;
-        for (const subwayLinesContainerGroup of subwayLinesContainerGroups) {
-            for (const subwayLineContainer of subwayLinesContainerGroup.children) {
+        // macro groups is just an arbitary grouping of the subway lines (like a macro group would be the number lines/multi-lines/etc)
+        const subwayLineMacroGroups: HTMLCollection = subwayLinesMasterContainer?.children;
+        const subwayLineGroupsArray: HTMLDivElement[] = [];
+
+        // init our array since all the items we're looking for are nested pretty deep
+        for (const subwayLineMacroGroup of subwayLineMacroGroups) {
+            for (const subwayLineGroups of subwayLineMacroGroup.children) {
+                const subwayLineGroupAsDiv: HTMLDivElement = subwayLineGroups as HTMLDivElement;
+                subwayLineGroupsArray.push(subwayLineGroupAsDiv);
+            }
+        }
+
+        for (const subwayLineGroup of subwayLineGroupsArray) {
+            for (const subwayLineContainer of subwayLineGroup.children) {
                 // get the button
                 const lineButton: HTMLButtonElement | null = subwayLineContainer.querySelector("button");
                 // also retrieve the line corresponding to this container
@@ -60,7 +71,7 @@ export class LinesSelectionPage {
                 
                 // add the color class to the subway line container group (which groups all related-color lines together)
                 // this hash map will be fed to the initSubwayLineContainerGroup function to add the class
-                subwayColorHashMap.set(line.color, subwayLinesContainerGroup as HTMLDivElement);
+                subwayColorHashMap.set(line.color, subwayLineGroup as HTMLDivElement);
                 // determine which array our line buttons belong to based on how many stations they have in the db
                 if (line.num_of_available_stations > 0)
                     availableLineButtons.push(lineButton);
@@ -71,7 +82,7 @@ export class LinesSelectionPage {
 
         this.initAvailableButtons(availableLineButtons, linesHashMap);
         this.initUnavailableButtons(unavailableLineButtons);
-        this.initSubwayLineContainerGroups(subwayColorHashMap);
+        this.initSubwayLineGroups(subwayColorHashMap);
     }
 
     // fetches all subway line data and reorganizes it to usable data for init element
@@ -111,10 +122,10 @@ export class LinesSelectionPage {
         return linesHashMap;
     }
 
-    // configure the line container groups (mainly for adding classes like the color of the lines it is holding)
-    private initSubwayLineContainerGroups(subwayColorHashMap: Map<string, HTMLDivElement>): void {
-        for (const [color, subwayLineContainerGroup] of subwayColorHashMap) {
-            subwayLineContainerGroup.classList.add(color);
+    // configure the line groups (mainly for adding classes like the color of the lines it is holding)
+    private initSubwayLineGroups(subwayColorHashMap: Map<string, HTMLDivElement>): void {
+        for (const [color, subwayLinesGroup] of subwayColorHashMap) {
+            subwayLinesGroup.classList.add(color);
         }
     }
 
@@ -159,19 +170,32 @@ export class LinesSelectionPage {
     private initUnavailableButtons(unavailableLineButtons: HTMLButtonElement[]): void {
         // iterate through each line button
         for (const lineButton of unavailableLineButtons) {
-            // get our parent so we can add a textbox to it (this will notify users the line isn't available)
+            // get our parent so we can add a warning-like logo to it (this will notify users the line isn't available)
             const lineButtonContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
 
             if (lineButtonContainer !== null) {
-                // creating out text box
-                const notificationTextBox: HTMLDivElement = document.createElement("div");
-                notificationTextBox.innerHTML = "This line is currently unavailable";
-                // configuring classes for the textbox and our line button
-                notificationTextBox.classList.add("notification_textbox");
-                lineButton.classList.add("not_available");
+                // creating our logo tag
+                const unavailableLineLogo: HTMLImageElement = document.createElement("img");
+                unavailableLineLogo.src = `${this.getStaticFolderPath()}platformpathapp/decals/unavailable_line_logo.svg`;
+                // configuring classes for the textbox and our line button container
+                unavailableLineLogo.classList.add("unavailable-line__logo");
+                lineButtonContainer.classList.add("line__container-unavailable");
                 // append the textbox to our button container
-                lineButtonContainer.appendChild(notificationTextBox);
+                lineButtonContainer.appendChild(unavailableLineLogo);
             }
         }
+    }
+
+    private getStaticFolderPath(): string {
+        const djangoConfig: HTMLElement | null = document.getElementById("django_config");
+        const STATIC_PATH: string | undefined = djangoConfig?.dataset.staticPath;
+
+        if (STATIC_PATH === undefined) {
+            console.warn("There is no element with the id django_config or it's missing the static-path attribute.");
+            console.warn(`django config status: ${djangoConfig}; attribute status: ${STATIC_PATH}`)
+            return "";
+        }
+        
+        return STATIC_PATH;
     }
 }

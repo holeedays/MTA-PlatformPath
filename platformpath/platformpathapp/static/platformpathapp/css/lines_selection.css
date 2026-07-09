@@ -1,20 +1,14 @@
-:root {
-    --blue_lines: #0039A6;
-    --orange_lines: #FF6319;
-    --yellow_lines: #FCCC0A;
-    --lime_green_lines: #6CBE45;
-    --light_green_lines: #A7A9AC;
-    --gray_lines: #808183;
-    --brown_lines: #996633;
-    --red_lines: #EE352E;
-    --green_lines: #00933C;
-    --purple_lines: #B933AD;
-}
-
-/* MACRO STYLING */
+/* =========================================================
+    Macro Styling
+   ========================================================= */
 
 * {
     font-family: Helvetica;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
 @keyframes page_load_in {
@@ -27,43 +21,224 @@
     }
 }
 
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
 body {
     animation: page_load_in 0.5s ease-in-out both;
+    background: #1b1b1b;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* HEADER STYLING */
+.page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    gap: 50px;
+    margin-top: 120px;
+}
 
-.header .title {
+
+.user-prompt {
+    font-size: 40px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.divider {  
+    border: none;
+    border-top: 3px solid #a8a8a8;
+    width: 20%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================================
+    Brand Styling (for the header)
+   ========================================================= */
+
+.brand {
     display: flex;
     align-items: center;
-
-    font-weight: bold;
-    font-size: 5vw;
-
-    margin: 0 0 0.5vw 0;
+    gap: 10px;
 }
-.header .sub_title {
-    font-weight: bold;
-    font-size: 1vw;
 
-    margin: 0 0 1vw 0;
-}
-.header img {
+.brand__logo {
+    /* Sized off the adjacent brand name's line-height so it stays
+    proportional to the text no matter where the brand mark is used. */
+    height: 1.6em;
     width: auto;
-    height: 5vw;
-
-    margin: 0 0.2vw 0 0;
+    flex-shrink: 0;
 }
 
-/* GENERAL STYLING FOR SUBWAY LINE BUTTONS */
+.brand__logo--sm {
+    height: 1.6em;
+}
 
-.subway_lines_container {
+.brand__name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a4fd6;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   Header — fixed, absolutely-positioned inner bar
+   ========================================================= */
+
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #000000;
+    z-index: 1000;
+}
+
+.site-header__inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 100px 0 10px;
+}
+
+.site-header__nav {
+    display: flex;
+    gap: 36px;
+}
+
+.site-header__nav a {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+}
+@media (hover:hover) {
+    .site-header__nav a:hover {
+        color: #1a4fd6;
+        transition: 0.25s ease-in-out;
+    }
+}
+.site-header__nav a:active {
+    color: #5400a3;
+    transition: 0.25s ease-in-out;
+}
+
+.header-spacer {
+    height: 60px;
+}
+
+/* =========================================================
+   Notification bar (& associated legend items)
+   ========================================================= */
+.notification-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+}
+
+.notification-bar__unavailable-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.unavailable-line__description {
+    font-weight: bold;
+    font-size: 15px;
+    font-style: italic;
+    color: #818181;
+}
+
+/* =================================================================
+   Unavailable line logo (used in notification bar/line container)
+   ================================================================= */
+
+.unavailable-line__logo {
+    width: 35px;
+    height: auto;
+}
+
+.line__container .unavailable-line__logo {
+    position: absolute;
+    left: 75%;
+    width: 25px;
+    z-index: 100;
+}
+
+@media(hover:hover) {
+    .line__container button:hover + .unavailable-line__logo {
+        transform: scale(1.2);
+        transition: 0.25s ease-in-out;
+    }
+}
+.line__container button:active + .unavailable-line__logo {
+    transform: scale(1.2);
+    transition: 0.25s ease-in-out;
+}
+
+/* ======================================================================================
+   General styling for lines master, macro-group, group, and individual line containers
+   ====================================================================================== */
+
+.lines__master-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.lines__macro-group-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+}
+
+.lines__group-container {
     display: flex;
 }
 
-.subway_lines_container button {
+.line__container {
+    /* div acts as the anchor */
+    position: relative;
+    display: flex;
+
+    margin: 0.5vw;
+}
+
+/* =========================================================
+    Button/Subway Logo
+   ========================================================= */
+
+.RED { --line-color: #EE352E; }
+.GREEN { --line-color: #00933C; }
+.PURPLE { --line-color: #B933AD; }
+.BLUE { --line-color: #0039A6; }
+.ORANGE { --line-color: #FF6319; }
+.YELLOW { --line-color: #FCCC0A; --text-color: #000000; }
+.BROWN { --line-color: #996633; }
+.LIME_GREEN { --line-color: #6CBE45; }
+.GRAY { --line-color: #A7A9AC; }
+.DARK_GRAY { --line-color: #808183; }
+
+.line__container button {
     font-weight: bold;
-    font-size: 3vw; 
+    font-size: 70px; 
     
     /* Perfect flexbox centering for circles */
     display: flex;
@@ -71,15 +246,16 @@ body {
     justify-content: center;
 
     /* Background and foreground colors */
-    color: white;
+    background-color: var(--line-color);
+    color: var(--text-color, #ffffff);
 
     /* The next one sets up the circle */
     border-radius: 50%;
     border-color: transparent;
 
     /* Try varying these styles, and/or others, for your Subway font */
-    width: 5vw;
-    height: 5vw;
+    width: 90px;
+    height: 90px;
     padding: 0;
     margin: 0;
 
@@ -87,130 +263,115 @@ body {
     flex-shrink: 0;
 }
 
-.subway_lines_container div {
-    /* div acts as the anchor */
-    position: relative;
-    display: inline-flex;
-
-    margin: 0.5vw;
-}
-
-/* TEXTBOX LOGIC AND STYLING */
-
-.subway_lines_container .notification_textbox {
-    /* detaches the item from flex space*/
-    position: absolute;
-    /* control the positioning of our textbox */
-    bottom: 3vw;
-    left: 3vw;
-
-    width: 8vw;
-    padding: 0.2vw;
-    /* make sure text box is on top */
-    z-index: 99;
-
-    background-color: #00cf53;
-    opacity: 0%;
-    font-size: 0.7vw;
-    font-weight: bold;
-
-    border-radius: 2%;
-    border: #000000 solid;
-}
-/* + denotes application to siblings (vs children, which doesn't use any symbol) */
-/* might keep sticky focus for this since it functions like a click function... */ 
-.subway_lines_container button:hover + .notification_textbox {
-    opacity: 100%;
-    transition: 0.25s ease-in-out;
-}
-.subway_lines_container button:active + .notification_textbox {
-    opacity: 100%;
-    transition: 0.25s ease-in-out;
-}
-
-/* BUTTON COLORS AND VISUAL LOGIC STATES (DRY refactored with CSS custom variables) */
-
-.BLUE { --line-color: var(--blue_lines); }
-.ORANGE { --line-color: var(--orange_lines); }
-.YELLOW { --line-color: var(--yellow_lines); --text-color: #000000; }
-.LIME_GREEN { --line-color: var(--lime_green_lines); }
-.LIGHT_GREEN { --line-color: var(--light_green_lines); }
-.GRAY { --line-color: var(--gray_lines); }
-.BROWN { --line-color: var(--brown_lines); }
-.RED { --line-color: var(--red_lines); }
-.GREEN { --line-color: var(--green_lines); }
-.PURPLE { --line-color: var(--purple_lines); }
-
-.subway_lines_container div button {
-    background-color: var(--line-color);
-    color: var(--text-color, #ffffff);
-}
-
 /* this @media wrapper only allows hover for devices that support hover (prevents sticky focus) on mobile/touch devices */
 @media (hover: hover) { 
-    .subway_lines_container div button:hover {
+    .line__container button:hover {
         background-color: color-mix(in srgb, var(--line-color), #000000 20%);
         color: var(--text-color, #b3b3b3);
         transition: 0.25s ease-in-out;
     }
 }
 /* this works for both desktop and mobile */
-.subway_lines_container div button:active { 
+.line__container button:active { 
         background-color: color-mix(in srgb, var(--line-color), #000000 20%);
         color: var(--text-color, #b3b3b3);
         transition: 0.25s ease-in-out;
 }
-.subway_lines_container div button.not_available {
-    background-color: color-mix(in srgb, var(--line-color), #000000 80%);
+.line__container-unavailable button {
+    background-color: color-mix(in srgb, var(--line-color), #000000 60%);
     color: var(--text-color, #555555);
     opacity: 85%;
 }
 
-/* --- MOBILE RESPONSIVENESS OVERRIDES --- */
-@media screen and (max-width: 768px) {
-    
-    /* Make the header larger on mobile */
-    .header .title {
-        font-size: 7.5vw;
-        margin: 0 0 1.5vw 0;
-    }
-    .header .sub_title {
-        font-size: 3vw;
-        margin: 0 0 3vw 0;
-    }
-    .header img {
-        height: 12vw;
-        margin: 0 3vw 0 0;
+/* =========================================================
+   Footer
+   ========================================================= */
+
+.site-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 120px;
+    padding: 24px 36px;
+}
+
+.site-footer__legal {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    color: #7a7a7a;
+    text-align: center;
+}
+
+
+/* =========================================================
+   Mobile/Tablet (<420px & <768px)
+   ========================================================= */
+
+@media (max-width: 768px) { 
+    .site-header {
+        height: 100px;
     }
 
-    /* Make subway buttons much larger for fingers */
-    .subway_lines_container button {
-        width: 16vw;
-        height: 16vw;
-        line-height: 16vw;
-        font-size: 8vw;
-        margin: 1vw;
+    .site-header__inner {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        padding: 8px 20px;
     }
 
-    /* Reposition and enlarge the info textbox */
-    .subway_lines_container .notification_textbox {
-        bottom: 12vw;
-        left: 10vw;
-        width: 18vw;
-        font-size: 3vw;
-
-        padding: 0.5vw;
+    .site-header__nav {
+        align-items: center;
+        justify-content: center;
+        gap: 60px;
+        width: 100%;
     }
 
-    /* Make the Submission button easier to hit */
-    .submission_button_container {
-        bottom: 8vw;
-        right: 4vw;
+    .header-spacer {
+        height: 76px;
     }
-    .submission_button_container button {
-        width: 32vw;
-        height: 12vw;
-        font-size: 5vw;
-        border-radius: 10vw;
+
+    .line__container button {
+        font-size: 50px;
+        width: 65px;
+        height: 65px;
+    }
+
+    .line__container .unavailable-line__logo {
+        width: 20px;
+    }
+
+    .unavailable-line__logo {
+        width: 28px;
+    }
+
+    .unavailable-line__description {
+        font-size: 13px;
+    }
+
+    .site-footer__legal {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 420px) {
+    .user-prompt {
+        font-size: 30px;
+    }
+
+    .lines__group-container {
+        min-width: 100%;
+        justify-content: center;
+    }
+
+    .unavailable-line__logo {
+        width: 25px;
+    }
+
+    .unavailable-line__description {
+        font-size: 12px;
     }
 }

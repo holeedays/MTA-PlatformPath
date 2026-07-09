@@ -9,7 +9,7 @@ different nodes based on exits and wall separations, platforms are broken to dif
 Edmond ----
 TO DO:
 (PRIORITY)
-Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity)
+Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity) --> currently on lines selection
 (The items below are stalled for now)
 Find a way to properly cache requested database data to avoid excessive queries 
 Do a visual rework and logical refactor of the first and second page (almost done with first page ~90%)

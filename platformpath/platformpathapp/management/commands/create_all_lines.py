@@ -58,13 +58,13 @@ class Command(BaseCommand):
             
     def init_light_green_lines(self):
         for line in self.light_green_lines:
-            self.init_line(name=line,color="LIGHT_GREEN")
-        self.stdout.write("--> Light green lines have finished initializing")
+            self.init_line(name=line,color="GRAY")
+        self.stdout.write("--> Gray lines have finished initializing")
     
     def init_gray_lines(self):
         for line in self.gray_lines:
-            self.init_line(name=line,color="GRAY")
-        self.stdout.write("--> Gray lines have finished initializing")
+            self.init_line(name=line,color="DARK_GRAY")
+        self.stdout.write("--> Dark gray lines have finished initializing")
 
     def init_brown_lines(self):
         for line in self.brown_lines:

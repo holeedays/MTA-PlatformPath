@@ -62,6 +62,10 @@ ul {
     height: 1.6em;
 }
 
+.brand__logo--lg {
+    height: 6.4vw;
+}
+
 .brand__name {
     font-size: 16px;
     font-weight: 800;
@@ -70,7 +74,7 @@ ul {
 }
 
 .brand__name--lg {
-    font-size: 42px;
+    font-size: 5vw;
 }
 
 .brand__name--sm {
@@ -80,6 +84,7 @@ ul {
 /* =========================================================
    Header — fixed, absolutely-positioned inner bar
    ========================================================= */
+
 .site-header {
     position: fixed;
     top: 0;
@@ -134,6 +139,9 @@ ul {
    ========================================================= */
 .hero {
     display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
     height: 640px;
     width: 100%;
     background: #6e6e6e;
@@ -146,6 +154,13 @@ ul {
     height: 100%;
     opacity: 75%;
     object-fit: cover;
+}
+
+/* modify the brand specifically for the hero section of the page */
+.brand__hero {
+    display: inline-flex;
+    position: absolute;
+    z-index: 100;
 }
 
 /* =========================================================
@@ -189,7 +204,7 @@ ul {
     max-width: 900px;
 }
 
-.lines__macro_group {
+.lines__macro-group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -221,16 +236,16 @@ ul {
     font-size: 64px;
 }
 
-.line--red     { background: #a8222f; }
-.line--green   { background: #0b8a4b; }
-.line--purple  { background: #5d2d61; }
-.line--blue    { background: #114576; }
-.line--orange  { background: #d86203; }
-.line--gold    { background: #fccc0a; color: #000000; }
-.line--brown   { background: #7b5233; }
-.line--lime    { background: #6e9b39; }
-.line--gray    { background: #64686c; }
-.line--gray-dark { background: #585858; }
+.line--red           { background: #a8222f; }
+.line--green         { background: #0b8a4b; }
+.line--purple        { background: #5d2d61; }
+.line--blue          { background: #114576; }
+.line--orange        { background: #d86203; }
+.line--yellow        { background: #fccc0a; color: #000000; }
+.line--brown         { background: #7b5233; }
+.line--lime-green    { background: #6e9b39; }
+.line--gray          { background: #64686c; }
+.line--dark-gray     { background: #585858; }
 
 .line--selected {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);

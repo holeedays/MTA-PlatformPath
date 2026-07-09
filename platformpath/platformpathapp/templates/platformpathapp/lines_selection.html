@@ -9,117 +9,160 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="header">
-        <div class="title">
-            <img src="{% static 'platformpathapp/decals/mta_logo.png' %}">
-            MTA PLATFORM PATH
-        </div>
-        <div class="sub_title">
-            SELECT A SUBWAY LINE(S)
-        </div>
+	<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="#">
+        <img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+        <span class="brand__name">PLATFORMPATH</span>
+      </a>
+      <nav class="site-header__nav">
+				<a href="#about">ABOUT US</a>
+				<a href="/alternative_index">HOME</a>
+        <a href="#navigate">NAVIGATE</a>
+      </nav>
     </div>
+  </header>
 
-    <div id="subway_lines_master_container">
-        <div class="subway_lines_container">
-            <div id="A_line_container">
-                <button>A</button>
-            </div>
-            <div id="C_line_container">
-                <button>C</button>
-            </div>
-            <div id="E_line_container">
-                <button>E</button>
-            </div>
-        </div>
-        
-        <div class="subway_lines_container">
-            <div id="B_line_container">
-                <button>B</button>
-            </div>
-            <div id="D_line_container">
-                <button>D</button>
-            </div>
-            <div id="F_line_container">
-                <button>F</button>
-            </div>
-            <div id="M_line_container">
-                <button>M</button>
-            </div>
-        </div>
+	<!-- ================= HEADER SPACE (prevents the header from overlapping with the content below) ================= -->
+	<div class="header-spacer"></div>
 
-        <div class="subway_lines_container">
-            <div id="N_line_container"> 
-                <button>N</button>
-            </div>
-            <div id="Q_line_container">
-                <button>Q</button>
-            </div>
-            <div id="R_line_container">
-                <button>R</button>
-            </div>
-            <div id="W_line_container">
-                <button>W</button>
-            </div>
-        </div>
-    
-        <div class="subway_lines_container">
-            <div id="G_line_container"> 
-                <button>G</button>
-            </div>
-        </div>
+	<main class="page">
+		<section class="user-prompt">
+			SELECT A LINE
+		</section>
 
-        <div class="subway_lines_container">
-            <div id="L_line_container">
-                <button>L</button>
-            </div>
-        </div>
+		<div class="divider"></div>
 
-        <div class="subway_lines_container">
-            <div id="S_line_container"> 
-                <button>S</button>
-            </div>
-        </div>
+		<section class="notification-bar">
+			<div class="notification-bar__unavailable-line">
+				<img class="unavailable-line__logo" src="{% static 'platformpathapp/decals/unavailable_line_logo.svg' %}" alt="unavailable_line_indicator">
+				<div class="unavailable-line__description"> Lines with this symbol are currently unavailable. We will add them soon as possible. </div>
+			</div>
+		</section>
 
-        <div class="subway_lines_container">
-            <div id="J_line_container">
-                <button>J</button>
-            </div>
-            <div id="Z_line_container">
-                <button>Z</button>
-            </div>
-        </div>
+		<!-- ================= SUBWAY LINE SELECTION ================= -->
+		<section id="subway_lines_master_container" class="lines__master-container">
+			<div class="lines__macro-group-container">
+				<div class="lines__group-container">
+					<div id="1_line_container" class="line__container">
+						<button>1</button>
+					</div>
+					<div id="2_line_container" class="line__container">
+						<button>2</button>
+					</div>
+					<div id="3_line_container" class="line__container">
+						<button>3</button>
+					</div>
+				</div>
 
-        <div class="subway_lines_container">
-            <div id="1_line_container">
-                <button>1</button>
-            </div>
-            <div id="2_line_container">
-                <button>2</button>
-            </div>
-            <div id="3_line_container">
-                <button>3</button>
-            </div>
-        </div>
+				<div class="lines__group-container">
+					<div id="4_line_container" class="line__container">
+						<button>4</button>
+					</div>
+					<div id="5_line_container" class="line__container">
+						<button>5</button>
+					</div>
+					<div id="6_line_container" class="line__container">
+						<button>6</button>
+					</div>
+				</div>
 
-        <div class="subway_lines_container">
-            <div id="4_line_container">
-                <button>4</button>
-            </div>
-            <div id="5_line_container">
-                <button>5</button>
-            </div>
-            <div id="6_line_container">
-                <button>6</button>
-            </div>
-        </div>
+				<div class="lines__group-container">
+					<div id="7_line_container" class="line__container">
+						<button>7</button>
+					</div>
+				</div>
+			</div>
 
-        <div class="subway_lines_container">
-            <div id="7_line_container">
-                <button>7</button>
-            </div>
-        </div>
+			<div class="lines__macro-group-container">
+				<div class="lines__group-container">
+					<div id="A_line_container" class="line__container">
+						<button>A</button>
+					</div>
+					<div id="C_line_container" class="line__container">
+						<button>C</button>
+					</div>
+					<div id="E_line_container" class="line__container">
+						<button>E</button>
+					</div>
+				</div>
+
+				<div class="lines__group-container">
+					<div id="B_line_container" class="line__container">
+							<button>B</button>
+					</div>
+					<div id="D_line_container" class="line__container">
+							<button>D</button>
+					</div>
+					<div id="F_line_container" class="line__container">
+							<button>F</button>
+					</div>
+					<div id="M_line_container" class="line__container">
+							<button>M</button>
+					</div>
+				</div>
+
+				<div class="lines__group-container">
+					<div id="N_line_container" class="line__container"> 
+						<button>N</button>
+					</div>
+					<div id="Q_line_container" class="line__container">
+						<button>Q</button>
+					</div>
+					<div id="R_line_container" class="line__container">
+						<button>R</button>
+					</div>
+					<div id="W_line_container" class="line__container">
+						<button>W</button>
+					</div>
+				</div>
+			</div>
+			
+			<div class="lines__macro-group-container">
+				<div class="lines__group-container">
+					<div id="J_line_container" class="line__container">
+						<button>J</button>
+					</div>
+					<div id="Z_line_container" class="line__container">
+						<button>Z</button>
+					</div>
+				</div>
+
+				<div class="lines__group-container">
+					<div id="G_line_container" class="line__container"> 
+						<button>G</button>
+					</div>
+				</div>
+
+				<div class="lines__group-container">
+						<div id="L_line_container" class="line__container">
+								<button>L</button>
+						</div>
+				</div>
+
+				<div class="lines__group-container">
+					<div id="S_line_container" class="line__container"> 
+						<button>S</button>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="brand brand--footer">
+      <img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+      <span class="brand__name brand__name--sm">PLATFORMPATH</span>
     </div>
+    <div class="site-footer__legal">
+      <span>2026 All rights reserved.</span>
+      <span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
+    </div>
+  </footer>
 
-    <script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
+	<div id="django_config" data-static-path="{% static '' %}"></div>
+	<script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
 </body>
 </html>
