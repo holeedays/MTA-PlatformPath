@@ -11,13 +11,20 @@
     --purple_lines: #B933AD;
 }
 
-/* MACRO STYLING */
+/* =========================================================
+    Macro Styling
+   ========================================================= */
 
 * {
     font-family: Helvetica;
+    margin: 0;
+    padding: 0;
 }
 
-/* Add a page load animation to make it look more immersive than it actually is */
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
 @keyframes page_load_in {
     from {
@@ -29,65 +36,181 @@
     }
 }
 
+html, body {
+    height: 100%;
+    width: 100%;
+}
+
 body {
-    --header-clearance: 8vw;
-    --header-gap: 3vh;
-
-    /* Using display grid here to allow dynamic centering of singular elements within the page */
-    display: grid;
-    grid-template-rows: auto auto;
-    justify-items: center;
-    align-content: start;
-    min-height: 100vh;
-    margin: 0;             
-
     animation: page_load_in 0.5s ease-in-out both;
-}
+    background: #1b1b1b;
 
-/* HEADER STYLING */
-
-.header {
-    grid-row: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 2vh;
 }
-.header .title {
+
+.page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+}
+
+.user-prompt {
+    font-size: 40px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.divider {  
+    border: none;
+    border-top: 3px solid #a8a8a8;
+    width: 20%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================================
+    Brand Styling (for the header)
+   ========================================================= */
+
+.brand {
     display: flex;
     align-items: center;
-
-    font-weight: bold;
-    font-size: 5vw;
-
-    margin: 0 0 0.5vw 0;
+    gap: 10px;
 }
-.header .sub_title {
-    font-weight: bold;
-    font-size: 1vw;
 
-    margin: 0 0 1vw 0;
-}
-.header img {
+.brand__logo {
+    /* Sized off the adjacent brand name's line-height so it stays
+    proportional to the text no matter where the brand mark is used. */
+    height: 1.6em;
     width: auto;
-    height: 5vw;
-
-    margin: 0 0.2vw 0 0;
+    flex-shrink: 0;
 }
 
-/* STYLING FOR PARENT CONTAINER */
+.brand__logo--sm {
+    height: 1.6em;
+}
 
-.stations_selection_container {
-    grid-row: 2;
-    margin-top: 5vh;
+.brand__name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a4fd6;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   Header — fixed, absolutely-positioned inner bar
+   ========================================================= */
+
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #000000;
+    z-index: 1000;
+}
+
+.site-header__inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px 0 10px;
+}
+
+.site-header__nav {
+    display: flex;
+    gap: 36px;
+}
+
+.site-header__nav a {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+}
+@media (hover:hover) {
+    .site-header__nav a:hover {
+        color: #1a4fd6;
+        transition: 0.25s ease-in-out;
+    }
+}
+.site-header__nav a:active {
+    color: #5400a3;
+    transition: 0.25s ease-in-out;
+}
+
+.header-spacer {
+    height: 60px;
+    flex-shrink: 0; 
+}
+
+/* =========================================================
+   Stations container
+   ========================================================= */
+
+.stations__user-selection {
+    display: flex;
+    justify-content: center;
+}
+
+.stations-list {
     display: flex;
     flex-direction: column;
+    width: 50vw;
+    height: 400px;
+    padding: 20px;
+    background-color: #111111;
+    gap: 5px;
+    overflow: auto;
+}
 
+.stations-list li {
+    display: flex;
+    gap: 10px;
+}
+
+.station__order-identifier {
+    color: #ffffff;
+}
+
+.station__button {
+    flex: 1;
+}
+
+
+/* =========================================================
+   Footer
+   ========================================================= */
+
+.site-footer {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 10px;
+    padding: 24px 36px;
+}
+
+.site-footer__legal {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    color: #7a7a7a;
+    text-align: center;
 }
 
 /* LOGO INPUT CONTAINER STYLING */
-.logo_input_container {
+.logo-input__container {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -138,203 +261,4 @@ body {
 .GREEN { --line-color: var(--green_lines); }
 .PURPLE { --line-color: var(--purple_lines); }
 
-/* INPUT FORM */
 
-.logo_input_container input {
-    flex: 1;
-
-    height: 80%;
-
-    font-size: 2vw;
-    font-weight: bold;
-    border: black groove 0.5vw;
-}
-
-/* ORDERED LIST STYLING */
-
-ol.stations {
-    align-items: center;
-    justify-content: center;
-
-    list-style-type: none;
-    padding-left: 0; 
-    margin: 1vw 0 0 0; 
-
-    width: 100%;
-}
-
-ol.stations li {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5vw;
-
-    min-height: 2vw;
-
-    margin: 0 0 0.25vw 0;
-
-    font-size: 1vw;
-    font-weight: bold;
-}
-
-/* styling of the ordering identifier and buttons */
-
-li .order_identifier {
-    font-weight: bold;
-    font-size: 1vw; 
-    
-    /* Bulletproof flexbox centering */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* Dynamic local variables color mapping */
-    background-color: var(--line-color);
-    color: var(--text-color, #ffffff);
-
-    /* The next one sets up the circle */
-    border-radius: 50%;
-    border: ridge black 0.2vw;
-
-    /* Try varying these styles, and/or others, for your Subway font */
-    width: 2vw;
-    height: 2vw;
-    padding: 0;
-    margin: 0;
-
-    /* display settings */
-    flex-shrink: 0;
-}
-
-li button {
-    flex: 1;
-    /* stretch the item vertically */
-    align-self: stretch;
-
-    font-size: 1vw;
-    font-weight: bold;
-
-    border: inset black 0.2vw;
-    
-    background-color: var(--line-color);
-    color: var(--text-color, #ffffff);
-}
-
-ol.stations li.hidden {
-    display: none;
-}
-
-/* color styling + interaction logic for the button and order identifier (Refactored cleanly) */
-
-@media (hover:hover) {
-    li button:hover {
-        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
-        transition: 0.25s ease-in-out;
-    }
-    li:has(button:hover) .order_identifier {
-        transform: scale(0.9);
-        background-color: color-mix(in srgb, var(--line-color), #000000 10%);
-        transition: 0.25s ease-in-out;
-    }
-}
-li button:active {
-    background-color: color-mix(in srgb, var(--line-color), #000000 20%);
-    transition: 0.25s ease-in-out;
-}
-li:has(button:active) .order_identifier {
-    transform: scale(0.9);
-    background-color: color-mix(in srgb, var(--line-color), #000000 10%);
-    transition: 0.25s ease-in-out;
-}
-
-/* On viewports with plenty of height, allow perfect centering at exactly 50% of the entire display */
-@media (min-height: 650px) {
-    body {
-        grid-template-rows: 1fr;
-        grid-template-areas: "page";
-        align-content: stretch;
-        place-items: center;
-    }
-
-    .header {
-        grid-area: page;
-        align-self: start;
-        margin-top: 2vh;
-    }
-
-    .stations_selection_container {
-        grid-area: page;
-        align-self: center; /* Exactly 50% vertical center of the entire 100vh display */
-        margin-top: 0;
-    }
-}
-
-/* MOBILE FRIENDLY STYLING */
-
-@media (max-width: 768px) {
-    /* Scale up font-sizes and layout spacing for small mobile screens */
-    
-    .header .title {
-        font-size: 8vw;
-        margin-bottom: 1vw;
-    }
-
-    .header img {
-        height: 8vw;
-    }
-
-    .header .sub_title {
-        font-size: 3vw;
-        margin-bottom: 4vw;
-    }
-
-    /* Scale up input and line logo */
-    
-    .logo {
-        width: 14vw;
-        height: 14vw;
-        font-size: 8vw;
-    }
-
-    .logo_input_container {
-        gap: 3vw;
-        padding: 0 4vw;
-        box-sizing: border-box;
-    }
-
-    .logo_input_container input {
-        font-size: 4.5vw;
-        border-width: 0.8vw;
-        padding: 1.5vw 2.5vw;
-        height: auto;
-    }
-
-    /* Scale up the station items for standard touch-target friendliness */
-    
-    ol.stations {
-        margin-top: 4vw;
-        padding: 0 4vw;
-        box-sizing: border-box;
-    }
-
-    ol.stations li {
-        gap: 2vw;
-        min-height: 10vw;
-        margin-bottom: 2vw;
-        font-size: 3.5vw;
-    }
-
-    li .order_identifier {
-        width: 7vw;
-        height: 7vw;
-        font-size: 3.5vw;
-        border-width: 0.4vw;
-    }
-
-    li button {
-        font-size: 3.5vw;
-        border-width: 0.4vw;
-        padding: 2vw;
-    }
-}

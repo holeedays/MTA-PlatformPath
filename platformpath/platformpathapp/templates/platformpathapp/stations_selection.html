@@ -9,25 +9,55 @@
     <link rel="stylesheet" href="{% static 'platformpathapp/css/stations_selection.css' %}">
 </head>
 <body>
-     <div class="header">
-        <div class="title">
-            <img src="{% static 'platformpathapp/decals/mta_logo.png' %}">
-            MTA PLATFORM PATH
-        </div>
-        <div class="sub_title">
-            SELECT YOUR STATION
-        </div>
+	<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="#">
+        <img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+        <span class="brand__name">PLATFORMPATH</span>
+      </a>
+      <nav class="site-header__nav">
+				<a href="#about">ABOUT US</a>
+				<a href="/alternative_index">HOME</a>
+        <a href="#navigate">NAVIGATE</a>
+      </nav>
     </div>
+  </header>
 
-    <div id="stations_selection_container" class="stations_selection_container">
-        <div class="logo_input_container">
-            <div id="logo" class="logo"></div>
-            <input>
-        </div>
-        <ol class="stations">
-        </ol>
+	<div class="header-spacer"></div>
+
+	<main class="page">
+		<section class="user-prompt">
+			SELECT A STATION
+		</section>
+
+		<div class="divider"></div>
+
+		<section class="stations__selection">
+			<button class="stations__direction"></button>
+			<div id="stations_user_selection" class="stations__user-selection">
+				<div class="logo-input__container">
+					<div id="logo" class="logo"></div>
+					<input>
+				</div>
+				<ol class="stations-list">
+				</ol>
+			</div>
+		</section>
+	</main>
+
+	<!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="brand brand--footer">
+      <img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+      <span class="brand__name brand__name--sm">PLATFORMPATH</span>
     </div>
+    <div class="site-footer__legal">
+      <span>2026 All rights reserved.</span>
+      <span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
+    </div>
+  </footer>
 
-    <script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
+	<script type="module" src="{% static 'platformpathapp/js/app_new.js'%}"></script>
 </body>
 </html>

@@ -45,7 +45,7 @@ export class StationsSelectionPage {
         
         // get the main elements we'll be modifying
         const stationsSelectionContainer: HTMLDivElement | null = (
-            document.getElementById("stations_selection_container") as HTMLDivElement);
+            document.getElementById("stations_user_selection") as HTMLDivElement);
         const inputForm: HTMLInputElement | null = stationsSelectionContainer?.querySelector("input");
         const stationsList: HTMLOListElement | null = stationsSelectionContainer?.querySelector("ol");
         const logoDiv: HTMLDivElement | null = document.getElementById("logo") as HTMLDivElement;
@@ -133,9 +133,10 @@ export class StationsSelectionPage {
 
             button.innerHTML = station.name;
             button.value = station.name;
+            button.classList.add("station__button");
             // we'll use this ordering over the ordered list's default numbering style
             orderIdentifier.innerHTML = `${station.station_order}`;
-            orderIdentifier.classList.add("order_identifier");
+            orderIdentifier.classList.add("station__order-identifier");
 
             listItemWrapper.append(orderIdentifier, button);
             stationsList.appendChild(listItemWrapper);

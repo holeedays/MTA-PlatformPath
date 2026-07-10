@@ -4,6 +4,8 @@
 
 * {
     font-family: Helvetica;
+    margin: 0;
+    padding: 0;
 }
 
 a {
@@ -38,12 +40,12 @@ body {
 .page {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    flex: 1; /* page occupies the full height of the browser minus the footer and header spacer */
+    padding: 50px 0; /* needs some padding to prevent flex wrap from pushing the user prompt right under the header (it's ugly) */
     align-items: center;
+    justify-content: center;
     gap: 50px;
-    margin-top: 120px;
 }
-
 
 .user-prompt {
     font-size: 40px;
@@ -111,7 +113,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 100px 0 10px;
+    padding: 0 30px 0 10px;
 }
 
 .site-header__nav {
@@ -138,6 +140,7 @@ body {
 
 .header-spacer {
     height: 60px;
+    flex-shrink: 0; /* prevents the subway line container flex-wrap from reducing the height of the space */
 }
 
 /* =========================================================
@@ -292,7 +295,6 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    margin-top: 120px;
     padding: 24px 36px;
 }
 
@@ -303,7 +305,6 @@ body {
     color: #7a7a7a;
     text-align: center;
 }
-
 
 /* =========================================================
    Mobile/Tablet (<420px & <768px)
@@ -330,7 +331,7 @@ body {
     }
 
     .header-spacer {
-        height: 76px;
+        height: 100px;
     }
 
     .line__container button {

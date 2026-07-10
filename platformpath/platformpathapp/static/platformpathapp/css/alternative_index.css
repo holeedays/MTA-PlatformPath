@@ -104,7 +104,7 @@ ul {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 100px 0 10px;
+    padding: 0 30px 0 10px;
 }
 
 .site-header__nav {
@@ -132,6 +132,7 @@ ul {
 
 .header-spacer {
     height: 60px;
+    flex-shrink: 0;
 }
 
 /* =========================================================
