@@ -141,8 +141,7 @@ export class LinesSelectionPage {
         // loop through all lines of available lines
         for (const lineButton of availableLineButtons) {
             // add our event listener
-            lineButton.addEventListener("click", () => {
-                const currentURL: string = URLHandler.getFullURLRoute();
+            lineButton.onclick = () => {
                 // get the right id to pass through the hash map
                 const subwayLineContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
                 let currentLine: {
@@ -151,17 +150,27 @@ export class LinesSelectionPage {
                     color: string,
                     num_of_available_stations: number
                 } | undefined | null = null;
-                if (subwayLineContainer !== null) {
+                
+                if (subwayLineContainer !== null)
                     currentLine = linesHashMap[subwayLineContainer.id];
-                }
 
                 // when the button is clicked, just route the url to the next page and add a slug for the metadata
                 // that we need
-                if (currentLine !== undefined && currentLine !== null) {
-                    const lineSlug: string = slugify(currentLine.color, currentLine.name, currentLine.id);
-                    URLHandler.redirectTo(currentURL + lineSlug + "/stations/");
+                if (currentLine === undefined || currentLine === null) {
+                    console.warn(
+                        `The parent container for line button of line ${lineButton.innerHTML} might not exist or lines 
+                        hash map might not have that value.`, 
+                        `Subway Line Container Status: ${subwayLineContainer}`,
+                        `Lines Hash Map Key Return Value: ${linesHashMap[subwayLineContainer.id]}`
+                    );
+                    return;
                 }
-            });
+
+                const lineSlug: string = slugify(currentLine.color, currentLine.name, currentLine.id);
+                const currentURL: string = URLHandler.getFullURLRoute();
+
+                URLHandler.redirectTo(currentURL + lineSlug + "/stations/");
+            };
         }
     }
 
@@ -171,28 +180,34 @@ export class LinesSelectionPage {
         // iterate through each line button
         for (const lineButton of unavailableLineButtons) {
             // get our parent so we can add a warning-like logo to it (this will notify users the line isn't available)
-            const lineButtonContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
+            const subwayLineContainer: HTMLDivElement | null = lineButton.parentElement as HTMLDivElement;
 
-            if (lineButtonContainer !== null) {
-                // creating our logo tag
-                const unavailableLineLogo: HTMLImageElement = document.createElement("img");
-                unavailableLineLogo.src = `${this.getStaticFolderPath()}platformpathapp/decals/unavailable_line_logo.svg`;
-                // configuring classes for the textbox and our line button container
-                unavailableLineLogo.classList.add("unavailable-line__logo");
-                lineButtonContainer.classList.add("line__container-unavailable");
-                // append the textbox to our button container
-                lineButtonContainer.appendChild(unavailableLineLogo);
+            if (subwayLineContainer === null) {
+                console.warn(`Line button for line "${lineButton.innerHTML}" has no parent container`);
+                continue;
             }
+
+            // creating our logo tag
+            const unavailableLineLogo: HTMLImageElement = document.createElement("img");
+            unavailableLineLogo.src = `${this.getStaticFolderPath()}platformpathapp/decals/unavailable_line_logo.svg`;
+            // configuring classes for the textbox and our line button container
+            unavailableLineLogo.classList.add("unavailable-line__logo");
+            subwayLineContainer.classList.add("line__container-unavailable");
+            // append the textbox to our button container
+            subwayLineContainer.appendChild(unavailableLineLogo);
         }
     }
 
+    // get the folder path for static files 
     private getStaticFolderPath(): string {
         const djangoConfig: HTMLElement | null = document.getElementById("django_config");
         const STATIC_PATH: string | undefined = djangoConfig?.dataset.staticPath;
 
         if (STATIC_PATH === undefined) {
-            console.warn("There is no element with the id django_config or it's missing the static-path attribute.");
-            console.warn(`django config status: ${djangoConfig}; attribute status: ${STATIC_PATH}`)
+            console.warn(
+                "There is no element with the id django_config or it's missing the static-path attribute.",
+                `django config status: ${djangoConfig}; attribute status: ${STATIC_PATH}`
+            );
             return "";
         }
         

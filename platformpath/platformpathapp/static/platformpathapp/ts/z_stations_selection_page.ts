@@ -4,7 +4,10 @@ import { URLHandler } from "./url_handler.ts";
 
 // this class will handle the stations selections route
 export class StationsSelectionPage {
+    private stationOrderReversed: boolean;
+
     constructor() {
+        this.stationOrderReversed = false;
     }
 
     // this is the function we'll run on app.ts
@@ -41,31 +44,40 @@ export class StationsSelectionPage {
             console.warn("Cannot fetch station data. Aborting initializing this page.");
             return;
         }
-        console.log(stations);
         
         // get the main elements we'll be modifying
         const stationsSelectionContainer: HTMLDivElement | null = (
-            document.getElementById("stations_user_selection") as HTMLDivElement);
-        const inputForm: HTMLInputElement | null = stationsSelectionContainer?.querySelector("input");
-        const stationsList: HTMLOListElement | null = stationsSelectionContainer?.querySelector("ol");
-        const logoDiv: HTMLDivElement | null = document.getElementById("logo") as HTMLDivElement;
+            document.getElementById("stations_selection_container") as HTMLDivElement);
+        const stationsInputContainer: HTMLDivElement | null = (
+            document.getElementById("stations_input_container") as HTMLDivElement);
+        // parent container of stationsSelection and Input Container
+        const stationsInputSelectionContainer: HTMLDivElement | null = (
+            stationsInputContainer?.parentElement ?? 
+            stationsSelectionContainer?.parentElement ?? 
+            null
+        ) as HTMLDivElement;
 
-        if (stationsSelectionContainer === null || inputForm === null || stationsList === null || logoDiv === null) {
+        if (stationsInputSelectionContainer === null || stationsSelectionContainer === null || stationsInputContainer === null) {
             console.warn(
-                "Cannot find stations selection container, input form, stations list, or logo div",
-                `Station Selection Container Status: ${stationsSelectionContainer};`,
-                `Input Form Status: ${inputForm};`,
-                `Stations List Status: ${stationsList}`,
-                `Logo div: ${logoDiv}`
+                "Stations input selection container/stations selection container/stations input container is null",
+                `Stations Input Selection Container Status: ${stationsInputSelectionContainer}`,
+                `Stations Selection Container Status: ${stationsSelectionContainer}`,
+                `Stations Input Container Status: ${stationsInputContainer}`
             );
             return;
         }
 
         // configure these elements
-        this.initStationSelectionContainer(stationsSelectionContainer, stations.line_reference.color);
-        const stationListElements: [HTMLLIElement, HTMLButtonElement][] = this.initStationsList(stationsList, stations.stations);
-        this.initInputForm(inputForm, stationListElements);
-        this.initLogoDiv(logoDiv, stations.line_reference.name);
+        this.initStationsInputSelectionContainer(stationsInputSelectionContainer, stations.line_reference.color);
+
+        const stationListElements: {
+            listItemWrapper: HTMLLIElement, 
+            orderIdentifier: HTMLSpanElement, 
+            button: HTMLButtonElement}[] | null = (
+            this.initStationsSelectionContainer(stationsSelectionContainer, stations.stations));
+
+        if (stationListElements !== null)
+            this.initStationsInputContainer(stationsInputContainer, stationListElements, stations.line_reference.name);
     }
     
     // get data from the slug in our url
@@ -103,10 +115,144 @@ export class StationsSelectionPage {
         return await(DataFetch.fetchStations(lineID));
     }
 
-    // configure our stations selection container (the parent container of our input form/selection container)
+    // configure our stations input selection container (the parent container of our input/selection container)
     // it's mainly just to add classes to it
-    private initStationSelectionContainer(stationsSelectionContainer: HTMLDivElement, ...classes: string[]): void {
-        classes.forEach((cls: string) => stationsSelectionContainer.classList.add(cls));
+    private initStationsInputSelectionContainer(stationsInputSelectionContainer: HTMLDivElement, ...classes: string[]): void {
+        classes.forEach((cls: string) => stationsInputSelectionContainer.classList.add(cls));
+    }
+
+    // configure the items in our stations selection container (mainly the ordered list within it) and return the contents in the list
+    private initStationsSelectionContainer(
+        stationsSelectionContainer: HTMLDivElement,
+        stations: {
+            name: string, 
+            id: number, 
+            station_order: number, 
+            lines: string[], 
+            diagram_path: string
+        }[]
+    ): {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[] | null {
+        // there are two items in our stations selection container...
+        // a list or all available stations
+        const stationsList: HTMLOListElement | null = stationsSelectionContainer?.querySelector("ol");
+        // and a button that, when toggled, swaps directions of the stations
+        const stationsDirectionButton: HTMLButtonElement | null = stationsSelectionContainer?.querySelector("button");
+        if (stationsList === null || stationsDirectionButton === null) {
+            console.warn(
+                "Stations list or stations direction button doesn't exist in stations selection container",
+                `Stations List Status: ${stationsList}; Stations Direction Button Status: ${stationsDirectionButton}`
+            );
+            return null;
+        }   
+
+        // init our stations list first (or else we cannot init the station direction button)
+        const stationListElements: {
+            listItemWrapper: HTMLLIElement, 
+            orderIdentifier: HTMLSpanElement,
+            button: HTMLButtonElement
+        }[] = this.initStationsList(stationsList, stations);
+        // then configure the logic for our stations direction button
+        this.initStationsDirectionButton(stationsDirectionButton, stations, stationListElements);
+
+        return stationListElements;
+    }
+
+    // configure the contents in the stations input container (the logo div and the input form)
+    private initStationsInputContainer(
+        stationsInputContainer: HTMLDivElement,
+        stationListElements: {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[], 
+        lineName: string): void {
+
+        const logoDiv: HTMLDivElement | null = stationsInputContainer?.querySelector("#logo") as HTMLDivElement;
+        const inputForm: HTMLInputElement | null = stationsInputContainer?.querySelector("input");
+
+        if (logoDiv === null || inputForm === null) {
+            console.warn(
+                "Logo div or input form doesn't exist",
+                `Logo Div Status: ${logoDiv}; Input Form Status ${inputForm}`
+            );
+            return;
+        }   
+
+        this.initInputForm(inputForm, stationListElements);
+        this.initLogoDiv(logoDiv, lineName);
+    }
+
+    // add the logic handling for our stations directions button
+    private initStationsDirectionButton(
+        stationsDirectionButton: HTMLButtonElement, 
+        stations: { 
+            name: string, 
+            id: number, 
+            station_order: number, 
+            lines: string[], 
+            diagram_path: string
+        }[],
+        stationListItems: {
+            listItemWrapper: HTMLLIElement, 
+            orderIdentifier: HTMLSpanElement, 
+            button: HTMLButtonElement}[]
+        ): void {
+
+        stationsDirectionButton.value = "NOT REVERSED";
+        stationsDirectionButton.innerHTML = "DOWNTOWN TO UPTOWN";
+
+        stationsDirectionButton.onclick = () => {
+            
+            let index: number = 0;
+            let increment: number = 0;
+
+            if (this.stationOrderReversed === false) {
+                index = stationListItems.length - 1;
+                increment = -1;
+
+                stationsDirectionButton.value = "REVERSED";
+                stationsDirectionButton.innerHTML = "UPTOWN TO DOWNTOWN";
+            }
+            else {
+                index = 0;
+                increment = 1;
+
+                stationsDirectionButton.value = "NOT REVERSED";
+                stationsDirectionButton.innerHTML = "DOWNTOWN TO UPTOWN";
+            }
+
+
+            for (let i = 0; i < stationListItems.length; i++) {
+
+                const button: HTMLButtonElement | undefined = stationListItems[i]?.button;
+                const orderIdentifier: HTMLSpanElement | undefined = stationListItems[i]?.orderIdentifier;
+                const stationName: string | undefined = stations[index]?.name;
+                const stationID: number | undefined = stations[index]?.id;
+                const stationOrder: number | undefined = stations[index]?.station_order;
+
+                if (button === undefined || 
+                    orderIdentifier === undefined ||
+                    stationName === undefined ||
+                    stationID === undefined || 
+                    stationOrder === undefined
+                ) {
+                    console.warn(
+                        `There is no button or order identifier span element at ${i} index or station json object at ${index}`,
+                        `Button Status: ${button}`,
+                        `Order Identifier Span Status: ${orderIdentifier}`,
+                        `Station JSON Object Status: ${stations[index]}`
+                    );
+                    return;
+                }
+
+                // we're essentially doing the same thing as in init stations list but reversing the values depending
+                // on if we are flipping the values
+                this.initStationButton(button, stationName, stationID);
+                this.initOrderIdentifier(orderIdentifier, stationOrder)
+
+                // shift our index so our stations list items are in line with the station json object items
+                index += increment;
+            }
+
+
+            this.stationOrderReversed = !this.stationOrderReversed;
+        };
     }
 
     // create the elements in our stations list
@@ -118,10 +264,13 @@ export class StationsSelectionPage {
             station_order: number,
             lines: string[],
             diagram_path: string
-        }[]): [HTMLLIElement, HTMLButtonElement][] {
+        }[]): {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[] {
 
         // create another array to hold all the list & button elements (tuples) we will create and add to to our list
-        const stationListElements: [HTMLLIElement, HTMLButtonElement][] = [];
+        const stationListElements: {
+            listItemWrapper: HTMLLIElement, 
+            orderIdentifier: HTMLSpanElement, 
+            button: HTMLButtonElement}[] = [];
 
         // create our buttons and add even listeners for each one
         for (const station of stations) {
@@ -129,25 +278,18 @@ export class StationsSelectionPage {
             // this items will contain the button and will be appended to our list
             const listItemWrapper: HTMLLIElement = document.createElement("li");
             // also add this div to contain the order number (it'll be custom over the original ordered list)
-            const orderIdentifier: HTMLDivElement = document.createElement("div");
-
-            button.innerHTML = station.name;
-            button.value = station.name;
-            button.classList.add("station__button");
-            // we'll use this ordering over the ordered list's default numbering style
-            orderIdentifier.innerHTML = `${station.station_order}`;
-            orderIdentifier.classList.add("station__order-identifier");
-
-            listItemWrapper.append(orderIdentifier, button);
-            stationsList.appendChild(listItemWrapper);
-            stationListElements.push([listItemWrapper, button]);
+            const orderIdentifier: HTMLSpanElement = document.createElement("span");
 
             // add the event listener logic for our buttons (redirecting to another part of our url)
-            button.addEventListener("click", () => {
-                const currentURL: string = URLHandler.getFullURLRoute();
-                const stationSlug: string = slugify(station.name, station.id);
-                window.location.href = currentURL + stationSlug + "/map/";
-            });
+            this.initStationButton(button, station.name, station.id);
+            // we'll use this ordering over the ordered list's default numbering style
+            this.initOrderIdentifier(orderIdentifier, station.station_order);
+
+            // now append all these items to our list item wrapper 
+            listItemWrapper.append(orderIdentifier, button);
+            // and to our stations list (to be used later)
+            stationsList.appendChild(listItemWrapper);
+            stationListElements.push({listItemWrapper, orderIdentifier, button});
         }
 
         // return our list elements (to be used later)
@@ -155,19 +297,22 @@ export class StationsSelectionPage {
     }
 
     // configure the event logic of the input form
-    private initInputForm(inputForm: HTMLInputElement, stationListElements: [HTMLLIElement, HTMLButtonElement][]): void {
+    private initInputForm(
+        inputForm: HTMLInputElement, 
+        stationListElements: {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[]
+    ): void {
         // configure the logic for the input form (matching user input)
         inputForm.addEventListener("input", () => {
             // create a regexp that tests whether any string matches with the current input form value (case insensitive)
             const userInputRegex: RegExp = new RegExp(`${inputForm.value}`, "i");
             // iterate through each button amd check whether the user input value matches with their value
-            for (const [listElement, buttonElement] of stationListElements) {
+            for (const {listItemWrapper, orderIdentifier, button} of stationListElements) {
                 // if it doesn't have the value, add a class to make it "hidden" from the container (CSS will handle it)
-                if (!userInputRegex.test(buttonElement.value)) {
-                    listElement.classList.add("hidden");
+                if (!userInputRegex.test(button.value)) {
+                    listItemWrapper.classList.add("hidden");
                 }
                 else {
-                    listElement.classList.remove("hidden");
+                    listItemWrapper.classList.remove("hidden");
                 }
             }
         });
@@ -176,5 +321,25 @@ export class StationsSelectionPage {
     // configure the logo div (it's just adding the line name to the logoDiv so the text is visible)
     private initLogoDiv(logoDiv: HTMLDivElement, lineName: string): void {
         logoDiv.innerHTML = lineName;
+    }
+
+    // configures the logic for a given station button (event listener + misc styling)
+    private initStationButton(stationButton: HTMLButtonElement, stationName: string, stationID: number): void {
+        stationButton.innerHTML = stationName;
+        stationButton.value = stationName;
+        stationButton.classList.add("station__btn");
+
+        // configure the URL redirecting for each button
+        stationButton.onclick = () => {
+            const currentURL: string = URLHandler.getFullURLRoute();
+            const stationSlug: string = slugify(stationName, stationID);
+            URLHandler.redirectTo(currentURL + stationSlug + "/map/");
+        }
+    }
+
+    // configures each order identifier span element for our station list items
+    private initOrderIdentifier(orderIdentifier: HTMLSpanElement, stationOrder: number): void {
+        orderIdentifier.innerHTML = `${stationOrder}`;
+        orderIdentifier.classList.add("station__order-identifier");
     }
 }

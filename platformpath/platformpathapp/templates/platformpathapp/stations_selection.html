@@ -24,6 +24,8 @@
     </div>
   </header>
 
+  <!-- ================= HEADER SPACING ================= -->
+
 	<div class="header-spacer"></div>
 
 	<main class="page">
@@ -33,14 +35,16 @@
 
 		<div class="divider"></div>
 
-		<section class="stations__selection">
-			<button class="stations__direction"></button>
-			<div id="stations_user_selection" class="stations__user-selection">
-				<div class="logo-input__container">
-					<div id="logo" class="logo"></div>
-					<input>
-				</div>
-				<ol class="stations-list">
+		<!-- ================= SUBWAY STATION SELECTION ================= -->
+
+		<section class="stations__input-selection-container">
+      <div id="stations_input_container" class="stations__input-container">
+        <div id="logo" class="logo"></div>
+        <input>
+      </div>
+			<div id="stations_selection_container" class="stations__selection-container">
+        <button class="stations__direction-btn"></button>
+				<ol class="stations__list">
 				</ol>
 			</div>
 		</section>

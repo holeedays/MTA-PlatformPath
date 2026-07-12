@@ -159,12 +159,17 @@ body {
    Stations container
    ========================================================= */
 
-.stations__user-selection {
+.stations__input-selection-container {
     display: flex;
+}
+
+.stations__selection-container {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
 }
 
-.stations-list {
+.stations__list {
     display: flex;
     flex-direction: column;
     width: 50vw;
@@ -175,7 +180,7 @@ body {
     overflow: auto;
 }
 
-.stations-list li {
+.stations__list li {
     display: flex;
     gap: 10px;
 }
@@ -184,8 +189,13 @@ body {
     color: #ffffff;
 }
 
-.station__button {
+.station__btn {
     flex: 1;
+}
+
+/* Hidden attribute... */
+li.hidden { /* remember specificity and how it competes against station__list li...*/
+    display: none; /* besides li.hidden, you can flag the item as !important too with .hidden selector */
 }
 
 
@@ -210,13 +220,13 @@ body {
 }
 
 /* LOGO INPUT CONTAINER STYLING */
-.logo-input__container {
+.stations__input-container {
     display: flex;
     flex-direction: row;
     align-items: center;
 
     width: 100%;
-    gap: 1vw;
+    gap: 10px;
 }
 
 /* SUBWAY LOGO STYLING */
