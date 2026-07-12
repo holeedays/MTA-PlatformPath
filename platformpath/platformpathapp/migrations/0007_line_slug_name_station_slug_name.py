@@ -1,0 +1,18 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [("platformpathapp", "0006_alter_line_name")]
+
+    operations = [
+        migrations.AddField(
+            model_name="line",
+            name="slug_name",
+            field=models.CharField(max_length=10, null=True, unique=True),
+        ),
+        migrations.AddField(
+            model_name="station",
+            name="slug_name",
+            field=models.CharField(blank=True, max_length=200, null=True),
+        ),
+    ]

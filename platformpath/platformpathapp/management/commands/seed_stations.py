@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 from django.db import OperationalError, connection
-from platformpathapp.models import Station, Line, StationLine, Node, Edge
+from platformpathapp.models import Station, Line, StationLine, Node, Edge, Layer
 
 from typing import Any
 # Import individual stations
@@ -40,12 +40,14 @@ class Command(BaseCommand):
 
         Edge.objects.all().delete()
         Node.objects.all().delete()
+        Layer.objects.all().delete()
         StationLine.objects.all().delete()
         Station.objects.all().delete()
         Line.objects.all().delete()
 
         self.reset_sequence("platformpathapp_station_lines")
         self.reset_sequence("platformpathapp_node")
+        self.reset_sequence("platformpathapp_layer")
         self.reset_sequence("platformpathapp_station_line")
         self.reset_sequence("platformpathapp_station")
         self.reset_sequence("platformpathapp_line")
