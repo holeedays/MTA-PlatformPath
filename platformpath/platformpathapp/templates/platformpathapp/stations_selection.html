@@ -38,12 +38,19 @@
 		<!-- ================= SUBWAY STATION SELECTION ================= -->
 
 		<section class="stations__input-selection-container">
-      <div id="stations_input_container" class="stations__input-container">
-        <div id="logo" class="logo"></div>
-        <input>
+      <div class="stations__input-container">
+        <div class="stations__line-logo"></div>
+        <input class="stations__input-form">
       </div>
-			<div id="stations_selection_container" class="stations__selection-container">
-        <button class="stations__direction-btn"></button>
+			<div class="stations__selection-container">
+        <div class="stations__direction-slider-container">
+          <div class="stations__direction-slider" role="switch">
+            <div class="slider-track">
+              <div class="slider-knob"></div>
+            </div>
+          </div>
+          <span class="stations__direction-description"></span>
+        </div>
 				<ol class="stations__list">
 				</ol>
 			</div>

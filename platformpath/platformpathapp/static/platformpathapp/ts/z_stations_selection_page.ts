@@ -47,15 +47,11 @@ export class StationsSelectionPage {
         
         // get the main elements we'll be modifying
         const stationsSelectionContainer: HTMLDivElement | null = (
-            document.getElementById("stations_selection_container") as HTMLDivElement);
+            document.querySelector(".stations__selection-container") as HTMLDivElement);
         const stationsInputContainer: HTMLDivElement | null = (
-            document.getElementById("stations_input_container") as HTMLDivElement);
+            document.querySelector(".stations__input-container") as HTMLDivElement);
         // parent container of stationsSelection and Input Container
-        const stationsInputSelectionContainer: HTMLDivElement | null = (
-            stationsInputContainer?.parentElement ?? 
-            stationsSelectionContainer?.parentElement ?? 
-            null
-        ) as HTMLDivElement;
+        const stationsInputSelectionContainer: HTMLDivElement | null = document.querySelector(".stations__input-selection-container");
 
         if (stationsInputSelectionContainer === null || stationsSelectionContainer === null || stationsInputContainer === null) {
             console.warn(
@@ -134,13 +130,14 @@ export class StationsSelectionPage {
     ): {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[] | null {
         // there are two items in our stations selection container...
         // a list or all available stations
-        const stationsList: HTMLOListElement | null = stationsSelectionContainer?.querySelector("ol");
-        // and a button that, when toggled, swaps directions of the stations
-        const stationsDirectionButton: HTMLButtonElement | null = stationsSelectionContainer?.querySelector("button");
-        if (stationsList === null || stationsDirectionButton === null) {
+        const stationsList: HTMLOListElement | null = stationsSelectionContainer.querySelector(".stations__list");
+        // and a slider that, when toggled, swaps directions of the stations
+        const stationsDirectionSliderContainer: HTMLDivElement | null = (
+            stationsSelectionContainer.querySelector(".stations__direction-slider-container"));
+        if (stationsList === null || stationsDirectionSliderContainer === null) {
             console.warn(
-                "Stations list or stations direction button doesn't exist in stations selection container",
-                `Stations List Status: ${stationsList}; Stations Direction Button Status: ${stationsDirectionButton}`
+                "Stations list or stations direction slider container doesn't exist in stations selection container",
+                `Stations List Status: ${stationsList}; Stations Direction Button Status: ${stationsDirectionSliderContainer}`
             );
             return null;
         }   
@@ -152,7 +149,7 @@ export class StationsSelectionPage {
             button: HTMLButtonElement
         }[] = this.initStationsList(stationsList, stations);
         // then configure the logic for our stations direction button
-        this.initStationsDirectionButton(stationsDirectionButton, stations, stationListElements);
+        this.initStationsDirectionSliderContainer(stationsDirectionSliderContainer, stations, stationListElements);
 
         return stationListElements;
     }
@@ -163,8 +160,8 @@ export class StationsSelectionPage {
         stationListElements: {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, button: HTMLButtonElement}[], 
         lineName: string): void {
 
-        const logoDiv: HTMLDivElement | null = stationsInputContainer?.querySelector("#logo") as HTMLDivElement;
-        const inputForm: HTMLInputElement | null = stationsInputContainer?.querySelector("input");
+        const logoDiv: HTMLDivElement | null = stationsInputContainer.querySelector(".stations__line-logo") as HTMLDivElement;
+        const inputForm: HTMLInputElement | null = stationsInputContainer.querySelector(".stations__input-form");
 
         if (logoDiv === null || inputForm === null) {
             console.warn(
@@ -179,8 +176,8 @@ export class StationsSelectionPage {
     }
 
     // add the logic handling for our stations directions button
-    private initStationsDirectionButton(
-        stationsDirectionButton: HTMLButtonElement, 
+    private initStationsDirectionSliderContainer(
+        stationsDirectionSliderContainer: HTMLDivElement, 
         stations: { 
             name: string, 
             id: number, 
@@ -194,10 +191,26 @@ export class StationsSelectionPage {
             button: HTMLButtonElement}[]
         ): void {
 
-        stationsDirectionButton.value = "NOT REVERSED";
-        stationsDirectionButton.innerHTML = "DOWNTOWN TO UPTOWN";
+        // get the two items that we will need
+        const directionDescription: HTMLSpanElement | null = (
+            stationsDirectionSliderContainer.querySelector(".stations__direction-description"));
+        const slider: HTMLDivElement | null = stationsDirectionSliderContainer.querySelector(".stations__direction-slider");
 
-        stationsDirectionButton.onclick = () => {
+        if (directionDescription === null || slider === null) {
+            console.warn(
+                "The direction description doesn't exist or the slider knob may not exist",
+                `Direction Description Status: ${directionDescription}; Slider Knob Status: ${slider}`
+            );
+            return;
+        }
+
+        // set the meta data for our slider and the direction description
+        slider.classList.add("stations__direction-slider-unselected");
+        directionDescription.innerHTML = "DOWNTOWN TO UPTOWN";
+        slider.setAttribute("aria-checked", "false");
+
+        // add our event listener
+        slider.onclick = () => {
             
             let index: number = 0;
             let increment: number = 0;
@@ -206,15 +219,19 @@ export class StationsSelectionPage {
                 index = stationListItems.length - 1;
                 increment = -1;
 
-                stationsDirectionButton.value = "REVERSED";
-                stationsDirectionButton.innerHTML = "UPTOWN TO DOWNTOWN";
+                slider.classList.add("stations__direction-slider-selected");
+                slider.classList.remove("stations__direction-slider-unselected");
+                directionDescription.innerHTML = "UPTOWN TO DOWNTOWN";
+                slider.setAttribute("aria-checked", "true");
             }
             else {
                 index = 0;
                 increment = 1;
 
-                stationsDirectionButton.value = "NOT REVERSED";
-                stationsDirectionButton.innerHTML = "DOWNTOWN TO UPTOWN";
+                slider.classList.add("stations__direction-slider-unselected");
+                slider.classList.remove("stations__direction-slider-selected");
+                directionDescription.innerHTML = "DOWNTOWN TO UPTOWN";
+                slider.setAttribute("aria-checked", "false");
             }
 
 

@@ -1,16 +1,3 @@
-:root {
-    --blue_lines: #0039A6;
-    --orange_lines: #FF6319;
-    --yellow_lines: #FCCC0A;
-    --lime_green_lines: #6CBE45;
-    --light_green_lines: #A7A9AC;
-    --gray_lines: #808183;
-    --brown_lines: #996633;
-    --red_lines: #EE352E;
-    --green_lines: #00933C;
-    --purple_lines: #B933AD;
-}
-
 /* =========================================================
     Macro Styling
    ========================================================= */
@@ -156,26 +143,30 @@ body {
 }
 
 /* =========================================================
-   Stations container
+   Stations selection container
    ========================================================= */
 
 .stations__input-selection-container {
     display: flex;
+    gap: 10px;
 }
 
 .stations__selection-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: stretch;
+    width: 40vw;
+    gap: 10px;
 }
 
 .stations__list {
     display: flex;
     flex-direction: column;
-    width: 50vw;
     height: 400px;
     padding: 20px;
     background-color: #111111;
+    width: auto;
     gap: 5px;
     overflow: auto;
 }
@@ -186,16 +177,106 @@ body {
 }
 
 .station__order-identifier {
-    color: #ffffff;
+    /* essentially the equivalent in styling to a miniature logo */
+    font-weight: bolder;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color, #ffffff);
+    background: var(--line-color);
+    border-radius: 50%;
+    border-color: transparent;
+    width: 20px;
+    height: 20px;
 }
 
 .station__btn {
     flex: 1;
+    color: #dbdbdb;
+    background-color: #727272;
+    font-weight: bolder;
+    /* reset/alter button styling here...*/
+    margin: 0;
+    padding: 0;
+    outline: inherit;
+    appearance: none;
+    border: 2px transparent;
+    border-radius: 4px;
 }
 
 /* Hidden attribute... */
 li.hidden { /* remember specificity and how it competes against station__list li...*/
     display: none; /* besides li.hidden, you can flag the item as !important too with .hidden selector */
+}
+
+/* =========================================================
+   Slider (for the stations list)
+   ========================================================= */
+.stations__direction-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.stations__direction-description {
+    font-weight: bolder;
+    color: #e0e0e0;
+}
+
+.slider-track {
+    /* variables to use in the slider knob */
+    --slider-width: 70px;
+    --slider-height: 35px;
+    --slider-track-color: #7a7a7a;
+    --slider-knob-color: #ffffff;
+
+    display: flex;
+    align-items: center;
+    width: var(--slider-width);
+    height: var(--slider-height);
+    background-color: var(--slider-track-color);
+    border: 5px solid #000000;
+    border-radius: 1000px;
+}
+
+.slider-knob {
+    transform: translateX(-5px);
+    height: calc(var(--slider-height) * 1.1);
+    aspect-ratio: 1 / 1;
+    background-color: var(--slider-knob-color);
+    border: 5px solid #000000;
+    border-radius: 100%;
+}
+
+.stations__direction-slider-selected .slider-knob {
+    transform: translateX(25px);
+    transition: 0.25s ease-in-out;
+}
+.stations__direction-slider-selected .slider-track {
+    --slider-track-color: #b8b8b8;
+    transition: 0.25s ease-in-out;
+}
+.stations__direction-slider-selected .slider-track:hover {
+    --slider-track-color: #7a7a7a;
+    --slider-knob-color: #d1d1d1;
+
+    transition: 0.25s ease-in-out;
+}
+.stations__direction-slider-unselected .slider-knob {
+    transform: translateX(-5px);
+    transition: 0.25s ease-in-out;
+}
+.stations__direction-slider-unselected .slider-track {
+    --slider-track-color: #575757;
+    transition: 0.25s ease-in-out;
+}
+.stations__direction-slider-unselected .slider-track:hover {
+    --slider-track-color: #4b4b4b;
+    --slider-knob-color: #d1d1d1;
+
+    transition: 0.25s ease-in-out;
 }
 
 
@@ -224,14 +305,12 @@ li.hidden { /* remember specificity and how it competes against station__list li
     display: flex;
     flex-direction: row;
     align-items: center;
-
-    width: 100%;
     gap: 10px;
 }
 
 /* SUBWAY LOGO STYLING */
 
-.logo {
+.stations__line-logo {
     font-weight: bold;
     font-size: 3vw; 
 
@@ -260,15 +339,14 @@ li.hidden { /* remember specificity and how it competes against station__list li
 
 /* Colors of each respective subway line group (DRY custom properties) */
 
-.BLUE { --line-color: var(--blue_lines); }
-.ORANGE { --line-color: var(--orange_lines); }
-.YELLOW  { --line-color: var(--yellow_lines); --text-color: #000000; }
-.LIME_GREEN  { --line-color: var(--lime_green_lines); }
-.LIGHT_GREEN { --line-color: var(--light_green_lines); }
-.GRAY { --line-color: var(--gray_lines); }
-.BROWN { --line-color: var(--brown_lines); }
-.RED { --line-color: var(--red_lines); }
-.GREEN { --line-color: var(--green_lines); }
-.PURPLE { --line-color: var(--purple_lines); }
-
+.RED { --line-color: #EE352E; }
+.GREEN { --line-color: #00933C; }
+.PURPLE { --line-color: #B933AD; }
+.BLUE { --line-color: #0039A6; }
+.ORANGE { --line-color: #FF6319; }
+.YELLOW { --line-color: #FCCC0A; --text-color: #000000; }
+.BROWN { --line-color: #996633; }
+.LIME_GREEN { --line-color: #6CBE45; }
+.GRAY { --line-color: #A7A9AC; }
+.DARK_GRAY { --line-color: #808183; }
 
