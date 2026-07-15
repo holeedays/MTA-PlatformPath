@@ -4,6 +4,8 @@ import { type LayerData } from "./station_data.ts"
 
 declare const panzoom: any;
 
+export type SelectionRole = "start" | "end";
+
 export class SvgRenderer {
     private currentPanZoom: any = null;
 
@@ -20,6 +22,7 @@ export class SvgRenderer {
             });
     }
 
+    // Highlight function used to highlight the node at each step of the directions
     public highlightNode(nodeId: string): void {
         document.querySelectorAll('.highlighted').forEach(el => {
             el.classList.remove('highlighted');
@@ -31,6 +34,24 @@ export class SvgRenderer {
         } else {
             console.warn('Node not found:', nodeId);
         }
+    }
+
+    // Seperate highlight function to highlight the start and the end of the selected path
+    public highlightSelectedNode(nodeId: string, role: SelectionRole): void {
+        const highlightClass = role === "start" ? "start-node-highlight" : "end-node-highlight";
+
+        // remove selection class from previous nodes
+        document.querySelectorAll(`.${highlightClass}`).forEach((element) => {
+            element.classList.remove(highlightClass);   
+        })
+        
+        const node = document.getElementById(nodeId);
+        if (!node) {
+            console.warn("Node not found:", nodeId);
+            return;
+        }
+        
+        node.classList.add(highlightClass);
     }
 
     // Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers

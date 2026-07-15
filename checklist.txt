@@ -31,12 +31,10 @@ Connect second page (station selections page) seamlessly to the third page (ivan
 Ivan ----
 TO DO:
 (Priority)
-Fix highlight Issues
-    - certain nodes are not highlighting (svgId might be wrong?)
 Edit station map page to show layers selection as a side panel instead of horizontal bar
-When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
 
 (Non-priority)
+Have a default value for the select dropdown button
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
@@ -47,6 +45,9 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
+Fix highlight Issues
+    - certain nodes are not highlighting (svgId might be wrong?)
 Update data retrieval for stations
     - update how layers are retrieved and sent 
     - Made LayerData object for the new serialized Layer model

@@ -133,14 +133,16 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             (dt_plat_mid, dt_plat_head, "Walk towards the head of the platform", "Walk towards the middle of the platform"),
             (dt_plat_head, stair_dt_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the head of the platform"),
             (stair_dt_to_mezz, stair_mezz_to_dt, "Take the stairs down to the mezzanine", "Take the stairs up to the downtown platform"),
-            (stair_mezz_to_dt, mezz_central, "Step off the stairs into the central mezzanine", "Approach the stairs to the downtown platform"),
+            (stair_mezz_to_dt, mezz_dt, "Step off the stairs into the mezzanine", "Approach the stairs to the downtown platform"),
+            (mezz_dt, mezz_central, "Walk towards the central mezzanine", "Walk towards the downtown exit"),
             
             # Uptown Platform Chain (Head -> Middle -> Rear -> Stairs)
             (ut_plat_head, ut_plat_mid, "Walk towards the middle of the platform", "Walk towards the head of the platform"),
             (ut_plat_mid, ut_plat_rear, "Walk towards the rear of the platform", "Walk towards the middle of the platform"),
             (ut_plat_rear, stair_ut_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the rear of the platform"),
             (stair_ut_to_mezz, stair_mezz_to_ut, "Take the stairs down to the mezzanine", "Take the stairs up to the uptown platform"),
-            (stair_mezz_to_ut, mezz_central, "Step off the stairs into the central mezzanine", "Approach the stairs to the uptown platform"),
+            (stair_mezz_to_ut, mezz_ut, "Step off the stairs into the mezzanine", "Approach the stairs to the uptown platform"),
+            (mezz_ut, mezz_central, "Walk towards the central mezzanine", "Walk towards the uptown exit"),
 
             # Mezzanine Core Routing
             (mezz_central, mezz_booth, "Walk towards the station booth", "Walk towards the center of the mezzanine"),
