@@ -1,7 +1,6 @@
-import { SvgRenderer } from "./svg_renderer.ts";
+import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
 import { StationData, type StationResponse } from "./station_data.ts";
-import { slugify } from "./slugs.ts"
 import { URLHandler } from "./url_handler.ts";
 
 class StationMap {
@@ -16,6 +15,18 @@ class StationMap {
         this.pathFinder = new PathFinder();
         this.stationData = new StationData();
         this.svgRenderer = new SvgRenderer();
+    }
+
+    // Updating the highlight for the selected start or end node when the dropdown is changed
+    private updateSelectedNodeHighlight(nodeId: number, role: SelectionRole): void {
+        const node = this.station?.node_models.find((item) => item.id === nodeId);
+
+        if (!node) {
+            console.warn("Selected node not found:", nodeId);
+            return;
+        }
+
+        this.svgRenderer.highlightSelectedNode(node.svg_id, role);
     }
 
     // initializes the page: loads diagram, fetches station data, sets up event listeners
@@ -40,6 +51,7 @@ class StationMap {
 
         console.log('Fetched station data:', this.station);
 
+        // initializing dropdown with node options
         for (const node of this.station?.node_models || []) {
             document.getElementById('start-node')?.appendChild(
                 new Option(node.label, node.id.toString())
@@ -47,8 +59,18 @@ class StationMap {
             document.getElementById('end-node')?.appendChild(
                 new Option(node.label, node.id.toString())
             );
-
         }
+
+        // Listeners for the dropdowns to highlight the selected start and end nodes
+        // to indicate to users what node they are choosing
+        document.getElementById("start-node")?.addEventListener("change", (event) => {
+            const nodeId = Number((event.target as HTMLSelectElement).value);
+            this.updateSelectedNodeHighlight(nodeId, "start");
+        });
+        document.getElementById("end-node")?.addEventListener("change", (event) => {
+            const nodeId = Number((event.target as HTMLSelectElement).value);
+            this.updateSelectedNodeHighlight(nodeId, "end");
+        });
 
         // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")

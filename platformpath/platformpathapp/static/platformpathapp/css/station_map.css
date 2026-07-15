@@ -52,6 +52,47 @@ html, body {
     animation: pulse 1.2s ease-in-out infinite;
 }
 
+.highlighted,
+.highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: #b4ff1b;
+    stroke: #527d00;
+}
+
+.start-node-highlight,
+.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: #2f80ed;
+    stroke: #0f4caa;
+}
+
+.end-node-highlight,
+.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: #eb5757;
+    stroke: #8f1d1d;
+}
+
+.start-node-highlight.end-node-highlight,
+.start-node-highlight.end-node-highlight
+    :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: #9b51e0;
+    stroke: #5a2784;
+}
+
+/* Pulse animation for the selected node before find route is pressed */
+.start-node-highlight,
+.end-node-highlight {
+    animation: selection-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes selection-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
 .highlighted path {
     fill: #b4ff1b;
 }
