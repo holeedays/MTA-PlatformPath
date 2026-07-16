@@ -142,7 +142,7 @@ export class LinesSelectionPage {
         // loop through all our avaialble line button pairs
         for (const lineButton of availableLineButtons) {
             // add our event listener
-            lineButton.button.onclick = () => {
+            lineButton.button.addEventListener("click", () => {
                 // get the right line data from our hash map
                 const currentLine: string | undefined = lineButton.container.dataset.line;
                 let lineData: {
@@ -170,7 +170,7 @@ export class LinesSelectionPage {
                 const currentURL: string = URLHandler.getFullURLRoute();
 
                 URLHandler.redirectTo(currentURL + lineSlug + "/stations/");
-            };
+            });
 
             // also add the proper aria state for readibility
             lineButton.button.setAttribute("aria-disabled", "false");

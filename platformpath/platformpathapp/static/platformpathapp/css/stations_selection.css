@@ -157,7 +157,6 @@ body {
     justify-content: center;
     align-items: stretch;
     width: 40vw;
-    gap: 10px;
 }
 
 .stations__list {
@@ -174,6 +173,17 @@ body {
 .stations__list li {
     display: flex;
     gap: 10px;
+
+    transition: 
+        display ease 0.25s allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
+        opacity 0.2s ease-in-out;
+}
+/* allow-discrete only works for exiting animations, not entry (because display: none means there is nothing)
+starting style fixes allows the document to understand what to do */
+@starting-style {
+    .stations__list li {
+        opacity: 0;
+    }
 }
 
 .station__order-identifier {
@@ -202,81 +212,86 @@ body {
     outline: inherit;
     appearance: none;
     border: 2px transparent;
-    border-radius: 4px;
+    border-radius: 4px;    
 }
 
 /* Hidden attribute... */
-li.hidden { /* remember specificity and how it competes against station__list li...*/
+li.item__hidden { /* remember specificity and how it competes against station__list li...*/
     display: none; /* besides li.hidden, you can flag the item as !important too with .hidden selector */
+    opacity: 0;
+}
+li.item__loading {
+    opacity: 0;
 }
 
 /* =========================================================
    Slider (for the stations list)
    ========================================================= */
 .stations__direction-slider-container {
+    /* slider variables */
+    --slider-width: 70px;
+    --slider-height: 30px;
+    --slider-track-color: #7a7a7a;
+    --slider-knob-color: #ffffff;
+    --slider-border-width: 5px;
+
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex: 1;
+    justify-content: center;
+    gap: 15px;
+    height: 50px;
+    background-color: #969696;
 }
 
 .stations__direction-description {
     font-weight: bolder;
-    color: #e0e0e0;
+    color: #000000;
 }
 
 .slider-track {
-    /* variables to use in the slider knob */
-    --slider-width: 70px;
-    --slider-height: 35px;
-    --slider-track-color: #7a7a7a;
-    --slider-knob-color: #ffffff;
-
     display: flex;
     align-items: center;
     width: var(--slider-width);
     height: var(--slider-height);
     background-color: var(--slider-track-color);
-    border: 5px solid #000000;
+    border: var(--slider-border-width) solid #000000;
     border-radius: 1000px;
-}
 
+    transition: 0.25s ease-in-out;
+}
 .slider-knob {
     transform: translateX(-5px);
     height: calc(var(--slider-height) * 1.1);
     aspect-ratio: 1 / 1;
     background-color: var(--slider-knob-color);
-    border: 5px solid #000000;
+    border: var(--slider-border-width) solid #000000;
     border-radius: 100%;
+
+    transition: 0.25s ease-in-out;
 }
 
-.stations__direction-slider-selected .slider-knob {
-    transform: translateX(25px);
-    transition: 0.25s ease-in-out;
-}
-.stations__direction-slider-selected .slider-track {
-    --slider-track-color: #b8b8b8;
-    transition: 0.25s ease-in-out;
-}
-.stations__direction-slider-selected .slider-track:hover {
-    --slider-track-color: #7a7a7a;
+.slider-track:hover {
     --slider-knob-color: #d1d1d1;
-
-    transition: 0.25s ease-in-out;
 }
+
 .stations__direction-slider-unselected .slider-knob {
     transform: translateX(-5px);
-    transition: 0.25s ease-in-out;
 }
 .stations__direction-slider-unselected .slider-track {
     --slider-track-color: #575757;
-    transition: 0.25s ease-in-out;
 }
 .stations__direction-slider-unselected .slider-track:hover {
     --slider-track-color: #4b4b4b;
-    --slider-knob-color: #d1d1d1;
+}
 
-    transition: 0.25s ease-in-out;
+.stations__direction-slider-selected .slider-knob {
+    transform: translateX(35px);
+}
+.stations__direction-slider-selected .slider-track {
+    --slider-track-color: #b8b8b8;
+}
+.stations__direction-slider-selected .slider-track:hover {
+    --slider-track-color: #7a7a7a;
 }
 
 
