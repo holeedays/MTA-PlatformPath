@@ -43,6 +43,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Generated inital placeholder README
 Edit station map page to show layers selection as a side panel instead of horizontal bar
 Have a default value for the select dropdown button
 When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
