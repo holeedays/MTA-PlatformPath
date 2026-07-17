@@ -85,17 +85,17 @@ class StationMap {
         if (!this.station) return;
 
         const layerOptions = document.getElementById("layer-options");
-        if (!layerOptions) return;
+        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
+        
+        if (!layerOptions || !allLayersButton) return;
 
         layerOptions.innerHTML = "";
 
-        // Setup button to display all layers of the station map
-        const allLayersButton = this.createLayerButton("Entire map", true);
+        // Setup button to display all layers of the station map and hook control to 
         allLayersButton.addEventListener("click", () => {
             this.svgRenderer.showAllLayers(this.station?.layer_models || []);
             this.setActiveLayerButton(allLayersButton);
         });
-        layerOptions.appendChild(allLayersButton);
 
         // Setup buttons to show individual layers of the map of the station
         for (const layer of this.station.layer_models) {
@@ -121,15 +121,16 @@ class StationMap {
         return button;
     }
 
+    // Helper function to clear active state from previous button and sets active state for current button
     private setActiveLayerButton(activeButton: HTMLButtonElement): void {
-        document.querySelectorAll(".layer-option").forEach((button) => {
+        document.querySelectorAll(".layer-option, .all-layers-button").forEach((button) => {
             button.classList.remove("active");
         });
         activeButton.classList.add("active");
     }
 
     private setActiveLayerButtonByLayer(layerId: string): void {
-        const layerButtons = document.querySelectorAll<HTMLButtonElement>(".layer-option");
+        const layerButtons = document.querySelectorAll<HTMLButtonElement>(".layer-option, .all-layers-button");
         for (const button of layerButtons) {
             if (button.innerText === layerId) {
                 this.setActiveLayerButton(button);
