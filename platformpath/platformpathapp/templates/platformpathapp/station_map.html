@@ -25,11 +25,13 @@
 
         <div id="route-form" style="margin: 20px 0;">
             <label for="start-node">Start:</label>
-            <select id="start-node">
+            <select id="start-node" required>
+                <option value="" selected disabled>Choose a start node</option>
             </select>
 
             <label for="end-node">End:</label>
-            <select id="end-node">
+            <select id="end-node" required>
+                <option value="" selected disabled>Choose a end node</option>
             </select>
 
             <button id="find-route">Find Route</button>

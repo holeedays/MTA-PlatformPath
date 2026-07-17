@@ -34,7 +34,6 @@ TO DO:
 Edit station map page to show layers selection as a side panel instead of horizontal bar
 
 (Non-priority)
-Have a default value for the select dropdown button
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
@@ -45,6 +44,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Have a default value for the select dropdown button
 When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
 Fix highlight Issues
     - certain nodes are not highlighting (svgId might be wrong?)
