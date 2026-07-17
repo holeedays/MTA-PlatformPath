@@ -31,7 +31,6 @@ Connect second page (station selections page) seamlessly to the third page (ivan
 Ivan ----
 TO DO:
 (Priority)
-Edit station map page to show layers selection as a side panel instead of horizontal bar
 
 (Non-priority)
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
@@ -44,6 +43,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+Edit station map page to show layers selection as a side panel instead of horizontal bar
 Have a default value for the select dropdown button
 When user selects start and end from the dropdown, the chosen nodes will flash before route is calculated
 Fix highlight Issues
