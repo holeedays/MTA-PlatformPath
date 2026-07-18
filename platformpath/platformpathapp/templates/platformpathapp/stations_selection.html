@@ -29,18 +29,22 @@
 	<div class="header-spacer"></div>
 
 	<main class="page">
-		<section class="user-prompt">
-			SELECT A STATION
-		</section>
-
-		<div class="divider"></div>
-
 		<!-- ================= SUBWAY STATION SELECTION ================= -->
 
 		<section class="stations__input-selection-container">
-      <div class="stations__input-container">
-        <div class="stations__line-logo"></div>
-        <input class="stations__input-form">
+      <div class="stations__input-container-wrapper">
+        <section class="user-prompt">
+          SELECT A STATION
+        </section>
+		    <div class="divider"></div>
+
+        <div class="stations__input-container">
+          <div class="stations__line-logo-container">
+            <button class="stations__line-logo-button"></button>
+            <span class="stations__line-logo-button-description" role="button description label">Select a new line</span>
+          </div>
+          <input class="stations__input-form" placeholder="Search here..."> 
+        </div>
       </div>
 			<div class="stations__selection-container">
         <div class="stations__direction-slider-container">

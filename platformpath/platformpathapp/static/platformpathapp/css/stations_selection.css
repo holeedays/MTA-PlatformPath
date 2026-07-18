@@ -44,6 +44,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 60px;
+    width: 100%;
 }
 
 .user-prompt {
@@ -55,9 +56,8 @@ body {
 .divider {  
     border: none;
     border-top: 3px solid #a8a8a8;
-    width: 20%;
+    width: 30%;
     max-width: 1200px;
-    margin: 0 auto;
 }
 
 /* =========================================================
@@ -148,7 +148,11 @@ body {
 
 .stations__input-selection-container {
     display: flex;
-    gap: 10px;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 95%;
+    gap: 20px;
 }
 
 .stations__selection-container {
@@ -156,27 +160,31 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
-    width: 40vw;
+    height: 100%;
+    width: 50vw;
 }
 
 .stations__list {
     display: flex;
     flex-direction: column;
-    height: 400px;
+    height: 80%;
     padding: 20px;
     background-color: #111111;
     width: auto;
     gap: 5px;
     overflow: auto;
+    border-radius: 10px;
 }
 
 .stations__list li {
     display: flex;
     gap: 10px;
+    justify-content: center;
 
     transition: 
         display ease 0.25s allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
-        opacity 0.2s ease-in-out;
+        opacity 0.2s ease-in-out,
+        all 0.25s;
 }
 /* allow-discrete only works for exiting animations, not entry (because display: none means there is nothing)
 starting style fixes allows the document to understand what to do */
@@ -185,11 +193,28 @@ starting style fixes allows the document to understand what to do */
         opacity: 0;
     }
 }
+@media(hover:hover) {
+    .stations__list li:hover {
+        transform: scale(1.02);
+    }
+    .stations__list li:hover > .station__btn {
+        color: var(--text-color, #ffffff);
+        background-color: var(--line-color);
+    }
+}
+/* note: :active only works reliably with interactable tags like buttons/inputs/anchors/etc */
+.stations__list li:active {
+    transform: scale(1.02);
+}
+.stations__list li > .station__btn:active {
+    color: var(--text-color, #ffffff);
+    background-color: var(--line-color);
+}
 
 .station__order-identifier {
     /* essentially the equivalent in styling to a miniature logo */
     font-weight: bolder;
-    font-size: 15px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -197,8 +222,8 @@ starting style fixes allows the document to understand what to do */
     background: var(--line-color);
     border-radius: 50%;
     border-color: transparent;
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
 }
 
 .station__btn {
@@ -206,6 +231,7 @@ starting style fixes allows the document to understand what to do */
     color: #dbdbdb;
     background-color: #727272;
     font-weight: bolder;
+    font-size: 17px;
     /* reset/alter button styling here...*/
     margin: 0;
     padding: 0;
@@ -213,9 +239,14 @@ starting style fixes allows the document to understand what to do */
     appearance: none;
     border: 2px transparent;
     border-radius: 4px;    
+
+    transition: 0.25s ease-in-out;
 }
 
-/* Hidden attribute... */
+/* =========================================================
+   Stations list list item attributes
+   ========================================================= */
+
 li.item__hidden { /* remember specificity and how it competes against station__list li...*/
     display: none; /* besides li.hidden, you can flag the item as !important too with .hidden selector */
     opacity: 0;
@@ -223,10 +254,16 @@ li.item__hidden { /* remember specificity and how it competes against station__l
 li.item__loading {
     opacity: 0;
 }
+li.item__temp {
+    font-size: 15px;
+    font-style: italic;
+    color: #868686;
+}
 
 /* =========================================================
-   Slider (for the stations list)
+   Slider container (used in conjunction with stations list)
    ========================================================= */
+
 .stations__direction-slider-container {
     /* slider variables */
     --slider-width: 70px;
@@ -241,10 +278,12 @@ li.item__loading {
     gap: 15px;
     height: 50px;
     background-color: #969696;
+    border-radius: 10px;
 }
 
 .stations__direction-description {
     font-weight: bolder;
+    font-size: 20px;
     color: #000000;
 }
 
@@ -294,6 +333,142 @@ li.item__loading {
     --slider-track-color: #7a7a7a;
 }
 
+/* =========================================================
+   Input container (used in conjunction with stations list)
+   ========================================================= */
+
+/* wrapper, only for styling and layout */
+.stations__input-container-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 0.8;
+    gap: 20px;
+}
+
+.stations__input-container {
+    --bg-color: #313131;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    height: 30px;
+    width: 90%;
+
+    border: 25px solid var(--bg-color);
+    background-color: var(--bg-color);
+    border-radius: 1000px;
+}
+
+.stations__input-form {
+    --font-size: 30px;
+
+    flex: 1;
+    height: var(--font-size);
+    font-size: var(--font-size);
+    color: #c1c1c1;
+    font-weight: bold;
+    background-color: var(--bg-color);
+
+    border: none;
+}
+.stations__input-form:focus {
+    outline: none;
+}
+
+/* ==================================================================
+   Stations line logo container (in the stations input container)
+   ================================================================== */
+
+.stations__line-logo-container {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    transform: translateX(-10px);
+}
+
+.stations__line-logo-button {
+    --logo-text-size: 50px;
+    --logo-bg-size: 60px;
+
+    font-weight: bold;
+    font-size: var(--logo-text-size); 
+
+    /* Bulletproof flexbox centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Background and foreground colors */
+    /* these variables are declared later */
+    color: var(--text-color, #ffffff);
+    background-color: var(--line-color);
+
+    /* The next one sets up the circle */
+    border-radius: 50%;
+    border-color: transparent;
+
+    /* Try varying these styles, and/or others, for your Subway font */
+    width: var(--logo-bg-size);
+    aspect-ratio: 1/1;
+    padding: 0;
+    margin: 0;
+
+    transition: 0.25s ease-in-out;
+}
+@media(hover:hover) {
+    .stations__line-logo-button:hover {
+        color: color-mix(in srgb, var(--text-color, white), #000000 20%);
+        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
+    }
+    .stations__line-logo-button:hover + .stations__line-logo-button-description{
+        opacity: 1;
+    }
+}
+.stations__line-logo-button:active {
+    color: color-mix(in srgb, var(--text-color, white), #000000 40%);
+    background-color: color-mix(in srgb, var(--line-color), #000000 40%);
+}
+.stations__line-logo-button:active ~ .stations__line-logo-button-description{
+    opacity: 1;
+}
+
+.stations__line-logo-button-description {
+    --bg-color: #4e4e4e;
+
+    position: absolute;
+    width: 100px;
+    height: auto;
+
+    text-align: center;
+    bottom: 110%;
+    z-index: 100;
+
+    font-size: 15px;
+
+    color: #e0e0e0;
+    background-color: var(--bg-color);
+    border: 5px solid var(--bg-color);
+    border-radius: 1000px;
+    /* hide the item onload, only when the button is hovered on the description appears*/
+    opacity: 0;
+
+    transition: 0.15s ease-in-out;
+}
+
+/* Colors of each respective subway line group */
+
+.RED { --line-color: #EE352E; }
+.GREEN { --line-color: #00933C; }
+.PURPLE { --line-color: #B933AD; }
+.BLUE { --line-color: #0039A6; }
+.ORANGE { --line-color: #FF6319; }
+.YELLOW { --line-color: #FCCC0A; --text-color: #000000; }
+.BROWN { --line-color: #996633; }
+.LIME_GREEN { --line-color: #6CBE45; }
+.GRAY { --line-color: #A7A9AC; }
+.DARK_GRAY { --line-color: #808183; }
 
 /* =========================================================
    Footer
@@ -315,53 +490,75 @@ li.item__loading {
     text-align: center;
 }
 
-/* LOGO INPUT CONTAINER STYLING */
-.stations__input-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
+/* =========================================================================================
+   Mobile/Tablet (<768px) [Don't need a dedicated mobile resolution resizing this time]
+   ========================================================================================= */
+@media (max-width: 768px) { 
+    .site-header {
+        height: 100px;
+    }
+
+    .site-header__inner {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        padding: 8px 20px;
+    }
+
+    .site-header__nav {
+        align-items: center;
+        justify-content: center;
+        gap: 60px;
+        width: 100%;
+    }
+
+    .header-spacer {
+        height: 100px;
+    }
+
+    .user-prompt {
+        font-size: 30px;
+    }
+
+    .stations__input-selection-container {
+        margin: 30px 0 0 0;
+        flex-direction: column;
+    }
+
+    .stations__input-container-wrapper {
+        width: 100%;
+        align-items: center;
+    }
+
+    .stations__input-container {
+        border-width: 10px;
+        flex: 0.8;
+        width: 90%;
+        gap: 5px;
+    }
+
+    .stations__input-form {
+        --font-size: 20px;
+        width: 90%;
+    }
+
+    .stations__line-logo-container {
+        transform: translateX(-2px);
+    }
+
+    .stations__line-logo-button {
+        --logo-text-size: 40px;
+        --logo-bg-size: 50px;
+    }
+
+    .stations__selection-container {
+        width: 95%;
+    }
+
+    .site-footer__legal {
+        flex-direction: column;
+        gap: 4px;
+    }
 }
-
-/* SUBWAY LOGO STYLING */
-
-.stations__line-logo {
-    font-weight: bold;
-    font-size: 3vw; 
-
-    /* Bulletproof flexbox centering */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* Background and foreground colors */
-    color: var(--text-color, white);
-    background-color: var(--line-color);
-
-    /* The next one sets up the circle */
-    border-radius: 50%;
-    border-color: transparent;
-
-    /* Try varying these styles, and/or others, for your Subway font */
-    width: 5vw;
-    height: 5vw;
-    padding: 0;
-    margin: 0;
-
-    /* display settings */
-    flex-shrink: 0;
-}
-
-/* Colors of each respective subway line group (DRY custom properties) */
-
-.RED { --line-color: #EE352E; }
-.GREEN { --line-color: #00933C; }
-.PURPLE { --line-color: #B933AD; }
-.BLUE { --line-color: #0039A6; }
-.ORANGE { --line-color: #FF6319; }
-.YELLOW { --line-color: #FCCC0A; --text-color: #000000; }
-.BROWN { --line-color: #996633; }
-.LIME_GREEN { --line-color: #6CBE45; }
-.GRAY { --line-color: #A7A9AC; }
-.DARK_GRAY { --line-color: #808183; }
 

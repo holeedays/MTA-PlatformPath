@@ -66,15 +66,19 @@ export class StationsSelectionPage {
 
         // configure these elements
         this.initStationsInputSelectionContainer(stationsInputSelectionContainer, stations.line_reference.color);
-
-        const stationListElements: {
-            listItemWrapper: HTMLLIElement, 
-            orderIdentifier: HTMLSpanElement, 
-            customButton: CustomHTMLButton}[] | null = (
+        // init station selection container and return the station list elements
+        const stationsListElements: {
+            stationsList: HTMLOListElement,
+            stationsListChildren: {
+                listItemWrapper: HTMLLIElement, 
+                orderIdentifier: HTMLSpanElement, 
+                customButton: CustomHTMLButton
+            }[]
+        } | null = (
             this.initStationsSelectionContainer(stationsSelectionContainer, stations.stations));
 
-        if (stationListElements !== null)
-            this.initStationsInputContainer(stationsInputContainer, stationListElements, stations.line_reference.name);
+        if (stationsListElements !== null)
+            this.initStationsInputContainer(stationsInputContainer, stationsListElements, stations.line_reference.name);
     }
     
     // get data from the slug in our url
@@ -128,7 +132,13 @@ export class StationsSelectionPage {
             lines: string[], 
             diagram_path: string
         }[]
-    ): {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, customButton: CustomHTMLButton}[] | null {
+    ): {
+        stationsList: HTMLOListElement,
+        stationsListChildren: {
+            listItemWrapper: HTMLLIElement, 
+            orderIdentifier: HTMLSpanElement, 
+            customButton: CustomHTMLButton}[]
+        } | null {
         // there are two items in our stations selection container...
         // a list or all available stations
         const stationsList: HTMLOListElement | null = stationsSelectionContainer.querySelector(".stations__list");
@@ -144,36 +154,44 @@ export class StationsSelectionPage {
         }   
 
         // init our stations list first (or else we cannot init the station direction button)
-        const stationListElements: {
+        const stationsListChildren: {
             listItemWrapper: HTMLLIElement, 
             orderIdentifier: HTMLSpanElement,
             customButton: CustomHTMLButton
         }[] = this.initStationsList(stationsList, stations);
         // then configure the logic for our stations direction button
-        this.initStationsDirectionSliderContainer(stationsDirectionSliderContainer, stations, stationListElements);
+        this.initStationsDirectionSliderContainer(stationsDirectionSliderContainer, stations, stationsListChildren);
 
-        return stationListElements;
+        return {stationsList, stationsListChildren};
     }
 
     // configure the contents in the stations input container (the logo div and the input form)
     private initStationsInputContainer(
         stationsInputContainer: HTMLDivElement,
-        stationListElements: {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, customButton: CustomHTMLButton}[], 
+        stationsListElements: {
+            stationsList: HTMLOListElement, 
+            stationsListChildren: {
+                listItemWrapper: HTMLLIElement, 
+                orderIdentifier: HTMLSpanElement, 
+                customButton: CustomHTMLButton
+            }[] 
+        },
         lineName: string): void {
 
-        const logoDiv: HTMLDivElement | null = stationsInputContainer.querySelector(".stations__line-logo") as HTMLDivElement;
+        const logoButton: HTMLButtonElement | null = (
+            stationsInputContainer.querySelector(".stations__line-logo-button") as HTMLButtonElement);
         const inputForm: HTMLInputElement | null = stationsInputContainer.querySelector(".stations__input-form");
 
-        if (logoDiv === null || inputForm === null) {
+        if (logoButton === null || inputForm === null) {
             console.warn(
-                "Logo div or input form doesn't exist",
-                `Logo Div Status: ${logoDiv}; Input Form Status ${inputForm}`
+                "Logo button or input form doesn't exist",
+                `Logo Button Status: ${logoButton}; Input Form Status ${inputForm}`
             );
             return;
         }   
 
-        this.initInputForm(inputForm, stationListElements);
-        this.initLogoDiv(logoDiv, lineName);
+        this.initInputForm(inputForm, stationsListElements);
+        this.initLogoButton(logoButton, lineName);
     }
 
     // add the logic handling for our stations directions button
@@ -322,28 +340,64 @@ export class StationsSelectionPage {
     // configure the event logic of the input form
     private initInputForm(
         inputForm: HTMLInputElement, 
-        stationListElements: {listItemWrapper: HTMLLIElement, orderIdentifier: HTMLSpanElement, customButton: CustomHTMLButton}[]
+        stationListElements: {
+            stationsList: HTMLOListElement, 
+            stationsListChildren: {
+                listItemWrapper: HTMLLIElement, 
+                orderIdentifier: HTMLSpanElement, 
+                customButton: CustomHTMLButton
+            }[]
+        }
     ): void {
         // configure the logic for the input form (matching user input)
         inputForm.addEventListener("input", () => {
             // create a regexp that tests whether any string matches with the current input form value (case insensitive)
             const userInputRegex: RegExp = new RegExp(`${inputForm.value}`, "i");
+
+            let stationButtonsHidden: number = 0;
+
             // iterate through each button amd check whether the user input value matches with their value
-            for (const {listItemWrapper, orderIdentifier, customButton} of stationListElements) {
-                // if it doesn't have the value, add a class to make it "hidden" from the container (CSS will handle it)
+            for (const {listItemWrapper, orderIdentifier, customButton} of stationListElements.stationsListChildren) {
+                // if it doesn't have the value, add a class to make it "hidden" from the container (CSS will handle that effect)
                 if (!userInputRegex.test(customButton.self.value)) {
                     listItemWrapper.classList.add("item__hidden");
+                    stationButtonsHidden++;
                 }
+                // else remove the "hidden" class
                 else {
                     listItemWrapper.classList.remove("item__hidden");
                 }
             }
+
+            // logic to deal with adding a custom element if all station buttons are hidden
+            let temporaryListItem: HTMLLIElement | null = (
+                stationListElements.stationsList.querySelector(".item__temp[data-is-unique='true']"));
+            // first check if the count is equivalent to the available number of stations
+            // if it doesn't, remove the temporary list item (if it exists)
+            if (stationButtonsHidden !== stationListElements.stationsListChildren.length) {
+                temporaryListItem?.remove();
+                return;
+            }
+
+            // if the count is equivalent, check if the list item already exists
+            if (temporaryListItem === null) {
+                // create an additional list element that tells the user there are no available results with what they searched
+                temporaryListItem = document.createElement("li");
+                // demarcate the item was a class "temp"
+                temporaryListItem.classList.add("item__temp");
+                // add this unique attribute
+                temporaryListItem.setAttribute("data-is-unique", "true");
+                temporaryListItem.innerHTML = "There are no available stations with that name :/";
+                // prepend it to our parent stationsList container
+                stationListElements.stationsList.prepend(temporaryListItem);
+            }
         });
     }
 
-    // configure the logo div (it's just adding the line name to the logoDiv so the text is visible)
-    private initLogoDiv(logoDiv: HTMLDivElement, lineName: string): void {
-        logoDiv.innerHTML = lineName;
+    // configure the logo button (event listener logic and its styling)
+    private initLogoButton(logoButton: HTMLButtonElement, lineName: string): void {
+        logoButton.innerHTML = lineName;
+        logoButton.addEventListener("click", () => URLHandler.redirectTo("/discover/lines/"));
     }
 
     // configures the logic for a given station button (event listener + misc styling)
