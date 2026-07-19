@@ -1,10 +1,30 @@
 This is where we add stuff we did and things to do...
 
+PLANS FOR THE FUTURE:
+------------------------------
+
+PRIORITIES:
+> Complete the station map view page (specifically mobile viewport)
+    - Fix zoom for different aspect ratios
+    - Color code nodes based on layers
+    - CSS Revamp (trying vertical layout for mobile?? testing...)
+    - Back button???
+    - Map slight rework (directional arrows for stairs)
+> Change the station map diagrams (maybe alter the arrows and names on them??)
+> Add all the new stations currently available
+> Remove old files
+
+... get more data, add more stations
+
+NICE-TO-HAVES (NON-PRIORITIES):
+> Google Maps API Integration/Mta Realtime Data Integration 
+> Fixing the station start to station end page
+
+
 TO DO FOR EVERYONE:
 - Alter the svg files of the maps so that each section is compartmentalized into different nodes (for instance, mezzanine is broken into
 different nodes based on exits and wall separations, platforms are broken to different nodes relative to the head/middle/rear of train)
 - Simplify nodes selection to include only exit stairs (remove other stairs) and the mezzanine/platform nodes
-
 
 Edmond ----
 TO DO:
