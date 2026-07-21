@@ -10,60 +10,78 @@
 </head>
 
 <body>
-    <div class="main">
-        <main class="station-map-page">
-            <section class="station-map-stage" aria-label="Station map">
-                <div id="diagram-container">
-                    <!-- SVG loads here -->
-                </div>
+	<div class="main">
+		<main class="station-map-page">
+			<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
+			<header class="site-header">
+				<div class="site-header__inner">
+					<a class="brand" href="#">
+							<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+							<span class="brand__name">PLATFORMPATH</span>
+					</a>
+					<nav class="site-header__nav">
+							<a href="/not-found">ABOUT US</a>
+							<a href="/">HOME</a>
+							<a href="/not-found">NAVIGATE</a>
+					</nav>
+				</div>
+			</header>
 
-                <header class="map-overlay map-header">
-                    <h1 id="diagram-name"></h1>
-                </header>
+			<!-- ================= HEADER SPACING ================= -->
+		<div class="header-spacer"></div>
 
-                <aside class="map-overlay level-stack" aria-label="Station levels">
-                    <button id="show-all-layers" class="all-layers-button active" type="button">
-                        Show all levels
-                    </button>
-                    
-                    <div class="level-rail">
-                        <p class="level-boundary">Top level ↑</p>
-                        <div id="layer-options" class="layer-options"></div>
-                        <p class="level-boundary">Bottom level ↓</p>
-                    </div>
-                </aside>
+		<section class="station-map-stage" aria-label="Station map">
+				<div id="diagram-container">
+						<!-- SVG loads here -->
+				</div>
 
-                <div id="route-form" class="map-overlay route-form">
-                    <div class="route-field">
-                        <label for="start-node">Start</label>
-                        <select id="start-node" required>
-                            <option value="" selected disabled>Choose a start node</option>
-                        </select>
-                    </div>
+				<header class="map-overlay map-header">
+						<h1 id="diagram-name"></h1>
+				</header>
 
-                    <div class="route-field">
-                        <label for="end-node">End</label>
-                        <select id="end-node" required>
-                            <option value="" selected disabled>Choose an end node</option>
-                        </select>
-                    </div>
+				<aside class="map-overlay level-stack" aria-label="Station levels">
+						<button id="show-all-layers" class="all-layers-button active" type="button">
+								Show all levels
+						</button>
+						
+						<div class="level-rail">
+								<p class="level-boundary">Top level ↑</p>
+								<div id="layer-options" class="layer-options"></div>
+								<p class="level-boundary">Bottom level ↓</p>
+						</div>
+				</aside>
 
-                    <button id="find-route" type="button">Find Route</button>
-                </div>
+				<div id="route-form" class="map-overlay route-form">
+						<div class="route-field">
+								<label for="start-node">Start</label>
+								<select id="start-node" required>
+										<option value="" selected disabled>Choose a start node</option>
+								</select>
+						</div>
 
-                <div id="step-ui" class="map-overlay step-ui" style="display: none;">
-                    <strong id="instruction-text">Instructions will appear here</strong>
-                    <div class="step-controls">
-                        <button id="btn-prev" type="button">Previous</button>
-                        <button id="btn-next" type="button">Next</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
+						<div class="route-field">
+								<label for="end-node">End</label>
+								<select id="end-node" required>
+										<option value="" selected disabled>Choose an end node</option>
+								</select>
+						</div>
 
-    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
-    <script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
+						<button id="find-route" type="button">Find Route</button>
+				</div>
+
+				<div id="step-ui" class="map-overlay step-ui" style="display: none;">
+						<strong id="instruction-text">Instructions will appear here</strong>
+						<div class="step-controls">
+								<button id="btn-prev" type="button">Previous</button>
+								<button id="btn-next" type="button">Next</button>
+						</div>
+				</div>
+		</section>
+		</main>
+	</div>
+
+	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+	<script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
 
 </body>
 
