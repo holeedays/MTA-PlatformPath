@@ -1,4 +1,4 @@
-import { DataFetch } from "./data_fetch_new.ts";
+import { DataFetch } from "./data_fetch.ts";
 import { slugify } from "./slugs.ts";
 import { URLHandler } from "./url_handler.ts";
 import { CustomHTMLButton } from "./custom_html_button.ts";
@@ -21,7 +21,7 @@ export class StationsSelectionPage {
     // umbrella function to init all elements in the html page, available or unavailable
     private async initElements(): Promise<void> {
         // retrieve the metadata embedded in our url
-        const lineID: number | null = this.getLineIDFromSlug();
+        const lineID: number | null = URLHandler.getIDFromURL();
         if (lineID === null) {
             console.warn("Cannot extract the ID from the URL. Aborting initializing this page.");
             return;
@@ -40,7 +40,7 @@ export class StationsSelectionPage {
                 lines: string[], 
                 diagram_path: string
             }[]
-            } | null = await this.fetchData(lineID);
+            } | null = await DataFetch.fetchStations(lineID);
         if (stations === null) {
             console.warn("Cannot fetch station data. Aborting initializing this page.");
             return;
@@ -79,41 +79,6 @@ export class StationsSelectionPage {
 
         if (stationsListElements !== null)
             this.initStationsInputContainer(stationsInputContainer, stationsListElements, stations.line_reference.name);
-    }
-    
-    // get data from the slug in our url
-    private getLineIDFromSlug(): number | null {
-        // extract the line slug from the URL and get the necessary data from it
-        // the url currently is: discover/lines/some_line_slug/stations/
-        const currentURL: string = URLHandler.getFullURLRoute();
-        const urlSplit: string[] = currentURL.split("/");
-        
-        const lineSlug: string | undefined = urlSplit[urlSplit.length - 3];
-        const lineSlugSplit: string[] | undefined = lineSlug?.split("-");
-        const lineID: number | undefined = Number(lineSlugSplit?.at(-1));
-        
-        if (lineID !== undefined && !Number.isNaN(lineID))
-            return lineID;
-        else 
-            return null;
-    }
-
-    // fetch the stations data given our our line ID
-    private async fetchData(lineID: number): Promise<{ 
-        line_reference: {
-            name: string,
-            color: string, 
-            id: number
-        },
-        stations: {
-            name: string, 
-            id: number, 
-            station_order: number, 
-            lines: string[], 
-            diagram_path: string
-        }[]} | null> {
-
-        return await(DataFetch.fetchStations(lineID));
     }
 
     // configure our stations input selection container (the parent container of our input/selection container)

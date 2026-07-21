@@ -1,11 +1,11 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
-import { StationData, type StationResponse } from "./station_data.ts";
+import { type StationResponse } from "./station_data.ts";
 import { URLHandler } from "./url_handler.ts";
+import { DataFetch } from "./data_fetch.ts";
 
-class StationMap {
+export class StationMapPage {
     private pathFinder: PathFinder;
-    private stationData: StationData;
     private currentPath: PathStep[] | null = null;
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
@@ -13,7 +13,6 @@ class StationMap {
 
     constructor() {
         this.pathFinder = new PathFinder();
-        this.stationData = new StationData();
         this.svgRenderer = new SvgRenderer();
     }
 
@@ -30,10 +29,17 @@ class StationMap {
     }
 
     // initializes the page: loads diagram, fetches station data, sets up event listeners
-    public async init(stationID: number): Promise<void> {
+    public async init(): Promise<void> {
+
+        // get the id from our url
+        const stationID: number | null = URLHandler.getIDFromURL();
+        if (stationID === null) {
+            console.warn("Cannot find valid station ID from the URL");
+            return;
+        }
+        this.station = await DataFetch.fetchEdgesNodesLayers(stationID) as StationResponse;
 
         // Load the station information from database (The station's edges and nodes)
-        this.station = await this.stationData.fetchStation(stationID);
         if (!this.station) {
             console.error('Failed to fetch station data');
             return;
@@ -220,26 +226,8 @@ class StationMap {
 }
 
 // Creates and initializes StationMap object for the page
-document.addEventListener("DOMContentLoaded", () => {
-    // Get the station id based on the URL
-    const currentURL: string = URLHandler.getFullURLRoute();
-    const urlSplit: string[] = currentURL.split('/');
-    const stationSlug: string | undefined = urlSplit[urlSplit.length - 3]
-    
-    let stationID: number | null | undefined = null;
-    if (stationSlug) {
-        const stationSlugSplit: string[] = stationSlug.split("-");
-        stationID = Number(stationSlug.at(-1));
-    } else {
-        console.error("Invalid station slug in URL");
-        return
-    }
+// document.addEventListener("DOMContentLoaded", () => {
+//     const stationMapPage = new StationMapPage();
+//     stationMapPage.init();
+// });
 
-    if (!stationID) {
-        console.error("Failed to initialize station data");
-        return;
-    }
-
-    const stationMap = new StationMap();
-    stationMap.init(stationID);
-});

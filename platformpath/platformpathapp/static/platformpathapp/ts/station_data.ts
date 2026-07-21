@@ -1,4 +1,4 @@
-import { DataFetch } from "./data_fetch_new.ts";
+import { DataFetch } from "./data_fetch.ts";
 
 export interface LayerData {
     id: number;
@@ -30,23 +30,4 @@ export interface StationResponse {
     edge_models: EdgeData[];
     node_models: NodeData[];
     layer_models: LayerData[];
-}
-
-export class StationData {
-    constructor() {}
-
-    public async fetchStation(stationId: number): Promise<StationResponse | null> {
-
-        const data = await DataFetch.fetchEdgesNodes(stationId);
-
-        console.log(data);
-
-        if (!data) {
-            console.error('Station not found in response:', stationId);
-            return null;
-        }
-
-        const station = data as StationResponse;
-        return station;
-    }
 }

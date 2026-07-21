@@ -3,7 +3,6 @@ export class DataFetch {
     constructor() {
     }
 
-    ///////////////////////////////////////////////////////////// ANTIQUATED WILL REMOVE LATER ON...
     // get the specified cookie based on the string (pulled from django's example code)
     public static getCookie(name: string): string {
         let cookieValue: string = "";
@@ -26,88 +25,77 @@ export class DataFetch {
         return this.getCookie("csrftoken");
     }
 
-    // fetch all available subway lines from the db
-    public static async fetchLines(fetchURL: string): Promise<any | null> {
+    // fetch all available subway lines in the database
+    public static async fetchLines(): Promise<any | null> {
+        const fetchURL: string = "/api/lines";
+
         try {
-            // technically a GET request would work, but it would store the data as query parameters (e.g. in the URL) in its header
-            // which is limiting and requires us to access it in a different way but it avoids the need for sending CSRF tokens
-            // POST puts all the information in its body
             const response = await fetch(fetchURL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": DataFetch.getCSRFToken()
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
                 }
-            });
+            }); 
 
-            // see if response is successful
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) 
+                throw new Error("Failed to fetch lines");
 
-            console.log("Successfully fetched all subway lines!");
-            const data = await response.json();
+            const data: any = await response.json();
             return data;
         }
-        catch (err: any) {
-            console.error(`Failed to fetch all subway lines: ${err}`);
+        catch(err: any) {
+            console.warn(err);
             return null;
         }
     }
 
-    // fetch all relevant stations (ordered) based on an array of line names
-    public static async fetchStations(lineNames: string[], fetchURL: string): Promise<any | null> {
+    // fetch stations based on the given line id
+    public static async fetchStations(lineID: number): Promise<any | null> {
+        const fetchURL: string = `/api/lines/${lineID}/stations`;
+
         try {
             const response = await fetch(fetchURL, {
-                method: "POST", 
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": DataFetch.getCSRFToken()
-                },
-                body: JSON.stringify(lineNames)
-            });
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
+                }
+            }); 
 
-            // see if response is successful
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) 
+                throw new Error(`Failed to fetch stations for the subway line with id=${lineID}`);
 
-            // if it is return our json objects
-            console.log("Successfully got all stations!");
-            const data = await response.json();
-            return data; 
+            const data: any = await response.json();
+            return data;
         }
-        catch (err: any) {
-            console.error("Failed to retrieve the following stations", err);
+        catch(err: any) {
+            console.warn(err);
             return null;
         }
     }
 
+    // fetch all edges/nodes/layers (all relevant metadata of the station) for the given station id
+    public static async fetchEdgesNodesLayers(stationID: number): Promise<any | null> {
+        const fetchURL: string = `/api/stations/${stationID}/edges_nodes`;
 
-    // fetch all relevant nodes and edges from an array of station names
-    public static async fetchEdgesNodes(stationNames: string[], fetchURL: string): Promise<any | null> {
         try {
             const response = await fetch(fetchURL, {
-                method: "POST", 
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": DataFetch.getCSRFToken()
-                },
-                body: JSON.stringify(stationNames)
-            });
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": DataFetch.getCSRFToken()
+                }
+            }); 
 
-            // see if response is successful
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) 
+                throw new Error(`Failed to fetch the edges and nodes for station model with id=${stationID}`);
 
-            // if it is get our json objects
-            console.log("Successfully got all nodes and edges!");
-            const data = await response.json();
-            return data; 
-        } 
-        catch (err: any) {
-            console.error("Failed to retrieve the following stations", err);
+            const data: any = await response.json();
+            return data;
+        }
+        catch(err: any) {
+            console.warn(err);
             return null;
         }
     }

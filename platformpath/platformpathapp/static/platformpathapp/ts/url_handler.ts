@@ -1,3 +1,4 @@
+import { extractValueFromSlug } from "./slugs.ts";
 
 export class URLHandler {
     constructor() {
@@ -88,7 +89,24 @@ export class URLHandler {
 
             fullURL += param;
         }
-8
+
         window.location.href = fullURL;
+    }
+
+    // get the id from the URL (by getting the line/station slug and extracting the id)
+    public static getIDFromURL(): number | null {
+        const fullURL: string = this.getFullURLRoute();
+        const fullURLSplit: string[] = fullURL.split("/");
+
+        // the slug, depending on which point it is called can contain the line name + color + id or station name + id
+        const slug: string | undefined = fullURLSplit[fullURLSplit.length - 3];
+        if (slug === undefined) 
+            return null;
+
+        const ID: string | null = extractValueFromSlug(slug, -1);
+        if (Number.isNaN(Number(ID))) 
+            return null;
+        else 
+            return Number(ID);     
     }
 }

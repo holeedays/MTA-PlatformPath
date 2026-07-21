@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTA PlatformPath</title>
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/style.css' %}">
+</head>
+
+<body class="home-page">
+    <main class="home-shell">
+        <nav class="home-nav" aria-label="Home navigation">
+            <div class="brand">
+                <img src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo">
+                <span>PlatformPath</span>
+            </div>
+            <a class="nav-link" href="{% url 'lines_selection' %}">Explore stations</a>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-content">
+                <p class="eyebrow">Interactive station maps</p>
+                <h1>Find your way through subway stations before you get there.</h1>
+                <p class="hero-copy">
+                    PlatformPath helps riders explore individual station maps, view platform layouts,
+                    and plan step-by-step movement between entrances, stairs, mezzanines, and platforms.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="primary-action" href="{% url 'lines_selection' %}">
+                        View individual station maps
+                    </a>
+                    <span class="helper-text">Start by selecting a subway line.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="route-preview" aria-label="Example route preview">
+            <div class="route-line" aria-hidden="true">
+                <span class="station-dot active"></span>
+                <span class="station-track"></span>
+                <span class="station-dot"></span>
+                <span class="station-track"></span>
+                <span class="station-dot"></span>
+            </div>
+            <div class="route-preview-text">
+                <strong>Entrance → Mezzanine → Platform</strong>
+                <span>Preview the path through a station one step at a time.</span>
+            </div>
+        </section>
+
+        <section class="info-section" aria-label="How PlatformPath works">
+            <div class="section-heading">
+                <p class="eyebrow">How it works</p>
+                <h2>Select a line, choose a station, then explore the map.</h2>
+            </div>
+
+            <ol class="steps-list">
+                <li>
+                    <span class="step-number">1</span>
+                    <div>
+                        <h3>Pick a subway line</h3>
+                        <p>Start from the line selection page and choose the route you want to inspect.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-number">2</span>
+                    <div>
+                        <h3>Open a station</h3>
+                        <p>Load an individual station diagram with platforms, stairs, and other key nodes.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="step-number">3</span>
+                    <div>
+                        <h3>Follow the path</h3>
+                        <p>Move through each step while the map shows the correct layer and highlighted location.</p>
+                    </div>
+                </li>
+            </ol>
+        </section>
+
+        <section class="bottom-cta" aria-label="Start exploring">
+            <div>
+                <p class="eyebrow">Ready to board?</p>
+                <h2>Open the station map viewer.</h2>
+            </div>
+            <a class="primary-action" href="{% url 'lines_selection' %}">
+                Select a line
+            </a>
+        </section>
+    </main>
+</body>
+
+</html>

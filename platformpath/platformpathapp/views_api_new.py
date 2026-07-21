@@ -58,8 +58,8 @@ class StationsFetchAPI(APIView):
                     
         return Response(stations_data)
     
-# fetch all edges and nodes corresponding to the selected station and line
-class EdgesNodesFetchAPI(APIView):
+# fetch all edges/nodes/layers corresponding to the selected station and line
+class EdgesNodesLayersFetchAPI(APIView):
     
     def get(self, request: Request, station_id: int) -> Response:
         # get the station that has the right id and add a custom attribute

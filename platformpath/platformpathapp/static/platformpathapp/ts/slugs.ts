@@ -20,3 +20,14 @@ export function slugify(...terms: (string | number)[]): string {
 
     return fullSlugifiedterm;
 }
+
+// extracts value from slug and returns it (in our case it will be IDs from the url slugs)
+export function extractValueFromSlug(slug: string, position: number): string | null {
+    const slugSplit: string[] | undefined = slug.split("-");
+    const value: string | undefined = slugSplit?.at(position);
+
+    if (value === undefined)
+        return null;
+    else 
+        return value;
+}

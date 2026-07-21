@@ -1,4 +1,4 @@
-import { DataFetch } from "./data_fetch_new.ts";
+import { DataFetch } from "./data_fetch.ts";
 import { URLHandler } from "./url_handler.ts";
 import { slugify } from "./slugs.ts";
 
