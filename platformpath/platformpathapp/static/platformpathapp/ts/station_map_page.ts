@@ -1,6 +1,6 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
-import { type StationResponse } from "./station_data.ts";
+import { type NodeData, type StationResponse } from "./station_data.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
 
@@ -60,10 +60,10 @@ export class StationMapPage {
         // initializing dropdown with node options
         for (const node of this.station?.node_models || []) {
             document.getElementById('start-node')?.appendChild(
-                new Option(node.label, node.id.toString())
+                this.createNodeOption(node)
             );
             document.getElementById('end-node')?.appendChild(
-                new Option(node.label, node.id.toString())
+                this.createNodeOption(node)
             );
         }
 
@@ -85,6 +85,22 @@ export class StationMapPage {
             ?.addEventListener("click", () => this.prevStep());
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
+    }
+
+    // Helper function to create each option with the color match the node's layer for the dropdown
+    private createNodeOption(node: NodeData): HTMLOptionElement {
+        const option = new Option(node.label, node.id.toString());
+
+        const layer = this.station?.layer_models.find(
+            (layer) => layer.id === node.layer
+        );
+
+        if (layer) {
+            option.style.backgroundColor = layer.color;
+            option.style.color = "#111";
+        }
+
+        return option;
     }
 
     private initLayerControls(): void {
