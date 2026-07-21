@@ -1,5 +1,3 @@
-import { DataFetch } from "./data_fetch.ts";
-
 export interface LayerData {
     id: number;
     name: string;

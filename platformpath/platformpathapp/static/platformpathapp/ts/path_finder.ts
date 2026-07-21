@@ -102,7 +102,7 @@ export class PathFinder {
             const fromNode = nodeMap[edge.from_node];
             const toNode   = nodeMap[edge.to_node];
 
-            // checks
+            // checks if the nodes exist
             if (!fromNode || !toNode) return null;
 
             if (isAccessible && !fromNode.is_accessible) return null;
