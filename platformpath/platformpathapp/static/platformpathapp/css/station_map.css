@@ -213,8 +213,9 @@ body {
 
 .all-layers-button.active,
 .layer-option.active {
-    background: #0039a6;
-    color: #ffffff;
+    transform: scale(1.05);
+    border: 3px solid #111;
+    font-weight: 800;
 }
 
 .route-form {

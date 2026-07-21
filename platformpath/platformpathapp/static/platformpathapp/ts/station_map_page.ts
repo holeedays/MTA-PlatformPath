@@ -103,9 +103,9 @@ export class StationMapPage {
             this.setActiveLayerButton(allLayersButton);
         });
 
-        // Setup buttons to show individual layers of the map of the station
+        // Create and setup buttons to show individual layers of the map of the station
         for (const layer of this.station.layer_models) {
-            const layerButton = this.createLayerButton(layer.name);
+            const layerButton = this.createLayerButton(layer.name, layer.color);
             layerButton.addEventListener("click", () => {
                 this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
                 this.setActiveLayerButton(layerButton);
@@ -116,14 +116,13 @@ export class StationMapPage {
         this.svgRenderer.showAllLayers(this.station.layer_models);
     }
 
-    private createLayerButton(label: string, isActive: boolean = false): HTMLButtonElement {
+    // Creates a button with the specified label and background color
+    private createLayerButton(label: string, color: string): HTMLButtonElement {
         const button = document.createElement("button");
         button.type = "button";
         button.classList.add("layer-option");
-        if (isActive) {
-            button.classList.add("active");
-        }
         button.innerText = label;
+        button.style.backgroundColor = color;
         return button;
     }
 
@@ -135,6 +134,7 @@ export class StationMapPage {
         activeButton.classList.add("active");
     }
 
+    // Function to set the active layer button by its ID
     private setActiveLayerButtonByLayer(layerId: string): void {
         const layerButtons = document.querySelectorAll<HTMLButtonElement>(".layer-option, .all-layers-button");
         for (const button of layerButtons) {
@@ -224,10 +224,4 @@ export class StationMapPage {
         }
     }
 }
-
-// Creates and initializes StationMap object for the page
-// document.addEventListener("DOMContentLoaded", () => {
-//     const stationMapPage = new StationMapPage();
-//     stationMapPage.init();
-// });
 
