@@ -81,6 +81,23 @@ export class SvgRenderer {
         });
     }
 
+    // Helper method to center the station map
+    public centerMap(zoom: number = 1): void {
+        const container = document.getElementById("diagram-container");
+        const svg = container?.querySelector("svg") as SVGSVGElement | null;
+
+        if (!container || !svg || !this.currentPanZoom) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const svgRect = svg.getBoundingClientRect();
+
+        const x = (containerRect.width - svgRect.width * zoom) / 2;
+        const y = (containerRect.height - svgRect.height * zoom) / 2;
+
+        this.currentPanZoom.zoomAbs(0, 0, zoom);
+        this.currentPanZoom.moveTo(x, y);
+    }
+
     // Pan, zoom, and scroll controls for the station diagram
     public setupDiagramControls(): void {
         const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
@@ -93,52 +110,55 @@ export class SvgRenderer {
 
         // Apply panzoom to the new SVG
         this.currentPanZoom = panzoom(svg, {
-            maxZoom: 4,
+            maxZoom: 8,
             minZoom: 0.3,
             smoothScroll: false
         });
 
-        // Double click to reset view
-        svg.addEventListener('dblclick', () => {
-            this.currentPanZoom.moveTo(0, 0);
-            this.currentPanZoom.zoomAbs(0, 0, 1);
-        });
     }
 
     // Method to load the diagram and immediately attach controls
     public async loadDiagramWithControls(diagramPath: string): Promise<void> {
         await this.loadDiagram(diagramPath);
         this.setupDiagramControls();
+        this.centerMap()
     }
 
     // Helper function to zoom on on a node based on svgId
-public centerOnNode(svgId: string, zoom: number = 2): void {
-    const container = document.getElementById("diagram-container");
-    const svg = container?.querySelector("svg") as SVGSVGElement | null;
-    const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
+    public centerOnNode(svgId: string, zoom: number = 4): void {
+        const container = document.getElementById("diagram-container");
+        const svg = container?.querySelector("svg") as SVGSVGElement | null;
+        const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
 
-    if (!container || !svg || !target || !this.currentPanZoom) return;
+        if (!container || !svg || !target || !this.currentPanZoom) return;
 
-    this.currentPanZoom.moveTo(0, 0);
-    this.currentPanZoom.zoomAbs(0, 0, 1);
+        // Hide the svg during transformation to avoid seeing a flicker
+        svg.style.visibility = "hidden";
 
-    requestAnimationFrame(() => {
-        const containerRect = container.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
+        this.currentPanZoom.zoomAbs(0, 0, 1);
+        this.currentPanZoom.moveTo(0, 0);
 
-        const targetCenterX =
-            targetRect.left - containerRect.left + targetRect.width / 2;
-        const targetCenterY =
-            targetRect.top - containerRect.top + targetRect.height / 2;
+        requestAnimationFrame(() => {
+            const containerRect = container.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
 
-        const containerCenterX = containerRect.width / 2;
-        const containerCenterY = containerRect.height / 2;
+            // Calculate the coordinates for the target node
+            const targetCenterX = targetRect.left - containerRect.left + targetRect.width / 2;
+            const targetCenterY = targetRect.top - containerRect.top + targetRect.height / 2;
 
-        this.currentPanZoom.zoomAbs(0, 0, zoom);
-        this.currentPanZoom.moveTo(
-            containerCenterX - targetCenterX * zoom,
-            containerCenterY - targetCenterY * zoom
-        );
-    });
-}
+            const containerCenterX = containerRect.width / 2;
+            const containerCenterY = containerRect.height / 2;
+
+            // Apply the pan and zoom with the calculations above to center the screen on the target node
+            this.currentPanZoom.zoomAbs(0, 0, zoom);
+            this.currentPanZoom.moveTo(
+                containerCenterX - targetCenterX * zoom,
+                containerCenterY - targetCenterY * zoom
+            );
+
+            requestAnimationFrame(() => {
+                svg.style.visibility = "";
+            });
+        });
+    }
 }
