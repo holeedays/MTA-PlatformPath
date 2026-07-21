@@ -133,6 +133,7 @@ body {
     overflow: hidden;
     touch-action: none;
     isolation: isolate;
+    background-color: #0a0a0a;
 }
 
 #diagram-container svg {
