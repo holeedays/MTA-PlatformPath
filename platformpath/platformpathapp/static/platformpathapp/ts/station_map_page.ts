@@ -48,7 +48,7 @@ export class StationMapPage {
         // Set the station name in the heading
         const stationHeading = document.getElementById('diagram-name');
         if (stationHeading) {
-            stationHeading.innerText = `Station: ${this.station?.station_model.name}`;
+            stationHeading.innerText = this.station?.station_model.name;
         }
 
         // Load the station diagram
@@ -123,6 +123,8 @@ export class StationMapPage {
         button.classList.add("layer-option");
         button.innerText = label;
         button.style.backgroundColor = color;
+        // this is to allow access to the color in the css
+        button.style.setProperty("--color", color);
         return button;
     }
 

@@ -179,7 +179,7 @@ body {
     position: absolute;
     left: 75%;
     width: 25px;
-    z-index: 100;
+    z-index: 1000;
 }
 
 @media(hover:hover) {

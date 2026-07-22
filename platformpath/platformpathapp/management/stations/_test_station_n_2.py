@@ -24,7 +24,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         layer_platforms = Layer.objects.create(
             name="PLATFORMS",
             layerOrder=1,
-            color="#C8E6FF",
+            color="#00C8FF",
             station=station,
             svg_id="PLATFORMS"
         )
@@ -32,7 +32,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         layer_mezzanine = Layer.objects.create(
             name="MEZZANINE",
             layerOrder=2,
-            color="#B4F8CA",
+            color="#00FF73",
             station=station,
             svg_id="MEZZANINE"
         )

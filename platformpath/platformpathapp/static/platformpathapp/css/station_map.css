@@ -12,28 +12,30 @@ a {
 html,
 body {
     height: 100%;
+    min-height: 100%;
+
     margin: 0;
     padding: 0;
 }
 
-.main {
-    height: 100%;
+body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .station-map-page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
+    flex: 1;
+    width: 100%;
     padding: 0;
     margin: 0;
-    background: #ffffff;
+    background: #3d3d3d;
 }
 
 .station-map-stage {
-    flex: 1;
+    height: 100%;
     position: relative;
-    /* width: 100%;
-    height: 100vh; */
     min-height: unset;
     margin: 0;
     overflow: hidden;
@@ -61,7 +63,7 @@ body {
 }
 
 .brand__logo--sm {
-    height: 1.6em;
+    height: 1.4em;
 }
 
 .brand__name {
@@ -69,6 +71,10 @@ body {
     font-weight: 800;
     color: #1a4fd6;
     letter-spacing: 0.5px;
+}
+
+.brand__name--sm {
+    font-size: 12px;
 }
 
 /* =========================================================
@@ -124,23 +130,23 @@ body {
     flex-shrink: 0; 
 }
 
+/* =========================================================
+   Diagram Container
+   ========================================================= */
 
 /* This is the only area that pans and zooms. */
 #diagram-container {
+    height: 100%;
     position: absolute;
     inset: 0;
     z-index: 0;
     overflow: hidden;
     touch-action: none;
     isolation: isolate;
-    background-color: #0a0a0a;
+    background-color: #171717;
 }
 
 #diagram-container svg {
-    /* width: 100%;
-    height: 100%;
-    display: block;
-    cursor: grab; */
     width: 1200px;
     height: auto;
     max-width: none;
@@ -152,6 +158,10 @@ body {
 #diagram-container svg:active {
     cursor: grabbing;
 }
+
+/* =========================================================
+   Map overlays (headers, level stack, route form)
+   ========================================================= */
 
 /* All controls sit above the SVG and never pan with it. */
 .map-overlay {
@@ -165,45 +175,63 @@ body {
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
-    background: rgb(255 255 255 / 85%);
 }
 
 .map-header h1 {
     margin: 0;
-    font-size: 48px;
+    font-size: 30px;
+    color: white;
 }
 
+/* level stack (to select layers on the station map) */
+
 .level-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
     top: 50%;
-    right: 28px;
-    width: 180px;
+    right: 1%;
+    width: 140px;
     transform: translateY(-50%);
     padding: 8px;
-    border: 1px solid #1a1a1a;
-    background: #ffffff;
+    border: 3px solid #3b3b3b;
+    border-radius: 10px;
+    background: #1d1d1d;
+}
+
+.level-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 5px;
 }
 
 .all-layers-button,
 .layer-option {
+    /* This is altered in the station_map.ts files for the other layer buttons (not all layers button) */
+    --color: #ff4a4a;
+
     width: 100%;
     min-height: 38px;
     padding: 8px 10px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #111111;
+    border-radius: 10px;
+    border: none;
+    background: var(--color);
+    color: #000000;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 12px;
+    font-weight: bolder;
     text-align: center;
-}
 
-.all-layers-button {
-    margin-bottom: 10px;
+    transition: 0.25s ease-in-out;
 }
 
 .layer-options {
     display: flex;
     flex-direction: column;
+    width: 100%;
     gap: 4px;
     margin: 6px 0;
 }
@@ -211,56 +239,65 @@ body {
 .level-boundary {
     margin: 0;
     padding: 4px;
-    color: #111111;
+    color: #ffffff;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 800;
     text-align: center;
-    text-transform: uppercase;
 }
 
 .all-layers-button.active,
 .layer-option.active {
     transform: scale(1.05);
-    border: 3px solid #111;
-    font-weight: 800;
+    background-color: color-mix(in srgb, var(--color), #ffffff 20%);
+    border: 3px solid #ffffff;
 }
 
+/* routing form (generate path) */
+
 .route-form {
-    bottom: 26px;
-    left: 24px;
+    bottom: 5%;
+    left: 1%;
     display: flex;
     align-items: end;
     gap: 14px;
     transform: none;
     padding: 12px;
+    border: 3px solid #3f3f3f;
     border-radius: 10px;
-    background: rgb(255 255 255 / 90%);
+    background: #1a1a1a;
 }
 
 .route-field {
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
     gap: 4px;
 }
 
 .route-field label {
     font-size: 0.75rem;
     font-weight: 700;
-    text-transform: uppercase;
 }
 
-.route-field select,
+.route-form select,
 .route-form button {
-    min-width: 185px;
-    min-height: 38px;
-    padding: 0 10px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
+    height: 30px;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+.route-form select {
+    font-style: italic;
+    background-color: #3f3f3f;
 }
 
 .route-form button {
-    min-width: auto;
-    background: #0039a6;
+    display: flex;
+    align-items: center;
+    padding: 10px 5px;
+    font-weight: bolder;
+    border: none;
+    background: #1a4fd6;
     color: #ffffff;
     cursor: pointer;
 }
@@ -372,6 +409,27 @@ body {
     100% {
         opacity: 0.8;
     }
+}
+
+/* =========================================================
+   Footer
+   ========================================================= */
+
+.site-footer {
+    position: absolute;
+    bottom: 1%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+}
+
+.site-footer__legal {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    color: #7a7a7a;
+    text-align: center;
 }
 
 /* Mobile styling */

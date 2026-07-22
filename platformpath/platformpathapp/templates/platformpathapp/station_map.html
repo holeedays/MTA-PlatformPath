@@ -10,26 +10,25 @@
 </head>
 
 <body>
-	<div class="main">
-		<main class="station-map-page">
-			<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
-			<header class="site-header">
-				<div class="site-header__inner">
-					<a class="brand" href="#">
-							<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
-							<span class="brand__name">PLATFORMPATH</span>
-					</a>
-					<nav class="site-header__nav">
-							<a href="/not-found">ABOUT US</a>
-							<a href="/">HOME</a>
-							<a href="/not-found">NAVIGATE</a>
-					</nav>
-				</div>
-			</header>
+	<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
+	<header class="site-header">
+		<div class="site-header__inner">
+			<a class="brand" href="#">
+					<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+					<span class="brand__name">PLATFORMPATH</span>
+			</a>
+			<nav class="site-header__nav">
+					<a href="/not-found">ABOUT US</a>
+					<a href="/">HOME</a>
+					<a href="/not-found">NAVIGATE</a>
+			</nav>
+		</div>
+	</header>
 
-			<!-- ================= HEADER SPACING ================= -->
-		<div class="header-spacer"></div>
+		<!-- ================= HEADER SPACING ================= -->
+	<div class="header-spacer"></div>
 
+	<main class="station-map-page">
 		<section class="station-map-stage" aria-label="Station map">
 				<div id="diagram-container">
 						<!-- SVG loads here -->
@@ -41,26 +40,26 @@
 
 				<aside class="map-overlay level-stack" aria-label="Station levels">
 						<button id="show-all-layers" class="all-layers-button active" type="button">
-								Show all levels
+							SHOW ALL LEVELS
 						</button>
 						
 						<div class="level-rail">
-								<p class="level-boundary">Top level ↑</p>
+								<p class="level-boundary">TOP LEVEL ↑</p>
 								<div id="layer-options" class="layer-options"></div>
-								<p class="level-boundary">Bottom level ↓</p>
+								<p class="level-boundary">BOTTOM LEVEL ↓</p>
 						</div>
 				</aside>
 
 				<div id="route-form" class="map-overlay route-form">
 						<div class="route-field">
-								<label for="start-node">Start</label>
+								<label for="start-node">START</label>
 								<select id="start-node" required>
 										<option value="" selected disabled>Choose a start node</option>
 								</select>
 						</div>
 
 						<div class="route-field">
-								<label for="end-node">End</label>
+								<label for="end-node">END</label>
 								<select id="end-node" required>
 										<option value="" selected disabled>Choose an end node</option>
 								</select>
@@ -77,8 +76,19 @@
 						</div>
 				</div>
 		</section>
-		</main>
-	</div>
+	</main>
+
+	<!-- ================= FOOTER ================= -->
+	<footer class="site-footer">
+		<div class="brand brand--footer">
+			<img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+			<span class="brand__name brand__name--sm">PLATFORMPATH</span>
+		</div>
+		<div class="site-footer__legal">
+			<span>2026 All rights reserved.</span>
+			<span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
+		</div>
+	</footer>
 
 	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
 	<script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
