@@ -5,8 +5,6 @@ PLANS FOR THE FUTURE:
 
 PRIORITIES:
 > Complete the station map view page (specifically mobile viewport)
-    - Fix zoom for different aspect ratios
-    - Color code nodes based on layers
     - CSS Revamp (trying vertical layout for mobile?? testing...)
     - Back button???
     - Map slight rework (directional arrows for stairs)
@@ -34,6 +32,9 @@ Start doing styling for the css and html of each page (making thematic continuit
 Find a way to properly cache requested database data to avoid excessive queries 
 
 DONE:
+Color code the dropdown options based on layer
+Fix zoom for different aspect ratios
+Color code the layer buttons to match the color of the actual layer
 Add additional functions to data_fetch class
 Register data fetching functions (frontend and backend) for station line tables
 Refactor existing pathfinder/app class
