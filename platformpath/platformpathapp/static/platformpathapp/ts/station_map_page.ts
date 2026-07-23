@@ -57,23 +57,16 @@ export class StationMapPage {
 
         console.log('Fetched station data:', this.station);
 
-        // initializing dropdown with node options
-        for (const node of this.station?.node_models || []) {
-            document.getElementById('start-node')?.appendChild(
-                this.createNodeOption(node)
-            );
-            document.getElementById('end-node')?.appendChild(
-                this.createNodeOption(node)
-            );
-        }
+        // this inits all dropdowns with node options and the filter checkbox
+        this.processNodes();
 
         // Listeners for the dropdowns to highlight the selected start and end nodes
         // to indicate to users what node they are choosing
-        document.getElementById("start-node")?.addEventListener("change", (event) => {
+        document.getElementById("start-node-dropdown")?.addEventListener("change", (event) => {
             const nodeId = Number((event.target as HTMLSelectElement).value);
             this.updateSelectedNodeHighlight(nodeId, "start");
         });
-        document.getElementById("end-node")?.addEventListener("change", (event) => {
+        document.getElementById("end-node-dropdown")?.addEventListener("change", (event) => {
             const nodeId = Number((event.target as HTMLSelectElement).value);
             this.updateSelectedNodeHighlight(nodeId, "end");
         });
@@ -85,22 +78,6 @@ export class StationMapPage {
             ?.addEventListener("click", () => this.prevStep());
         document.getElementById("btn-next")
             ?.addEventListener("click", () => this.nextStep());
-    }
-
-    // Helper function to create each option with the color match the node's layer for the dropdown
-    private createNodeOption(node: NodeData): HTMLOptionElement {
-        const option = new Option(node.label, node.id.toString());
-
-        const layer = this.station?.layer_models.find(
-            (layer) => layer.id === node.layer
-        );
-
-        if (layer) {
-            option.style.backgroundColor = layer.color;
-            option.style.color = "#111";
-        }
-
-        return option;
     }
 
     private initLayerControls(): void {
@@ -166,10 +143,10 @@ export class StationMapPage {
     // Reads from the form and delegates to startNavigation
     private async handleFormSubmit(): Promise<void> {
         const fromNodeId = parseInt(
-            (document.getElementById('start-node') as HTMLSelectElement).value
+            (document.getElementById('start-node-dropdown') as HTMLSelectElement).value
         );
         const toNodeId = parseInt(
-            (document.getElementById('end-node') as HTMLSelectElement).value
+            (document.getElementById('end-node-dropdown') as HTMLSelectElement).value
         );
 
         await this.startNavigation( fromNodeId, toNodeId);
@@ -240,6 +217,76 @@ export class StationMapPage {
             this.currentIndex--;
             this.renderCurrentStep();
         }
+    }
+
+    // umbrella function to process all elements on the page involving the node data (e.g. route form + filter checkbox)
+    private processNodes(): void {
+        if (this.station === null) {
+            console.warn("The station response object has nothing in it");
+            return;
+        }
+
+        // retrieve our dropdown elements
+        const startNodeDropdown: HTMLSelectElement | null = document.getElementById("start-node-dropdown") as HTMLSelectElement;
+        const endNodeDropdown: HTMLSelectElement | null = document.getElementById("end-node-dropdown") as HTMLSelectElement;
+        // retrieve our filter checkbox
+        const filterCheckBox: HTMLDivElement | null = document.querySelector(".filter-checkbox") as HTMLDivElement;
+
+        if (startNodeDropdown === null || endNodeDropdown === null || filterCheckBox === null) {
+            console.warn(
+                "Start/End node dropdowns (either one or both) don't exist or filter checkbox doesn't exist",
+                `Start Node Dropdown Status: ${startNodeDropdown}`,
+                `End Node Dropdown Status: ${endNodeDropdown}`,
+                `Filter Checkbox Status: ${filterCheckBox}`
+            );
+            return;
+        }
+
+        const nodeOptions: HTMLOptionElement[] = [];
+        const nodeTypesHashMap: Map<string,string> = new Map();
+
+        // initializing dropdown with node options
+        this.station.node_models.forEach((node: NodeData) => {
+            const startNodeOption: HTMLOptionElement = this.addNewOptionToDropdown(startNodeDropdown, node);
+            const endNodeOption: HTMLOptionElement = this.addNewOptionToDropdown(endNodeDropdown, node);
+
+            // add these types into our type dict
+            Object.entries(node.types_dict).forEach((dictPair: [string, string]) => {
+                // just doing this for readability sake
+                const value: string = dictPair[0];
+                const readableLabel: string = dictPair[1];
+
+                nodeTypesHashMap.set(value, readableLabel);
+            });
+
+            nodeOptions.push(startNodeOption, endNodeOption);
+        });
+
+        // ...to be continued
+    }
+
+    // adds new option based on the given node data to the given dropdown and returns it
+    private addNewOptionToDropdown(dropdown: HTMLSelectElement, node: NodeData): HTMLOptionElement {
+        // create the option
+        const option = new Option(node.label, node.id.toString());
+
+        const layer = this.station?.layer_models.find(
+            (layer) => layer.id === node.layer
+        );
+        // also calibrate its styling (based on the layer it belongs to)
+        if (layer !== undefined) {
+            option.style.backgroundColor = layer.color;
+            option.style.color = "#111";
+        }
+        // add it to our dropdown
+        dropdown.appendChild(option);
+
+        return option;
+    } 
+
+    // init filter buttons 
+    private initFilterButtons(): void {
+
     }
 }
 

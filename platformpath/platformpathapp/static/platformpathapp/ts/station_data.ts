@@ -12,7 +12,7 @@ export interface NodeData {
     svg_id: string;
     layer: number;
     is_accessible: boolean;
-    types_dict: Map<string,string>;
+    types_dict: Record<string,string>;
 }
 
 export interface EdgeData {

@@ -252,19 +252,25 @@ body {
     border: 3px solid #ffffff;
 }
 
-/* routing form (generate path) */
+/* routing form (generate path) + filter checkbox */
 
-.route-form {
+.route-form-filter-checkbox__container {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
     bottom: 5%;
     left: 1%;
-    display: flex;
-    align-items: end;
-    gap: 14px;
     transform: none;
     padding: 12px;
     border: 3px solid #3f3f3f;
     border-radius: 10px;
     background: #1a1a1a;
+}
+
+.route-form {
+    display: flex;
+    align-items: end;
+    gap: 14px;
 }
 
 .route-field {

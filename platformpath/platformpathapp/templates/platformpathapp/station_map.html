@@ -50,22 +50,26 @@
 						</div>
 				</aside>
 
-				<div id="route-form" class="map-overlay route-form">
-						<div class="route-field">
-								<label for="start-node">START</label>
-								<select id="start-node" required>
-										<option value="" selected disabled>Choose a start node</option>
-								</select>
-						</div>
+				<div class="map-overlay route-form-filter-checkbox__container">
+					<div class="filter-checkbox" aria-label="Checkbox for various filters on the nodes">
+					</div>
+					<div id="route-form" class="route-form">
+							<div class="route-field">
+									<label for="start-node-dropdown">START</label>
+									<select id="start-node-dropdown" required>
+											<option value="" selected disabled>Choose a start node</option>
+									</select>
+							</div>
 
-						<div class="route-field">
-								<label for="end-node">END</label>
-								<select id="end-node" required>
-										<option value="" selected disabled>Choose an end node</option>
-								</select>
-						</div>
+							<div class="route-field">
+									<label for="end-node-dropdown">END</label>
+									<select id="end-node-dropdown" required>
+											<option value="" selected disabled>Choose an end node</option>
+									</select>
+							</div>
 
-						<button id="find-route" type="button">Find Route</button>
+							<button id="find-route" type="button">Find Route</button>
+					</div>
 				</div>
 
 				<div id="step-ui" class="map-overlay step-ui" style="display: none;">
