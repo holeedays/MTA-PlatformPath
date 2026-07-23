@@ -64,7 +64,7 @@ class NodeSerializer(serializers.ModelSerializer[Node]):
 
     class Meta:
         model = Node
-        fields: list[str] = ["id", "station", "node_type", "label", "svg_id", "layer", "is_accessible"]
+        fields: list[str] = ["id", "station", "label", "svg_id", "layer", "is_accessible", "types_dict"]
 
 class EdgeSerializer(serializers.ModelSerializer[Edge]):
 

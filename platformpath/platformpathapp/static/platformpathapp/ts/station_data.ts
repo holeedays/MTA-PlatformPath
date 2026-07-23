@@ -8,11 +8,11 @@ export interface LayerData {
 
 export interface NodeData {
     id: number;
-    node_type: string;
     label: string;
     svg_id: string;
     layer: number;
     is_accessible: boolean;
+    types_dict: Map<string,string>;
 }
 
 export interface EdgeData {
