@@ -5,10 +5,12 @@ PLANS FOR THE FUTURE:
 
 PRIORITIES:
 > Complete the station map view page (specifically mobile viewport)
-    - CSS Revamp (trying vertical layout for mobile?? testing...)
-    - Back button???
-    - Map slight rework (directional arrows for stairs)
+    - Adding a preview of the path (before selecting through steps)
+    - Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path)
+    - Add filters to limit the node selections (for user simplicity)
+    - Adding dynamic arrow changes for the stairs given a selected path
 > Change the station map diagrams (maybe alter the arrows and names on them??)
+    - we are currently doing this...
 > Add all the new stations currently available
 > Remove old files
 
@@ -17,6 +19,7 @@ PRIORITIES:
 NICE-TO-HAVES (NON-PRIORITIES):
 > Google Maps API Integration/Mta Realtime Data Integration 
 > Fixing the station start to station end page
+> Having server caches (to allow for favorited stations and things of the like)
 
 
 TO DO FOR EVERYONE:
