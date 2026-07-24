@@ -74,7 +74,7 @@ class Layer(models.Model):
 # this will be used in nodes
 class NodeTypes(models.TextChoices):
     NONE = ("NONE", "None") # default value
-    EXIT_STAIRS = ("EXT_STRS", "Exit Stairs")
+    EXIT_STAIRS = ("STRS_EXT", "Exit Stairs")
     STAIRS = ("STRS", "Stairs")
     UPTOWN_PLATFORM = ("PLTFRM_UPTWN", "Uptown Platform")
     DOWNTOWN_PLATFORM = ("PLTFRM_DWNTWN", "Downtown Platform")

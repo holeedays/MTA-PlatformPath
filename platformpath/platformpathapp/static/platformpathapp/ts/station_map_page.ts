@@ -1,6 +1,7 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
-import { type NodeData, type StationResponse } from "./station_data.ts";
+import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
+import { NodeOption } from "./node_option.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
 
@@ -242,23 +243,35 @@ export class StationMapPage {
             return;
         }
 
-        const nodeOptions: HTMLOptionElement[] = [];
+        const nodeOptions: NodeOption[] = [];
         const nodeTypesHashMap: Map<string,string> = new Map();
 
         // initializing dropdown with node options
         this.station.node_models.forEach((node: NodeData) => {
-            const startNodeOption: HTMLOptionElement = this.addNewOptionToDropdown(startNodeDropdown, node);
-            const endNodeOption: HTMLOptionElement = this.addNewOptionToDropdown(endNodeDropdown, node);
-
+            const filters: Map<string,string> = new Map();
             // add these types into our type dict
             Object.entries(node.types_dict).forEach((dictPair: [string, string]) => {
                 // just doing this for readability sake
                 const value: string = dictPair[0];
                 const readableLabel: string = dictPair[1];
 
+                filters.set(value, readableLabel);
                 nodeTypesHashMap.set(value, readableLabel);
             });
 
+            // create our node options and add it to our dropdown
+            const startNodeOption: NodeOption | null = this.addNewOptionToDropdown(startNodeDropdown, node, filters);
+            const endNodeOption: NodeOption | null = this.addNewOptionToDropdown(endNodeDropdown, node, filters);
+
+            if (startNodeOption === null || endNodeOption === null) {
+                console.warn(
+                    "Start node or end node options might be null",
+                    `Start Node Option Status: ${startNodeOption}; End Node Option Status: ${endNodeOption}`
+                );
+                return;
+            }
+
+            // add them to our collection of node options
             nodeOptions.push(startNodeOption, endNodeOption);
         });
 
@@ -266,27 +279,46 @@ export class StationMapPage {
     }
 
     // adds new option based on the given node data to the given dropdown and returns it
-    private addNewOptionToDropdown(dropdown: HTMLSelectElement, node: NodeData): HTMLOptionElement {
-        // create the option
-        const option = new Option(node.label, node.id.toString());
+    private addNewOptionToDropdown(
+        dropdown: HTMLSelectElement, 
+        node: NodeData,
+        filters: Map<string,string>
+    ): NodeOption | null {
 
-        const layer = this.station?.layer_models.find(
-            (layer) => layer.id === node.layer
+        const layer: LayerData | undefined = this.station?.layer_models.find(
+            (layer: LayerData) => layer.id === node.layer
         );
-        // also calibrate its styling (based on the layer it belongs to)
-        if (layer !== undefined) {
-            option.style.backgroundColor = layer.color;
-            option.style.color = "#111";
+        if (layer === undefined) {
+            console.warn("There is no layer model that equals to the node layer");
+            return null;
         }
-        // add it to our dropdown
-        dropdown.appendChild(option);
 
-        return option;
+        // create the option
+        const nodeOption: NodeOption = new NodeOption(
+            node.label, 
+            node.id.toString(), 
+            layer,
+            filters
+        );
+
+        // add it to our dropdown
+        dropdown.appendChild(nodeOption.self);
+
+        return nodeOption;
     } 
 
     // init filter buttons 
-    private initFilterButtons(): void {
+    private initFilterButtons(nodeTypesHashMap: Map<string, string>, nodeOptions: NodeOption[]): void {
+        const nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [];
+        const enabledNodeOptions: NodeOption[] = [];
 
+        // sort our node types based on their value names (which are more unified and actually relates similar items together)
+        // for ex: values STRS_EXT (label: Exit Stairs) and STRS (label: Stairs) are grouped together 
+        nodeTypesHashMap.forEach((readableLabel: string, value: string) => nodeTypesAlphabetized.push({value, readableLabel}));
+        nodeTypesAlphabetized.sort((
+            pairA: {value: string, readableLabel: string}, 
+            pairB: {value: string, readableLabel: string}
+        ) => pairA.value.localeCompare(pairB.value));
     }
 }
 
