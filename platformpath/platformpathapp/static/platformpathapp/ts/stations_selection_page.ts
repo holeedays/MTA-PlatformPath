@@ -1,7 +1,7 @@
 import { DataFetch } from "./data_fetch.ts";
 import { slugify } from "./slugs.ts";
 import { URLHandler } from "./url_handler.ts";
-import { CustomHTMLButton } from "./custom_html_button.ts";
+import { CustomHTMLButton } from "./selection_custom_elements.ts";
 
 // this class will handle the stations selections route
 export class StationsSelectionPage {

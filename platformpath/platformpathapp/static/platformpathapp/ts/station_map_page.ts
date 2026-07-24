@@ -1,7 +1,7 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
 import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
-import { NodeOption } from "./node_option.ts";
+import { NodeOption, FilterCheckBox } from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
 
@@ -230,15 +230,15 @@ export class StationMapPage {
         // retrieve our dropdown elements
         const startNodeDropdown: HTMLSelectElement | null = document.getElementById("start-node-dropdown") as HTMLSelectElement;
         const endNodeDropdown: HTMLSelectElement | null = document.getElementById("end-node-dropdown") as HTMLSelectElement;
-        // retrieve our filter checkbox
-        const filterCheckBox: HTMLDivElement | null = document.querySelector(".filter-checkbox") as HTMLDivElement;
+        // retrieve our filter checklist
+        const filterCheckList: HTMLDivElement | null = document.querySelector(".filter-checklist") as HTMLDivElement;
 
-        if (startNodeDropdown === null || endNodeDropdown === null || filterCheckBox === null) {
+        if (startNodeDropdown === null || endNodeDropdown === null || filterCheckList === null) {
             console.warn(
-                "Start/End node dropdowns (either one or both) don't exist or filter checkbox doesn't exist",
+                "Start/End node dropdowns (either one or both) don't exist or filter checklist doesn't exist",
                 `Start Node Dropdown Status: ${startNodeDropdown}`,
                 `End Node Dropdown Status: ${endNodeDropdown}`,
-                `Filter Checkbox Status: ${filterCheckBox}`
+                `Filter Checklist Status: ${filterCheckList}`
             );
             return;
         }
@@ -275,6 +275,9 @@ export class StationMapPage {
             nodeOptions.push(startNodeOption, endNodeOption);
         });
 
+        // also init our checkboxes
+        this.initFilterCheckboxes(filterCheckList, nodeTypesHashMap, nodeOptions);
+
         // ...to be continued
     }
 
@@ -307,10 +310,14 @@ export class StationMapPage {
         return nodeOption;
     } 
 
-    // init filter buttons 
-    private initFilterButtons(nodeTypesHashMap: Map<string, string>, nodeOptions: NodeOption[]): void {
+    // create all various filter checkboxes (for the filtering of our options)
+    private initFilterCheckboxes (
+        filterChecklist: HTMLDivElement, 
+        nodeTypesHashMap: Map<string, string>, 
+        nodeOptions: NodeOption[]
+    ): void {
+        // create a js object that holds all our node types in alphabetical order (by value not the readable label)
         const nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [];
-        const enabledNodeOptions: NodeOption[] = [];
 
         // sort our node types based on their value names (which are more unified and actually relates similar items together)
         // for ex: values STRS_EXT (label: Exit Stairs) and STRS (label: Stairs) are grouped together 
@@ -319,6 +326,122 @@ export class StationMapPage {
             pairA: {value: string, readableLabel: string}, 
             pairB: {value: string, readableLabel: string}
         ) => pairA.value.localeCompare(pairB.value));
+
+        // create a filter checkbox that reveals all options
+        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterChecklist,nodeOptions);
+
+        // create individual filter checkboxes for the various other node types
+        this.createOtherFilterCheckboxes(
+            filterChecklist,
+            allOptionFilterCheckbox,
+            nodeTypesAlphabetized,
+            nodeOptions
+        );
+    }
+
+    // create the all option filter checkbox (reveals the options in the dropdown for all node types)
+    private createAllOptionFilterCheckbox(
+        filterChecklist: HTMLDivElement, 
+        nodeOptions: NodeOption[]
+    ): FilterCheckBox {
+        // create our filter checkbox
+        const filterCheckBox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL");
+
+        // add the logic of the filter button for the all option filter checkbox
+        filterCheckBox.buttonElement.addEventListener("click", () => {
+            // clear all the styling for the other checkboxes
+            document.querySelectorAll(".filter-checkbox__enabled").forEach((filterCheckbox: Element) => {
+                filterCheckbox.classList.remove("filter-checkbox__enabled");
+            });
+
+            // iterate thru the node options and remove the hidden class if it exists
+            nodeOptions.forEach((nodeOption: NodeOption) => {
+                nodeOption.self.classList.remove("node-data__hidden");
+            });
+                
+            // also indicate this filter check box has been clicked
+            filterCheckBox.self.classList.add("filter-checkbox__enabled");
+        });
+
+        // activate the event listener as default
+        filterCheckBox.buttonElement.click();
+        // add the checkbox to the checklist parent container
+        filterChecklist.append(filterCheckBox.self);
+
+        return filterCheckBox;
+    }   
+
+    // create all the other checkboxes (for the different node types)
+    private createOtherFilterCheckboxes(
+        filterChecklist: HTMLDivElement,
+        allOptionFilterCheckbox: FilterCheckBox,
+        nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [],
+        nodeOptions: NodeOption[]
+    ): void {
+
+        // this is a set containing all enabled filters (excluding the all option since it's special)
+        const activeFilters: Set<string> = new Set();
+        // iterate through our alphabetized node types
+        nodeTypesAlphabetized.forEach((type: {value: string, readableLabel: string}) => {
+            const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel,type.value);
+
+            // on/off switch boolean for the event listener
+            let filterEnabled: boolean = false;
+            // event listener logic here...
+            filterCheckbox.buttonElement.addEventListener("click", () => {
+                // if filter is not previously enabled
+                if (!filterEnabled) {
+                    // add this to our set of enabled filters
+                    activeFilters.add(type.value);
+    
+                    // add the enabled styling to this checkbox
+                    filterCheckbox.self.classList.add("filter-checkbox__enabled");
+                    // and remove the styling on all option filter since it should be disabled if any other filter is enabled
+                    allOptionFilterCheckbox.self.classList.remove("filter-checkbox__enabled");
+                }
+                // in the case this filter is disabled
+                else {
+                    // delete this filter value from enabled filters
+                    activeFilters.delete(type.value);
+
+                    // remove its class attribute
+                    filterCheckbox.self.classList.remove("filter-checkbox__enabled");
+                }
+
+                // do the switch boolean statement here (so the active filters check can execute safely 
+                // and the state change is consistent)
+                filterEnabled = !filterEnabled;
+
+                // now check if any other active filters are enabled
+                if (activeFilters.size === 0) {
+                    // activate the event listener for this
+                    allOptionFilterCheckbox.buttonElement.click();
+                    return;
+                }
+
+                // now loop through our node options with the activeFilters readjusted
+                nodeOptions.forEach((nodeOption: NodeOption) => {
+                    let matchesAFilter: boolean = false;
+                    for (const filterValue of activeFilters) {
+                        if (nodeOption.filters.has(filterValue)) {
+                            matchesAFilter = true;
+                            break;
+                        }
+                    }
+                    // if not just hide it
+                    if (!matchesAFilter) {
+                        nodeOption.self.classList.add("node-data__hidden");
+                    }
+                    // else remove the hidden class if it exists
+                    else {
+                        nodeOption.self.classList.remove("node-data__hidden");
+                    }
+                });
+            });
+
+            // append the checkbox to the checklist parent
+            filterChecklist.append(filterCheckbox.self);
+        });
     }
 }
 

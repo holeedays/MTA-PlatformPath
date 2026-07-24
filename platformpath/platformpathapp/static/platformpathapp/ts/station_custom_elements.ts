@@ -57,5 +57,36 @@ export class NodeOption {
 
         this.self.append(labelComponent, filterDescriptionComponent);
     }
-    
+}
+
+// a filter checkbox class used to house custom properties for a compound html object ("The filter checkbox")
+export class FilterCheckBox {
+    public label: string;
+    public value: string;
+
+    public self: HTMLDivElement;
+    public labelElement: HTMLSpanElement;
+    public buttonElement: HTMLButtonElement;
+
+    constructor(label: string, value: string) {
+        this.label = label;
+        this.value = value;
+
+        this.self = document.createElement("div");
+        this.labelElement = document.createElement("span");
+        this.buttonElement = document.createElement("button");
+        
+        this.setStyling();
+    }
+
+    // like node option, sets the styling/visual look of element and anything extraneous involving the html part of the element
+    private setStyling() {
+        // note: these attributes are just for legibility and semantic understanding of what the checkbox does... etc
+        this.self.setAttribute("label", "filter checkbox");
+        this.labelElement.innerHTML = this.label;
+        this.buttonElement.value = this.value;
+
+        // append all these children to the parent container
+        this.self.append(this.labelElement, this.buttonElement);
+    }
 }

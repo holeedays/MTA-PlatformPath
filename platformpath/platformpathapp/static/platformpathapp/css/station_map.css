@@ -252,9 +252,14 @@ body {
     border: 3px solid #ffffff;
 }
 
-/* routing form (generate path) + filter checkbox */
+/* routing form (generate path) + filter checklist */
 
-.route-form-filter-checkbox__container {
+/* testing thing here */
+.node-data__hidden {
+    display: none;
+}
+
+.route-form-filter-checklist__container {
     display: flex;
     flex-direction: column;
     align-items: end;
