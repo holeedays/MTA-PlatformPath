@@ -202,41 +202,42 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 5. Create Edges
         edges_data = [
             # Downtown Platform Chain
-            (dt_plat_head, dt_plat_mid, "Walk towards the middle of the platform", "Walk towards the head of the platform"),
-            (dt_plat_mid, dt_plat_rear, "Walk towards the rear of the platform", "Walk towards the middle of the platform"),
-            (dt_plat_rear, stair_dt_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the rear of the platform"),
-            (stair_dt_to_mezz, stair_mezz_to_dt, "Take the stairs down to the mezzanine", "Take the stairs up to the downtown platform"),
-            (stair_mezz_to_dt, mezz_dt, "Step off the stairs into the downtown mezzanine", "Approach the stairs to the downtown platform"),
-            (mezz_dt, mezz_central, "Walk towards the central mezzanine", "Walk towards the downtown exit"),
+            (dt_plat_head, dt_plat_mid, "Walk towards the middle of the platform", "Walk towards the head of the platform", "NONE"),
+            (dt_plat_mid, dt_plat_rear, "Walk towards the rear of the platform", "Walk towards the middle of the platform", "NONE"),
+            (dt_plat_rear, stair_dt_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the rear of the platform", "NONE"),
+            (stair_dt_to_mezz, stair_mezz_to_dt, "Take the stairs down to the mezzanine", "Take the stairs up to the downtown platform", "DOWN"),
+            (stair_mezz_to_dt, mezz_dt, "Step off the stairs into the downtown mezzanine", "Approach the stairs to the downtown platform", "NONE"),
+            (mezz_dt, mezz_central, "Walk towards the central mezzanine", "Walk towards the downtown exit", "NONE"),
 
             # Uptown Platform Chain
-            (ut_plat_rear, ut_plat_mid, "Walk towards the middle of the platform", "Walk towards the rear of the platform"),
-            (ut_plat_mid, ut_plat_head, "Walk towards the head of the platform", "Walk towards the middle of the platform"),
-            (ut_plat_head, stair_ut_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the head of the platform"),
-            (stair_ut_to_mezz, stair_mezz_to_ut, "Take the stairs down to the mezzanine", "Take the stairs up to the uptown platform"),
-            (stair_mezz_to_ut, mezz_ut, "Step off the stairs into the uptown mezzanine", "Approach the stairs to the uptown platform"),
-            (mezz_ut, mezz_central, "Walk towards the central mezzanine", "Walk towards the uptown exit"),
+            (ut_plat_rear, ut_plat_mid, "Walk towards the middle of the platform", "Walk towards the rear of the platform", "NONE"),
+            (ut_plat_mid, ut_plat_head, "Walk towards the head of the platform", "Walk towards the middle of the platform", "NONE"),
+            (ut_plat_head, stair_ut_to_mezz, "Approach the stairs leading to the mezzanine", "Step off the stairs onto the head of the platform", "NONE"),
+            (stair_ut_to_mezz, stair_mezz_to_ut, "Take the stairs down to the mezzanine", "Take the stairs up to the uptown platform", "DOWN"),
+            (stair_mezz_to_ut, mezz_ut, "Step off the stairs into the uptown mezzanine", "Approach the stairs to the uptown platform", "NONE"),
+            (mezz_ut, mezz_central, "Walk towards the central mezzanine", "Walk towards the uptown exit", "NONE"),
 
             # Mezzanine Core Routing
-            (mezz_central, mezz_booth, "Walk towards the station booth", "Walk towards the center of the mezzanine"),
-            (mezz_booth, mezz_ut_exit, "Head towards the uptown exit gates", "Head towards the station booth"),
-            (mezz_booth, mezz_dt_exit, "Head towards the downtown exit gates", "Head towards the station booth"),
+            (mezz_central, mezz_booth, "Walk towards the station booth", "Walk towards the center of the mezzanine", "NONE"),
+            (mezz_booth, mezz_ut_exit, "Head towards the uptown exit gates", "Head towards the station booth", "NONE"),
+            (mezz_booth, mezz_dt_exit, "Head towards the downtown exit gates", "Head towards the station booth", "NONE"),
 
             # Street Exit Chains
-            (stair_se, mezz_ut_exit, "Take the stairs down to the uptown exit area", "Take the stairs up to the SE corner street level"),
-            (mezz_ut_exit, stair_ne, "Take the stairs up to the NE corner street level", "Take the stairs down to the uptown exit area"),
-            
-            (stair_sw, mezz_dt_exit, "Take the stairs down to the downtown exit area", "Take the stairs up to the SW corner street level"),
-            (mezz_dt_exit, stair_nw, "Take the stairs up to the NW corner street level", "Take the stairs down to the downtown exit area"),
+            (stair_se, mezz_ut_exit, "Take the stairs up to the uptown exit area", "Take the stairs down to the SE corner street level", "UP"),
+            (mezz_ut_exit, stair_ne, "Take the stairs down to the NE corner street level", "Take the stairs up to the uptown exit area", "DOWN"),
+
+            (stair_sw, mezz_dt_exit, "Take the stairs up to the downtown exit area", "Take the stairs down to the SW corner street level", "UP"),
+            (mezz_dt_exit, stair_nw, "Take the stairs down to the NW corner street level", "Take the stairs up to the downtown exit area", "DOWN"),
         ]
 
-        for from_n, to_n, instr_fwd, instr_bwd in edges_data:
+        for from_n, to_n, instr_fwd, instr_bwd, vertical_dir in edges_data:
             Edge.objects.create(
                 station=station,
                 from_node=from_n,
                 to_node=to_n,
                 instruction_forward=instr_fwd,
                 instruction_backward=instr_bwd,
+                forward_vertical_direction=vertical_dir,
                 is_active=True
             )
 

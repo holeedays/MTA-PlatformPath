@@ -54,6 +54,7 @@ export class StationMapPage {
 
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
+        this.svgRenderer.hideRouteDirectionLabels();
         this.initLayerControls();
 
         console.log('Fetched station data:', this.station);
@@ -175,6 +176,11 @@ export class StationMapPage {
 
         // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
+            const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
+
+            // Enables all stair labels for the complete route
+            this.svgRenderer.showRouteDirectionLabels(labelIds);
+
             const stepUI = document.getElementById('step-ui');
             if (stepUI) stepUI.style.display = 'block';
             this.renderCurrentStep();
@@ -442,6 +448,42 @@ export class StationMapPage {
             // append the checkbox to the checklist parent
             filterChecklist.append(filterCheckbox.self);
         });
+    }
+
+    // Helper function to get the svgId of the correct label for the stairs
+    // that are a part of the route that was found
+    private getRouteDirectionLabelIds(path: PathStep[]): Set<string> {
+        const labelIds = new Set<string>();
+
+        for (const step of path) {
+            const traversal = step.traversal;
+
+            if (!traversal || traversal.verticalDirection === "NONE") {
+                continue;
+            }
+
+            const endpointIds = [
+                traversal.fromNodeId,
+                traversal.toNodeId,
+            ];
+
+            for (const nodeId of endpointIds) {
+                const node = this.station?.node_models.find(
+                    (candidate) => candidate.id === nodeId
+                );
+
+                // "STRS" is the stored value for NodeTypes.STAIRS.
+                if (!node || !("STRS" in node.types_dict)) {
+                    continue;
+                }
+
+                labelIds.add(
+                    `${node.svg_id}_${traversal.verticalDirection}`
+                );
+            }
+        }
+
+        return labelIds;
     }
 }
 
