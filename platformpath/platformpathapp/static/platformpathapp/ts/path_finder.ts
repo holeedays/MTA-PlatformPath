@@ -1,9 +1,22 @@
-import { type StationResponse, type NodeData } from "./station_data.ts"
+import { type StationResponse, type NodeData, type VerticalDirection } from "./station_data.ts"
+
+export interface RouteTraversal {
+    fromNodeId: number;
+    toNodeId: number;
+    verticalDirection: VerticalDirection;
+}
 
 export interface PathStep {
     svgId: string;
     layer: string;
     instruction: string;
+    traversal?: RouteTraversal;
+}
+
+interface Neighbor {
+    neighbor: number;
+    instruction: string;
+    verticalDirection: VerticalDirection;
 }
 
 export class PathFinder {
@@ -64,7 +77,7 @@ export class PathFinder {
             visited.add(currentNodeId);
 
             const neighbors = adjacency[currentNodeId] || [];
-            neighbors.forEach(({ neighbor, instruction }) => {
+            neighbors.forEach(({ neighbor, instruction, verticalDirection }) => {
                 if (!visited.has(neighbor)) {
                     const targetNode = nodeMap[neighbor];
                     if (!targetNode) return;
@@ -72,7 +85,12 @@ export class PathFinder {
                     queue.push([neighbor, [...path, {
                         svgId:       targetNode.svg_id,
                         layer:       layerMap[targetNode.layer] || "",
-                        instruction: instruction
+                        instruction: instruction,
+                        traversal: {
+                            fromNodeId: currentNodeId,
+                            toNodeId: neighbor,
+                            verticalDirection: verticalDirection,
+                        }
                     }]]);
                 }
             });
@@ -86,7 +104,7 @@ export class PathFinder {
     private getAdjacencyAndNodeMap(
         station: StationResponse,
         isAccessible: boolean = false
-    ): [Record<number, {neighbor: number; instruction: string}[]>, Record<number, NodeData>] | null {
+    ): [Record<number, Neighbor[]>, Record<number, NodeData>] | null {
           // Build node lookup map
         const nodeMap: Record<number, NodeData> = {};
         station.node_models.forEach(node => {
@@ -94,7 +112,7 @@ export class PathFinder {
         });
 
         // Build adjacency map
-        const adjacency: Record<number, { neighbor: number; instruction: string }[]> = {};
+        const adjacency: Record<number, Neighbor[]> = {};
 
         station.edge_models.forEach((edge) => {
             if (!edge.is_active) return null;
@@ -116,14 +134,28 @@ export class PathFinder {
 
             fromNeighbors.push({
                 neighbor:    edge.to_node,
-                instruction: edge.instruction_forward
+                instruction: edge.instruction_forward,
+                verticalDirection: edge.forward_vertical_direction
             });
             toNeighbors.push({
                 neighbor:    edge.from_node,
-                instruction: edge.instruction_backward
+                instruction: edge.instruction_backward,
+                verticalDirection: this.reverseDirection(edge.forward_vertical_direction)
             });
         });
 
         return [adjacency, nodeMap];
-    }   
+    }
+    
+    // Helper function for getting the direction of the stairs
+    private reverseDirection(direction: VerticalDirection): VerticalDirection {
+    switch (direction) {
+        case "UP":
+            return "DOWN";
+        case "DOWN":
+            return "UP";
+        default:
+            return "NONE";
+    }
+}
 }

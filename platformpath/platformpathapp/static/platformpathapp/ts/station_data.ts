@@ -15,11 +15,14 @@ export interface NodeData {
     types_dict: Record<string,string>;
 }
 
+export type VerticalDirection = "NONE" | "UP" | "DOWN"
+
 export interface EdgeData {
     from_node: number;
     to_node: number;
     instruction_forward: string;
     instruction_backward: string;
+    forward_vertical_direction: VerticalDirection;
     is_active: boolean;
 }
 

@@ -46,6 +46,7 @@ export class StationMapPage {
 
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
+        this.svgRenderer.hideRouteDirectionLabels();
         this.initLayerControls();
 
         console.log('Fetched station data:', this.station);

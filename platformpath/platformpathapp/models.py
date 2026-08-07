@@ -100,6 +100,13 @@ class NodeTypes(models.TextChoices):
     def get_default(cls) -> dict[str, str]:
         return {cls.NONE: cls.NONE.label}
 
+# enum to hold the direction of the stairs for edges in order to show the appropriate label
+# when the route is created
+class VerticalDirections(models.TextChoices):
+    NONE = ("NONE", "None")
+    UP = ("UP", "Up")
+    DOWN = ("DOWN", "Down")
+
 class Node(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     label = models.CharField(max_length=200)
@@ -132,6 +139,12 @@ class Edge(models.Model):
     instruction_forward = models.CharField(max_length=300)
     instruction_backward = models.CharField(max_length=300)
     is_active = models.BooleanField(default=True)
+    # direction of the stairs for the forward edge
+    forward_vertical_direction = models.CharField(
+        max_length=4,
+        choices=VerticalDirections.choices,
+        default=VerticalDirections.NONE,
+    )
 
     def __str__(self):
         return f"{self.from_node.label} - {self.to_node.label}"

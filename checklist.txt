@@ -8,7 +8,6 @@ PRIORITIES:
     - Adding a preview of the path (before selecting through steps)
     - Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path)
     - Add filters to limit the node selections (for user simplicity)
-    - Adding dynamic arrow changes for the stairs given a selected path
 > Change the station map diagrams (maybe alter the arrows and names on them??)
     - we are currently doing this...
 > Add all the new stations currently available
@@ -67,6 +66,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+- Adding dynamic arrow changes for the stairs given a selected path
 Generated inital placeholder README
 Edit station map page to show layers selection as a side panel instead of horizontal bar
 Have a default value for the select dropdown button

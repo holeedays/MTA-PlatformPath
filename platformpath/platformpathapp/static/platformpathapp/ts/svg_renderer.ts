@@ -175,4 +175,31 @@ export class SvgRenderer {
             });
         });
     }
+
+    // Function to hide all stair labels on the svg
+    public hideRouteDirectionLabels(): void {
+        document
+            .querySelectorAll<SVGGraphicsElement>(
+                '#diagram-container g[id$="_UP"], #diagram-container g[id$="_DOWN"]'
+            )
+            .forEach((label) => {
+                label.style.display = "none";
+            });
+    }
+
+    // Function to show a specific stair label on the svg
+    public showRouteDirectionLabels(labelIds: Iterable<string>): void {
+        this.hideRouteDirectionLabels();
+
+        for (const labelId of labelIds) {
+            const label = document.getElementById(labelId) as SVGGraphicsElement | null;
+
+            if (!label) {
+                console.warn("Route direction label not found:", labelId);
+                continue;
+            }
+
+            label.style.display = "inline";
+        }
+    }
 }
