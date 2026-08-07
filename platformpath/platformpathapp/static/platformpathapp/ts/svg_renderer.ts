@@ -1,6 +1,7 @@
 // Contains all functions related to rendering the svg diagrams
 
 import { type LayerData } from "./station_data.ts"
+import { NodeSVG, SVGComponentElement } from "./station_custom_elements.ts"
 
 declare const panzoom: any;
 
@@ -22,22 +23,17 @@ export class SvgRenderer {
             });
     }
 
-    // essentially change the fill of the node (any children (or itself) that has an explicit fill attribute to it)
-    public fillNode(nodeSVG: HTMLElement, color: string): void {
-        // set the fill on parent
-        nodeSVG.style.fill = color;
-        // and set the fill on the children
-        const coloredComponents: NodeListOf<HTMLElement> = nodeSVG.querySelectorAll<HTMLElement>("[fill]");
-        coloredComponents.forEach((component: HTMLElement) => {
-            component.style.fill = color;
-        });
+    public muteNode(nodeSVG: NodeSVG): void {
+        nodeSVG.Self.BaseElement.classList.add("muted");
+    }
+
+    public unmuteNode(nodeSVG: NodeSVG): void {
+        nodeSVG.Self.BaseElement.classList.remove("muted");
     }
 
     // Highlight function used to highlight the node at each step of the directions
     public highlightNode(nodeId: string): void {
-        document.querySelectorAll('.highlighted').forEach(el => {
-            el.classList.remove('highlighted');
-        });
+        this.unhighlightNodes();
 
         const el = document.getElementById(nodeId);
         if (el) {
@@ -63,6 +59,13 @@ export class SvgRenderer {
         }
         
         node.classList.add(highlightClass);
+    }
+
+    // Removes all highlighted nodes, excluding the selected nodes (e.g. start and end nodes)
+    public unhighlightNodes(): void {
+          document.querySelectorAll(".highlighted").forEach((element) => {
+            element.classList.remove("highlighted");   
+        })
     }
 
     // Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers

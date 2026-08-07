@@ -254,11 +254,6 @@ body {
 
 /* routing form (generate path) + filter checklist */
 
-/* testing thing here */
-.node-data__hidden {
-    display: none;
-}
-
 .route-form-filter-checklist__container {
     display: flex;
     flex-direction: column;
@@ -290,19 +285,9 @@ body {
     font-weight: 700;
 }
 
-.route-form select,
-.route-form button {
+.route-form__button {
     height: 30px;
     border-radius: 5px;
-    color: #ffffff;
-}
-
-.route-form select {
-    font-style: italic;
-    background-color: #3f3f3f;
-}
-
-.route-form button {
     display: flex;
     align-items: center;
     padding: 10px 5px;
@@ -311,6 +296,23 @@ body {
     background: #1a4fd6;
     color: #ffffff;
     cursor: pointer;
+}
+
+.route-field__dropdown:popover-open {
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+/* testing thing here */
+.route-field__dropdown-option {
+    background-color: var(--bg-color);
+}
+.option__hidden {
+    display: none;
+}
+.option__selected {
+    background-color: color-mix(in srgb, var(--bg-color), #000000 40%);
 }
 
 .step-ui {
@@ -358,6 +360,12 @@ body {
 }
 
 /* Highlighting styles for diagram paths */
+
+.muted,
+.muted :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: color-mix(in srgb, var(--original-fill), #000000 80%)
+}
+
 .highlighted {
     opacity: 0.1;
     animation: pulse 1.2s ease-in-out infinite;

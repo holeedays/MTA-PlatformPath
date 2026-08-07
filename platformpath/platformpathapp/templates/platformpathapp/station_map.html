@@ -55,20 +55,26 @@
 					</div>
 					<div id="route-form" class="route-form">
 							<div class="route-field">
-									<label for="start-node-dropdown">START</label>
-									<select id="start-node-dropdown" required>
-											<option value="" selected disabled>Choose a start node</option>
-									</select>
+								<button class="route-field__dropdown-button route-form__button" popovertarget="start-node-dropdown">START</button>
+								<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
+
+								<!-- <label for="start-node-dropdown">START</label>
+								<select id="start-node-dropdown" required>
+										<option value="" selected disabled>Choose a start node</option>
+								</select> -->
 							</div>
 
 							<div class="route-field">
-									<label for="end-node-dropdown">END</label>
-									<select id="end-node-dropdown" required>
-											<option value="" selected disabled>Choose an end node</option>
-									</select>
+								<button class="route-field__dropdown-button route-form__button" popovertarget="end-node-dropdown">END</button>
+								<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
+
+								<!-- <label for="end-node-dropdown">END</label>
+								<select id="end-node-dropdown" required>
+										<option value="" selected disabled>Choose an end node</option>
+								</select> -->
 							</div>
 
-							<button id="find-route" type="button">Find Route</button>
+							<button class="route-form__button" id="find-route" type="button">Find Route</button>
 					</div>
 				</div>
 

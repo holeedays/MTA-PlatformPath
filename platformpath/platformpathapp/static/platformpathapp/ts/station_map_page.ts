@@ -1,7 +1,7 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep } from "./path_finder.ts";
 import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
-import { NodeOption, FilterCheckBox } from "./station_custom_elements.ts";
+import { NodeOption, FilterCheckBox, NodeSVG } from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
 
@@ -9,26 +9,16 @@ export class StationMapPage {
     private pathFinder: PathFinder;
     private currentPath: PathStep[] | null = null;
     private currentPathNodeIDs: Set<string> = new Set();
-    private nodeSVGs: HTMLElement[] = [];
+    private nodeSVGs: NodeSVG[] = [];
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
 
+    private navigationActive: boolean = false;
+
     constructor() {
         this.pathFinder = new PathFinder();
         this.svgRenderer = new SvgRenderer();
-    }
-
-    // Updating the highlight for the selected start or end node when the dropdown is changed
-    private updateSelectedNodeHighlight(nodeId: number, role: SelectionRole): void {
-        const node = this.station?.node_models.find((item) => item.id === nodeId);
-
-        if (!node) {
-            console.warn("Selected node not found:", nodeId);
-            return;
-        }
-
-        this.svgRenderer.highlightSelectedNode(node.svg_id, role);
     }
 
     // initializes the page: loads diagram, fetches station data, sets up event listeners
@@ -60,25 +50,17 @@ export class StationMapPage {
 
         console.log('Fetched station data:', this.station);
 
-        // this inits all dropdowns with node options and the filter checkbox
+        // init all dropdowns with node options and the filter checkbox
         this.processNodes();
-
-        // Listeners for the dropdowns to highlight the selected start and end nodes
-        // to indicate to users what node they are choosing
-        document.getElementById("start-node-dropdown")?.addEventListener("change", (event) => {
-            const nodeId = Number((event.target as HTMLSelectElement).value);
-            this.updateSelectedNodeHighlight(nodeId, "start");
-        });
-        document.getElementById("end-node-dropdown")?.addEventListener("change", (event) => {
-            const nodeId = Number((event.target as HTMLSelectElement).value);
-            this.updateSelectedNodeHighlight(nodeId, "end");
-        });
-
+        // init our path step buttons
+        this.initPathStepButtons();
+    
         // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")
             ?.addEventListener("click", () => this.handleFormSubmit());
     }
 
+    // init the layer("levels") buttons 
     private initLayerControls(): void {
         if (!this.station) return;
 
@@ -141,14 +123,38 @@ export class StationMapPage {
     
     // Reads from the form and delegates to startNavigation
     private async handleFormSubmit(): Promise<void> {
-        const fromNodeId = parseInt(
-            (document.getElementById('start-node-dropdown') as HTMLSelectElement).value
+        const fromNodeId: number = parseInt(
+            (document.getElementById('start-node-dropdown') as HTMLDivElement).getAttribute("data-value") ?? ""
         );
-        const toNodeId = parseInt(
-            (document.getElementById('end-node-dropdown') as HTMLSelectElement).value
+        const toNodeId: number = parseInt(
+            (document.getElementById('end-node-dropdown') as HTMLDivElement).getAttribute("data-value") ?? ""
         );
 
         await this.startNavigation(fromNodeId, toNodeId);
+    }
+
+    // init the logic for the path step buttons
+    private initPathStepButtons(): void {
+        const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
+        const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
+        const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
+
+        if (
+            instructionText === null ||
+            btnPrev === null ||
+            btnNext === null
+        ) {
+            console.warn(
+                "Instruction text, previous node button, and/or next node button does not exist",
+                `Instruction Text Status: ${instructionText}`,
+                `Previous Node Button Status: ${btnPrev}`,
+                `Next Node Button Status: ${btnNext}`
+            );
+            return;
+        } 
+
+        btnPrev.addEventListener("click", () => this.prevStep(instructionText, btnPrev, btnNext));
+        btnNext.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext))
     }
 
     // Uses the PathFinder to get a path and initializes the UI for navigation
@@ -171,16 +177,17 @@ export class StationMapPage {
         );
         // clear out the previous values from our set
         this.currentPathNodeIDs.clear();
+        // add the new values
         this.currentPath?.forEach((step: PathStep) => {
             this.currentPathNodeIDs.add(step.svgId);
         });
 
         // reset our current index for our path so we start at the first step
         this.currentIndex = 0;
-        // render the entire path
-        this.renderPath();
         // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
+            // render the entire path
+            this.renderPath();
             // get the relevant ui elements
             const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
             const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
@@ -196,17 +203,14 @@ export class StationMapPage {
                 console.warn(
                     "stepUI parent object, instruction text, previous node button, and/or next node button does not exist",
                     `StepUI Status: ${stepUI}`,
+                    `Instruction Text Status: ${instructionText}`,
                     `Previous Node Button Status: ${btnPrev}`,
                     `Next Node Button Status: ${btnNext}`
                 );
                 return;
             }
             stepUI.style.display = 'block';
-
-            document.getElementById("btn-prev")
-                ?.addEventListener("click", () => this.prevStep(instructionText, btnPrev, btnNext));
-            document.getElementById("btn-next")
-                ?.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext));
+            this.navigationActive = true;
 
             this.renderCurrentStep(instructionText, btnPrev, btnNext);
         } else {
@@ -214,13 +218,39 @@ export class StationMapPage {
         }
     }
 
+
+    private endNavigation(): void {
+        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
+        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
+
+        if (stepUI === null) {
+            console.warn("There is no step ui element");
+            return;
+        }
+
+        this.derenderPath();
+        stepUI.style.display = 'none';
+        this.currentPathNodeIDs.clear();
+        allLayersButton?.click();
+    }
+
     // renders the entirety of the path 
     // to be fixed...
     private renderPath(): void {
-        this.nodeSVGs.forEach((nodeSVG: HTMLElement) => {
-            if (!this.currentPathNodeIDs.has(nodeSVG.id)) {
-                this.svgRenderer.fillNode(nodeSVG, "#3d3d3d");
+        this.nodeSVGs.forEach((nodeSVG: NodeSVG) => {
+            if (!this.currentPathNodeIDs.has(nodeSVG.Self.BaseElement.id)) {
+                this.svgRenderer.muteNode(nodeSVG);
             }
+            else {
+                this.svgRenderer.unmuteNode(nodeSVG);
+            }
+        });
+    }
+
+    // derenders the entire path
+    private derenderPath(): void {
+        this.nodeSVGs.forEach((nodeSVG: NodeSVG) => {
+            this.svgRenderer.unmuteNode(nodeSVG);
         });
     }
 
@@ -245,7 +275,7 @@ export class StationMapPage {
         this.setActiveLayerButtonByLayer(step.layer);
         // highlight nodes and center onto them
         this.svgRenderer.highlightNode(step.svgId);
-        this.svgRenderer.centerOnNode(step.svgId);
+        // this.svgRenderer.centerOnNode(step.svgId);
 
         btnPrev.disabled = (this.currentIndex === 0);
         btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
@@ -265,7 +295,7 @@ export class StationMapPage {
         }
     }
 
-    // umbrella function to process all elements on the page involving the node data (e.g. route form + filter checkbox)
+    // umbrella function to process all elements on the page involving the node data (e.g. route form + filter checkbox + node options logic)
     // as well as the node data itself
     private processNodes(): void {
         if (this.station === null) {
@@ -274,8 +304,8 @@ export class StationMapPage {
         }
 
         // retrieve our dropdown elements
-        const startNodeDropdown: HTMLSelectElement | null = document.getElementById("start-node-dropdown") as HTMLSelectElement;
-        const endNodeDropdown: HTMLSelectElement | null = document.getElementById("end-node-dropdown") as HTMLSelectElement;
+        const startNodeDropdown: HTMLDivElement | null = document.getElementById("start-node-dropdown") as HTMLDivElement;
+        const endNodeDropdown: HTMLDivElement | null = document.getElementById("end-node-dropdown") as HTMLDivElement;
         // retrieve our filter checklist
         const filterCheckList: HTMLDivElement | null = document.querySelector(".filter-checklist") as HTMLDivElement;
 
@@ -289,6 +319,7 @@ export class StationMapPage {
             return;
         }
 
+        // init node option container to hold our newly created node options
         const nodeOptions: NodeOption[] = [];
         const nodeTypesHashMap: Map<string,string> = new Map();
 
@@ -306,8 +337,8 @@ export class StationMapPage {
             });
 
             // create our node options and add it to our dropdown
-            const startNodeOption: NodeOption | null = this.addNewOptionToDropdown(startNodeDropdown, node, filters);
-            const endNodeOption: NodeOption | null = this.addNewOptionToDropdown(endNodeDropdown, node, filters);
+            const startNodeOption: NodeOption | null = this.createNewOption(startNodeDropdown, node, filters);
+            const endNodeOption: NodeOption | null = this.createNewOption(endNodeDropdown, node, filters);
 
             if (startNodeOption === null || endNodeOption === null) {
                 console.warn(
@@ -317,16 +348,16 @@ export class StationMapPage {
                 return;
             }
 
-            // add them to our collection of node options
+            // add them to our node options array
             nodeOptions.push(startNodeOption, endNodeOption);
 
             // also collect all our node svg ids and store them
-            const nodeSVG: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
-            if (nodeSVG === null) {
+            const nodeSVGElement: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
+            if (nodeSVGElement === null) {
                 console.warn(`There is no nodeSVG group for the node with id ${node.svg_id}`);
                 return;
             }
-            this.nodeSVGs.push(nodeSVG);
+            this.nodeSVGs.push(new NodeSVG(nodeSVGElement));
         });
 
         // also init our checkboxes
@@ -334,8 +365,8 @@ export class StationMapPage {
     }
 
     // adds new option based on the given node data to the given dropdown and returns it
-    private addNewOptionToDropdown(
-        dropdown: HTMLSelectElement, 
+    private createNewOption(
+        dropdown: HTMLDivElement, 
         node: NodeData,
         filters: Map<string,string>
     ): NodeOption | null {
@@ -348,16 +379,30 @@ export class StationMapPage {
             return null;
         }
 
-        // create the option
+        // create the option (which automatically adds the option to the given dropdown container (and inits all logic/styling))
         const nodeOption: NodeOption = new NodeOption(
+            dropdown,
             node.label, 
             node.id.toString(), 
+            node.svg_id,
             layer,
             filters
         );
+        // add additional event listener logic 
+        nodeOption.Self.addEventListener("click", () => {
+            // determine what this dropdown this selected node option belongs to
+            const selectionRole: SelectionRole = nodeOption.Parent.id === "start-node-dropdown"? "start": "end";
+            // highlight the selected node (either start or end)
+            this.svgRenderer.highlightSelectedNode(nodeOption.SVGID, selectionRole);
+            // unhighlight other nodes
+            this.svgRenderer.unhighlightNodes();
 
-        // add it to our dropdown
-        dropdown.appendChild(nodeOption.self);
+            // toggle off any navigation if it exists
+            if (this.navigationActive) {
+                this.endNavigation();
+                this.navigationActive = false;
+            }
+        });
 
         return nodeOption;
     } 
@@ -379,46 +424,33 @@ export class StationMapPage {
             pairB: {value: string, readableLabel: string}
         ) => pairA.value.localeCompare(pairB.value));
 
+        // create a set to hold all active filters we have
+        const activeFilters: Set<string> = new Set();
         // create a filter checkbox that reveals all options
-        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterChecklist,nodeOptions);
+        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterChecklist, nodeOptions, activeFilters);
 
         // create individual filter checkboxes for the various other node types
         this.createOtherFilterCheckboxes(
             filterChecklist,
             allOptionFilterCheckbox,
             nodeTypesAlphabetized,
-            nodeOptions
+            nodeOptions,
+            activeFilters
         );
     }
 
     // create the all option filter checkbox (reveals the options in the dropdown for all node types)
     private createAllOptionFilterCheckbox(
         filterChecklist: HTMLDivElement, 
-        nodeOptions: NodeOption[]
+        nodeOptions: NodeOption[],
+        activeFilters: Set<string>
     ): FilterCheckBox {
         // create our filter checkbox
-        const filterCheckBox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL");
-
-        // add the logic of the filter button for the all option filter checkbox
-        filterCheckBox.buttonElement.addEventListener("click", () => {
-            // clear all the styling for the other checkboxes
-            document.querySelectorAll(".filter-checkbox__enabled").forEach((filterCheckbox: Element) => {
-                filterCheckbox.classList.remove("filter-checkbox__enabled");
-            });
-
-            // iterate thru the node options and remove the hidden class if it exists
-            nodeOptions.forEach((nodeOption: NodeOption) => {
-                nodeOption.self.classList.remove("node-data__hidden");
-            });
-                
-            // also indicate this filter check box has been clicked
-            filterCheckBox.self.classList.add("filter-checkbox__enabled");
-        });
-
+        const filterCheckBox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL", filterChecklist);
+        // init the logic for our all filter checkbox
+        filterCheckBox.initAllFilterLogic(nodeOptions, activeFilters);
         // activate the event listener as default
-        filterCheckBox.buttonElement.click();
-        // add the checkbox to the checklist parent container
-        filterChecklist.append(filterCheckBox.self);
+        filterCheckBox.ButtonElement.click();
 
         return filterCheckBox;
     }   
@@ -428,71 +460,15 @@ export class StationMapPage {
         filterChecklist: HTMLDivElement,
         allOptionFilterCheckbox: FilterCheckBox,
         nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [],
-        nodeOptions: NodeOption[]
+        nodeOptions: NodeOption[],
+        activeFilters: Set<string>
     ): void {
-
-        // this is a set containing all enabled filters (excluding the all option since it's special)
-        const activeFilters: Set<string> = new Set();
         // iterate through our alphabetized node types
         nodeTypesAlphabetized.forEach((type: {value: string, readableLabel: string}) => {
-            const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel,type.value);
-
-            // on/off switch boolean for the event listener
-            let filterEnabled: boolean = false;
-            // event listener logic here...
-            filterCheckbox.buttonElement.addEventListener("click", () => {
-                // if filter is not previously enabled
-                if (!filterEnabled) {
-                    // add this to our set of enabled filters
-                    activeFilters.add(type.value);
-    
-                    // add the enabled styling to this checkbox
-                    filterCheckbox.self.classList.add("filter-checkbox__enabled");
-                    // and remove the styling on all option filter since it should be disabled if any other filter is enabled
-                    allOptionFilterCheckbox.self.classList.remove("filter-checkbox__enabled");
-                }
-                // in the case this filter is disabled
-                else {
-                    // delete this filter value from enabled filters
-                    activeFilters.delete(type.value);
-
-                    // remove its class attribute
-                    filterCheckbox.self.classList.remove("filter-checkbox__enabled");
-                }
-
-                // do the switch boolean statement here (so the active filters check can execute safely 
-                // and the state change is consistent)
-                filterEnabled = !filterEnabled;
-
-                // now check if any other active filters are enabled
-                if (activeFilters.size === 0) {
-                    // activate the event listener for this
-                    allOptionFilterCheckbox.buttonElement.click();
-                    return;
-                }
-
-                // now loop through our node options with the activeFilters readjusted
-                nodeOptions.forEach((nodeOption: NodeOption) => {
-                    let matchesAFilter: boolean = false;
-                    for (const filterValue of activeFilters) {
-                        if (nodeOption.filters.has(filterValue)) {
-                            matchesAFilter = true;
-                            break;
-                        }
-                    }
-                    // if not just hide it
-                    if (!matchesAFilter) {
-                        nodeOption.self.classList.add("node-data__hidden");
-                    }
-                    // else remove the hidden class if it exists
-                    else {
-                        nodeOption.self.classList.remove("node-data__hidden");
-                    }
-                });
-            });
-
-            // append the checkbox to the checklist parent
-            filterChecklist.append(filterCheckbox.self);
+            // create a filter checkbox 
+            const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterChecklist);
+            // initiate the logic for it
+            filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, activeFilters);
         });
     }
 }
