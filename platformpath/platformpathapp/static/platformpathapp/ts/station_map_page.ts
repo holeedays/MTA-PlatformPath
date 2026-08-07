@@ -8,6 +8,8 @@ import { DataFetch } from "./data_fetch.ts";
 export class StationMapPage {
     private pathFinder: PathFinder;
     private currentPath: PathStep[] | null = null;
+    private currentPathNodeIDs: Set<string> = new Set();
+    private nodeSVGs: HTMLElement[] = [];
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
@@ -76,10 +78,6 @@ export class StationMapPage {
         // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")
             ?.addEventListener("click", () => this.handleFormSubmit());
-        document.getElementById("btn-prev")
-            ?.addEventListener("click", () => this.prevStep());
-        document.getElementById("btn-next")
-            ?.addEventListener("click", () => this.nextStep());
     }
 
     private initLayerControls(): void {
@@ -151,7 +149,7 @@ export class StationMapPage {
             (document.getElementById('end-node-dropdown') as HTMLSelectElement).value
         );
 
-        await this.startNavigation( fromNodeId, toNodeId);
+        await this.startNavigation(fromNodeId, toNodeId);
     }
 
     // Uses the PathFinder to get a path and initializes the UI for navigation
@@ -166,14 +164,22 @@ export class StationMapPage {
         }
 
         // Find the path using the PathFinder
-        this.currentPath  = this.pathFinder.findPath(
+        this.currentPath = this.pathFinder.findPath(
             this.station,
             fromNodeId,
             toNodeId,
             accessibleOnly
         );
-        this.currentIndex = 0;
+        // clear out the previous values from our set
+        this.currentPathNodeIDs.clear();
+        this.currentPath?.forEach((step: PathStep) => {
+            this.currentPathNodeIDs.add(step.svgId);
+        });
 
+        // reset our current index for our path so we start at the first step
+        this.currentIndex = 0;
+        // render the entire path
+        this.renderPath();
         // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
             const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
@@ -181,52 +187,92 @@ export class StationMapPage {
             // Enables all stair labels for the complete route
             this.svgRenderer.showRouteDirectionLabels(labelIds);
 
-            const stepUI = document.getElementById('step-ui');
-            if (stepUI) stepUI.style.display = 'block';
-            this.renderCurrentStep();
+            // get the relevant ui elements
+            const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
+            const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
+            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
+            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
+
+            if (
+                stepUI === null ||
+                instructionText === null ||
+                btnPrev === null ||
+                btnNext === null
+            ) {
+                console.warn(
+                    "stepUI parent object, instruction text, previous node button, and/or next node button does not exist",
+                    `StepUI Status: ${stepUI}`,
+                    `Previous Node Button Status: ${btnPrev}`,
+                    `Next Node Button Status: ${btnNext}`
+                );
+                return;
+            }
+            stepUI.style.display = 'block';
+
+            document.getElementById("btn-prev")
+                ?.addEventListener("click", () => this.prevStep(instructionText, btnPrev, btnNext));
+            document.getElementById("btn-next")
+                ?.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext));
+
+            this.renderCurrentStep(instructionText, btnPrev, btnNext);
         } else {
             console.warn('No path found');
         }
     }
 
+    // renders the entirety of the path 
+    // to be fixed...
+    private renderPath(): void {
+        this.nodeSVGs.forEach((nodeSVG: HTMLElement) => {
+            if (!this.currentPathNodeIDs.has(nodeSVG.id)) {
+                this.svgRenderer.fillNode(nodeSVG, "#3d3d3d");
+            }
+        });
+    }
+
     // Renders the current step: updates instructions, highlights nodes/layers, and manages button states
-    private renderCurrentStep(): void {
+    private renderCurrentStep(
+        instructionText: HTMLElement, 
+        btnPrev: HTMLButtonElement, 
+        btnNext: HTMLButtonElement
+    ): void {
         if (!this.currentPath) return;
         const step = this.currentPath[this.currentIndex];
-        if (!step) return;
-
-        const instructionText = document.getElementById('instruction-text');
-        if (instructionText) {
-            instructionText.innerText =
-                `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
+        if (!step) {
+            console.warn(`${step} is not a valid index of the currentPath`);
+            return;
         }
 
+        // update instructions
+        instructionText.innerText =
+            `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
+        // set the correct layers
         this.svgRenderer.showLayer(step.layer, this.station?.layer_models || []);
         this.setActiveLayerButtonByLayer(step.layer);
+        // highlight nodes and center onto them
         this.svgRenderer.highlightNode(step.svgId);
         this.svgRenderer.centerOnNode(step.svgId);
 
-        const btnPrev = document.getElementById('btn-prev') as HTMLButtonElement;
-        const btnNext = document.getElementById('btn-next') as HTMLButtonElement;
-        if (btnPrev) btnPrev.disabled = (this.currentIndex === 0);
-        if (btnNext) btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
+        btnPrev.disabled = (this.currentIndex === 0);
+        btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
     }
 
-    private nextStep(): void {
+    private nextStep(instructionText: HTMLElement, btnPrev: HTMLButtonElement, btnNext: HTMLButtonElement): void {
         if (this.currentPath && this.currentIndex < this.currentPath.length - 1) {
             this.currentIndex++;
-            this.renderCurrentStep();
+            this.renderCurrentStep(instructionText, btnPrev, btnNext);
         }
     }
 
-    private prevStep(): void {
+    private prevStep(instructionText: HTMLElement, btnPrev: HTMLButtonElement, btnNext: HTMLButtonElement): void {
         if (this.currentIndex > 0) {
             this.currentIndex--;
-            this.renderCurrentStep();
+            this.renderCurrentStep(instructionText, btnPrev, btnNext);
         }
     }
 
     // umbrella function to process all elements on the page involving the node data (e.g. route form + filter checkbox)
+    // as well as the node data itself
     private processNodes(): void {
         if (this.station === null) {
             console.warn("The station response object has nothing in it");
@@ -279,12 +325,18 @@ export class StationMapPage {
 
             // add them to our collection of node options
             nodeOptions.push(startNodeOption, endNodeOption);
+
+            // also collect all our node svg ids and store them
+            const nodeSVG: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
+            if (nodeSVG === null) {
+                console.warn(`There is no nodeSVG group for the node with id ${node.svg_id}`);
+                return;
+            }
+            this.nodeSVGs.push(nodeSVG);
         });
 
         // also init our checkboxes
         this.initFilterCheckboxes(filterCheckList, nodeTypesHashMap, nodeOptions);
-
-        // ...to be continued
     }
 
     // adds new option based on the given node data to the given dropdown and returns it

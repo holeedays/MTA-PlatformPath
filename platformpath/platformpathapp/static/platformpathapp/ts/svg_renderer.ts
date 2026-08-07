@@ -22,6 +22,17 @@ export class SvgRenderer {
             });
     }
 
+    // essentially change the fill of the node (any children (or itself) that has an explicit fill attribute to it)
+    public fillNode(nodeSVG: HTMLElement, color: string): void {
+        // set the fill on parent
+        nodeSVG.style.fill = color;
+        // and set the fill on the children
+        const coloredComponents: NodeListOf<HTMLElement> = nodeSVG.querySelectorAll<HTMLElement>("[fill]");
+        coloredComponents.forEach((component: HTMLElement) => {
+            component.style.fill = color;
+        });
+    }
+
     // Highlight function used to highlight the node at each step of the directions
     public highlightNode(nodeId: string): void {
         document.querySelectorAll('.highlighted').forEach(el => {
