@@ -235,14 +235,19 @@ export class StationMapPage {
             return;
         }
 
+        // derender the existing path
         this.derenderPath();
+        // hide route direction labels
+        this.svgRenderer.hideRouteDirectionLabels();
+        // remove the step ui from view
         stepUI.style.display = 'none';
+        // clear all path node ids 
         this.currentPathNodeIDs.clear();
+        // click the all layers button to reveal all layers again
         allLayersButton?.click();
     }
 
     // renders the entirety of the path 
-    // to be fixed...
     private renderPath(): void {
         this.nodeSVGs.forEach((nodeSVG: NodeSVG) => {
             if (!this.currentPathNodeIDs.has(nodeSVG.Self.BaseElement.id)) {
