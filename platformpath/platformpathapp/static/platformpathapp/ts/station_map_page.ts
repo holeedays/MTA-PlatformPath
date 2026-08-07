@@ -189,6 +189,12 @@ export class StationMapPage {
         if (this.currentPath && this.currentPath.length > 0) {
             // render the entire path
             this.renderPath();
+
+            // get label ids
+            const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
+            // Enables all stair labels for the complete route
+            this.svgRenderer.showRouteDirectionLabels(labelIds);
+
             // get the relevant ui elements
             const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
             const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
@@ -219,7 +225,7 @@ export class StationMapPage {
         }
     }
 
-
+    // end the navigation process (the opposite of StartNavigation)
     private endNavigation(): void {
         const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
         const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
@@ -471,6 +477,42 @@ export class StationMapPage {
             // initiate the logic for it
             filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, activeFilters);
         });
+    }
+
+    // Helper function to get the svgId of the correct label for the stairs
+    // that are a part of the route that was found
+    private getRouteDirectionLabelIds(path: PathStep[]): Set<string> {
+        const labelIds = new Set<string>();
+
+        for (const step of path) {
+            const traversal = step.traversal;
+
+            if (!traversal || traversal.verticalDirection === "NONE") {
+                continue;
+            }
+
+            const endpointIds = [
+                traversal.fromNodeId,
+                traversal.toNodeId,
+            ];
+
+            for (const nodeId of endpointIds) {
+                const node = this.station?.node_models.find(
+                    (candidate) => candidate.id === nodeId
+                );
+
+                // "STRS" is the stored value for NodeTypes.STAIRS.
+                if (!node || !("STRS" in node.types_dict)) {
+                    continue;
+                }
+
+                labelIds.add(
+                    `${node.svg_id}_${traversal.verticalDirection}`
+                );
+            }
+        }
+
+        return labelIds;
     }
 }
 

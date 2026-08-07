@@ -23,10 +23,11 @@ export class SvgRenderer {
             });
     }
 
+    // adds a class to node svgs that essentially darkens them
     public muteNode(nodeSVG: NodeSVG): void {
         nodeSVG.Self.BaseElement.classList.add("muted");
     }
-
+    // removes the mute class from the node
     public unmuteNode(nodeSVG: NodeSVG): void {
         nodeSVG.Self.BaseElement.classList.remove("muted");
     }
