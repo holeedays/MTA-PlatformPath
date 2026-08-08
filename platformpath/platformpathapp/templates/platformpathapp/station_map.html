@@ -30,61 +30,51 @@
 
 	<main class="station-map-page">
 		<section class="station-map-stage" aria-label="Station map">
-				<div id="diagram-container">
-						<!-- SVG loads here -->
+			<div id="diagram-container">
+					<!-- SVG loads here -->
+			</div>
+
+			<header class="map-overlay map-header">
+				<h1 id="diagram-name"></h1>
+			</header>
+
+			<aside class="map-overlay level-stack" aria-label="Station levels">
+				<button id="show-all-layers" class="all-layers-button active" type="button">
+					SHOW ALL LEVELS
+				</button>
+				
+				<div class="level-rail">
+					<p class="level-boundary">TOP LEVEL ↑</p>
+					<div id="layer-options" class="layer-options"></div>
+					<p class="level-boundary">BOTTOM LEVEL ↓</p>
 				</div>
+			</aside>
 
-				<header class="map-overlay map-header">
-						<h1 id="diagram-name"></h1>
-				</header>
-
-				<aside class="map-overlay level-stack" aria-label="Station levels">
-						<button id="show-all-layers" class="all-layers-button active" type="button">
-							SHOW ALL LEVELS
-						</button>
-						
-						<div class="level-rail">
-								<p class="level-boundary">TOP LEVEL ↑</p>
-								<div id="layer-options" class="layer-options"></div>
-								<p class="level-boundary">BOTTOM LEVEL ↓</p>
-						</div>
-				</aside>
-
-				<div class="map-overlay route-form-filter-checklist__container">
-					<div class="filter-checklist" aria-label="Checklist for various filters on the nodes">
+			<div class="map-overlay route-form-filter-checklist__container">
+				<div class="filter-checklist" aria-label="Checklist of filters">
+				</div>
+				<div id="route-form" class="route-form">
+					<div class="route-field">
+						<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">START</button>
+						<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
 					</div>
-					<div id="route-form" class="route-form">
-							<div class="route-field">
-								<button class="route-field__dropdown-button route-form__button" popovertarget="start-node-dropdown">START</button>
-								<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
 
-								<!-- <label for="start-node-dropdown">START</label>
-								<select id="start-node-dropdown" required>
-										<option value="" selected disabled>Choose a start node</option>
-								</select> -->
-							</div>
-
-							<div class="route-field">
-								<button class="route-field__dropdown-button route-form__button" popovertarget="end-node-dropdown">END</button>
-								<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
-
-								<!-- <label for="end-node-dropdown">END</label>
-								<select id="end-node-dropdown" required>
-										<option value="" selected disabled>Choose an end node</option>
-								</select> -->
-							</div>
-
-							<button class="route-form__button" id="find-route" type="button">Find Route</button>
+					<div class="route-field">
+						<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">END</button>
+						<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
 					</div>
-				</div>
 
-				<div id="step-ui" class="map-overlay step-ui" style="display: none;">
-						<strong id="instruction-text">Instructions will appear here</strong>
-						<div class="step-controls">
-								<button id="btn-prev" type="button">Previous</button>
-								<button id="btn-next" type="button">Next</button>
-						</div>
+					<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
 				</div>
+			</div>
+
+			<div id="step-ui" class="map-overlay step-ui" style="display: none;">
+				<strong id="instruction-text">Instructions will appear here</strong>
+				<div class="step-controls">
+					<button id="btn-prev" type="button">Previous</button>
+					<button id="btn-next" type="button">Next</button>
+				</div>
+			</div>
 		</section>
 	</main>
 

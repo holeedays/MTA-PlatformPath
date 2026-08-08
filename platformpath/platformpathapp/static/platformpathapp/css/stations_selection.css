@@ -175,6 +175,17 @@ body {
     overflow: auto;
     border-radius: 10px;
 }
+/* custom scrollbar styling since stations__list can overflow */
+.stations__list::-webkit-scrollbar {
+    width: 20px;
+}
+.stations__list::-webkit-scrollbar-track {
+    background: #1f1f1f;
+}
+.stations__list::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;                    
+}
 
 .stations__list li {
     display: flex;
@@ -194,6 +205,9 @@ starting style fixes allows the document to understand what to do */
     }
 }
 @media(hover:hover) {
+    .stations__list::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
     .stations__list li:hover {
         transform: scale(1.02);
     }

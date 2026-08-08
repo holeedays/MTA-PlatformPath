@@ -260,8 +260,9 @@ export class FilterCheckBox {
 
     // like node option, sets the styling/visual look of element and anything extraneous involving the html part of the element
     private setStyling(): void {
-        // note: these attributes are just for legibility and semantic understanding of what the checkbox does... etc
-        this.self.setAttribute("label", "filter checkbox");
+        this.self.classList.add("filter-checklist__checkbox");
+        // NOTE: this attribute is just for legibility and semantic understanding of what the checkbox does... etc
+        this.self.setAttribute("aria-label", "Filter checkbox");
         this.labelElement.innerHTML = this.label;
         this.buttonElement.value = this.value;
 

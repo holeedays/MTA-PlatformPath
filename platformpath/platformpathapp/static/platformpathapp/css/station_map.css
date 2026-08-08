@@ -160,7 +160,7 @@ body {
 }
 
 /* =========================================================
-   Map overlays (headers, level stack, route form)
+   Map overlays (headers, level stack, route form (includes filter checklist), step ui)
    ========================================================= */
 
 /* All controls sit above the SVG and never pan with it. */
@@ -183,7 +183,7 @@ body {
     color: white;
 }
 
-/* level stack (to select layers on the station map) */
+/* ======== level stack (to select layers on the station map) ======== */
 
 .level-stack {
     display: flex;
@@ -252,37 +252,28 @@ body {
     border: 3px solid #ffffff;
 }
 
-/* routing form (generate path) + filter checklist */
+/* ======== routing form (generate path) + filter checklist ======== */
 
 .route-form-filter-checklist__container {
     display: flex;
     flex-direction: column;
-    align-items: end;
+    align-items: center;
     bottom: 5%;
-    left: 1%;
+    left: 2%;
     transform: none;
     padding: 12px;
     border: 3px solid #3f3f3f;
     border-radius: 10px;
     background: #1a1a1a;
+    gap: 20px;
+    width: 650px;
 }
 
 .route-form {
     display: flex;
     align-items: end;
+    width: 100%;
     gap: 14px;
-}
-
-.route-field {
-    display: flex;
-    flex-direction: column;
-    color: #ffffff;
-    gap: 4px;
-}
-
-.route-field label {
-    font-size: 0.75rem;
-    font-weight: 700;
 }
 
 .route-form__button {
@@ -291,6 +282,7 @@ body {
     display: flex;
     align-items: center;
     padding: 10px 5px;
+    font-size: 15px;
     font-weight: bolder;
     border: none;
     background: #1a4fd6;
@@ -298,22 +290,123 @@ body {
     cursor: pointer;
 }
 
+.route-form__find-route-button {
+    flex: 1;
+}
+
+/* dropdown portion of the route form */
+
+.route-field {
+    display: flex;
+    flex-direction: column;
+    width: 40%;
+    gap: 4px;
+}
+
+.route-field__dropdown-button {
+    width: 100%;
+}
+
 .route-field__dropdown:popover-open {
+    /* reset the automatically set popover options here*/
+    inset: auto;
+    position-area: top;
+
     display: flex;
     flex-direction: column;
     z-index: 1000;
+    max-height: 400px;
+    overflow: auto;
+    /* popovers are position:fixed hence they don't actually behave relative to parent containers as they usually do, instead we have
+    to reference the implicit position anchor's (the button [the popover target]) width */
+    width: anchor-size(width);
+    border: none;
+    border-radius: 7px;
+}
+/* custom scrollbar styling since route-field__dropdown can overflow */
+.route-field__dropdown:popover-open::-webkit-scrollbar {
+    width: 5px;
+}
+.route-field__dropdown:popover-open::-webkit-scrollbar-track {
+    background: #1f1f1f;
+}
+.route-field__dropdown:popover-open::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;                    
+}
+.route-field__dropdown:popover-open::-webkit-scrollbar-thumb:active {
+    background: #cacaca;
 }
 
-/* testing thing here */
 .route-field__dropdown-option {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #000000;
+    padding: 1px 5px;
     background-color: var(--bg-color);
+
+    transition: ease-in-out 0.25s;
 }
+.route-field__dropdown-option:active {
+    background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
+}
+@media (hover:hover) {
+    .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
+    .route-field__dropdown-option:hover {
+        background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
+    }
+}
+/* these represent the individual components making up the dropdown option */
+.route-field__dropdown-option strong {
+    font-size: 16px; 
+    font-weight: 600;
+}
+.route-field__dropdown-option span {
+    opacity: 0.8;
+    font-size: 14px;
+}
+
 .option__hidden {
     display: none;
 }
 .option__selected {
     background-color: color-mix(in srgb, var(--bg-color), #000000 40%);
 }
+
+/* ======== filter checklist ======== */
+
+.filter-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    background-color: #252525;
+    border-radius: 5px;
+    gap: 10px;
+}
+.filter-checklist__checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    gap: 5px;
+}
+.filter-checklist__checkbox span {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: bold;
+}
+.filter-checklist__checkbox button {
+    border: none;
+
+    width: 15px;
+    aspect-ratio: 1/1;
+    border-radius: 3px;
+}
+
+/* ======== step ui ======== */
 
 .step-ui {
     right: 220px;
@@ -366,68 +459,45 @@ body {
     fill: color-mix(in srgb, var(--original-fill), #000000 80%)
 }
 
-.highlighted {
-    opacity: 0.1;
-    animation: pulse 1.2s ease-in-out infinite;
+@keyframes highlightAnimation {
+    0% {fill: color-mix(in srgb, var(--original-fill), #000000 50%)}
+    100% {fill: var(--original-fill)}
+}
+@keyframes startEndHighlightAnimation {
+    0% {fill: color-mix(in srgb, var(--target-fill), #000000 50%)}
+    100% {fill: var(--target-fill)}
 }
 
+/* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
+the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
+will keep it with the standard highlight animation which applies original fill */
 .highlighted,
 .highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
-    fill: #b4ff1b;
-    stroke: #527d00;
+    animation-name: highlightAnimation;
+    animation-duration: 0.5s;
+    animation-direction: alternate;
+    animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
+    animation-iteration-count: infinite;
+}
+
+.highlighted.start-node-highlight,
+.highlighted.end-node-highlight,
+.highlighted.start-node-highlight :is(rect, circle, ellipse, polygon, polyline),
+.highlighted.end-node-highlight :is(rect, circle, ellipse, polygon, polyline)
+{
+    animation-name: startEndHighlightAnimation;
 }
 
 .start-node-highlight,
-.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    fill: #2f80ed;
-    stroke: #0f4caa;
+.start-node-highlight :is(rect, circle, ellipse, polygon, polyline) {
+    --target-fill: #9900ff;
+    fill: var(--target-fill);
 }
 
 .end-node-highlight,
-.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    fill: #eb5757;
-    stroke: #8f1d1d;
-}
-
-.start-node-highlight.end-node-highlight,
-.start-node-highlight.end-node-highlight
-    :is(path, rect, circle, ellipse, polygon, polyline) {
-    fill: #9b51e0;
-    stroke: #5a2784;
-}
-
-/* Pulse animation for the selected node before find route is pressed */
-.start-node-highlight,
-.end-node-highlight {
-    animation: selection-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes selection-pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
-}
-
-.highlighted path {
-    fill: #b4ff1b;
-}
-
-@keyframes pulse {
-    0% {
-        opacity: 0.8;
-    }
-
-    50% {
-        opacity: 0.3;
-    }
-
-    100% {
-        opacity: 0.8;
-    }
+.end-node-highlight :is(rect, circle, ellipse, polygon, polyline) {
+    --target-fill: #e5ff00;
+    fill: var(--target-fill);
 }
 
 /* =========================================================
