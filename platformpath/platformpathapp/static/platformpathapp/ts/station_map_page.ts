@@ -47,10 +47,13 @@ export class StationMapPage {
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
         this.svgRenderer.hideRouteDirectionLabels();
+        // init our layer controls (toggling the different layers of the svg)
         this.initLayerControls();
 
         console.log('Fetched station data:', this.station);
 
+        // init our filter toggle button (will be responsible for revealing all of our filter checkboxes)
+        this.initFilterChecklistToggleButton();
         // init all dropdowns with node options and the filter checkbox
         this.processNodes();
         // init our path step buttons
@@ -88,7 +91,8 @@ export class StationMapPage {
             layerOptions.appendChild(layerButton);
         }
 
-        this.svgRenderer.showAllLayers(this.station.layer_models);
+        // activate the all layers button by default
+        allLayersButton.click();
     }
 
     // Creates a button with the specified label and background color
@@ -97,9 +101,8 @@ export class StationMapPage {
         button.type = "button";
         button.classList.add("layer-option");
         button.innerText = label;
-        button.style.backgroundColor = color;
         // this is to allow access to the color in the css
-        button.style.setProperty("--color", color);
+        button.style.setProperty("--bg-color", color);
         return button;
     }
 
@@ -132,6 +135,46 @@ export class StationMapPage {
         );
 
         await this.startNavigation(fromNodeId, toNodeId);
+    }
+
+    // add event handling of the toggle button 
+    private initFilterChecklistToggleButton(): void {
+        const filterChecklistToggleButton: HTMLButtonElement | null = document.querySelector(".filter-checklist__toggle-button");
+        const filterChecklistToggleButtonGraphic: HTMLImageElement | null| undefined = filterChecklistToggleButton?.querySelector("img");
+        const filterChecklistCheckboxesContainer: HTMLDivElement | null = document.querySelector(".filter-checklist__checkboxes-container");
+
+        if (
+            filterChecklistToggleButton === null || 
+            // technically don't need both lines just null check but typescript won't allow just a singular check
+            filterChecklistToggleButtonGraphic === null || 
+            filterChecklistToggleButtonGraphic === undefined || 
+            filterChecklistCheckboxesContainer === null
+        ) {
+            console.warn(
+                "Filter checklist toggle button doesn't exist and/or it's image graphic doesn't exist", 
+                "and/or the filter checklist checkboxes container does not exist",
+                `Filter Checklist Toggle Button Status: ${filterChecklistToggleButton}`,
+                `Toggle Button Image Graphic Status: ${filterChecklistToggleButtonGraphic}`,
+                `Filter Checklist Checkboxes Container Status: ${filterChecklistCheckboxesContainer}`
+            );
+            return;
+        }
+
+        let pressed: boolean = false;
+
+        // toggle event handling of toggle button here (it's all styling for the other elements)
+        filterChecklistToggleButton.addEventListener("click", () => {
+            if (!pressed) {
+                filterChecklistToggleButtonGraphic.classList.add("graphic__reversed");
+                filterChecklistCheckboxesContainer.classList.remove("container__hidden");
+            }
+            else {
+                filterChecklistToggleButtonGraphic.classList.remove("graphic__reversed");
+                filterChecklistCheckboxesContainer.classList.add("container__hidden");
+            }
+
+            pressed = !pressed;
+        });
     }
 
     // init the logic for the path step buttons
@@ -318,15 +361,15 @@ export class StationMapPage {
         // retrieve our dropdown elements
         const startNodeDropdown: HTMLDivElement | null = document.getElementById("start-node-dropdown") as HTMLDivElement;
         const endNodeDropdown: HTMLDivElement | null = document.getElementById("end-node-dropdown") as HTMLDivElement;
-        // retrieve our filter checklist
-        const filterCheckList: HTMLDivElement | null = document.querySelector(".filter-checklist") as HTMLDivElement;
+        // retrieve our filter check boxes container (the part of the checklist that holds the filters)
+        const filterCheckboxesContainer: HTMLDivElement | null = document.querySelector(".filter-checklist__checkboxes-container") as HTMLDivElement;
 
-        if (startNodeDropdown === null || endNodeDropdown === null || filterCheckList === null) {
+        if (startNodeDropdown === null || endNodeDropdown === null || filterCheckboxesContainer === null) {
             console.warn(
-                "Start/End node dropdowns (either one or both) don't exist or filter checklist doesn't exist",
+                "Start/End node dropdowns (either one or both) don't exist or filter checklist's checkboxes container doesn't exist",
                 `Start Node Dropdown Status: ${startNodeDropdown}`,
                 `End Node Dropdown Status: ${endNodeDropdown}`,
-                `Filter Checklist Status: ${filterCheckList}`
+                `Filter Checklist Checkboxes Container Status: ${filterCheckboxesContainer}`
             );
             return;
         }
@@ -373,7 +416,7 @@ export class StationMapPage {
         });
 
         // also init our checkboxes
-        this.initFilterCheckboxes(filterCheckList, nodeTypesHashMap, nodeOptions);
+        this.initFilterCheckboxes(filterCheckboxesContainer, nodeTypesHashMap, nodeOptions);
     }
 
     // adds new option based on the given node data to the given dropdown and returns it
@@ -421,7 +464,7 @@ export class StationMapPage {
 
     // create all various filter checkboxes (for the filtering of our options)
     private initFilterCheckboxes (
-        filterChecklist: HTMLDivElement, 
+        filterCheckboxesContainer: HTMLDivElement, 
         nodeTypesHashMap: Map<string, string>, 
         nodeOptions: NodeOption[]
     ): void {
@@ -439,11 +482,11 @@ export class StationMapPage {
         // create a set to hold all active filters we have
         const activeFilters: Set<string> = new Set();
         // create a filter checkbox that reveals all options
-        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterChecklist, nodeOptions, activeFilters);
+        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterCheckboxesContainer, nodeOptions, activeFilters);
 
         // create individual filter checkboxes for the various other node types
         this.createOtherFilterCheckboxes(
-            filterChecklist,
+            filterCheckboxesContainer,
             allOptionFilterCheckbox,
             nodeTypesAlphabetized,
             nodeOptions,
@@ -469,7 +512,7 @@ export class StationMapPage {
 
     // create all the other checkboxes (for the different node types)
     private createOtherFilterCheckboxes(
-        filterChecklist: HTMLDivElement,
+        filterCheckboxesContainer: HTMLDivElement,
         allOptionFilterCheckbox: FilterCheckBox,
         nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [],
         nodeOptions: NodeOption[],
@@ -478,7 +521,7 @@ export class StationMapPage {
         // iterate through our alphabetized node types
         nodeTypesAlphabetized.forEach((type: {value: string, readableLabel: string}) => {
             // create a filter checkbox 
-            const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterChecklist);
+            const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterCheckboxesContainer);
             // initiate the logic for it
             filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, activeFilters);
         });

@@ -177,8 +177,8 @@ export class FilterCheckBox {
             // clear our active filters list
             activeFilters.clear();
             // clear all the styling for the other checkboxes
-            document.querySelectorAll(".filter-checkbox__enabled").forEach((filterCheckbox: Element) => {
-                filterCheckbox.classList.remove("filter-checkbox__enabled");
+            document.querySelectorAll(".checkbox__enabled").forEach((filterCheckbox: Element) => {
+                filterCheckbox.classList.remove("checkbox__enabled");
             });
 
             // iterate thru the node options and remove the hidden class if it exists
@@ -187,7 +187,7 @@ export class FilterCheckBox {
             });
                 
             // also indicate this filter check box has been clicked
-            this.self.classList.add("filter-checkbox__enabled");
+            this.self.classList.add("checkbox__enabled");
         });
     }
 
@@ -209,9 +209,9 @@ export class FilterCheckBox {
                 activeFilters.add(this.value);
 
                 // add the enabled styling to this checkbox
-                this.self.classList.add("filter-checkbox__enabled");
+                this.self.classList.add("checkbox__enabled");
                 // and remove the styling on all option filter since it should be disabled if any other filter is enabled
-                allOptionFilterCheckbox.Self.classList.remove("filter-checkbox__enabled");
+                allOptionFilterCheckbox.Self.classList.remove("checkbox__enabled");
             }
             // in the case this filter is disabled
             else {
@@ -219,7 +219,7 @@ export class FilterCheckBox {
                 activeFilters.delete(this.value);
 
                 // remove its class attribute
-                this.self.classList.remove("filter-checkbox__enabled");
+                this.self.classList.remove("checkbox__enabled");
             }
 
             // now check if any other active filters are enabled

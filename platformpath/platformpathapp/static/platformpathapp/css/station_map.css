@@ -211,21 +211,32 @@ body {
 .all-layers-button,
 .layer-option {
     /* This is altered in the station_map.ts files for the other layer buttons (not all layers button) */
-    --color: #ff4a4a;
+    --bg-color: #ff4a4a;
 
     width: 100%;
     min-height: 38px;
     padding: 8px 10px;
     border-radius: 10px;
     border: none;
-    background: var(--color);
+    background: var(--bg-color);
     color: #000000;
     cursor: pointer;
     font-size: 12px;
     font-weight: bolder;
     text-align: center;
 
-    transition: 0.25s ease-in-out;
+    transition: all 0.25s ease-in-out;
+}
+.all-layers-button:active,
+.layer-option:active {
+    transform: scale(1.02);
+}
+@media (hover:hover) {
+    .all-layers-button:hover,
+    .layer-option:hover {
+        background: color-mix(in srgb, var(--bg-color), #000000 20%);
+        transform: scale(1.02);
+    }   
 }
 
 .layer-options {
@@ -248,7 +259,7 @@ body {
 .all-layers-button.active,
 .layer-option.active {
     transform: scale(1.05);
-    background-color: color-mix(in srgb, var(--color), #ffffff 20%);
+    background-color: color-mix(in srgb, var(--bg-color), #ffffff 20%);
     border: 3px solid #ffffff;
 }
 
@@ -265,7 +276,7 @@ body {
     border: 3px solid #3f3f3f;
     border-radius: 10px;
     background: #1a1a1a;
-    gap: 20px;
+    gap: 15px;
     width: 650px;
 }
 
@@ -277,21 +288,35 @@ body {
 }
 
 .route-form__button {
+    --bg-color: #5f5d5d;
+
     height: 30px;
     border-radius: 5px;
     display: flex;
     align-items: center;
     padding: 10px 5px;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: bolder;
     border: none;
-    background: #1a4fd6;
+    background: #5f5d5d;
     color: #ffffff;
     cursor: pointer;
+
+    transition: all .25s ease-in-out;
+}
+.route-form__button:active {
+    background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+}
+@media (hover:hover) {
+    .route-form__button:hover {
+        background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+    }
 }
 
 .route-form__find-route-button {
+    display: flex;
     flex: 1;
+    justify-content: center;
 }
 
 /* dropdown portion of the route form */
@@ -299,7 +324,7 @@ body {
 .route-field {
     display: flex;
     flex-direction: column;
-    width: 40%;
+    width: 39%;
     gap: 4px;
 }
 
@@ -337,6 +362,11 @@ body {
 .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:active {
     background: #cacaca;
 }
+@media (hover:hover) {
+    .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
+}
 
 .route-field__dropdown-option {
     display: flex;
@@ -344,16 +374,14 @@ body {
     border: 1px solid #000000;
     padding: 1px 5px;
     background-color: var(--bg-color);
+    cursor: pointer;
 
-    transition: ease-in-out 0.25s;
+    transition: all ease-in-out 0.25s;
 }
 .route-field__dropdown-option:active {
     background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
 }
 @media (hover:hover) {
-    .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:hover {
-        background: #cacaca;
-    }
     .route-field__dropdown-option:hover {
         background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
     }
@@ -379,17 +407,57 @@ body {
 
 .filter-checklist {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
     width: 100%;
-    background-color: #252525;
     border-radius: 5px;
     gap: 10px;
 }
+
+.filter-checklist__checkboxes-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    background: #252525;
+    padding: 5px 0;
+    border-radius: 5px;
+    gap: 10px;
+
+    /* settings to set to allow for proper animation transitions */
+    overflow: hidden; /* forces height/width changes onto the children, making them accomodate the changes in dimensions */
+    transform-origin: bottom center; /* transforms stuff occurs at the bottom center anchor point now instead of the center */
+    clip-path: inset(0 0 0 0); /* this is the magic here... creates an invisible mask relative to the entire container allowing
+                                us to have cool pull out effect; put it the same time as the other transitions for a smooth pull out */
+
+    transition: 
+        transform .25s ease-in-out,
+        padding .25s ease-in-out,
+        clip-path 0.3s ease-in-out,
+        display 0.25s ease-in-out allow-discrete;
+}
+.filter-checklist__checkboxes-container.container__hidden {
+    padding: 0px;
+    display: none;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(100%);
+}
+/* like station selection, we copy and paste all animatable stylings when we have .container__hidden allowing us to properly 
+have an animation from display: none -> display: something else (e.g. the backward animation) */
+@starting-style {
+    .filter-checklist__checkboxes-container {
+        padding: 0px;
+        transform: translateY(100%);
+        clip-path: inset(0 0 100% 0);
+    }
+}
+
 .filter-checklist__checkbox {
     display: flex;
     flex-direction: column;
     align-items: center;
+    background: #333333;
+    border-radius: 5px;
     padding: 4px;
     gap: 5px;
 }
@@ -400,10 +468,64 @@ body {
 }
 .filter-checklist__checkbox button {
     border: none;
+    background: #f0f0f0;
 
     width: 15px;
     aspect-ratio: 1/1;
-    border-radius: 3px;
+    border-radius: 50%;
+    cursor: pointer;
+
+    transition: all 0.1s ease-in-out;
+}
+.filter-checklist__checkbox button:active {
+        transform: scale(0.9);
+        background: #e7e09c;
+}
+@media (hover:hover) {
+    .filter-checklist__checkbox button:hover {
+        transform: scale(0.9);
+        background: #e7e09c;
+    }
+}
+/* .checkbox__enabled is in the same class list (thereby dom element) as filter-checklist__checkbox */
+.checkbox__enabled button{
+    background: #20d62f;
+}
+
+.filter-checklist__toggle-button {
+    --bg-color: #3b3b3b;
+
+    border: none;
+    border-radius: 1000px;
+
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    background: var(--bg-color);
+    padding: 5px 25px;
+    gap: 15px;
+    cursor: pointer;
+
+    transition: all 0.25s ease-in-out;
+}
+.filter-checklist__toggle-button:active {
+    background: color-mix(in srgb, var(--bg-color), #ffffff 10%);
+}
+@media (hover:hover) {
+    .filter-checklist__toggle-button:hover {
+        background: color-mix(in srgb, var(--bg-color), #ffffff 10%);
+    }
+}
+.filter-checklist__toggle-button img {
+    height: 23px;
+    width: auto;
+
+    transition: all .5s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+img.graphic__reversed {
+    transform: rotate(180deg);
 }
 
 /* ======== step ui ======== */

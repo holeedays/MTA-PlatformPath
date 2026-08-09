@@ -194,11 +194,11 @@ body {
 
     transition: 
         display ease 0.25s allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
-        opacity 0.2s ease-in-out,
-        all 0.25s;
+        opacity 0.2s ease-in-out;
 }
-/* allow-discrete only works for exiting animations, not entry (because display: none means there is nothing)
-starting style fixes allows the document to understand what to do */
+/* this is the sauce for allow-discrete to work properly... 
+it basically tells the animation what to do when display: none -> display: whatever */
+/* you can think of it as copying what you add to it when you set the item to display:none (this accounts for the backward animation) */
 @starting-style {
     .stations__list li {
         opacity: 0;
