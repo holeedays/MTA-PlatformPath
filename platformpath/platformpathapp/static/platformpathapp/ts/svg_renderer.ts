@@ -1,14 +1,14 @@
 // Contains all functions related to rendering the svg diagrams
 
 import { type LayerData } from "./station_data.ts"
-import { NodeSVG, SVGComponentElement } from "./station_custom_elements.ts"
-
-declare const panzoom: any;
+import { NodeSVG } from "./station_custom_elements.ts"
+// import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
 
 export class SvgRenderer {
-    private currentPanZoom: any = null;
+    // @ts-ignore
+    private currentPanZoom: PanZoom | null = null;
 
     constructor() {}
 
@@ -45,7 +45,7 @@ export class SvgRenderer {
     }
 
     // Seperate highlight function to highlight the start and the end of the selected path
-    public highlightSelectedNode(nodeId: string, role: SelectionRole): void {
+    public highlightSelectedNode(nodeSVGID: string, role: SelectionRole): void {
         const highlightClass = role === "start" ? "start-node-highlight" : "end-node-highlight";
 
         // remove selection class from previous nodes
@@ -53,9 +53,9 @@ export class SvgRenderer {
             element.classList.remove(highlightClass);   
         })
         
-        const node = document.getElementById(nodeId);
+        const node: HTMLElement | null = document.getElementById(nodeSVGID);
         if (!node) {
-            console.warn("Node not found:", nodeId);
+            console.warn("Node not found:", nodeSVGID);
             return;
         }
         
@@ -124,7 +124,8 @@ export class SvgRenderer {
         }
 
         // Apply panzoom to the new SVG
-        this.currentPanZoom = panzoom(svg, {
+        // @ts-ignore
+        this.currentPanZoom = panzoom(svg, { 
             maxZoom: 8,
             minZoom: 0.3,
             smoothScroll: false
@@ -165,8 +166,8 @@ export class SvgRenderer {
             const containerCenterY = containerRect.height / 2;
 
             // Apply the pan and zoom with the calculations above to center the screen on the target node
-            this.currentPanZoom.zoomAbs(0, 0, zoom);
-            this.currentPanZoom.moveTo(
+            this.currentPanZoom?.zoomAbs(0, 0, zoom);
+            this.currentPanZoom?.moveTo(
                 containerCenterX - targetCenterX * zoom,
                 containerCenterY - targetCenterY * zoom
             );

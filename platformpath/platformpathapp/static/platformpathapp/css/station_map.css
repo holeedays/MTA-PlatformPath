@@ -147,8 +147,8 @@ body {
 }
 
 #diagram-container svg {
-    width: 1200px;
-    height: auto;
+    width: 100%;
+    height: 100%;
     max-width: none;
     max-height: none;
     display: block;
@@ -428,12 +428,13 @@ body {
     overflow: hidden; /* forces height/width changes onto the children, making them accomodate the changes in dimensions */
     transform-origin: bottom center; /* transforms stuff occurs at the bottom center anchor point now instead of the center */
     clip-path: inset(0 0 0 0); /* this is the magic here... creates an invisible mask relative to the entire container allowing
-                                us to have cool pull out effect; put it the same time as the other transitions for a smooth pull out */
+                                us to have cool pull out effect when used with transform: translate; 
+                                put the transition to be the same time as transform: translate for a smooth pull out */
 
     transition: 
         transform .25s ease-in-out,
         padding .25s ease-in-out,
-        clip-path 0.3s ease-in-out,
+        clip-path 0.25s ease-in-out,
         display 0.25s ease-in-out allow-discrete;
 }
 .filter-checklist__checkboxes-container.container__hidden {

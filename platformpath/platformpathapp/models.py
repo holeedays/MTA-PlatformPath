@@ -21,6 +21,9 @@ class Station(models.Model):
     name = models.CharField(max_length=200)
     slug_name = models.CharField(max_length=200, null=True, blank=True)
     diagram_path = models.CharField(max_length=100)
+    # alt to diagram path, has some modifications to the diagram to account
+    # for a 90 degree rotation of the original diagram... it does not necessarily need to exist just yet
+    diagram_rotated_path = models.CharField(max_length=100, null=True, blank=True)
     lines = models.ManyToManyField(
         to=Line, 
         blank=True,

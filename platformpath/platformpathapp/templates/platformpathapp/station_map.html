@@ -38,7 +38,7 @@
 				<h1 id="diagram-name"></h1>
 			</header>
 
-			<aside class="map-overlay level-stack" aria-label="Station levels">
+			<aside class="map-overlay level-stack" aria-label="Map view toggles">
 				<button id="show-all-layers" class="all-layers-button active" type="button">
 					SHOW ALL LEVELS
 				</button>
@@ -51,14 +51,14 @@
 			</aside>
 
 			<div class="map-overlay route-form-filter-checklist__container">
-				<div class="filter-checklist" aria-label="Checklist of filters">
+				<div class="filter-checklist" aria-label="Filters toggle">
 					<div class="filter-checklist__checkboxes-container container__hidden"></div>
 					<button class="filter-checklist__toggle-button">
 						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Toggle button icon">
 						SELECT FILTERS
 					</button>
 				</div>
-				<div id="route-form" class="route-form">
+				<div id="route-form" class="route-form" aria-label="Nodes selection">
 					<div class="route-field">
 						<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">START</button>
 						<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
@@ -73,13 +73,17 @@
 				</div>
 			</div>
 
-			<div id="step-ui" class="map-overlay step-ui" style="display: none;">
+			<div id="step-ui" class="map-overlay step-ui" style="display: none;" aria-label="Steps Instructions/Buttons">
 				<strong id="instruction-text">Instructions will appear here</strong>
 				<div class="step-controls">
 					<button id="btn-prev" type="button">Previous</button>
 					<button id="btn-next" type="button">Next</button>
 				</div>
 			</div>
+
+			<button class="map-overlay map__rotate-button">
+				<img src="" alt="Rotate map button">
+			</button>
 		</section>
 	</main>
 

@@ -26,8 +26,16 @@ export interface EdgeData {
     is_active: boolean;
 }
 
+export interface StationData {
+    name: string,
+    id: number,
+    diagram_path: string,
+    diagram_rotated_path: string | null, // diagram rotated path can be null (since in the db it is nullable for now)
+    lines: string[]
+}
+
 export interface StationResponse {
-    station_model: { name: string; id: number; diagram_path: string; lines: string[]; };
+    station_model: StationData;
     edge_models: EdgeData[];
     node_models: NodeData[];
     layer_models: LayerData[];

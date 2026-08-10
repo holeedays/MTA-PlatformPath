@@ -10,7 +10,8 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="Bay 50 St",
-            diagram_path="/static/platformpathapp/diagrams/Bay50.svg"
+            diagram_path="/static/platformpathapp/diagrams/Bay50_v3.svg",
+            diagram_rotated_path="/static/platformpathapp/diagrams/Bay50_v3_rotated.svg"
         )
 
         # 2. Create line and attach to station

@@ -10,11 +10,13 @@ export class StationMapPage {
     private currentPath: PathStep[] | null = null;
     private currentPathNodeIDs: Set<string> = new Set();
     private nodeSVGs: NodeSVG[] = [];
+    private selectedNodeOptions: {
+        startNode: NodeOption | null, 
+        endNode: NodeOption | null
+    } = {startNode: null, endNode: null};
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
-
-    private navigationActive: boolean = false;
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -54,10 +56,12 @@ export class StationMapPage {
 
         // init our filter toggle button (will be responsible for revealing all of our filter checkboxes)
         this.initFilterChecklistToggleButton();
-        // init all dropdowns with node options and the filter checkbox
-        this.processNodes();
+        // init all dropdowns with node options and the filter checkbox (e.g. anything involving node data)
+        this.initNodes();
         // init our path step buttons
         this.initPathStepButtons();
+        // init our map rotate button
+        this.initMapRotateButton();
     
         // Set up event listeners for form submission and navigation buttons
         document.getElementById("find-route")
@@ -125,16 +129,17 @@ export class StationMapPage {
         }
     }
     
-    // Reads from the form and delegates to startNavigation
+    // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
     private async handleFormSubmit(): Promise<void> {
-        const fromNodeId: number = parseInt(
-            (document.getElementById('start-node-dropdown') as HTMLDivElement).getAttribute("data-value") ?? ""
-        );
-        const toNodeId: number = parseInt(
-            (document.getElementById('end-node-dropdown') as HTMLDivElement).getAttribute("data-value") ?? ""
-        );
+        const startNodeID: number | undefined = this.selectedNodeOptions.startNode?.ID;
+        const endNodeID: number | undefined = this.selectedNodeOptions.endNode?.ID;
 
-        await this.startNavigation(fromNodeId, toNodeId);
+        if (startNodeID === undefined || endNodeID === undefined) {
+            console.warn("Invalid start and/or end node ID");
+            return;
+        }
+
+        await this.startNavigation(startNodeID, endNodeID);
     }
 
     // add event handling of the toggle button 
@@ -180,8 +185,8 @@ export class StationMapPage {
     // init the logic for the path step buttons
     private initPathStepButtons(): void {
         const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
-        const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
-        const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
+        const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev");    
+        const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next");
 
         if (
             instructionText === null ||
@@ -201,6 +206,65 @@ export class StationMapPage {
         btnNext.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext))
     }
 
+    // adds event handling of the map rotate button as well as the diagram container (since the map rotate button works in tandem with
+    // switching the svg)
+    private initMapRotateButton(): void {
+        const mapRotateButton: HTMLButtonElement | null = document.querySelector(".map__rotate-button");
+        const diagramContainer: HTMLDivElement | null = document.querySelector("#diagram-container");
+
+        if (mapRotateButton === null || diagramContainer === null) {
+            console.warn(
+                "The map rotate button and/or the diagram container doesn't exist",
+                `Map Rotate Button Status: ${mapRotateButton}`,
+                `Diagram Container Status: ${diagramContainer}`
+            );
+            return;
+        }
+
+        let pressed: boolean = false;
+
+        const diagramPath: string | null | undefined = this.station?.station_model.diagram_path;
+        const diagramRotatedPath: string | null | undefined = this.station?.station_model.diagram_rotated_path;
+        
+        mapRotateButton.addEventListener("click", async () => { 
+            // add a TEMPORARY class that functions as a brief animatic for the button (to provide a little more juice to interactivity)
+            mapRotateButton.classList.add("animating");
+            diagramContainer.classList.add("swapping");
+
+            // if the button hasn't been toggled before and the diagram rotated path exists 
+            if (
+                !pressed && 
+                diagramRotatedPath !== null &&
+                diagramRotatedPath !== undefined
+            ) {
+                await this.svgRenderer.loadDiagramWithControls(diagramRotatedPath);
+            }
+            else if (
+                diagramPath !== null &&
+                diagramPath !== undefined
+            ) {
+                await this.svgRenderer.loadDiagramWithControls(diagramPath);
+            }
+
+            this.reinitMap();
+
+            pressed = !pressed;
+        });
+
+        // since the classes are temporary, we want to remove the class for both the button and container 
+        mapRotateButton.addEventListener("transitionend", (ev: TransitionEvent) => {
+            if (ev.propertyName === "transform") {
+                mapRotateButton.classList.remove("animating");
+            }
+        });
+
+        diagramContainer.addEventListener("transitionend",(ev: TransitionEvent) => {
+            if (ev.propertyName === "opacity") {
+                mapRotateButton.classList.remove("swapping");
+            }
+        }); 
+    } 
+
     // Uses the PathFinder to get a path and initializes the UI for navigation
     public async startNavigation(
         fromNodeId: number,
@@ -219,17 +283,17 @@ export class StationMapPage {
             toNodeId,
             accessibleOnly
         );
-        // clear out the previous values from our set
-        this.currentPathNodeIDs.clear();
-        // add the new values
-        this.currentPath?.forEach((step: PathStep) => {
-            this.currentPathNodeIDs.add(step.svgId);
-        });
-
         // reset our current index for our path so we start at the first step
         this.currentIndex = 0;
         // Show the step UI and render the first step
         if (this.currentPath && this.currentPath.length > 0) {
+            // clear out the previous values from our set
+            this.currentPathNodeIDs.clear();
+            // add the new values
+            this.currentPath.forEach((step: PathStep) => {
+                this.currentPathNodeIDs.add(step.svgId);
+            });
+
             // render the entire path
             this.renderPath();
 
@@ -259,9 +323,10 @@ export class StationMapPage {
                 );
                 return;
             }
-            stepUI.style.display = 'block';
-            this.navigationActive = true;
 
+            // make the stepui visible now
+            stepUI.style.display = 'block';
+            // render the current style
             this.renderCurrentStep(instructionText, btnPrev, btnNext);
         } else {
             console.warn('No path found');
@@ -278,14 +343,16 @@ export class StationMapPage {
             return;
         }
 
+        // clear the current path
+        this.currentPath = null;
+        // clear all path node ids 
+        this.currentPathNodeIDs.clear();
         // derender the existing path
         this.derenderPath();
         // hide route direction labels
         this.svgRenderer.hideRouteDirectionLabels();
         // remove the step ui from view
         stepUI.style.display = 'none';
-        // clear all path node ids 
-        this.currentPathNodeIDs.clear();
         // click the all layers button to reveal all layers again
         allLayersButton?.click();
     }
@@ -352,15 +419,15 @@ export class StationMapPage {
 
     // umbrella function to process all elements on the page involving the node data (e.g. route form + filter checkbox + node options logic)
     // as well as the node data itself
-    private processNodes(): void {
+    private initNodes(): void {
         if (this.station === null) {
             console.warn("The station response object has nothing in it");
             return;
         }
 
         // retrieve our dropdown elements
-        const startNodeDropdown: HTMLDivElement | null = document.getElementById("start-node-dropdown") as HTMLDivElement;
-        const endNodeDropdown: HTMLDivElement | null = document.getElementById("end-node-dropdown") as HTMLDivElement;
+        const startNodeDropdown: HTMLDivElement | null = document.querySelector("#start-node-dropdown");
+        const endNodeDropdown: HTMLDivElement | null = document.querySelector("#end-node-dropdown");
         // retrieve our filter check boxes container (the part of the checklist that holds the filters)
         const filterCheckboxesContainer: HTMLDivElement | null = document.querySelector(".filter-checklist__checkboxes-container") as HTMLDivElement;
 
@@ -406,13 +473,10 @@ export class StationMapPage {
             // add them to our node options array
             nodeOptions.push(startNodeOption, endNodeOption);
 
-            // also collect all our node svg ids and store them
-            const nodeSVGElement: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
-            if (nodeSVGElement === null) {
-                console.warn(`There is no nodeSVG group for the node with id ${node.svg_id}`);
-                return;
-            }
-            this.nodeSVGs.push(new NodeSVG(nodeSVGElement));
+            // also collect all our node svg ids and store them in our nodeSVG array
+            const nodeSVG: NodeSVG | null = this.initNodeSVG(node);
+            if (nodeSVG !== null)
+                this.nodeSVGs.push(nodeSVG);
         });
 
         // also init our checkboxes
@@ -438,7 +502,7 @@ export class StationMapPage {
         const nodeOption: NodeOption = new NodeOption(
             dropdown,
             node.label, 
-            node.id.toString(), 
+            node.id,
             node.svg_id,
             layer,
             filters
@@ -446,16 +510,26 @@ export class StationMapPage {
         // add additional event listener logic 
         nodeOption.Self.addEventListener("click", () => {
             // determine what this dropdown this selected node option belongs to
-            const selectionRole: SelectionRole = nodeOption.Parent.id === "start-node-dropdown"? "start": "end";
+            let selectionRole: SelectionRole | null = null;
+            if (nodeOption.Parent.id === "start-node-dropdown") {
+                selectionRole = "start";
+                // also store the nodeOption in our selectedNodeOptions (which is crucial for handling path finding) 
+                this.selectedNodeOptions.startNode = nodeOption;
+            }
+            else {
+                console.log("Bye");
+                selectionRole = "end";
+                this.selectedNodeOptions.endNode = nodeOption;
+            }
             // highlight the selected node (either start or end)
             this.svgRenderer.highlightSelectedNode(nodeOption.SVGID, selectionRole);
             // unhighlight other nodes
             this.svgRenderer.unhighlightNodes();
 
             // toggle off any navigation if it exists
-            if (this.navigationActive) {
+            if (this.currentPath !== null) {
                 this.endNavigation();
-                this.navigationActive = false;
+                this.currentPath = null;
             }
         });
 
@@ -523,8 +597,69 @@ export class StationMapPage {
             // create a filter checkbox 
             const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterCheckboxesContainer);
             // initiate the logic for it
-            filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, activeFilters);
+            filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, this.selectedNodeOptions, activeFilters);
         });
+    }
+
+    // (in the case that a new diagram is loaded in) reset the necessary items for the map and navigation to work properly
+    private reinitMap(): void {
+        if (this.station === null) {
+            console.warn("The station response object has nothing in it");
+            return;
+        }
+
+        // clear the array of current nodeSVGs (since the diagram container is being completely reloaded)
+        this.nodeSVGs = [];
+        // reinit our nodeSVGs
+        this.station.node_models.forEach((node: NodeData) => {
+            const nodeSVG: NodeSVG | null = this.initNodeSVG(node);
+            if (nodeSVG !== null)
+                this.nodeSVGs.push(nodeSVG);
+        });
+
+        // highlight the start and end nodes again (if selected)
+        if (this.selectedNodeOptions.startNode !== null)
+            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.startNode.SVGID, "start");
+        if (this.selectedNodeOptions.endNode !== null)
+            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.endNode.SVGID, "end");
+
+        // if navigation is already in progress
+        if (this.currentPath !== null) {
+            // hide the route direction labels
+            this.svgRenderer.hideRouteDirectionLabels();
+            // and get back all the direction label ids to display the proper ones
+            const labelIDs: Set<string> = this.getRouteDirectionLabelIds(this.currentPath);
+            this.svgRenderer.showRouteDirectionLabels(labelIDs);
+            // render the path again (currentNodeIDs + currentPath should have all the needed information to continue the 
+            // navigation from where we left off)
+            this.renderPath();
+            // render the current step
+            const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
+            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
+            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
+
+            if (instructionText === null || btnPrev === null || btnNext === null) {
+                console.warn(
+                    "Instructions text block, previous step button, and/or next step button doesn't exist",
+                    `Instructions Text Status: ${instructionText}`,
+                    `Previous Button Status: ${btnPrev}`,
+                    `Next Button Status: ${btnNext}`
+            );
+                return;
+            }
+
+            this.renderCurrentStep(instructionText, btnPrev, btnNext);
+        }
+    }
+
+    // creates a new nodeSVG item given a nodeData obj
+    private initNodeSVG(node: NodeData): NodeSVG | null {
+        const nodeSVGElement: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
+            if (nodeSVGElement === null) {
+                console.warn(`There is no nodeSVG group for the node with id ${node.svg_id}`);
+                return null;
+            }
+        return new NodeSVG(nodeSVGElement);
     }
 
     // Helper function to get the svgId of the correct label for the stairs

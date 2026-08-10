@@ -5,7 +5,7 @@ import { type SelectionRole } from "./svg_renderer.ts";
 // a node option class used to house various proprties pertaining to an option for the node dropdown
 export class NodeOption {
     private label: string;
-    private id: string;
+    private id: number;
     private svgID: string;
     private layer: LayerData; 
     // NOTE: filters is in the structure {value: readableLabel}
@@ -17,7 +17,7 @@ export class NodeOption {
     constructor(
         parent: HTMLDivElement,
         label: string,
-        id: string,
+        id: number,
         svgID: string,
         layer: LayerData,
         filters: Map<string,string>
@@ -42,11 +42,11 @@ export class NodeOption {
     get Label(): string {
         return this.label;
     }
-    get ID(): string {
-        return this.id;
-    }
     get SVGID(): string {
         return this.svgID;
+    }
+    get ID(): number {
+        return this.id;
     }
     get Layer(): LayerData {
         return this.layer;
@@ -71,7 +71,6 @@ export class NodeOption {
                 // and then apply class changes
                 previouslySelectedOption?.classList.remove("option__selected");
                 this.self.classList.add("option__selected");
-                this.parent.setAttribute("data-value", this.id);
             }
             // hide dropdown afterwards
             this.parent.hidePopover();
@@ -99,6 +98,7 @@ export class NodeOption {
             descriptionFilters += readableLabel;
             count++;
         });
+        // attaches some legible metadata on the client end to view
         this.self.setAttribute("data-filters", dataFilters);
 
         // we will split the label and filter descriptions as separate parts of the option (for more flexible styling later on)
@@ -196,7 +196,8 @@ export class FilterCheckBox {
     public initSpecificFilterLogic(
         allOptionFilterCheckbox: FilterCheckBox, 
         nodeOptions: NodeOption[],
-        activeFilters: Set<string>,
+        selectedNodeOptions: {startNode: NodeOption | null, endNode: NodeOption | null},
+        activeFilters: Set<string>
     ): void {
         if (this.logicWasInitializedPreviously())
             return;
@@ -245,9 +246,11 @@ export class FilterCheckBox {
                     // also remove the option__selected class if it is to be hidden
                     nodeOption.Self.classList.remove("option__selected");
 
-                    // also remove it from the parent's data-value if it is to be hidden and is the currently selected value
-                    if (nodeOption.ID === nodeOption.Parent.getAttribute("data-value"))
-                        nodeOption.Parent.setAttribute("data-value", "");
+                    // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
+                    if (selectedNodeOptions.startNode !== null && nodeOption.SVGID === selectedNodeOptions.startNode.SVGID) 
+                        selectedNodeOptions.startNode = null;
+                    if (selectedNodeOptions.endNode !== null && nodeOption.SVGID === selectedNodeOptions.endNode.SVGID) 
+                        selectedNodeOptions.endNode = null;
                 }
                 // else remove the hidden class if it exists
                 else {
