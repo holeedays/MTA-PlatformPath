@@ -30,7 +30,9 @@
 
 	<main class="station-map-page">
 		<section class="station-map-stage" aria-label="Station map">
-			<div id="diagram-container">
+
+			<!-- ================= STATION DIAGRAM CONTAINER ================= -->
+			<div class="diagram-container" id="diagram-container">
 					<!-- SVG loads here -->
 			</div>
 
@@ -38,6 +40,7 @@
 				<h1 id="diagram-name"></h1>
 			</header>
 
+			<!-- ================= LAYERS/LEVELS VIEW TOGGLE ================= -->
 			<aside class="map-overlay level-stack" aria-label="Map view toggles">
 				<button id="show-all-layers" class="all-layers-button active" type="button">
 					SHOW ALL LEVELS
@@ -50,6 +53,7 @@
 				</div>
 			</aside>
 
+			<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST ================= -->
 			<div class="map-overlay route-form-filter-checklist__container">
 				<div class="filter-checklist" aria-label="Filters toggle">
 					<div class="filter-checklist__checkboxes-container container__hidden"></div>
@@ -73,6 +77,7 @@
 				</div>
 			</div>
 
+			<!-- ================= STEP UI BLOCK ================= -->
 			<div id="step-ui" class="map-overlay step-ui" style="display: none;" aria-label="Steps Instructions/Buttons">
 				<strong id="instruction-text">Instructions will appear here</strong>
 				<div class="step-controls">
@@ -81,8 +86,18 @@
 				</div>
 			</div>
 
+			<!-- ================= MAP ROTATE BUTTON ================= -->
 			<button class="map-overlay map__rotate-button">
-				<img src="" alt="Rotate map button">
+				<img 
+					class="rotate-button__animated-parts-img" 
+					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
+					alt="Rotate map button animated parts"
+				>
+				<img 
+					class="rotate-button__base-img" 
+					src="{% static 'platformpathapp/decals/map_rotate_button_base.svg' %}" 
+					alt="Rotate map button base"
+				>
 			</button>
 		</section>
 	</main>

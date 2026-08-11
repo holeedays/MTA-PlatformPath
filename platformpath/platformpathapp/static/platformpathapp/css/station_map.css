@@ -30,7 +30,6 @@ body {
     width: 100%;
     padding: 0;
     margin: 0;
-    background: #3d3d3d;
 }
 
 .station-map-stage {
@@ -39,7 +38,7 @@ body {
     min-height: unset;
     margin: 0;
     overflow: hidden;
-    background: #ffffff;
+    background: #171717;
     border: none;
     box-sizing: border-box;
 }
@@ -135,7 +134,8 @@ body {
    ========================================================= */
 
 /* This is the only area that pans and zooms. */
-#diagram-container {
+.diagram-container {
+    width: 100%;
     height: 100%;
     position: absolute;
     inset: 0;
@@ -143,10 +143,10 @@ body {
     overflow: hidden;
     touch-action: none;
     isolation: isolate;
-    background-color: #171717;
+    background: #171717;
 }
 
-#diagram-container svg {
+.diagram-container svg {
     width: 100%;
     height: 100%;
     max-width: none;
@@ -154,14 +154,24 @@ body {
     display: block;
     cursor: grab;
 }
-
-#diagram-container svg:active {
+.diagram-container svg:active {
     cursor: grabbing;
 }
+/* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
+to work properly; we use a custom keyframe animation */
+@keyframes SVGSwappingAnimation { 
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+.diagram-container.swapping {
+    animation: SVGSwappingAnimation;
+    animation-duration: .35s;
+    animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
+}
 
-/* =========================================================
-   Map overlays (headers, level stack, route form (includes filter checklist), step ui)
-   ========================================================= */
+/* ================================================================================================
+   Map overlays (headers, level stack, route form (includes filter checklist), step ui, map rotate button)
+   ================================================================================================ */
 
 /* All controls sit above the SVG and never pan with it. */
 .map-overlay {
@@ -622,6 +632,57 @@ will keep it with the standard highlight animation which applies original fill *
     --target-fill: #e5ff00;
     fill: var(--target-fill);
 }
+
+/* ======== map rotate button ======== */
+
+.map__rotate-button {
+    background: none;
+    border: none;
+
+    /* we're using grid display to stack the 2 button images on top of one another */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    align-items: center;
+    justify-items: center; /* centers item within a grid cell while justify-content centers items for entire grid-rows*/
+    bottom: 5%;
+    right: 1%;
+    cursor: pointer;
+}
+.map__rotate-button > * { /* target every child element here*/
+    /* assign them all the same column and row grid (so they're overlapping) */
+    grid-column: 1;
+    grid-row: 1;
+}
+.rotate-button__animated-parts-img {
+    width: 35px;
+    height: auto;
+    z-index: 1;
+}
+.animating > .rotate-button__animated-parts-img {
+    transition: transform 0.4s cubic-bezier(0.075, 0.82, 0.165, 1); /* this is a one way transition hence we put it here instead of
+                                                                    on .rotate-button__animated-parts-img*/
+    transform: rotate(-360deg); /* rotate counter clockwise cause the arrows are in that direction*/
+}
+.rotate-button__base-img {
+    width: 45px;
+    height: auto;
+    z-index: 0;
+
+    transition: all .25s ease-in-out;
+}
+.animating > .rotate-button__base-img {
+    filter: none !important;
+}
+@media (hover:hover) {
+    .map__rotate-button:hover > .rotate-button__base-img {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000); /* cannot use bg-color, fill, etc for img tags... filter is the alternative */ 
+    }
+}
+.map__rotate-button:active > .rotate-button__base-img {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
+}
+
 
 /* =========================================================
    Footer

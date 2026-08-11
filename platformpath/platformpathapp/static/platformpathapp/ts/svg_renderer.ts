@@ -97,20 +97,33 @@ export class SvgRenderer {
     }
 
     // Helper method to center the station map
-    public centerMap(zoom: number = 1): void {
+    public centerMap(zoom: number = 0.9): void {
         const container = document.getElementById("diagram-container");
         const svg = container?.querySelector("svg") as SVGSVGElement | null;
 
-        if (!container || !svg || !this.currentPanZoom) return;
+        if (!container || !svg || !this.currentPanZoom) {
+            console.warn(
+                "Diagram container, station svg, and/or this current pan zoom doesn't exist",
+                `Diagram Container Status: ${container}`,
+                `Station SVG Status: ${svg}`,
+                `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
+            );
+            return;
+        }
 
-        const containerRect = container.getBoundingClientRect();
+        // make sure the svg size is consistent with the container size (the external css should already deal with this but this
+        // is just for safe measures so that centering is good)
+        container.style.width = "100%";
+        container.style.height = "100%";
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+
+        // once we made sure the container and the svg are the same size, we can just check the bounding box for the client rect
+        // NOTE: this is how much space the svg occupies on the page; since we set width + height to coincide with the container
+        // the svg will assume the same dimensions as the container rather its listed width and height (which would overflow the page)
         const svgRect = svg.getBoundingClientRect();
-
-        const x = (containerRect.width - svgRect.width * zoom) / 2;
-        const y = (containerRect.height - svgRect.height * zoom) / 2;
-
-        this.currentPanZoom.zoomAbs(0, 0, zoom);
-        this.currentPanZoom.moveTo(x, y);
+        // get center of screen and apply zoom
+        this.currentPanZoom.zoomAbs(svgRect.width/2, svgRect.height/2, zoom);
     }
 
     // Pan, zoom, and scroll controls for the station diagram

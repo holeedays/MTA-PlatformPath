@@ -1,0 +1,19 @@
+<svg width="215" height="200" viewBox="0 0 215 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="animated parts">
+<g id="station silhouette">
+<path id="Rectangle 7" d="M31.0642 89H186.317V96H22.3175L31.0642 89Z" fill="black"/>
+<path id="Rectangle 8" d="M28.3175 104H192.317L183.034 111H28.3175V104Z" fill="black"/>
+<rect id="Rectangle 12" x="121.317" y="83" width="15" height="5" fill="black"/>
+<rect id="Rectangle 14" x="121.317" y="112" width="15" height="5" fill="black"/>
+<rect id="Rectangle 15" x="75.3175" y="112" width="15" height="5" fill="black"/>
+<rect id="Rectangle 13" x="75.3175" y="83" width="15" height="5" fill="black"/>
+<rect id="Rectangle 16" x="90.3175" y="111" width="31" height="6" fill="black"/>
+<rect id="Rectangle 17" x="90.3175" y="83" width="31" height="6" fill="black"/>
+<rect id="Rectangle 18" x="98.3175" y="96" width="23" height="8" fill="black"/>
+</g>
+<g id="arrow">
+<path id="Ellipse 6" d="M200.317 100L138.583 152.175L214.635 179.551L200.317 100ZM107.317 186C103.451 186 100.317 189.134 100.317 193C100.317 196.866 103.451 200 107.317 200V193V186ZM178.979 159.28L173.587 154.816C157.802 173.876 133.978 186 107.317 186V193V200C138.324 200 166.039 185.88 184.37 163.745L178.979 159.28Z" fill="black"/>
+<path id="Ellipse 7" d="M14.3175 100L76.0518 47.8252L0 20.4491L14.3175 100ZM107.317 14C111.183 14 114.317 10.866 114.317 7C114.317 3.13401 111.183 0 107.317 0V7V14ZM35.6564 40.7197L41.0477 45.1845C56.8332 26.1236 80.6565 14 107.317 14V7V0C76.3111 0 48.5964 14.1201 30.2652 36.2548L35.6564 40.7197Z" fill="black"/>
+</g>
+</g>
+</svg>

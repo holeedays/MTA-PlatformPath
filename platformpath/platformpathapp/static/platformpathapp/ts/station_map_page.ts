@@ -206,15 +206,18 @@ export class StationMapPage {
         btnNext.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext))
     }
 
-    // adds event handling of the map rotate button as well as the diagram container (since the map rotate button works in tandem with
+    // adds event handling of the map rotate button as well as the map SVG (since the map rotate button works in tandem with
     // switching the svg)
     private initMapRotateButton(): void {
         const mapRotateButton: HTMLButtonElement | null = document.querySelector(".map__rotate-button");
         const diagramContainer: HTMLDivElement | null = document.querySelector("#diagram-container");
 
-        if (mapRotateButton === null || diagramContainer === null) {
+        if (
+            mapRotateButton === null || 
+            diagramContainer === null
+        ) {
             console.warn(
-                "The map rotate button and/or the diagram container doesn't exist",
+                "The map rotate button or the diagram container doesn't exist",
                 `Map Rotate Button Status: ${mapRotateButton}`,
                 `Diagram Container Status: ${diagramContainer}`
             );
@@ -252,15 +255,17 @@ export class StationMapPage {
         });
 
         // since the classes are temporary, we want to remove the class for both the button and container 
+        // transition end event listener for the map button
         mapRotateButton.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "transform") {
                 mapRotateButton.classList.remove("animating");
             }
         });
-
-        diagramContainer.addEventListener("transitionend",(ev: TransitionEvent) => {
-            if (ev.propertyName === "opacity") {
-                mapRotateButton.classList.remove("swapping");
+        // animation end event listener (e.g. keyframe animation end event listener) for diagram container 
+        // since using a standard transition animation doesn't work very well
+        diagramContainer.addEventListener("animationend", (ev: AnimationEvent) => {
+            if (ev.animationName === "SVGSwappingAnimation") {
+                diagramContainer.classList.remove("swapping");
             }
         }); 
     } 
@@ -342,6 +347,8 @@ export class StationMapPage {
             console.warn("There is no step ui element");
             return;
         }
+
+        // NOTE: we will not clear the selectedNodeOptions because we want the state of those to be saved (for now at least)
 
         // clear the current path
         this.currentPath = null;
