@@ -6,8 +6,8 @@ PLANS FOR THE FUTURE:
 PRIORITIES:
 > Complete the station map view page (specifically mobile viewport)
     - Adding a preview of the path (before selecting through steps)
-    - Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path)
-    - Add filters to limit the node selections (for user simplicity)
+    - Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
+    - Add a legend (map elements + coloring explanation)
 > Change the station map diagrams (maybe alter the arrows and names on them??)
     - we are currently doing this...
 > Add all the new stations currently available
@@ -29,7 +29,7 @@ different nodes based on exits and wall separations, platforms are broken to dif
 Edmond ----
 TO DO:
 (PRIORITY)
-Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity) --> currently on lines selection
+Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity) --> currently on station map
 (The items below are stalled for now)
 Find a way to properly cache requested database data to avoid excessive queries 
 
@@ -50,6 +50,9 @@ Fix API url routing for the fetching edges and nodes. Either choose to use a hyb
 with slugs and ids together or just use ids in the API routing + user routing.
 Connect second page (station selections page) seamlessly to the third page (ivan's page)
 Do a visual rework and logical refactor of the home page, line selection page, and station selection page (basically done with all of it for now)
+Finished lines selection/station selections styling and logic
+Add filters to limit the node selections (for user simplicity)
+Added a map rotation button
 
 Ivan ----
 TO DO:
