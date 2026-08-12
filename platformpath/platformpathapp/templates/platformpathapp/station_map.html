@@ -14,7 +14,7 @@
 	<header class="site-header">
 		<div class="site-header__inner">
 			<a class="brand" href="#">
-					<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+					<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo big">
 					<span class="brand__name">PLATFORMPATH</span>
 			</a>
 			<nav class="site-header__nav">
@@ -23,6 +23,16 @@
 					<a href="/not-found">NAVIGATE</a>
 			</nav>
 		</div>
+		<button class="site-header__toggle-button">
+			<img 
+				class="toggle-button__animated-parts-img"
+				src="{% static 'platformpathapp/decals/site_header_toggle_button_animated_parts.svg' %}" 
+				alt="Site header toggle button icon animated parts">
+			<img 
+				class="toggle-button__base-img"
+				src="{% static 'platformpathapp/decals/site_header_toggle_button_base.svg' %}" 
+				alt="Site header toggle button icon base">
+		</button>
 	</header>
 
 		<!-- ================= HEADER SPACING ================= -->
@@ -56,7 +66,7 @@
 			<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST ================= -->
 			<div class="map-overlay route-form-filter-checklist__container">
 				<div class="filter-checklist" aria-label="Filters toggle">
-					<div class="filter-checklist__checkboxes-container container__hidden"></div>
+					<div class="filter-checklist__checkboxes-container hidden"></div>
 					<button class="filter-checklist__toggle-button">
 						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Toggle button icon">
 						SELECT FILTERS
@@ -91,12 +101,12 @@
 				<img 
 					class="rotate-button__animated-parts-img" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
-					alt="Rotate map button animated parts"
+					alt="Rotate map button icon animated parts"
 				>
 				<img 
 					class="rotate-button__base-img" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_base.svg' %}" 
-					alt="Rotate map button base"
+					alt="Rotate map button icon base"
 				>
 			</button>
 		</section>
@@ -105,7 +115,7 @@
 	<!-- ================= FOOTER ================= -->
 	<footer class="site-footer">
 		<div class="brand brand--footer">
-			<img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA">
+			<img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
 			<span class="brand__name brand__name--sm">PLATFORMPATH</span>
 		</div>
 		<div class="site-footer__legal">

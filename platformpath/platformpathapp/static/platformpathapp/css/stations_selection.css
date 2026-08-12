@@ -125,21 +125,21 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     color: #ffffff;
+
+    transition: color 0.25s ease-in-out;
 }
 @media (hover:hover) {
     .site-header__nav a:hover {
         color: #1a4fd6;
-        transition: 0.25s ease-in-out;
     }
 }
 .site-header__nav a:active {
     color: #5400a3;
-    transition: 0.25s ease-in-out;
 }
 
 .header-spacer {
     height: 60px;
-    flex-shrink: 0; 
+    flex-shrink: 0; /* prevent other flex items from forcing the space to shrink */
 }
 
 /* =========================================================
@@ -169,7 +169,7 @@ body {
     flex-direction: column;
     height: 80%;
     padding: 20px;
-    background-color: #111111;
+    background: #111111;
     width: auto;
     gap: 5px;
     overflow: auto;
@@ -213,7 +213,7 @@ it basically tells the animation what to do when display: none -> display: whate
     }
     .stations__list li:hover > .station__btn {
         color: var(--text-color, #ffffff);
-        background-color: var(--line-color);
+        background: var(--line-color);
     }
 }
 /* note: :active only works reliably with interactable tags like buttons/inputs/anchors/etc */
@@ -222,7 +222,7 @@ it basically tells the animation what to do when display: none -> display: whate
 }
 .stations__list li > .station__btn:active {
     color: var(--text-color, #ffffff);
-    background-color: var(--line-color);
+    background: var(--line-color);
 }
 
 .station__order-identifier {
@@ -243,7 +243,7 @@ it basically tells the animation what to do when display: none -> display: whate
 .station__btn {
     flex: 1;
     color: #dbdbdb;
-    background-color: #727272;
+    background: #727272;
     font-weight: bolder;
     font-size: 17px;
     /* reset/alter button styling here...*/
@@ -253,22 +253,20 @@ it basically tells the animation what to do when display: none -> display: whate
     appearance: none;
     border: 2px transparent;
     border-radius: 4px;    
-
-    transition: 0.25s ease-in-out;
 }
 
 /* =========================================================
    Stations list list item attributes
    ========================================================= */
 
-li.item__hidden { /* remember specificity and how it competes against station__list li...*/
+.stations__list li.hidden { /* remember specificity and how it competes against station__list li...*/
     display: none; /* besides li.hidden, you can flag the item as !important too with .hidden selector */
     opacity: 0;
 }
-li.item__loading {
+.stations__list li.loading {
     opacity: 0;
 }
-li.item__temp {
+.stations__list li.temp {
     font-size: 15px;
     font-style: italic;
     color: #868686;
@@ -291,7 +289,7 @@ li.item__temp {
     justify-content: center;
     gap: 15px;
     height: 50px;
-    background-color: #969696;
+    background: #969696;
     border-radius: 10px;
 }
 
@@ -300,50 +298,62 @@ li.item__temp {
     font-size: 20px;
     color: #000000;
 }
+.stations__direction-description.swapping {
+    animation: TextChangeAnimation;
+    animation-duration: .25s;
+    animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
+}
+/* we're using a keyframe animation here since the text change is instantaneous hence we need the opacity to be 0 immediately */
+@keyframes TextChangeAnimation {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
 
 .slider-track {
     display: flex;
     align-items: center;
     width: var(--slider-width);
     height: var(--slider-height);
-    background-color: var(--slider-track-color);
+    background: var(--slider-track-color);
     border: var(--slider-border-width) solid #000000;
     border-radius: 1000px;
 
-    transition: 0.25s ease-in-out;
+    transition: background 0.25s ease-in-out;
 }
 .slider-knob {
     transform: translateX(-5px);
     height: calc(var(--slider-height) * 1.1);
     aspect-ratio: 1 / 1;
-    background-color: var(--slider-knob-color);
+    background: var(--slider-knob-color);
     border: var(--slider-border-width) solid #000000;
     border-radius: 100%;
 
-    transition: 0.25s ease-in-out;
+    transition: 
+        background 0.25s ease-in-out,
+        transform 0.25s ease-in-out;
 }
 
 .slider-track:hover {
     --slider-knob-color: #d1d1d1;
 }
 
-.stations__direction-slider-unselected .slider-knob {
+.stations__direction-slider.unselected .slider-knob {
     transform: translateX(-5px);
 }
-.stations__direction-slider-unselected .slider-track {
+.stations__direction-slider.unselected .slider-track {
     --slider-track-color: #575757;
 }
-.stations__direction-slider-unselected .slider-track:hover {
+.stations__direction-slider.unselected .slider-track:hover {
     --slider-track-color: #4b4b4b;
 }
 
-.stations__direction-slider-selected .slider-knob {
+.stations__direction-slider.selected .slider-knob {
     transform: translateX(35px);
 }
-.stations__direction-slider-selected .slider-track {
+.stations__direction-slider.selected .slider-track {
     --slider-track-color: #b8b8b8;
 }
-.stations__direction-slider-selected .slider-track:hover {
+.stations__direction-slider.selected .slider-track:hover {
     --slider-track-color: #7a7a7a;
 }
 
@@ -371,7 +381,7 @@ li.item__temp {
     width: 90%;
 
     border: 25px solid var(--bg-color);
-    background-color: var(--bg-color);
+    background: var(--bg-color);
     border-radius: 1000px;
 }
 
@@ -383,7 +393,7 @@ li.item__temp {
     font-size: var(--font-size);
     color: #c1c1c1;
     font-weight: bold;
-    background-color: var(--bg-color);
+    background: var(--bg-color);
 
     border: none;
 }
@@ -417,7 +427,7 @@ li.item__temp {
     /* Background and foreground colors */
     /* these variables are declared later */
     color: var(--text-color, #ffffff);
-    background-color: var(--line-color);
+    background: var(--line-color);
 
     /* The next one sets up the circle */
     border-radius: 50%;
@@ -429,20 +439,23 @@ li.item__temp {
     padding: 0;
     margin: 0;
 
-    transition: 0.25s ease-in-out;
+    transition: 
+        color 0.25s ease-in-out,
+        background 0.25s ease-in-out;
 }
 @media(hover:hover) {
     .stations__line-logo-button:hover {
         color: color-mix(in srgb, var(--text-color, white), #000000 20%);
-        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
+        background: color-mix(in srgb, var(--line-color), #000000 20%);
     }
-    .stations__line-logo-button:hover + .stations__line-logo-button-description{
+    .stations__line-logo-button:hover ~ .stations__line-logo-button-description { /* tilda selects all siblings  vs + which is
+                                                                                    the immediate sibling only (next sibling) */
         opacity: 1;
     }
 }
 .stations__line-logo-button:active {
     color: color-mix(in srgb, var(--text-color, white), #000000 40%);
-    background-color: color-mix(in srgb, var(--line-color), #000000 40%);
+    background: color-mix(in srgb, var(--line-color), #000000 40%);
 }
 .stations__line-logo-button:active ~ .stations__line-logo-button-description{
     opacity: 1;
@@ -462,13 +475,13 @@ li.item__temp {
     font-size: 15px;
 
     color: #e0e0e0;
-    background-color: var(--bg-color);
+    background: var(--bg-color);
     border: 5px solid var(--bg-color);
     border-radius: 1000px;
     /* hide the item onload, only when the button is hovered on the description appears*/
     opacity: 0;
 
-    transition: 0.15s ease-in-out;
+    transition: opacity 0.15s ease-in-out;
 }
 
 /* Colors of each respective subway line group */

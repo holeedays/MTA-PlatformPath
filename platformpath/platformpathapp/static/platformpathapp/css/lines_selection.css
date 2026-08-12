@@ -126,16 +126,16 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     color: #ffffff;
+
+    transition: color 0.25s ease-in-out;
 }
 @media (hover:hover) {
     .site-header__nav a:hover {
         color: #1a4fd6;
-        transition: 0.25s ease-in-out;
     }
 }
 .site-header__nav a:active {
     color: #5400a3;
-    transition: 0.25s ease-in-out;
 }
 
 .header-spacer {
@@ -180,17 +180,17 @@ body {
     left: 75%;
     width: 25px;
     z-index: 1000;
+
+    transition: transform 0.25s ease-in-out;
 }
 
 @media(hover:hover) {
     .line__container button:hover + .unavailable-line__logo {
         transform: scale(1.2);
-        transition: 0.25s ease-in-out;
     }
 }
 .line__container button:active + .unavailable-line__logo {
     transform: scale(1.2);
-    transition: 0.25s ease-in-out;
 }
 
 /* ======================================================================================
@@ -249,7 +249,7 @@ body {
     justify-content: center;
 
     /* Background and foreground colors */
-    background-color: var(--line-color);
+    background: var(--line-color);
     color: var(--text-color, #ffffff);
 
     /* The next one sets up the circle */
@@ -264,24 +264,26 @@ body {
 
     /* display settings */
     flex-shrink: 0;
+
+    transition: 
+        background 0.25s ease-in-out,
+        color 0.25s ease-in-out;
 }
 
 /* this @media wrapper only allows hover for devices that support hover (prevents sticky focus) on mobile/touch devices */
 @media (hover: hover) { 
     .line__container button:hover {
-        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
+        background: color-mix(in srgb, var(--line-color), #000000 20%);
         color: var(--text-color, #b3b3b3);
-        transition: 0.25s ease-in-out;
     }
 }
 /* this works for both desktop and mobile */
 .line__container button:active { 
-        background-color: color-mix(in srgb, var(--line-color), #000000 20%);
+        background: color-mix(in srgb, var(--line-color), #000000 20%);
         color: var(--text-color, #b3b3b3);
-        transition: 0.25s ease-in-out;
 }
-.line__container-unavailable button {
-    background-color: color-mix(in srgb, var(--line-color), #000000 60%);
+.line__container.unavailable button {
+    background: color-mix(in srgb, var(--line-color), #000000 60%);
     color: var(--text-color, #555555);
     opacity: 85%;
 }

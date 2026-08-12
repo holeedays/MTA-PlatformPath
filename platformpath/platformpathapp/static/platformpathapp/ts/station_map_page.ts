@@ -40,12 +40,12 @@ export class StationMapPage {
             return;
         }
 
-        // Set the station name in the heading
-        const stationHeading = document.getElementById('diagram-name');
-        if (stationHeading) {
-            stationHeading.innerText = this.station?.station_model.name;
-        }
+        // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
+        // lower resolutions/dimensions)
+        this.initSiteHeaderToggleButton();
 
+        // init the station heading (name of station) on top of the page
+        this.initStationHeading();
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
         this.svgRenderer.hideRouteDirectionLabels();
@@ -54,6 +54,8 @@ export class StationMapPage {
 
         console.log('Fetched station data:', this.station);
 
+        // init our find route button, which will handle activating the pathfinding between the start/end nodes
+        this.initRouteFindButton();
         // init our filter toggle button (will be responsible for revealing all of our filter checkboxes)
         this.initFilterChecklistToggleButton();
         // init all dropdowns with node options and the filter checkbox (e.g. anything involving node data)
@@ -62,10 +64,20 @@ export class StationMapPage {
         this.initPathStepButtons();
         // init our map rotate button
         this.initMapRotateButton();
-    
-        // Set up event listeners for form submission and navigation buttons
-        document.getElementById("find-route")
-            ?.addEventListener("click", () => this.handleFormSubmit());
+    }
+
+    // Set the station name in the heading element 
+    private initStationHeading(): void {
+        const stationHeading: HTMLDivElement | null = document.querySelector('#diagram-name');
+        if (stationHeading === null || this.station === null) {
+            console.warn(
+                "Station heading is null or the fetched station data is empty",
+                `Station Heading Status: ${stationHeading}`,
+                `Station Data Status: ${this.station}`
+            );
+            return;
+        }
+        stationHeading.innerText = this.station.station_model.name;
     }
 
     // init the layer("levels") buttons 
@@ -142,6 +154,16 @@ export class StationMapPage {
         await this.startNavigation(startNodeID, endNodeID);
     }
 
+    // Set up event listeners for the find route button (form submission after selecting start/end nodes)
+    private initRouteFindButton(): void {
+        const findRouteButton: HTMLButtonElement | null = document.querySelector("#find-route");
+        if (findRouteButton === null) {
+            console.warn("Find route button doesn't exist");
+            return;
+        }
+        findRouteButton.addEventListener("click", () => this.handleFormSubmit());
+    }
+
     // add event handling of the toggle button 
     private initFilterChecklistToggleButton(): void {
         const filterChecklistToggleButton: HTMLButtonElement | null = document.querySelector(".filter-checklist__toggle-button");
@@ -165,17 +187,19 @@ export class StationMapPage {
             return;
         }
 
-        let pressed: boolean = false;
+        // though hidden should already be added, make sure the checkboxes container is already hidden to begin with 
+        filterChecklistCheckboxesContainer.classList.add("hidden");
 
+        let pressed: boolean = false;
         // toggle event handling of toggle button here (it's all styling for the other elements)
         filterChecklistToggleButton.addEventListener("click", () => {
             if (!pressed) {
-                filterChecklistToggleButtonGraphic.classList.add("graphic__reversed");
-                filterChecklistCheckboxesContainer.classList.remove("container__hidden");
+                filterChecklistToggleButtonGraphic.classList.add("reversed");
+                filterChecklistCheckboxesContainer.classList.remove("hidden");
             }
             else {
-                filterChecklistToggleButtonGraphic.classList.remove("graphic__reversed");
-                filterChecklistCheckboxesContainer.classList.add("container__hidden");
+                filterChecklistToggleButtonGraphic.classList.remove("reversed");
+                filterChecklistCheckboxesContainer.classList.add("hidden");
             }
 
             pressed = !pressed;
@@ -202,6 +226,7 @@ export class StationMapPage {
             return;
         } 
 
+        // add event listening logic for the buttons (e.g. click and moving either back or forth in the path steps)
         btnPrev.addEventListener("click", () => this.prevStep(instructionText, btnPrev, btnNext));
         btnNext.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext))
     }
@@ -410,6 +435,7 @@ export class StationMapPage {
         btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
     }
 
+    // these 2 functions are just the incrementing of the pathfinding steps
     private nextStep(instructionText: HTMLElement, btnPrev: HTMLButtonElement, btnNext: HTMLButtonElement): void {
         if (this.currentPath && this.currentIndex < this.currentPath.length - 1) {
             this.currentIndex++;
@@ -704,5 +730,56 @@ export class StationMapPage {
 
         return labelIds;
     }
+
+    // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header
+    // ideally should retract the header so that the diagram can occupy the full space
+    private initSiteHeaderToggleButton(): void {
+        const siteHeaderContainer: HTMLHeadElement | null = document.querySelector(".site-header");
+        const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
+            siteHeaderContainer?.querySelector(".site-header__toggle-button"));
+        const headerSpacer: HTMLDivElement | null = document.querySelector(".header-spacer");
+
+        if (
+            siteHeaderContainer === null ||
+            siteHeaderToggleButton === null ||
+            siteHeaderToggleButton === undefined ||
+            headerSpacer === null
+        ) {
+            console.warn(
+                "Site header, site header toggle button, and/or header spacer doesn't exist",
+                `Site Header Status: ${siteHeaderContainer}`,
+                `Site Header Toggle Button Status: ${siteHeaderToggleButton}`,
+                `Header Spacer Status: ${headerSpacer}`
+            );
+            return;
+        }
+
+        // toggle event handling here (just style changes currently)
+        let pressed: boolean = false;
+        siteHeaderToggleButton.addEventListener("click", () => {
+            if (!pressed) {
+                // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
+                siteHeaderToggleButton.classList.add("reversed", "animating");
+                siteHeaderContainer.classList.add("retracted");
+                headerSpacer.classList.add("hidden");
+            }
+            else {
+                siteHeaderToggleButton.classList.add("animating");
+                siteHeaderToggleButton.classList.remove("reversed");
+                siteHeaderContainer.classList.remove("retracted");
+                headerSpacer.classList.remove("hidden");
+            }
+
+            pressed = !pressed;
+        });
+
+        // also add event listener for animation end for the button
+        siteHeaderToggleButton.addEventListener("animationend", (ev: AnimationEvent) => {
+            if (ev.animationName === "SiteHeaderButtonAnimation") {
+                siteHeaderToggleButton.classList.remove("animating");
+            }
+        });
+    }
+
 }
 

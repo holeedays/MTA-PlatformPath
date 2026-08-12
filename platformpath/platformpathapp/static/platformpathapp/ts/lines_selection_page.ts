@@ -187,7 +187,7 @@ export class LinesSelectionPage {
             unavailableLineLogo.src = `${this.getStaticFolderPath()}platformpathapp/decals/unavailable_line_logo.svg`;
             // configuring classes for the textbox and our line button container
             unavailableLineLogo.classList.add("unavailable-line__logo");
-            lineButton.container.classList.add("line__container-unavailable");
+            lineButton.container.classList.add("unavailable");
             // append the textbox to our button container
             lineButton.container.appendChild(unavailableLineLogo);
             // also add an aria state for readability

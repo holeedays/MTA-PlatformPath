@@ -76,18 +76,23 @@ body {
     font-size: 12px;
 }
 
-/* =========================================================
-   Header — fixed, absolutely-positioned inner bar
-   ========================================================= */
+/* ==================================================================
+   Header — fixed, absolutely-positioned inner bar + toggle button
+   ================================================================== */
 
 .site-header {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
+    z-index: 1000;
     height: 60px;
     background: #000000;
-    z-index: 1000;
+
+    transition: transform .25s ease-in-out;
+}
+.site-header.retracted {
+    transform: translateY(-60px);
 }
 
 .site-header__inner {
@@ -112,21 +117,88 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     color: #ffffff;
+
+    transition: color 0.25s ease-in-out;
 }
 @media (hover:hover) {
     .site-header__nav a:hover {
         color: #1a4fd6;
-        transition: 0.25s ease-in-out;
     }
 }
 .site-header__nav a:active {
     color: #5400a3;
-    transition: 0.25s ease-in-out;
+}
+
+.site-header__toggle-button {
+    border: none;
+    background: none;
+
+    /* this toggle button is composed of 2 imgs and so we want to stack both of these on top of one another; this hack does so */
+    display: grid; 
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+
+    position: absolute;
+    align-items: center;
+    justify-items: center;
+    top: 65px;
+    /* these 2 lines is a hack to center the absolute positioned button*/
+    left: 50%; 
+    transform: translateX(-50%);
+    opacity: 0.7;
+    cursor: pointer;
+}
+.site-header__toggle-button > * { /* assign all children to the same row/column on grid */
+    grid-column: 1;
+    grid-row: 1;
+}
+.site-header__toggle-button .toggle-button__animated-parts-img {
+    width: 50px;
+    height: auto;
+    z-index: 1;
+}
+.site-header__toggle-button.reversed .toggle-button__animated-parts-img {
+    transform: rotate(180deg);
+}
+.site-header__toggle-button.animating .toggle-button__animated-parts-img {
+    /* we're using an animation here instead of transition since we want opacity to be 0 instantaneously*/
+    animation: SiteHeaderButtonAnimation;
+    animation-duration: .25s; 
+    animation-timing-function: cubic-bezier(0.05, 0.2, 0.8, 0.91);
+}
+
+.site-header__toggle-button .toggle-button__base-img {
+    width: 150px;
+    height: auto;
+    z-index: 0;
+
+    transition: filter .25s ease-in-out;
+}
+@media (hover:hover) {
+    .site-header__toggle-button:hover .toggle-button__base-img{
+        filter: invert(.2); /* remember! use filter for images to color them */
+    }
+}
+.site-header__toggle-button:active .toggle-button__base-img {
+        filter: invert(.2); /* remember! use filter for images to color them */
+}
+@keyframes SiteHeaderButtonAnimation {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
 }
 
 .header-spacer {
     height: 60px;
-    flex-shrink: 0; 
+    flex-shrink: 0; /* prevent shrinking from other flex items */
+    background: #171717; /* sometimes, despite the header retraction and header spacer space decrease being at 
+                                about the same interval, the items sometimes don't sync during transitioning, creating a glaring white
+                                space between the top of the page and the diagram; as such, I'll cheese it by adding the same bg \
+                                color as the diagram container*/
+
+    transition: height .25s ease-in-out; 
+}
+.header-spacer.hidden {
+    height: 0px;
 }
 
 /* =========================================================
@@ -154,19 +226,17 @@ body {
     display: block;
     cursor: grab;
 }
-.diagram-container svg:active {
-    cursor: grabbing;
+
+.diagram-container.swapping {
+    animation: SVGSwappingAnimation;
+    animation-duration: .35s;
+    animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
 /* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
 to work properly; we use a custom keyframe animation */
 @keyframes SVGSwappingAnimation { 
     0% {opacity: 0;}
     100% {opacity: 1;}
-}
-.diagram-container.swapping {
-    animation: SVGSwappingAnimation;
-    animation-duration: .35s;
-    animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
 
 /* ================================================================================================
@@ -235,7 +305,9 @@ to work properly; we use a custom keyframe animation */
     font-weight: bolder;
     text-align: center;
 
-    transition: all 0.25s ease-in-out;
+    transition: 
+        transform 0.25s ease-in-out,
+        background 0.25s ease-in-out;
 }
 .all-layers-button:active,
 .layer-option:active {
@@ -312,7 +384,7 @@ to work properly; we use a custom keyframe animation */
     color: #ffffff;
     cursor: pointer;
 
-    transition: all .25s ease-in-out;
+    transition: background .25s ease-in-out;
 }
 .route-form__button:active {
     background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
@@ -386,14 +458,14 @@ to work properly; we use a custom keyframe animation */
     background-color: var(--bg-color);
     cursor: pointer;
 
-    transition: all ease-in-out 0.25s;
+    transition: background ease-in-out 0.25s;
 }
 .route-field__dropdown-option:active {
-    background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
+    background: color-mix(in srgb, var(--bg-color), #000000 30%);
 }
 @media (hover:hover) {
     .route-field__dropdown-option:hover {
-        background-color: color-mix(in srgb, var(--bg-color), #000000 30%);
+        background: color-mix(in srgb, var(--bg-color), #000000 30%);
     }
 }
 /* these represent the individual components making up the dropdown option */
@@ -401,15 +473,16 @@ to work properly; we use a custom keyframe animation */
     font-size: 16px; 
     font-weight: 600;
 }
+
 .route-field__dropdown-option span {
     opacity: 0.8;
     font-size: 14px;
 }
 
-.option__hidden {
+.route-field__dropdown-option.hidden {
     display: none;
 }
-.option__selected {
+.route-field__dropdown-option.selected {
     background-color: color-mix(in srgb, var(--bg-color), #000000 40%);
 }
 
@@ -447,7 +520,7 @@ to work properly; we use a custom keyframe animation */
         clip-path 0.25s ease-in-out,
         display 0.25s ease-in-out allow-discrete;
 }
-.filter-checklist__checkboxes-container.container__hidden {
+.filter-checklist__checkboxes-container.hidden {
     padding: 0px;
     display: none;
     clip-path: inset(0 0 100% 0);
@@ -472,11 +545,13 @@ have an animation from display: none -> display: something else (e.g. the backwa
     padding: 4px;
     gap: 5px;
 }
+
 .filter-checklist__checkbox span {
     color: #ffffff;
     font-size: 15px;
     font-weight: bold;
 }
+
 .filter-checklist__checkbox button {
     border: none;
     background: #f0f0f0;
@@ -486,7 +561,9 @@ have an animation from display: none -> display: something else (e.g. the backwa
     border-radius: 50%;
     cursor: pointer;
 
-    transition: all 0.1s ease-in-out;
+    transition: 
+        transform 0.1s ease-in-out,
+        background 0.1s ease-in-out;
 }
 .filter-checklist__checkbox button:active {
         transform: scale(0.9);
@@ -498,8 +575,8 @@ have an animation from display: none -> display: something else (e.g. the backwa
         background: #e7e09c;
     }
 }
-/* .checkbox__enabled is in the same class list (thereby dom element) as filter-checklist__checkbox */
-.checkbox__enabled button{
+/* enabled is in the same class list (thereby dom element) as filter-checklist__checkbox */
+.filter-checklist__checkbox.enabled button{
     background: #20d62f;
 }
 
@@ -519,7 +596,7 @@ have an animation from display: none -> display: something else (e.g. the backwa
     gap: 15px;
     cursor: pointer;
 
-    transition: all 0.25s ease-in-out;
+    transition: background 0.25s ease-in-out;
 }
 .filter-checklist__toggle-button:active {
     background: color-mix(in srgb, var(--bg-color), #ffffff 10%);
@@ -529,13 +606,14 @@ have an animation from display: none -> display: something else (e.g. the backwa
         background: color-mix(in srgb, var(--bg-color), #ffffff 10%);
     }
 }
+
 .filter-checklist__toggle-button img {
     height: 23px;
     width: auto;
 
-    transition: all .5s cubic-bezier(0.075, 0.82, 0.165, 1);
+    transition: transform .5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-img.graphic__reversed {
+.filter-checklist__toggle-button img.reversed {
     transform: rotate(180deg);
 }
 
@@ -649,11 +727,13 @@ will keep it with the standard highlight animation which applies original fill *
     right: 1%;
     cursor: pointer;
 }
+
 .map__rotate-button > * { /* target every child element here*/
     /* assign them all the same column and row grid (so they're overlapping) */
     grid-column: 1;
     grid-row: 1;
 }
+
 .rotate-button__animated-parts-img {
     width: 35px;
     height: auto;
@@ -664,12 +744,13 @@ will keep it with the standard highlight animation which applies original fill *
                                                                     on .rotate-button__animated-parts-img*/
     transform: rotate(-360deg); /* rotate counter clockwise cause the arrows are in that direction*/
 }
+
 .rotate-button__base-img {
     width: 45px;
     height: auto;
     z-index: 0;
 
-    transition: all .25s ease-in-out;
+    transition: filter .25s ease-in-out;
 }
 .animating > .rotate-button__base-img {
     filter: none !important;

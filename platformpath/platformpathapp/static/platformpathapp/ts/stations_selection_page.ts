@@ -188,9 +188,9 @@ export class StationsSelectionPage {
             return;
         }
 
-        // set the meta data for our slider and the direction description
-        slider.classList.add("stations__direction-slider-unselected");
-        directionDescription.innerHTML = "DOWNTOWN TO UPTOWN";
+        // make sure the meta data for our slider and the direction description is set properly in the beginning
+        slider.classList.add("unselected");
+        directionDescription.innerHTML = "UPTOWN";
         slider.setAttribute("aria-checked", "false");
 
         // add our event listener
@@ -202,18 +202,20 @@ export class StationsSelectionPage {
                 index = stationListItems.length - 1;
                 increment = -1;
 
-                slider.classList.add("stations__direction-slider-selected");
-                slider.classList.remove("stations__direction-slider-unselected");
-                directionDescription.innerHTML = "UPTOWN TO DOWNTOWN";
+                slider.classList.add("selected");
+                slider.classList.remove("unselected");
+                directionDescription.innerHTML = "DOWNTOWN";
+                directionDescription.classList.add("swapping");
                 slider.setAttribute("aria-checked", "true");
             }
             else {
                 index = 0;
                 increment = 1;
 
-                slider.classList.add("stations__direction-slider-unselected");
-                slider.classList.remove("stations__direction-slider-selected");
-                directionDescription.innerHTML = "DOWNTOWN TO UPTOWN";
+                slider.classList.add("unselected");
+                slider.classList.remove("selected");
+                directionDescription.innerHTML = "UPTOWN";
+                directionDescription.classList.add("swapping");
                 slider.setAttribute("aria-checked", "false");
             }
 
@@ -253,6 +255,13 @@ export class StationsSelectionPage {
                 // shift our index so our stations list items are in line with the station json object items
                 index += increment;
             };
+
+            // also add an event handler for direction description (which removes the temp class of "swapping" after the animation is done)
+            directionDescription.addEventListener("animationend", (ev: AnimationEvent) => {
+                if (ev.animationName === "TextChangeAnimation") {
+                    directionDescription.classList.remove("swapping");
+                }
+            });
 
 
             this.stationOrderReversed = !this.stationOrderReversed;
@@ -325,18 +334,18 @@ export class StationsSelectionPage {
             for (const {listItemWrapper, orderIdentifier, customButton} of stationListElements.stationsListChildren) {
                 // if it doesn't have the value, add a class to make it "hidden" from the container (CSS will handle that effect)
                 if (!userInputRegex.test(customButton.self.value)) {
-                    listItemWrapper.classList.add("item__hidden");
+                    listItemWrapper.classList.add("hidden");
                     stationButtonsHidden++;
                 }
                 // else remove the "hidden" class
                 else {
-                    listItemWrapper.classList.remove("item__hidden");
+                    listItemWrapper.classList.remove("hidden");
                 }
             }
 
             // logic to deal with adding a custom element if all station buttons are hidden
             let temporaryListItem: HTMLLIElement | null = (
-                stationListElements.stationsList.querySelector(".item__temp[data-is-unique='true']"));
+                stationListElements.stationsList.querySelector(".temp[data-is-unique='true']"));
             // first check if the count is equivalent to the available number of stations
             // if it doesn't, remove the temporary list item (if it exists)
             if (stationButtonsHidden !== stationListElements.stationsListChildren.length) {
@@ -349,7 +358,7 @@ export class StationsSelectionPage {
                 // create an additional list element that tells the user there are no available results with what they searched
                 temporaryListItem = document.createElement("li");
                 // demarcate the item was a class "temp"
-                temporaryListItem.classList.add("item__temp");
+                temporaryListItem.classList.add("temp");
                 // add this unique attribute
                 temporaryListItem.setAttribute("data-is-unique", "true");
                 temporaryListItem.innerHTML = "There are no available stations with that name :/";
@@ -391,17 +400,17 @@ export class StationsSelectionPage {
     private initListItemWrapperPrelim(listItemWrapper: HTMLLIElement): void {
         listItemWrapper.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "opacity")
-                listItemWrapper.classList.remove("item__loading");
+                listItemWrapper.classList.remove("loading");
         });
     }
     // configures the styling for the list item wrapper
     private initListItemWrapper(listItemWrapper: HTMLLIElement): void {
         // I added this code simply to avoid the event listener from not running at all 
-        // (which basically adds item__loading permanently); it soft resets the class list
-        if (listItemWrapper.classList.contains("item__loading")) {
-            listItemWrapper.classList.remove("item__loading");
+        // (which basically adds .loading permanently); it soft resets the class list
+        if (listItemWrapper.classList.contains("loading")) {
+            listItemWrapper.classList.remove("loading");
             return;
         }
-        listItemWrapper.classList.add("item__loading");
+        listItemWrapper.classList.add("loading");
     }
 }

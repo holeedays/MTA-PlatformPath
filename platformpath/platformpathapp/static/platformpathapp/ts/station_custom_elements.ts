@@ -65,12 +65,12 @@ export class NodeOption {
     private setBaseLogic(): void {
         this.self.addEventListener("click", () => {
             // check if the parent has an option that is selected
-            const previouslySelectedOption: HTMLButtonElement | null = this.parent.querySelector<HTMLButtonElement>(".option__selected");
+            const previouslySelectedOption: HTMLButtonElement | null = this.parent.querySelector<HTMLButtonElement>(".selected");
             // determine if the previously selected option matches our current option
             if (previouslySelectedOption !== this.self) {
                 // and then apply class changes
-                previouslySelectedOption?.classList.remove("option__selected");
-                this.self.classList.add("option__selected");
+                previouslySelectedOption?.classList.remove("selected");
+                this.self.classList.add("selected");
             }
             // hide dropdown afterwards
             this.parent.hidePopover();
@@ -176,18 +176,18 @@ export class FilterCheckBox {
         this.buttonElement.addEventListener("click", () => {
             // clear our active filters list
             activeFilters.clear();
-            // clear all the styling for the other checkboxes
-            document.querySelectorAll(".checkbox__enabled").forEach((filterCheckbox: Element) => {
-                filterCheckbox.classList.remove("checkbox__enabled");
+            // clear all the styling for the other enabled checkboxes
+            document.querySelectorAll(".filter-checklist__checkbox, .enabled").forEach((filterCheckbox: Element) => {
+                filterCheckbox.classList.remove("enabled");
             });
 
             // iterate thru the node options and remove the hidden class if it exists
             nodeOptions.forEach((nodeOption: NodeOption) => {
-                nodeOption.Self.classList.remove("option__hidden");
+                nodeOption.Self.classList.remove("hidden");
             });
                 
             // also indicate this filter check box has been clicked
-            this.self.classList.add("checkbox__enabled");
+            this.self.classList.add("enabled");
         });
     }
 
@@ -210,9 +210,9 @@ export class FilterCheckBox {
                 activeFilters.add(this.value);
 
                 // add the enabled styling to this checkbox
-                this.self.classList.add("checkbox__enabled");
+                this.self.classList.add("enabled");
                 // and remove the styling on all option filter since it should be disabled if any other filter is enabled
-                allOptionFilterCheckbox.Self.classList.remove("checkbox__enabled");
+                allOptionFilterCheckbox.Self.classList.remove("enabled");
             }
             // in the case this filter is disabled
             else {
@@ -220,7 +220,7 @@ export class FilterCheckBox {
                 activeFilters.delete(this.value);
 
                 // remove its class attribute
-                this.self.classList.remove("checkbox__enabled");
+                this.self.classList.remove("enabled");
             }
 
             // now check if any other active filters are enabled
@@ -242,9 +242,9 @@ export class FilterCheckBox {
                 }
                 // if not just hide it and remove the selected value
                 if (!matchesAFilter) {
-                    nodeOption.Self.classList.add("option__hidden");
+                    nodeOption.Self.classList.add("hidden");
                     // also remove the option__selected class if it is to be hidden
-                    nodeOption.Self.classList.remove("option__selected");
+                    nodeOption.Self.classList.remove("selected");
 
                     // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
                     if (selectedNodeOptions.startNode !== null && nodeOption.SVGID === selectedNodeOptions.startNode.SVGID) 
@@ -254,7 +254,7 @@ export class FilterCheckBox {
                 }
                 // else remove the hidden class if it exists
                 else {
-                    nodeOption.Self.classList.remove("option__hidden");
+                    nodeOption.Self.classList.remove("hidden");
                 }
             });
         });
