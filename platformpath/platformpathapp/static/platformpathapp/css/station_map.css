@@ -1,3 +1,8 @@
+:root { /* define global vars here */
+    --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
+                                    will take the full lot of space */ 
+}
+
 * {
     font-family: Helvetica;
     margin: 0;
@@ -86,7 +91,7 @@ body {
     left: 0;
     width: 100%;
     z-index: 1000;
-    height: 60px;
+    height: var(--site-header-height);
     background: #000000;
 
     transition: transform .25s ease-in-out;
@@ -188,20 +193,6 @@ body {
     100% {opacity: 1;}
 }
 
-.header-spacer {
-    height: 60px;
-    flex-shrink: 0; /* prevent shrinking from other flex items */
-    background: #171717; /* sometimes, despite the header retraction and header spacer space decrease being at 
-                                about the same interval, the items sometimes don't sync during transitioning, creating a glaring white
-                                space between the top of the page and the diagram; as such, I'll cheese it by adding the same bg \
-                                color as the diagram container*/
-
-    transition: height .25s ease-in-out; 
-}
-.header-spacer.hidden {
-    height: 0px;
-}
-
 /* =========================================================
    Diagram Container
    ========================================================= */
@@ -227,12 +218,16 @@ body {
     display: block;
     cursor: grab;
 }
+.diagram-container svg:active {
+    cursor: grabbing; /* Updates cursor while dragging */
+}
 
 .diagram-container.swapping {
     animation: SVGSwappingAnimation;
     animation-duration: .35s;
     animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
+
 /* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
 to work properly; we use a custom keyframe animation */
 @keyframes SVGSwappingAnimation { 
@@ -251,11 +246,16 @@ to work properly; we use a custom keyframe animation */
 }
 
 .map-header {
-    top: 20px;
+    top: calc(var(--site-header-height) + 20px); /* the map header should be ideally header height + a little margin */
     left: 24px;
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
+
+    transition: top .25s ease-in-out;
+}
+.map-header.shifted-up {
+    top: 30px;
 }
 
 .map-header h1 {
@@ -631,7 +631,7 @@ have an animation from display: none -> display: something else (e.g. the backwa
     background: rgb(255 255 255 / 90%);
 }
 
-#instruction-text {
+.step-ui__instruction-text {
     display: block;
     min-height: 3.6rem;
     max-height: 3.6rem;
@@ -640,13 +640,13 @@ have an animation from display: none -> display: something else (e.g. the backwa
     text-align: center;
 }
 
-.step-controls {
+.step-ui__step-controls {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
-.step-controls button {
+.step-ui__step-controls button {
     min-height: 38px;
     border: 1px solid #1a1a1a;
     border-radius: 4px;
@@ -660,10 +660,6 @@ have an animation from display: none -> display: something else (e.g. the backwa
     opacity: 0.5;
 }
 
-#diagram-container svg:active {
-    cursor: grabbing; /* Updates cursor while dragging */
-}
-
 /* Highlighting styles for diagram paths */
 
 .muted,
@@ -671,11 +667,11 @@ have an animation from display: none -> display: something else (e.g. the backwa
     fill: color-mix(in srgb, var(--original-fill), #000000 80%)
 }
 
-@keyframes highlightAnimation {
+@keyframes NodeHighlightAnimation {
     0% {fill: color-mix(in srgb, var(--original-fill), #000000 50%)}
     100% {fill: var(--original-fill)}
 }
-@keyframes startEndHighlightAnimation {
+@keyframes StartEndNodeHighlightAnimation {
     0% {fill: color-mix(in srgb, var(--target-fill), #000000 50%)}
     100% {fill: var(--target-fill)}
 }
@@ -685,7 +681,7 @@ the reason is cause the arrow inherits the fill color which we don't want, we wa
 will keep it with the standard highlight animation which applies original fill */
 .highlighted,
 .highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
-    animation-name: highlightAnimation;
+    animation-name: NodeHighlightAnimation;
     animation-duration: 0.5s;
     animation-direction: alternate;
     animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
@@ -697,7 +693,7 @@ will keep it with the standard highlight animation which applies original fill *
 .highlighted.start-node-highlight :is(rect, circle, ellipse, polygon, polyline),
 .highlighted.end-node-highlight :is(rect, circle, ellipse, polygon, polyline)
 {
-    animation-name: startEndHighlightAnimation;
+    animation-name: StartEndNodeHighlightAnimation;
 }
 
 .start-node-highlight,

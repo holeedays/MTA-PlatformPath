@@ -731,25 +731,25 @@ export class StationMapPage {
         return labelIds;
     }
 
-    // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header
-    // ideally should retract the header so that the diagram can occupy the full space
+    // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
+    // (and map/station header) ideally should retract the header so that the diagram can be completely unobstructed
     private initSiteHeaderToggleButton(): void {
         const siteHeaderContainer: HTMLHeadElement | null = document.querySelector(".site-header");
         const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
             siteHeaderContainer?.querySelector(".site-header__toggle-button"));
-        const headerSpacer: HTMLDivElement | null = document.querySelector(".header-spacer");
+        const stationHeaderContainer: HTMLDivElement | null = document.querySelector(".map-header");
 
         if (
             siteHeaderContainer === null ||
             siteHeaderToggleButton === null ||
             siteHeaderToggleButton === undefined ||
-            headerSpacer === null
+            stationHeaderContainer === null
         ) {
             console.warn(
-                "Site header, site header toggle button, and/or header spacer doesn't exist",
+                "Site header, site header toggle button, and/or station header doesn't exist",
                 `Site Header Status: ${siteHeaderContainer}`,
                 `Site Header Toggle Button Status: ${siteHeaderToggleButton}`,
-                `Header Spacer Status: ${headerSpacer}`
+                `Station Header Status: ${stationHeaderContainer}`
             );
             return;
         }
@@ -761,13 +761,13 @@ export class StationMapPage {
                 // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
                 siteHeaderToggleButton.classList.add("reversed", "animating");
                 siteHeaderContainer.classList.add("retracted");
-                headerSpacer.classList.add("hidden");
+                stationHeaderContainer.classList.add("shifted-up");
             }
             else {
                 siteHeaderToggleButton.classList.add("animating");
                 siteHeaderToggleButton.classList.remove("reversed");
                 siteHeaderContainer.classList.remove("retracted");
-                headerSpacer.classList.remove("hidden");
+                stationHeaderContainer.classList.remove("shifted-up");
             }
 
             pressed = !pressed;
