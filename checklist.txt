@@ -8,6 +8,7 @@ PRIORITIES (in order of priority):
     - Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
         - Modify pathfinder to ignore ADA accessible nodes unless toggled
     - Add a legend (map elements + coloring explanation)
+    - Add a button (maybe to the station heading) to return back to the station selection part of the website
     - Adding a preview of the path (before selecting through steps)
 > Change the station map diagrams (maybe alter the arrows and names on them??)
     - we are currently doing this...
