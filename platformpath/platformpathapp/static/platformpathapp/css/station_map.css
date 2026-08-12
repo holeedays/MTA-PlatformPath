@@ -152,13 +152,22 @@ body {
     grid-column: 1;
     grid-row: 1;
 }
+@media (hover:hover) {
+    .site-header__toggle-button:hover{
+        opacity: 1; 
+    }
+}
+.site-header__toggle-button:active {
+        filter: 1; 
+}
 .site-header__toggle-button .toggle-button__animated-parts-img {
     width: 50px;
     height: auto;
     z-index: 1;
 }
+
 .site-header__toggle-button.reversed .toggle-button__animated-parts-img {
-    transform: rotate(180deg);
+    transform: scaleY(-1);
 }
 .site-header__toggle-button.animating .toggle-button__animated-parts-img {
     /* we're using an animation here instead of transition since we want opacity to be 0 instantaneously*/
@@ -173,14 +182,6 @@ body {
     z-index: 0;
 
     transition: filter .25s ease-in-out;
-}
-@media (hover:hover) {
-    .site-header__toggle-button:hover .toggle-button__base-img{
-        filter: invert(.2); /* remember! use filter for images to color them */
-    }
-}
-.site-header__toggle-button:active .toggle-button__base-img {
-        filter: invert(.2); /* remember! use filter for images to color them */
 }
 @keyframes SiteHeaderButtonAnimation {
     0% {opacity: 0;}
