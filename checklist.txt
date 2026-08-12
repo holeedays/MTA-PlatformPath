@@ -3,13 +3,16 @@ This is where we add stuff we did and things to do...
 PLANS FOR THE FUTURE:
 ------------------------------
 
-PRIORITIES:
+PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport)
-    - Adding a preview of the path (before selecting through steps)
-    - Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
+    - Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
+        - Modify pathfinder to ignore ADA accessible nodes unless toggled
     - Add a legend (map elements + coloring explanation)
+    - Adding a preview of the path (before selecting through steps)
 > Change the station map diagrams (maybe alter the arrows and names on them??)
     - we are currently doing this...
+    - add more nodes (2 rules have been instated for creating nodes in figma doc)
+    - add rotated views 
 > Add all the new stations currently available
 > Remove old files
 
@@ -53,6 +56,7 @@ Do a visual rework and logical refactor of the home page, line selection page, a
 Finished lines selection/station selections styling and logic
 Add filters to limit the node selections (for user simplicity)
 Added a map rotation button
+Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
 
 Ivan ----
 TO DO:
