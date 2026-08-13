@@ -264,15 +264,14 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                     (stair_nw, mezz_dt_exit, "Take the stairs up to the downtown exit area", "UP"),
         ]
 
-        for from_n, to_n, instr_fwd, instr_bwd, vertical_dir in edges_data:
+        for from_n, to_n, instruction, vertical_direction in edges_data:
             Edge.objects.create(
                 station=station,
                 from_node=from_n,
                 to_node=to_n,
-                instruction_forward=instr_fwd,
-                instruction_backward=instr_bwd,
-                forward_vertical_direction=vertical_dir,
-                is_active=True
+                instruction=instruction,
+                vertical_direction=vertical_direction,
+                is_active=True,
             )
 
         if stdout and style:

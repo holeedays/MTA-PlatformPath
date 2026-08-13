@@ -18,6 +18,7 @@ export interface NodeData {
 export type VerticalDirection = "NONE" | "UP" | "DOWN"
 
 export interface EdgeData {
+    id: number
     from_node: number;
     to_node: number;
     instruction: string;
