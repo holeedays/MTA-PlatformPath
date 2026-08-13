@@ -2,6 +2,17 @@
     Macro Styling
    ========================================================= */
 
+:root {
+    /* these 3 variables are interdependent... due to some race condition bugs (e.g. .loading on the stations-list li items
+     from toggling the slider causes it to get stuck permanently because we use transitionend event listener to toggle off .loading 
+    on the item which doesn't really work if you're spamming the slider to the max), ***we need the station list item wrapper's
+    transition duration to be equal or less to the direction description animation/slider transition (which does have a race condition 
+    check and is directly tied to the event handling of the list item wrapper)*** */
+    --direction-description-animation-duration: .2s;
+    --slider-transition-duration: .25s; /* apply this to the slider track and knob */
+    --li-item-wrapper-transition-duration: calc(var(--slider-transition-duration) - .05s);
+}
+
 * {
     font-family: Helvetica;
     margin: 0;
@@ -193,8 +204,8 @@ body {
     justify-content: center;
 
     transition: 
-        display ease 0.25s allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
-        opacity 0.2s ease-in-out;
+        display var(--li-item-wrapper-transition-duration) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
+        opacity var(--li-item-wrapper-transition-duration) ease-in-out;
 }
 /* this is the sauce for allow-discrete to work properly... 
 it basically tells the animation what to do when display: none -> display: whatever */
@@ -299,12 +310,12 @@ it basically tells the animation what to do when display: none -> display: whate
     color: #000000;
 }
 .stations__direction-description.swapping {
-    animation: TextChangeAnimation;
-    animation-duration: .25s;
+    animation: DirectionDescriptionSwapAnimation;
+    animation-duration: var(--direction-description-animation-duration);
     animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
 /* we're using a keyframe animation here since the text change is instantaneous hence we need the opacity to be 0 immediately */
-@keyframes TextChangeAnimation {
+@keyframes DirectionDescriptionSwapAnimation {
     0% {opacity: 0;}
     100% {opacity: 1;}
 }
@@ -318,7 +329,7 @@ it basically tells the animation what to do when display: none -> display: whate
     border: var(--slider-border-width) solid #000000;
     border-radius: 1000px;
 
-    transition: background 0.25s ease-in-out;
+    transition: background var(--slider-transition-duration) ease-in-out;
 }
 .slider-knob {
     transform: translateX(-5px);
@@ -329,8 +340,8 @@ it basically tells the animation what to do when display: none -> display: whate
     border-radius: 100%;
 
     transition: 
-        background 0.25s ease-in-out,
-        transform 0.25s ease-in-out;
+        background var(--slider-transition-duration) ease-in-out,
+        transform var(--slider-transition-duration) ease-in-out;
 }
 
 .slider-track:hover {

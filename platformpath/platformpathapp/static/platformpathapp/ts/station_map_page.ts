@@ -250,11 +250,17 @@ export class StationMapPage {
         }
 
         let pressed: boolean = false;
+        // booleans to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
+        let diagramContainerIsAnimating: boolean = false;
+        let mapRotateButtonIsTransitioning: boolean = false;
 
         const diagramPath: string | null | undefined = this.station?.station_model.diagram_path;
         const diagramRotatedPath: string | null | undefined = this.station?.station_model.diagram_rotated_path;
         
         mapRotateButton.addEventListener("click", async () => { 
+            if (diagramContainerIsAnimating || mapRotateButtonIsTransitioning)
+                return;
+
             // add a TEMPORARY class that functions as a brief animatic for the button (to provide a little more juice to interactivity)
             mapRotateButton.classList.add("animating");
             diagramContainer.classList.add("swapping");
@@ -276,6 +282,8 @@ export class StationMapPage {
 
             this.reinitMap();
 
+            diagramContainerIsAnimating = true;
+            mapRotateButtonIsTransitioning = true;
             pressed = !pressed;
         });
 
@@ -284,6 +292,7 @@ export class StationMapPage {
         mapRotateButton.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "transform") {
                 mapRotateButton.classList.remove("animating");
+                mapRotateButtonIsTransitioning = false;
             }
         });
         // animation end event listener (e.g. keyframe animation end event listener) for diagram container 
@@ -291,6 +300,7 @@ export class StationMapPage {
         diagramContainer.addEventListener("animationend", (ev: AnimationEvent) => {
             if (ev.animationName === "SVGSwappingAnimation") {
                 diagramContainer.classList.remove("swapping");
+                diagramContainerIsAnimating = false;
             }
         }); 
     } 
@@ -550,7 +560,6 @@ export class StationMapPage {
                 this.selectedNodeOptions.startNode = nodeOption;
             }
             else {
-                console.log("Bye");
                 selectionRole = "end";
                 this.selectedNodeOptions.endNode = nodeOption;
             }
@@ -754,9 +763,16 @@ export class StationMapPage {
             return;
         }
 
-        // toggle event handling here (just style changes currently)
+        // button switch boolean
         let pressed: boolean = false;
+        // boolean to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
+        let siteHeaderButtonIsAnimating: boolean = false;
+
+        // toggle event handling here (just style changes currently)
         siteHeaderToggleButton.addEventListener("click", () => {
+            if (siteHeaderButtonIsAnimating) 
+                return;
+
             if (!pressed) {
                 // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
                 siteHeaderToggleButton.classList.add("reversed", "animating");
@@ -770,6 +786,7 @@ export class StationMapPage {
                 stationHeaderContainer.classList.remove("shifted-up");
             }
 
+            siteHeaderButtonIsAnimating = true;
             pressed = !pressed;
         });
 
@@ -777,6 +794,7 @@ export class StationMapPage {
         siteHeaderToggleButton.addEventListener("animationend", (ev: AnimationEvent) => {
             if (ev.animationName === "SiteHeaderButtonAnimation") {
                 siteHeaderToggleButton.classList.remove("animating");
+                siteHeaderButtonIsAnimating = false;
             }
         });
     }

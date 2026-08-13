@@ -5,10 +5,7 @@ import { CustomHTMLButton } from "./selection_custom_elements.ts";
 
 // this class will handle the stations selections route
 export class StationsSelectionPage {
-    private stationOrderReversed: boolean;
-
     constructor() {
-        this.stationOrderReversed = false;
     }
 
     // this is the function we'll run on app.ts
@@ -179,11 +176,19 @@ export class StationsSelectionPage {
         const directionDescription: HTMLSpanElement | null = (
             stationsDirectionSliderContainer.querySelector(".stations__direction-description"));
         const slider: HTMLDivElement | null = stationsDirectionSliderContainer.querySelector(".stations__direction-slider");
+        const sliderKnob: HTMLDivElement | null | undefined = slider?.querySelector(".slider-knob");
 
-        if (directionDescription === null || slider === null) {
+        if (
+            directionDescription === null || 
+            slider === null ||
+            sliderKnob === null ||
+            sliderKnob === undefined
+        ) {
             console.warn(
-                "The direction description doesn't exist or the slider knob may not exist",
-                `Direction Description Status: ${directionDescription}; Slider Knob Status: ${slider}`
+                "The direction description doesn't exist, the slider, or the slider knob may not exist",
+                `Direction Description Status: ${directionDescription}`,
+                `Slider Status: ${slider}`,
+                `Slider Knob Status: ${sliderKnob}`
             );
             return;
         }
@@ -193,12 +198,21 @@ export class StationsSelectionPage {
         directionDescription.innerHTML = "UPTOWN";
         slider.setAttribute("aria-checked", "false");
 
+        let pressed: boolean = false;
+        // booleans to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
+        let sliderIsTransitioning: boolean = false;
+        let directionDescriptionIsAnimating: boolean = false;
+
         // add our event listener
-        slider.addEventListener("click", () => {            
+        slider.addEventListener("click", () => {        
+            if (sliderIsTransitioning || directionDescriptionIsAnimating)
+                return;
+            
             let index: number = 0;
             let increment: number = 0;
 
-            if (this.stationOrderReversed === false) {
+            // handle the styling here
+            if (!pressed) {
                 index = stationListItems.length - 1;
                 increment = -1;
 
@@ -219,6 +233,7 @@ export class StationsSelectionPage {
                 slider.setAttribute("aria-checked", "false");
             }
 
+            // handle the actual event logic here
             for (let i = 0; i < stationListItems.length; i++) {
 
                 const button: CustomHTMLButton | undefined = stationListItems[i]?.customButton;
@@ -256,15 +271,25 @@ export class StationsSelectionPage {
                 index += increment;
             };
 
-            // also add an event handler for direction description (which removes the temp class of "swapping" after the animation is done)
-            directionDescription.addEventListener("animationend", (ev: AnimationEvent) => {
-                if (ev.animationName === "TextChangeAnimation") {
-                    directionDescription.classList.remove("swapping");
-                }
-            });
+            pressed = !pressed;
+            sliderIsTransitioning = true;
+            directionDescriptionIsAnimating = true;
+        });
 
+        // also add an event handler for both the slider and direction description... we want both items to finish their transitions/
+        // animations before we can listen for another click (this prevents some desyncing race conditions with user clicking input)
+        slider.addEventListener("transitionend", (ev: TransitionEvent) => {
+            // NOTE: transitionend is a bubbling event meaning a children's finishing transition will trigger this event listener
+            // we need to check if it really is the knob (which is the only part of the slider moving) that is done transitioning
+            if (ev.target === sliderKnob && ev.propertyName === "transform")
+                sliderIsTransitioning = false;
+        });
 
-            this.stationOrderReversed = !this.stationOrderReversed;
+        directionDescription.addEventListener("animationend", (ev: AnimationEvent) => {
+            if (ev.animationName === "DirectionDescriptionSwapAnimation") {
+                directionDescription.classList.remove("swapping");
+                directionDescriptionIsAnimating = false;
+            }
         });
     }
 
@@ -285,7 +310,7 @@ export class StationsSelectionPage {
             orderIdentifier: HTMLSpanElement, 
             customButton: CustomHTMLButton}[] = [];
 
-        // create our buttons and add even listeners for each one
+        // create our buttons and add event listeners for each one
         for (const station of stations) {
             // this is a custom class that has custom properties over the vanilla button element
             const customButton: CustomHTMLButton = new CustomHTMLButton();
@@ -398,6 +423,10 @@ export class StationsSelectionPage {
 
     // configures the item wrapper event listener logic 
     private initListItemWrapperPrelim(listItemWrapper: HTMLLIElement): void {
+        // there is no need to worry about the race condition since the slider already has a check to avoid desyncing of the list styling
+        // (e.g. the .loading class stays permanently attached); this also requires some css correspondence however, which
+        // is making sure the list item wrapper transition time is the same or shorter than the animation of the direction description 
+        // and slider (whichever one is longest in duration)
         listItemWrapper.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "opacity")
                 listItemWrapper.classList.remove("loading");
@@ -405,12 +434,6 @@ export class StationsSelectionPage {
     }
     // configures the styling for the list item wrapper
     private initListItemWrapper(listItemWrapper: HTMLLIElement): void {
-        // I added this code simply to avoid the event listener from not running at all 
-        // (which basically adds .loading permanently); it soft resets the class list
-        if (listItemWrapper.classList.contains("loading")) {
-            listItemWrapper.classList.remove("loading");
-            return;
-        }
         listItemWrapper.classList.add("loading");
     }
 }
