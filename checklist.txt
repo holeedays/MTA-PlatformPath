@@ -21,6 +21,7 @@ PRIORITIES (in order of priority):
 ... get more data, add more stations
 
 NICE-TO-HAVES (NON-PRIORITIES):
+> Change edges to no longer be bidirectional
 > Google Maps API Integration/Mta Realtime Data Integration 
 > Fixing the station start to station end page
 > Having server caches (to allow for favorited stations and things of the like)
@@ -63,8 +64,15 @@ Changing the path visualization (leaning towards greyed out nodes aside from the
 Ivan ----
 TO DO:
 (Priority)
+- Add checkbox feature for accessible stations
+- Add center on node back and make sure that is works
+- Add new bay 50, 25th av diagrams and modifiy seed to add the new selections
+- Add preview before steps (current vision is to lower opacity of everything other than path steps and show path steps at normal opacity
+    the full map layer is in view and ther will be a looping brightening/coloring of each sequenctial node until user starts the steps)
+- Add bayparkway station
 
 (Non-priority)
+- !!! Refactor database and scripts to accepts single directional edges (solves the escalator dilemna)
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
