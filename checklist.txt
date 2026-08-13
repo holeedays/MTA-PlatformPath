@@ -72,7 +72,6 @@ TO DO:
 - Add bayparkway station
 
 (Non-priority)
-- !!! Refactor database and scripts to accepts single directional edges (solves the escalator dilemna)
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
@@ -83,6 +82,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+- Refactor database and scripts to accepts single directional edges (solves the escalator dilemna)
 - Adding dynamic arrow changes for the stairs given a selected path
 Generated inital placeholder README
 Edit station map page to show layers selection as a side panel instead of horizontal bar
