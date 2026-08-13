@@ -11,7 +11,7 @@ export interface NodeData {
     label: string;
     svg_id: string;
     layer: number;
-    is_accessible: boolean;
+    is_accessible_infrastructure: boolean;
     types_dict: Record<string,string>;
 }
 
@@ -31,7 +31,8 @@ export interface StationData {
     id: number,
     diagram_path: string,
     diagram_rotated_path: string | null, // diagram rotated path can be null (since in the db it is nullable for now)
-    lines: string[]
+    lines: string[],
+    accessible_station: boolean
 }
 
 export interface StationResponse {

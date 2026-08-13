@@ -10,7 +10,8 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="25 Av",
-            diagram_path="/static/platformpathapp/diagrams/25Av.svg"
+            diagram_path="/static/platformpathapp/diagrams/25Av.svg",
+            accessible_station=False
         )
 
         # 2. Create line and attach to station
@@ -43,28 +44,28 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # --- PLATFORM LAYER NODES ---
         dt_plat_head = Node.objects.create(
             station=station, label="Downtown Platform Head", 
-            svg_id="DOWNTOWN PLATFORM HEAD", layer=layer_platforms, is_accessible=False,
+            svg_id="DOWNTOWN PLATFORM HEAD", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.DOWNTOWN_PLATFORM: NodeTypes.DOWNTOWN_PLATFORM.label
             }
         )
         dt_plat_mid = Node.objects.create(
             station=station, label="Downtown Platform Middle", 
-            svg_id="DOWNTOWN PLATFORM MIDDLE", layer=layer_platforms, is_accessible=False,
+            svg_id="DOWNTOWN PLATFORM MIDDLE", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.DOWNTOWN_PLATFORM: NodeTypes.DOWNTOWN_PLATFORM.label
             }
         )
         dt_plat_rear = Node.objects.create(
             station=station, label="Downtown Platform Rear", 
-            svg_id="DOWNTOWN PLATFORM REAR", layer=layer_platforms, is_accessible=False,
+            svg_id="DOWNTOWN PLATFORM REAR", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.DOWNTOWN_PLATFORM: NodeTypes.DOWNTOWN_PLATFORM.label
             }
         )
         stair_dt_to_mezz = Node.objects.create(
             station=station, label="Stairs from Downtown Platform to Mezzanine", 
-            svg_id="DOWNTOWN_TO_MEZZ_STAIRS", layer=layer_platforms, is_accessible=False,
+            svg_id="DOWNTOWN_TO_MEZZ_STAIRS", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.DOWNTOWN_PLATFORM: NodeTypes.DOWNTOWN_PLATFORM.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label
@@ -73,28 +74,28 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         
         ut_plat_head = Node.objects.create(
             station=station, label="Uptown Platform Head", 
-            svg_id="UPTOWN PLATFORM HEAD", layer=layer_platforms, is_accessible=False,
+            svg_id="UPTOWN PLATFORM HEAD", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.UPTOWN_PLATFORM: NodeTypes.UPTOWN_PLATFORM.label
             }
         )
         ut_plat_mid = Node.objects.create(
             station=station, label="Uptown Platform Middle", 
-            svg_id="UPTOWN PLATFORM MIDDLE", layer=layer_platforms, is_accessible=False, 
+            svg_id="UPTOWN PLATFORM MIDDLE", layer=layer_platforms, is_accessible_infrastructure=False, 
             types_dict = {
                 NodeTypes.UPTOWN_PLATFORM: NodeTypes.UPTOWN_PLATFORM.label
             }
         )
         ut_plat_rear = Node.objects.create(
             station=station, label="Uptown Platform Rear", 
-            svg_id="UPTOWN PLATFORM REAR", layer=layer_platforms, is_accessible=False,
+            svg_id="UPTOWN PLATFORM REAR", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.UPTOWN_PLATFORM: NodeTypes.UPTOWN_PLATFORM.label
             }
         )
         stair_ut_to_mezz = Node.objects.create(
             station=station, label="Stairs from Uptown Platform to Mezzanine", 
-            svg_id="UPTOWN_TO_MEZZ_STAIRS", layer=layer_platforms, is_accessible=False,
+            svg_id="UPTOWN_TO_MEZZ_STAIRS", layer=layer_platforms, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.UPTOWN_PLATFORM: NodeTypes.UPTOWN_PLATFORM.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label
@@ -104,7 +105,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # --- MEZZANINE LAYER NODES ---
         stair_ne = Node.objects.create(
             station=station, label="Stairs at NE corner", 
-            svg_id="25_AV_86_ST_NE_STAIRS", layer=layer_mezzanine, is_accessible=False,
+            svg_id="25_AV_86_ST_NE_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
@@ -113,7 +114,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         )
         stair_nw = Node.objects.create(
             station=station, label="Stairs at NW corner", 
-            svg_id="25_AV_86_ST_NW_STAIRS", layer=layer_mezzanine, is_accessible=False,
+            svg_id="25_AV_86_ST_NW_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
@@ -122,7 +123,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         )
         stair_sw = Node.objects.create(
             station=station, label="Stairs at SW corner", 
-            svg_id="25_AV_86_ST_SW_STAIRS", layer=layer_mezzanine, is_accessible=False,
+            svg_id="25_AV_86_ST_SW_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
@@ -131,7 +132,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         )
         stair_se = Node.objects.create(
             station=station, label="Stairs at SE corner", 
-            svg_id="25_AV_86_ST_SE_STAIRS", layer=layer_mezzanine, is_accessible=False, 
+            svg_id="25_AV_86_ST_SE_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False, 
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
@@ -141,7 +142,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
 
         stair_mezz_to_ut = Node.objects.create(
             station=station, label="Mezzanine Stairs to Uptown Platform", 
-            svg_id="MEZZ_TO_UPTOWN_STAIRS", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZ_TO_UPTOWN_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label
@@ -149,7 +150,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         )
         stair_mezz_to_dt = Node.objects.create(
             station=station, label="Mezzanine Stairs to Downtown Platform", 
-            svg_id="MEZZ_TO_DOWNTOWN_STAIRS", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZ_TO_DOWNTOWN_STAIRS", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label
@@ -158,42 +159,42 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
 
         mezz_ut = Node.objects.create(
             station=station, label="Mezzanine Uptown Area", 
-            svg_id="MEZZANINE UPTOWN", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE UPTOWN", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
         mezz_ut_exit = Node.objects.create(
             station=station, label="Mezzanine Uptown Exit", 
-            svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
         mezz_dt = Node.objects.create(
             station=station, label="Mezzanine Downtown Area", 
-            svg_id="MEZZANINE DOWNTOWN", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE DOWNTOWN", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
         mezz_dt_exit = Node.objects.create(
             station=station, label="Mezzanine Downtown Exit", 
-            svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
         mezz_central = Node.objects.create(
             station=station, label="Mezzanine Central Area", 
-            svg_id="MEZZANINE CENTRAL", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE CENTRAL", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
         mezz_booth = Node.objects.create(
             station=station, label="Mezzanine Central Booth", 
-            svg_id="MEZZANINE CENTRAL BOOTH", layer=layer_mezzanine, is_accessible=False,
+            svg_id="MEZZANINE CENTRAL BOOTH", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }

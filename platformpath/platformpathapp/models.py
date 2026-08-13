@@ -28,6 +28,8 @@ class Station(models.Model):
         to=Line, 
         blank=True,
         through="StationLine")
+    # indicates whether the station is accessible as an option
+    accessible_station = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -115,7 +117,7 @@ class Node(models.Model):
     label = models.CharField(max_length=200)
     svg_id = models.CharField(max_length=100)
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE)
-    is_accessible = models.BooleanField(default=False) 
+    is_accessible_infrastructure = models.BooleanField(default=False)
                 
     types = models.JSONField(
         name="types_dict", #NOTE: this will be the default name now
@@ -130,7 +132,7 @@ class Node(models.Model):
     def save(self, *args, **kwargs) -> None:
         # this is because django doesnt trigger validators when creating the object (for performance or smthing or whatever...)
         # .full_clean() does trigger it so we're gonna add this when saving the object
-        self.full_clean() 
+        self.full_clean()
         super().save(*args, **kwargs)
 
 class Edge(models.Model):

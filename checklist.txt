@@ -7,6 +7,7 @@ PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport)
     - Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
         - Modify pathfinder to ignore ADA accessible nodes unless toggled
+        - Add checkbox to look for an accessible route if the station is accessible
     - Add a legend (map elements + coloring explanation)
     - Add a button (maybe to the station heading) to return back to the station selection part of the website
     - Adding a preview of the path (before selecting through steps)

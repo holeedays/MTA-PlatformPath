@@ -123,8 +123,10 @@ export class PathFinder {
             // checks if the nodes exist
             if (!fromNode || !toNode) return null;
 
-            if (isAccessible && !fromNode.is_accessible) return null;
-            if (isAccessible && !toNode.is_accessible)   return null;
+            // check if node is accessible if accessible option is enabled
+            // if it is not and the accessible option is enabled this iteration of the loop is skipped
+            if (isAccessible && this.isNotAccessible(fromNode)) return;
+            if (isAccessible && this.isNotAccessible(toNode))   return;
 
             // addressing for reverese directions (a -> b, b -> a)
             const fromNeighbors = adjacency[edge.from_node] ?? [];
@@ -157,5 +159,11 @@ export class PathFinder {
         default:
             return "NONE";
     }
-}
+    
+    }
+
+    // method to determine if a node is not accessible
+    private isNotAccessible(node: NodeData): boolean {
+        return "STRS" in node.types_dict || "STRS_EXT" in node.types_dict;
+    }
 }
