@@ -147,11 +147,18 @@ export class PathFinder {
         const adjacency: Record<number, EdgeData[]> = {};
 
         station.edge_models.forEach((edge) => {
-            // inactive endges are will not be considered for the route
+            // inactive edges are will not be considered for the route
             if (!edge.is_active) return null;
 
             const fromNode = nodeMap[edge.from_node];
             const toNode   = nodeMap[edge.to_node];
+
+            // Edges with accessible infrastructure will not be considered for the route if the accessible option is
+            // disabled since it is normally just worse to use
+            if (!isAccessible) {
+                if(fromNode?.is_accessible_infrastructure) return;
+                if(toNode?.is_accessible_infrastructure) return;
+            }
 
             // checks if the nodes exist
             if (!fromNode || !toNode) return null;
