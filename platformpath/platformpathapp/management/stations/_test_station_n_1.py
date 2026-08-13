@@ -10,8 +10,8 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="Test Station 1",
-            diagram_path="/static/platformpathapp/diagrams/Bay50_v3.svg",
-            diagram_rotated_path="/static/platformpathapp/diagrams/Bay50_v3_rotated.svg",
+            diagram_path="/static/platformpathapp/diagrams/Bay50.svg",
+            diagram_rotated_path="/static/platformpathapp/diagrams/Bay50_rotated.svg",
             accessible_station=False
         )
 
@@ -165,13 +165,27 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        mezz_ut_exit = Node.objects.create(
-            station=station, label="Mezzanine Uptown Exit", 
-            svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        # mezz_ut_exit = Node.objects.create(
+        #     station=station, label="Mezzanine Uptown Exit", 
+        #     svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        #     types_dict = {
+        #         NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+        #     }
+        # )
+        mezz_ut_harway_exit = Node.objects.create(
+            station=station, label="Mezzanine Uptown Harway Av Exit",
+            svg_id="MEZZANINE UPTOWN HARWAY EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
+        mezz_ut_bay_50_exit = Node.objects.create(
+            station=station, label="Mezzanine Uptown Bay 50 Exit",
+            svg_id="MEZZANINE UPTOWN BAY 50 EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+            types_dict = {
+                NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+            }
+        ) 
         mezz_dt = Node.objects.create(
             station=station, label="Mezzanine Downtown Area", 
             svg_id="MEZZANINE DOWNTOWN", layer=layer_mezzanine, is_accessible_infrastructure=False,
@@ -179,13 +193,27 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        mezz_dt_exit = Node.objects.create(
-            station=station, label="Mezzanine Downtown Exit", 
-            svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        # mezz_dt_exit = Node.objects.create(
+        #     station=station, label="Mezzanine Downtown Exit", 
+        #     svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        #     types_dict = {
+        #         NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+        #     }
+        # )
+        mezz_dt_harway_exit = Node.objects.create(
+            station=station, label="Mezzanine Downtown Harway Av Exit",
+            svg_id="MEZZANINE DOWNTOWN HARWAY EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
+        mezz_dt_bay_50_exit = Node.objects.create(
+            station=station, label="Mezzanine Downtown Bay 50 Exit",
+            svg_id="MEZZANINE DOWNTOWN BAY 50 EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+            types_dict = {
+                NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+            }
+        ) 
         mezz_central = Node.objects.create(
             station=station, label="Mezzanine Central Area", 
             svg_id="MEZZANINE CENTRAL", layer=layer_mezzanine, is_accessible_infrastructure=False,
@@ -245,26 +273,36 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                     (mezz_central, mezz_booth, "Walk towards the station booth", "NONE"),
                     (mezz_booth, mezz_central, "Walk towards the center of the mezzanine", "NONE"),
                     
-                    (mezz_booth, mezz_ut_exit, "Head towards the uptown exit gates", "NONE"),
-                    (mezz_ut_exit, mezz_booth, "Head towards the station booth", "NONE"),
+                    (mezz_booth, mezz_ut_harway_exit, "Head towards the uptown exit gates", "NONE"),
+                    (mezz_ut_harway_exit, mezz_booth, "Head towards the station booth", "NONE"),
                     
-                    (mezz_booth, mezz_dt_exit, "Head towards the downtown exit gates", "NONE"),
-                    (mezz_dt_exit, mezz_booth, "Head towards the station booth", "NONE"),
+                    (mezz_booth, mezz_dt_harway_exit, "Head towards the downtown exit gates", "NONE"),
+                    (mezz_dt_harway_exit, mezz_booth, "Head towards the station booth", "NONE"),
 
                     # Street Exit Chains
-                    # Bay 50 St 2 <-> Uptown Exit <-> Harway Av 2
-                    (stair_bay_50_2, mezz_ut_exit, "Take the stairs up to the uptown exit area", "UP"),
-                    (mezz_ut_exit, stair_bay_50_2, "Take the stairs down to the Bay 50 St entrance 2", "DOWN"),
+                    # Uptown Harway Exit <-> Harway Av 2
+                    (stair_harway_2, mezz_ut_harway_exit, "Take the stairs up to the uptown Harway exit area", "UP"),
+                    (mezz_ut_harway_exit, stair_harway_2, "Take the stairs down to the Harway Av entrance 2", "DOWN"),
+
+                    # Uptown Harway Exit <-> Uptown Bay 50 Exit
+                    (mezz_ut_harway_exit, mezz_ut_bay_50_exit, "Walk towards the uptown Bay 50 exit area", "NONE"),
+                    (mezz_ut_bay_50_exit, mezz_ut_harway_exit, "Walk towards the uptown Harway exit area", "NONE"),
                     
-                    (mezz_ut_exit, stair_harway_2, "Take the stairs down to the Harway Av entrance 2", "DOWN"),
-                    (stair_harway_2, mezz_ut_exit, "Take the stairs up to the uptown exit area", "UP"),
+                    # Uptown Bay 50 Exit <-> Bay 50 St 2
+                    (stair_bay_50_2, mezz_ut_bay_50_exit, "Take the stairs up to the uptown Bay 50 exit area", "UP"),
+                    (mezz_ut_bay_50_exit, stair_bay_50_2, "Take the stairs down to the Bay 50 St entrance 2", "DOWN"),
                     
-                    # Bay 50 St 1 <-> Downtown Exit <-> Harway Av 1
-                    (stair_bay_50_1, mezz_dt_exit, "Take the stairs up to the downtown exit area", "UP"),
-                    (mezz_dt_exit, stair_bay_50_1, "Take the stairs down to the Bay 50 St entrance 1", "DOWN"),
+                    # Downtown Harway Exit <-> Harway Av 1
+                    (stair_harway_1, mezz_dt_harway_exit, "Take the stairs up to the downtown Harway exit area", "UP"),
+                    (mezz_dt_harway_exit, stair_harway_1, "Take the stairs down to the Harway Av entrance 1", "DOWN"),
+
+                    # Downtown Harway Exit <-> Downtown Bay 50 Exit
+                    (mezz_dt_harway_exit, mezz_dt_bay_50_exit, "Walk towards the downtown Bay 50 exit area", "NONE"),
+                    (mezz_dt_bay_50_exit, mezz_dt_harway_exit, "Walk towards the downtown Harway exit area", "NONE"),
                     
-                    (mezz_dt_exit, stair_harway_1, "Take the stairs down to the Harway Av entrance 1", "DOWN"),
-                    (stair_harway_1, mezz_dt_exit, "Take the stairs up to the downtown exit area", "UP"),
+                    # Downtown Bay 50 Exit <-> Bay 50 St 1
+                    (stair_bay_50_1, mezz_dt_bay_50_exit, "Take the stairs up to the downtown Bay 50 exit area", "UP"),
+                    (mezz_dt_bay_50_exit, stair_bay_50_1, "Take the stairs down to the Bay 50 St entrance 1", "DOWN"),
         ]
 
         for from_n, to_n, instruction, vertical_direction in edges_data:
