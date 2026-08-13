@@ -141,11 +141,10 @@ class Edge(models.Model):
                                              on_delete=models.CASCADE)
     to_node = models.ForeignKey(Node, related_name='edges_to',
                                              on_delete=models.CASCADE)
-    instruction_forward = models.CharField(max_length=300)
-    instruction_backward = models.CharField(max_length=300)
+    instruction = models.CharField(max_length=300)
     is_active = models.BooleanField(default=True)
-    # direction of the stairs for the forward edge
-    forward_vertical_direction = models.CharField(
+    # direction of the stairs for the edge
+    vertical_direction = models.CharField(
         max_length=4,
         choices=VerticalDirections.choices,
         default=VerticalDirections.NONE,

@@ -84,7 +84,7 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
     class Meta:
         model = Edge
         # from_node and to_node will be returned as ids, which is fine for our case
-        fields: list[str] = ["id", "station", "from_node", "to_node", "instruction_forward", "instruction_backward", "forward_vertical_direction","is_active"]
+        fields: list[str] = ["id", "station", "from_node", "to_node", "instruction", "vertical_direction","is_active"]
 
 class LayerSerializer(serializers.ModelSerializer):
     class Meta:
