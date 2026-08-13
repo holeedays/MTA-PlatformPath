@@ -165,13 +165,6 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        # mezz_ut_exit = Node.objects.create(
-        #     station=station, label="Mezzanine Uptown Exit", 
-        #     svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
-        #     types_dict = {
-        #         NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
-        #     }
-        # )
         mezz_ut_harway_exit = Node.objects.create(
             station=station, label="Mezzanine Uptown Harway Av Exit",
             svg_id="MEZZANINE UPTOWN HARWAY EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
@@ -193,13 +186,6 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        # mezz_dt_exit = Node.objects.create(
-        #     station=station, label="Mezzanine Downtown Exit", 
-        #     svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
-        #     types_dict = {
-        #         NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
-        #     }
-        # )
         mezz_dt_harway_exit = Node.objects.create(
             station=station, label="Mezzanine Downtown Harway Av Exit",
             svg_id="MEZZANINE DOWNTOWN HARWAY EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
