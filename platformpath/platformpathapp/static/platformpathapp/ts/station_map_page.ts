@@ -709,18 +709,21 @@ export class StationMapPage {
     private getRouteDirectionLabelIds(path: PathStep[]): Set<string> {
         const labelIds = new Set<string>();
 
+        // Loops through each step in the path and generates the svg_id of the stairs
+        // label based on the direction of the edge if has a vertical direction
         for (const step of path) {
-            const traversal = step.traversal;
-
-            if (!traversal || traversal.verticalDirection === "NONE") {
+            // look at the edge of the path and see if it has a vertical direction
+            const edge = step.incomingEdge;
+            if (!edge || edge.vertical_direction === "NONE") {
                 continue;
             }
 
+            // Each edge has two nodes, so each one has to be checked
+            // to see if it is a structure that actual has the label
             const endpointIds = [
-                traversal.fromNodeId,
-                traversal.toNodeId,
+                edge.from_node,
+                edge.to_node,
             ];
-
             for (const nodeId of endpointIds) {
                 const node = this.station?.node_models.find(
                     (candidate) => candidate.id === nodeId
@@ -732,7 +735,7 @@ export class StationMapPage {
                 }
 
                 labelIds.add(
-                    `${node.svg_id}_${traversal.verticalDirection}`
+                    `${node.svg_id}_${edge.vertical_direction}`
                 );
             }
         }
