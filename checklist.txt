@@ -64,12 +64,11 @@ Changing the path visualization (leaning towards greyed out nodes aside from the
 Ivan ----
 TO DO:
 (Priority)
-- Add checkbox feature for accessible stations
-- Add center on node back and make sure that is works
 - Add new bay 50, 25th av diagrams and modifiy seed to add the new selections
 - Add preview before steps (current vision is to lower opacity of everything other than path steps and show path steps at normal opacity
     the full map layer is in view and ther will be a looping brightening/coloring of each sequenctial node until user starts the steps)
 - Add bayparkway station
+- Add checkbox feature for accessible stations
 
 (Non-priority)
 The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
@@ -82,6 +81,7 @@ Need to think about how edges work since there are escalators that only go one d
 elevators go to multiple layers.
 
 DONE:
+- Add center on node back and make sure that is works
 - Refactor database and scripts to accepts single directional edges (solves the escalator dilemna)
 - Adding dynamic arrow changes for the stairs given a selected path
 Generated inital placeholder README

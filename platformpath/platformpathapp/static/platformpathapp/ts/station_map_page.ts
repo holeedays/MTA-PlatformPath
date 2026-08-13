@@ -439,7 +439,7 @@ export class StationMapPage {
         this.setActiveLayerButtonByLayer(step.layer);
         // highlight nodes and center onto them
         this.svgRenderer.highlightNode(step.svgId);
-        // this.svgRenderer.centerOnNode(step.svgId);
+        this.svgRenderer.centerOnNode(step.svgId);
 
         btnPrev.disabled = (this.currentIndex === 0);
         btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
