@@ -76,18 +76,14 @@ TO DO:
 (Priority)
 - Add preview before steps (current vision is to lower opacity of everything other than path steps and show path steps at normal opacity
     the full map layer is in view and ther will be a looping brightening/coloring of each sequenctial node until user starts the steps)
-- Add bayparkway station
 - Add checkbox feature for accessible stations
 
 (Non-priority)
-The pan/zoom feature for the station map is quite small for smaller screen sizes and limits the zoom a bit too much
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
     - The next button doesn't work when boarding the train. (Might want to change the
         appearance of the next button at this stage or make the button do the same 
         the board train button)
     - (Potential) Make the phase tracker interactable to move to different phases
-Need to think about how edges work since there are escalators that only go one direction. Additionally
-elevators go to multiple layers.
 
 DONE:
 - Add new bay 50, 25th av diagrams and modifiy seed to add the new selections
