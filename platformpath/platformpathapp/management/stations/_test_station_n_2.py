@@ -11,6 +11,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         station = Station.objects.create(
             name="Test Station 2",
             diagram_path="/static/platformpathapp/diagrams/25Av.svg",
+            diagram_rotated_path="/static/platformpathapp/diagrams/25Av_rotated.svg",
             accessible_station=False
         )
 
@@ -164,9 +165,16 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        mezz_ut_exit = Node.objects.create(
-            station=station, label="Mezzanine Uptown Exit", 
-            svg_id="MEZZANINE UPTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        mezz_ut_ne_exit = Node.objects.create(
+            station=station, label="Mezzanine Uptown NE Exit", 
+            svg_id="MEZZANINE UPTOWN NE EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+            types_dict = {
+                NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+            }
+        )
+        mezz_ut_se_exit = Node.objects.create(
+            station=station, label="Mezzanine Uptown SE Exit", 
+            svg_id="MEZZANINE UPTOWN SE EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
@@ -178,9 +186,16 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
         )
-        mezz_dt_exit = Node.objects.create(
-            station=station, label="Mezzanine Downtown Exit", 
-            svg_id="MEZZANINE DOWNTOWN EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+        mezz_dt_nw_exit = Node.objects.create(
+            station=station, label="Mezzanine Downtown NW Exit", 
+            svg_id="MEZZANINE DOWNTOWN NW EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
+            types_dict = {
+                NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
+            }
+        )
+        mezz_dt_sw_exit = Node.objects.create(
+            station=station, label="Mezzanine Downtown SW Exit", 
+            svg_id="MEZZANINE DOWNTOWN SW EXIT", layer=layer_mezzanine, is_accessible_infrastructure=False,
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label
             }
@@ -244,25 +259,38 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                     (mezz_central, mezz_booth, "Walk towards the station booth", "NONE"),
                     (mezz_booth, mezz_central, "Walk towards the center of the mezzanine", "NONE"),
                     
-                    (mezz_booth, mezz_ut_exit, "Head towards the uptown exit gates", "NONE"),
-                    (mezz_ut_exit, mezz_booth, "Head towards the station booth", "NONE"),
+                    (mezz_booth, mezz_ut_ne_exit, "Head towards the uptown exit gates", "NONE"),
+                    (mezz_ut_ne_exit, mezz_booth, "Head towards the station booth", "NONE"),
                     
-                    (mezz_booth, mezz_dt_exit, "Head towards the downtown exit gates", "NONE"),
-                    (mezz_dt_exit, mezz_booth, "Head towards the station booth", "NONE"),
+                    (mezz_booth, mezz_dt_nw_exit, "Head towards the downtown exit gates", "NONE"),
+                    (mezz_dt_nw_exit, mezz_booth, "Head towards the station booth", "NONE"),
 
                     # Street Exit Chains
-                    (stair_se, mezz_ut_exit, "Take the stairs up to the uptown exit area", "UP"),
-                    (mezz_ut_exit, stair_se, "Take the stairs down to the SE corner street level", "DOWN"),
                     
-                    (mezz_ut_exit, stair_ne, "Take the stairs down to the NE corner street level", "DOWN"),
-                    (stair_ne, mezz_ut_exit, "Take the stairs up to the uptown exit area", "UP"),
+                    # Uptown NE Exit <-> NE Corner
+                    (stair_ne, mezz_ut_ne_exit, "Take the stairs up to the uptown NE exit area", "UP"),
+                    (mezz_ut_ne_exit, stair_ne, "Take the stairs down to the NE corner street level", "DOWN"),
 
-                    (stair_sw, mezz_dt_exit, "Take the stairs up to the downtown exit area", "UP"),
-                    (mezz_dt_exit, stair_sw, "Take the stairs down to the SW corner street level", "DOWN"),
-                    
-                    (mezz_dt_exit, stair_nw, "Take the stairs down to the NW corner street level", "DOWN"),
-                    (stair_nw, mezz_dt_exit, "Take the stairs up to the downtown exit area", "UP"),
-        ]
+                    # Uptown NE Exit <-> Uptown SE Exit
+                    (mezz_ut_ne_exit, mezz_ut_se_exit, "Walk towards the uptown SE exit area", "NONE"),
+                    (mezz_ut_se_exit, mezz_ut_ne_exit, "Walk towards the uptown NE exit area", "NONE"),
+
+                    # Uptown SE Exit <-> SE Corner
+                    (stair_se, mezz_ut_se_exit, "Take the stairs up to the uptown SE exit area", "UP"),
+                    (mezz_ut_se_exit, stair_se, "Take the stairs down to the SE corner street level", "DOWN"),
+
+                    # Downtown NW Exit <-> NW Corner
+                    (stair_nw, mezz_dt_nw_exit, "Take the stairs up to the downtown NW exit area", "UP"),
+                    (mezz_dt_nw_exit, stair_nw, "Take the stairs down to the NW corner street level", "DOWN"),
+
+                    # Downtown NW Exit <-> Downtown SW Exit
+                    (mezz_dt_nw_exit, mezz_dt_sw_exit, "Walk towards the downtown SW exit area", "NONE"),
+                    (mezz_dt_sw_exit, mezz_dt_nw_exit, "Walk towards the downtown NW exit area", "NONE"),
+
+                    # Downtown SW Exit <-> SW Corner
+                    (stair_sw, mezz_dt_sw_exit, "Take the stairs up to the downtown SW exit area", "UP"),
+                    (mezz_dt_sw_exit, stair_sw, "Take the stairs down to the SW corner street level", "DOWN"),
+                ]
 
         for from_n, to_n, instruction, vertical_direction in edges_data:
             Edge.objects.create(
