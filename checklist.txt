@@ -1,5 +1,15 @@
 This is where we add stuff we did and things to do...
 
+**CURRENT ISSUES:
+> Bay Parkway Svg Label Directions not working properly (they do not show arrows sometimes for stairs and arrows do not ever show for
+elevators or ramps for some reason)
+> Start and end highlight has some issues (
+    - switching filters removes selected options, however this doesn't remove the highlighting on the map
+    - right now, path is included in the highlighting for all highlights but we don't want to do that or else arrows/texts are hard to see
+    ; is there a way to address this issue???
+)
+
+
 PLANS FOR THE FUTURE:
 ------------------------------
 
