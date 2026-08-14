@@ -1,7 +1,8 @@
 // Contains all functions related to rendering the svg diagrams
 
-import { type LayerData } from "./station_data.ts"
-import { NodeSVG } from "./station_custom_elements.ts"
+import { type LayerData } from "./station_data.ts";
+import { NodeSVG } from "./station_custom_elements.ts";
+import { NodeOption } from "./station_custom_elements.ts"
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -44,29 +45,44 @@ export class SvgRenderer {
         }
     }
 
-    // Seperate highlight function to highlight the start and the end of the selected path
-    public highlightSelectedNode(nodeSVGID: string, role: SelectionRole): void {
-        const highlightClass = role === "start" ? "start-node-highlight" : "end-node-highlight";
+    // gets the highlight class depending on the role given (of a node)
+    public getHighlightClass(role: SelectionRole): string {
+        return role === "start" ? "start-node-highlight" : "end-node-highlight";
+    }
 
-        // remove selection class from previous nodes
-        document.querySelectorAll(`.${highlightClass}`).forEach((element) => {
-            element.classList.remove(highlightClass);   
-        })
-        
-        const node: HTMLElement | null = document.getElementById(nodeSVGID);
-        if (!node) {
-            console.warn("Node not found:", nodeSVGID);
+    // Seperate highlight function to highlight the start and the end of the selected path
+    public highlightSelectedNode(nodeOption: NodeOption): void {
+        const role: SelectionRole = nodeOption.selectionRole();
+        // unhighlight all current instances of that selected node
+        this.unhighlightSelectedNode(role);
+        // get the highlight class 
+        const highlightClass: string = this.getHighlightClass(role);
+        // find our new svg that we will highlight
+        // unescaped spaces don't work with query selector (and our svg ids usually have spaces) so we do this instead
+        const node: SVGGraphicsElement | null = document.querySelector("#" + CSS.escape(nodeOption.SVGID));
+        if (node === null) {
+            console.warn(`Node with SVG ID: '${nodeOption.SVGID}' cannot be found`);
             return;
         }
-        
+        // add the highlight class to the nodeOption
         node.classList.add(highlightClass);
     }
 
     // Removes all highlighted nodes, excluding the selected nodes (e.g. start and end nodes)
     public unhighlightNodes(): void {
-          document.querySelectorAll(".highlighted").forEach((element) => {
+          document.querySelectorAll(".highlighted").forEach((element: Element) => {
             element.classList.remove("highlighted");   
         })
+    }
+
+    // Removes the highlighted node given the current role (either a start or end node)
+    public unhighlightSelectedNode(role: SelectionRole): void {
+        // get the highlight class
+        const highlightClass: string = this.getHighlightClass(role);
+        // remove selection class from previous nodes
+        document.querySelectorAll(`.${highlightClass}`).forEach((element) => {
+            element.classList.remove(highlightClass);   
+        });
     }
 
     // Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers
@@ -191,15 +207,33 @@ export class SvgRenderer {
         });
     }
 
+    // get all route direction labels
+    public getRouteDirectionLabels(): SVGGraphicsElement[] {
+        return Array.from(
+            document.querySelectorAll<SVGGraphicsElement>('#diagram-container g[id$="_UP"], #diagram-container g[id$="_DOWN"]')
+        );
+    }
+
+    // Inits the route direction labels (hides the elements and adds some styling to these labels)
+    public initRouteDirectionLabels(): void {
+        // get the direction labels
+        const labelElements: SVGGraphicsElement[] = this.getRouteDirectionLabels();
+        // hide all of them first
+        this.hideRouteDirectionLabels();
+        // and then add a special class for these elements
+        labelElements.forEach((labelElement: SVGGraphicsElement) => {
+            labelElement.classList.add("route-direction__label");
+        });
+    }
+
     // Function to hide all stair labels on the svg
     public hideRouteDirectionLabels(): void {
-        document
-            .querySelectorAll<SVGGraphicsElement>(
-                '#diagram-container g[id$="_UP"], #diagram-container g[id$="_DOWN"]'
-            )
-            .forEach((label) => {
-                label.style.display = "none";
-            });
+        // get all the direction labels
+        const labelElements: SVGGraphicsElement[] = this.getRouteDirectionLabels();
+        // hide the label elements
+        labelElements.forEach((labelElement: SVGGraphicsElement) => {
+                labelElement.style.display = "none";
+        });
     }
 
     // Function to show a specific stair label on the svg
@@ -207,14 +241,17 @@ export class SvgRenderer {
         this.hideRouteDirectionLabels();
 
         for (const labelId of labelIds) {
-            const label = document.getElementById(labelId) as SVGGraphicsElement | null;
+            const labelElement: SVGGraphicsElement | null = document.querySelector(`#${labelId}`);
 
-            if (!label) {
-                console.warn("Route direction label not found:", labelId);
+            if (labelElement === null) {
+                console.warn(
+                    "Route direction label element doesn't exist:", labelId
+                );
                 continue;
             }
 
-            label.style.display = "inline";
+            // make the label visible
+            labelElement.style.display = "inline";
         }
     }
 }

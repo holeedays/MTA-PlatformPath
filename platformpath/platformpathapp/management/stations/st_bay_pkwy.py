@@ -442,8 +442,8 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             # Uptown Intermediate Compound
 
             # mezzanine to intermediate uptown platform stairs
-            (mezz_central_rear_ut, stair_mezz_to_inter_ut, "Approach the stairs to the intermediate uptown platform", "NONE"),
-            (stair_mezz_to_inter_ut, mezz_central_rear_ut, "Step off the stairs onto the central mezzanine", "NONE"),
+            (mezz_central_rear_ut, stair_mezz_to_inter_ut, "Approach the stairs to the intermediate uptown platform", "UP"),
+            (stair_mezz_to_inter_ut, mezz_central_rear_ut, "Step off the stairs onto the central mezzanine", "DOWN"),
             (stair_mezz_to_inter_ut, inter_ut_plat, "Take the stairs up to the intermediate uptown platform landing", "UP"),
             (inter_ut_plat, stair_mezz_to_inter_ut, "Take the stairs down to the central mezzanine", "DOWN"),
 
@@ -472,8 +472,8 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             # Downtown Intermediate Compound
 
             # mezzanine to intermediate downtown platform stairs
-            (mezz_central_rear_dt, stair_mezz_to_inter_dt, "Approach the stairs to the intermediate downtown platform", "NONE"),
-            (stair_mezz_to_inter_dt, mezz_central_rear_dt, "Step off the stairs onto the central mezzanine", "NONE"),
+            (mezz_central_rear_dt, stair_mezz_to_inter_dt, "Approach the stairs to the intermediate downtown platform", "UP"),
+            (stair_mezz_to_inter_dt, mezz_central_rear_dt, "Step off the stairs onto the central mezzanine", "DOWN"),
             (stair_mezz_to_inter_dt, inter_dt_plat, "Take the stairs up to the intermediate downtown platform landing", "UP"),
             (inter_dt_plat, stair_mezz_to_inter_dt, "Take the stairs down to the central mezzanine", "DOWN"),
 

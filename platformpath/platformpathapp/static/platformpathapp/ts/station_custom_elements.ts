@@ -1,6 +1,6 @@
+import type { PathStep } from "./path_finder.ts";
 import { type LayerData } from "./station_data.ts";
-import { SvgRenderer } from "./svg_renderer.ts";
-import { type SelectionRole } from "./svg_renderer.ts";
+import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
 
 // a node option class used to house various proprties pertaining to an option for the node dropdown
 export class NodeOption {
@@ -32,9 +32,7 @@ export class NodeOption {
 
         this.parent = parent;
         this.self = document.createElement("button");
-        this.parent.append(this.self);
 
-        this.setBaseLogic();
         this.setStyling();
     }
 
@@ -59,22 +57,6 @@ export class NodeOption {
     }
     get Self(): HTMLButtonElement {
         return this.self;
-    }
-
-    // set the logic for the dropdown (still involves some styling changes but this is only involved with the event logic)
-    private setBaseLogic(): void {
-        this.self.addEventListener("click", () => {
-            // check if the parent has an option that is selected
-            const previouslySelectedOption: HTMLButtonElement | null = this.parent.querySelector<HTMLButtonElement>(".selected");
-            // determine if the previously selected option matches our current option
-            if (previouslySelectedOption !== this.self) {
-                // and then apply class changes
-                previouslySelectedOption?.classList.remove("selected");
-                this.self.classList.add("selected");
-            }
-            // hide dropdown afterwards
-            this.parent.hidePopover();
-        });
     }
 
     // set the styling/visual look of the element
@@ -108,7 +90,18 @@ export class NodeOption {
         labelComponent.innerHTML = this.label;
         filterDescriptionComponent.innerHTML = descriptionFilters;
 
+        // append the label componenets to the node option
         this.self.append(labelComponent, filterDescriptionComponent);
+        // and now append it to its parent
+        this.parent.append(this.self);
+    }
+
+    // gets the selection role of this node option
+    public selectionRole(): SelectionRole {
+        if (this.parent.id === "start-node-dropdown")
+            return "start"
+        else
+            return "end"
     }
 }
 
@@ -155,111 +148,6 @@ export class FilterCheckBox {
     get LogicHasBeenInit(): boolean {
         return this.logicHasBeenInit;
     }
-
-    // checker function to prevent multiple event handlers to be assigned to one checbox
-    private logicWasInitializedPreviously(): boolean {
-        if (this.logicHasBeenInit) {
-            console.log("This filter checkbox's event logic has already been initiated");
-            return true;
-        }
-        this.logicHasBeenInit = true;
-        return false;
-    }   
-
-    // init the logic for an all option filter checkbox
-    // to be utilized in the station map page where these params can be fulfilled
-    public initAllFilterLogic(nodeOptions: NodeOption[], activeFilters: Set<string>): void {
-        // include this check to prevent accidental assignments of multiple event handlers 
-        if (this.logicWasInitializedPreviously())
-            return;
-
-        this.buttonElement.addEventListener("click", () => {
-            // clear our active filters list
-            activeFilters.clear();
-            // clear all the styling for the other enabled checkboxes
-            document.querySelectorAll(".filter-checklist__checkbox, .enabled").forEach((filterCheckbox: Element) => {
-                filterCheckbox.classList.remove("enabled");
-            });
-
-            // iterate thru the node options and remove the hidden class if it exists
-            nodeOptions.forEach((nodeOption: NodeOption) => {
-                nodeOption.Self.classList.remove("hidden");
-            });
-                
-            // also indicate this filter check box has been clicked
-            this.self.classList.add("enabled");
-        });
-    }
-
-    // init the logic for a specific option checkbox (e.g. STRS, MEZZ, etc.. VS ALL)
-    // to be utilized in the station map page where these params can be fulfilled
-    public initSpecificFilterLogic(
-        allOptionFilterCheckbox: FilterCheckBox, 
-        nodeOptions: NodeOption[],
-        selectedNodeOptions: {startNode: NodeOption | null, endNode: NodeOption | null},
-        activeFilters: Set<string>
-    ): void {
-        if (this.logicWasInitializedPreviously())
-            return;
-
-        // event listener logic here...
-        this.buttonElement.addEventListener("click", () => {
-            // if filter is not previously enabled
-            if (!activeFilters.has(this.value)) {
-                // add this to our set of enabled filters
-                activeFilters.add(this.value);
-
-                // add the enabled styling to this checkbox
-                this.self.classList.add("enabled");
-                // and remove the styling on all option filter since it should be disabled if any other filter is enabled
-                allOptionFilterCheckbox.Self.classList.remove("enabled");
-            }
-            // in the case this filter is disabled
-            else {
-                // delete this filter value from enabled filters
-                activeFilters.delete(this.value);
-
-                // remove its class attribute
-                this.self.classList.remove("enabled");
-            }
-
-            // now check if any other active filters are enabled
-            if (activeFilters.size === 0) {
-                // activate the event listener for this
-                allOptionFilterCheckbox.ButtonElement.click();
-                return;
-            }
-
-            // now loop through our node options with the activeFilters readjusted
-            nodeOptions.forEach((nodeOption: NodeOption) => {
-                // create a boolean to determine if any filters match 
-                let matchesAFilter: boolean = false;
-                for (const filterValue of activeFilters) {
-                    if (nodeOption.Filters.has(filterValue)) {
-                        matchesAFilter = true;
-                        break;
-                    }
-                }
-                // if not just hide it and remove the selected value
-                if (!matchesAFilter) {
-                    nodeOption.Self.classList.add("hidden");
-                    // also remove the option__selected class if it is to be hidden
-                    nodeOption.Self.classList.remove("selected");
-
-                    // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
-                    if (selectedNodeOptions.startNode !== null && nodeOption.SVGID === selectedNodeOptions.startNode.SVGID) 
-                        selectedNodeOptions.startNode = null;
-                    if (selectedNodeOptions.endNode !== null && nodeOption.SVGID === selectedNodeOptions.endNode.SVGID) 
-                        selectedNodeOptions.endNode = null;
-                }
-                // else remove the hidden class if it exists
-                else {
-                    nodeOption.Self.classList.remove("hidden");
-                }
-            });
-        });
-    }
-
 
     // like node option, sets the styling/visual look of element and anything extraneous involving the html part of the element
     private setStyling(): void {

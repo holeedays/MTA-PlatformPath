@@ -695,17 +695,20 @@ will keep it with the standard highlight animation which applies original fill *
 {
     animation-name: StartEndNodeHighlightAnimation;
 }
-
 .start-node-highlight,
 .start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
     --target-fill: #9900ff;
     fill: var(--target-fill);
 }
-
 .end-node-highlight,
 .end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
     --target-fill: #e5ff00;
     fill: var(--target-fill);
+}
+/* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
+if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
+:is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
+    --target-fill: var(--original-fill);
 }
 
 /* ======== map rotate button ======== */

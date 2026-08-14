@@ -48,7 +48,8 @@ export class StationMapPage {
         this.initStationHeading();
         // Load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
-        this.svgRenderer.hideRouteDirectionLabels();
+        // init the route direction labels
+        this.svgRenderer.initRouteDirectionLabels();
         // init our layer controls (toggling the different layers of the svg)
         this.initLayerControls();
 
@@ -391,6 +392,8 @@ export class StationMapPage {
         this.currentPathNodeIDs.clear();
         // derender the existing path
         this.derenderPath();
+        // unhighlight all the other nodes
+        this.svgRenderer.unhighlightNodes();
         // hide route direction labels
         this.svgRenderer.hideRouteDirectionLabels();
         // remove the step ui from view
@@ -550,23 +553,30 @@ export class StationMapPage {
             layer,
             filters
         );
-        // add additional event listener logic 
+
+        // event listener here deals with the selection of the item
         nodeOption.Self.addEventListener("click", () => {
-            // determine what this dropdown this selected node option belongs to
-            let selectionRole: SelectionRole | null = null;
-            if (nodeOption.Parent.id === "start-node-dropdown") {
-                selectionRole = "start";
-                // also store the nodeOption in our selectedNodeOptions (which is crucial for handling path finding) 
+            // check if the parent has an option that is selected
+            const previouslySelectedOption: HTMLButtonElement | null = nodeOption.Parent.querySelector<HTMLButtonElement>(".selected");
+            // determine if the previously selected option matches our current option
+            if (previouslySelectedOption !== nodeOption.Self) {
+                // and then apply class changes
+                previouslySelectedOption?.classList.remove("selected");
+                nodeOption.Self.classList.add("selected");
+            }
+            // hide dropdown afterwards
+            nodeOption.Parent.hidePopover();
+        });
+        // event listener here deals with the extraneous effects of the selection (highlighting, current path interruption, etc)
+        nodeOption.Self.addEventListener("click", () => {
+            // highlight the selected node (it'll be either a start or end node, svg renderer will handle all the logic from here)
+            this.svgRenderer.highlightSelectedNode(nodeOption);
+            // also add the node option to our selectedNodeOptions depending on which one it represents
+            const role: SelectionRole = nodeOption.selectionRole();
+            if (role === "start")
                 this.selectedNodeOptions.startNode = nodeOption;
-            }
-            else {
-                selectionRole = "end";
+            else
                 this.selectedNodeOptions.endNode = nodeOption;
-            }
-            // highlight the selected node (either start or end)
-            this.svgRenderer.highlightSelectedNode(nodeOption.SVGID, selectionRole);
-            // unhighlight other nodes
-            this.svgRenderer.unhighlightNodes();
 
             // toggle off any navigation if it exists
             if (this.currentPath !== null) {
@@ -598,7 +608,11 @@ export class StationMapPage {
         // create a set to hold all active filters we have
         const activeFilters: Set<string> = new Set();
         // create a filter checkbox that reveals all options
-        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(filterCheckboxesContainer, nodeOptions, activeFilters);
+        const allOptionFilterCheckbox: FilterCheckBox = this.createAllOptionFilterCheckbox(
+            filterCheckboxesContainer, 
+            nodeOptions, 
+            activeFilters
+        );
 
         // create individual filter checkboxes for the various other node types
         this.createOtherFilterCheckboxes(
@@ -619,7 +633,22 @@ export class StationMapPage {
         // create our filter checkbox
         const filterCheckBox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL", filterChecklist);
         // init the logic for our all filter checkbox
-        filterCheckBox.initAllFilterLogic(nodeOptions, activeFilters);
+        filterCheckBox.ButtonElement.addEventListener("click", () => {
+            // clear our active filters list
+            activeFilters.clear();
+            // clear all the styling for the other enabled checkboxes
+            document.querySelectorAll(".filter-checklist__checkbox, .enabled").forEach((filterCheckbox: Element) => {
+                filterCheckbox.classList.remove("enabled");
+            });
+
+            // iterate thru the node options and remove the hidden class if it exists
+            nodeOptions.forEach((nodeOption: NodeOption) => {
+                nodeOption.Self.classList.remove("hidden");
+            });
+                
+            // also indicate this filter check box has been clicked
+            filterCheckBox.Self.classList.add("enabled");
+        });
         // activate the event listener as default
         filterCheckBox.ButtonElement.click();
 
@@ -639,7 +668,80 @@ export class StationMapPage {
             // create a filter checkbox 
             const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterCheckboxesContainer);
             // initiate the logic for it
-            filterCheckbox.initSpecificFilterLogic(allOptionFilterCheckbox, nodeOptions, this.selectedNodeOptions, activeFilters);
+            filterCheckbox.ButtonElement.addEventListener("click", () => {
+                // if filter is not previously enabled
+                if (!activeFilters.has(filterCheckbox.Value)) {
+                    // add this to our set of enabled filters
+                    activeFilters.add(filterCheckbox.Value);
+
+                    // add the enabled styling to this checkbox
+                    filterCheckbox.Self.classList.add("enabled");
+                    // and remove the styling on all option filter since it should be disabled if any other filter is enabled
+                    allOptionFilterCheckbox.Self.classList.remove("enabled");
+                }
+                // in the case this filter is disabled
+                else {
+                    // delete this filter value from enabled filters
+                    activeFilters.delete(filterCheckbox.Value);
+
+                    // remove its class attribute
+                    filterCheckbox.Self.classList.remove("enabled");
+                }
+
+                // now check if any other active filters are enabled
+                if (activeFilters.size === 0) {
+                    // activate the event listener for this
+                    allOptionFilterCheckbox.ButtonElement.click();
+                    return;
+                }
+
+                // now loop through our node options with the activeFilters readjusted
+                nodeOptions.forEach((nodeOption: NodeOption) => {
+                    // create a boolean to determine if any filters match 
+                    let matchesAFilter: boolean = false;
+                    for (const filterValue of activeFilters) {
+                        if (nodeOption.Filters.has(filterValue)) {
+                            matchesAFilter = true;
+                            break;
+                        }
+                    }
+                    // if not just hide it and remove the selected value
+                    if (!matchesAFilter) {
+                        nodeOption.Self.classList.add("hidden");
+                        // also remove the option__selected class if it is to be hidden
+                        nodeOption.Self.classList.remove("selected");
+
+                        // if navigating is already happening, just ignore the following statements below
+                        if (this.currentPath !== null)
+                            return;
+
+                        // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
+                        // and remove the highlighting corresponding to the selection role of that node option
+                        if (
+                            this.selectedNodeOptions.startNode !== null && 
+                            nodeOption.SVGID === this.selectedNodeOptions.startNode.SVGID
+                        ) {
+                            this.svgRenderer.unhighlightSelectedNode(
+                                this.selectedNodeOptions.startNode.selectionRole()
+                            );
+                            this.selectedNodeOptions.startNode = null;
+                        }
+                        if (
+                            this.selectedNodeOptions.endNode !== null && 
+                            nodeOption.SVGID === this.selectedNodeOptions.endNode.SVGID
+                        ) {
+                            this.svgRenderer.unhighlightSelectedNode(
+                                this.selectedNodeOptions.endNode.selectionRole()
+                            );
+                            this.selectedNodeOptions.endNode = null;
+                        }
+                    }
+                    // else remove the hidden class if it exists
+                    else {
+                        nodeOption.Self.classList.remove("hidden");
+                    }
+                });
+            });
         });
     }
 
@@ -661,9 +763,9 @@ export class StationMapPage {
 
         // highlight the start and end nodes again (if selected)
         if (this.selectedNodeOptions.startNode !== null)
-            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.startNode.SVGID, "start");
+            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.startNode);
         if (this.selectedNodeOptions.endNode !== null)
-            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.endNode.SVGID, "end");
+            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.endNode);
 
         // if navigation is already in progress
         if (this.currentPath !== null) {
