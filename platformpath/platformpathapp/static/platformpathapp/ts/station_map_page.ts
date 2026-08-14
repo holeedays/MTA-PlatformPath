@@ -719,18 +719,28 @@ export class StationMapPage {
             }
 
             // Each edge has two nodes, so each one has to be checked
-            // to see if it is a structure that actual has the label
-            const endpointIds = [
+            // to see if it is a structure that actually has the label
+            const endpointIds: number[] = [
                 edge.from_node,
                 edge.to_node,
             ];
             for (const nodeId of endpointIds) {
-                const node = this.station?.node_models.find(
-                    (candidate) => candidate.id === nodeId
+                const node: NodeData | undefined = this.station?.node_models.find(
+                    (candidate: NodeData) => candidate.id === nodeId
                 );
 
-                // "STRS" is the stored value for NodeTypes.STAIRS.
-                if (!node || !("STRS" in node.types_dict)) {
+                // "STRS" is the stored value for NodeTypes.STAIRS,
+                // "RMP" is the stored value for NodeTypes.RAMP,
+                // "ELVTR" is the stored value for NodeTypes.ELEVATOR
+                // all of these node types are directionally-based (e.g. they have arrow indicators for which way they go)
+                if (
+                    node === undefined || 
+                    !(
+                        "STRS" in node.types_dict ||
+                        "RMP" in node.types_dict ||
+                        "ELVTR" in node.types_dict
+                    )
+                ) {
                     continue;
                 }
 

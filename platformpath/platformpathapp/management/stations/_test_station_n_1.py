@@ -110,7 +110,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_harway_2 = Node.objects.create(
@@ -119,7 +119,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_bay_50_1 = Node.objects.create(
@@ -128,7 +128,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_bay_50_2 = Node.objects.create(
@@ -137,7 +137,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
 
@@ -301,5 +301,4 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 is_active=True,
             )
 
-        if stdout and style:
-            stdout.write(style.SUCCESS("Successfully seeded updated Bay 50 St station!"))
+        stdout.write(style.SUCCESS("Successfully seeded updated Bay 50 St station!"))

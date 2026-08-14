@@ -158,10 +158,11 @@ export class PathFinder {
             // NOTE: This feature should be removed if there are cases where the accessible infrastructure is the only
             // reasonable node to take for the route. A solution to this might be to just not name nodes like that as
             // accessible infrastructure since everyone has to use it.
-            if (!isAccessible) {
-                if(fromNode?.is_accessible_infrastructure) return;
-                if(toNode?.is_accessible_infrastructure) return;
-            }
+            
+            // if (!isAccessible) {
+            //     if(fromNode?.is_accessible_infrastructure) return;
+            //     if(toNode?.is_accessible_infrastructure) return;
+            // }
 
             // checks if the nodes exist
             if (!fromNode || !toNode) return null;

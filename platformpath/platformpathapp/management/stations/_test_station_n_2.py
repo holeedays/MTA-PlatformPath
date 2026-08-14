@@ -110,7 +110,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_nw = Node.objects.create(
@@ -119,7 +119,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_sw = Node.objects.create(
@@ -128,7 +128,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
         stair_se = Node.objects.create(
@@ -137,7 +137,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
             types_dict = {
                 NodeTypes.MEZZANINE: NodeTypes.MEZZANINE.label,
                 NodeTypes.STAIRS: NodeTypes.STAIRS.label,
-                NodeTypes.EXIT_STAIRS: NodeTypes.EXIT_STAIRS.label
+                NodeTypes.EXIT: NodeTypes.EXIT.label
             }
         )
 
@@ -302,5 +302,4 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 is_active=True,
             )
 
-        if stdout and style:
-            stdout.write(style.SUCCESS("Successfully seeded updated 25 Av station!"))
+        stdout.write(style.SUCCESS("Successfully seeded updated 25 Av station!"))

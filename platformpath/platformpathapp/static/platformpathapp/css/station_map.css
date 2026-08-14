@@ -690,20 +690,20 @@ will keep it with the standard highlight animation which applies original fill *
 
 .highlighted.start-node-highlight,
 .highlighted.end-node-highlight,
-.highlighted.start-node-highlight :is(rect, circle, ellipse, polygon, polyline),
-.highlighted.end-node-highlight :is(rect, circle, ellipse, polygon, polyline)
+.highlighted.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline),
+.highlighted.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline)
 {
     animation-name: StartEndNodeHighlightAnimation;
 }
 
 .start-node-highlight,
-.start-node-highlight :is(rect, circle, ellipse, polygon, polyline) {
+.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
     --target-fill: #9900ff;
     fill: var(--target-fill);
 }
 
 .end-node-highlight,
-.end-node-highlight :is(rect, circle, ellipse, polygon, polyline) {
+.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
     --target-fill: #e5ff00;
     fill: var(--target-fill);
 }
