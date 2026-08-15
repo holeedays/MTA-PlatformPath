@@ -764,6 +764,55 @@ if the arrow has the class (.route-direction__label) and target any paths within
         filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
 }
 
+/*
+Route preview styling
+*/
+.route-preview {
+    right: 220px;
+    bottom: 100px;
+    display: grid;
+    gap: 10px;
+    width: clamp(260px, 34vw, 420px);
+    padding: 14px;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #111111;
+}
+
+.route-preview__controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.route-preview__controls button {
+    min-height: 38px;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #111111;
+    cursor: pointer;
+}
+
+@keyframes RoutePreviewPulse {
+    0%, 8%, 100% {
+        fill: var(--original-fill);
+    }
+
+    4% {
+        fill: #b4ff1b;
+    }
+}
+
+.route-preview-node,
+.route-preview-node :is(path, rect, circle, ellipse, polygon, polyline) {
+    animation-name: RoutePreviewPulse;
+    animation-duration: var(--preview-duration);
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-delay: calc(var(--preview-index) * -1s);
+}
 
 /* =========================================================
    Footer
@@ -838,6 +887,14 @@ if the arrow has the class (.route-direction__label) and target any paths within
 
     .step-controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .route-preview {
+    right: 12px;
+    bottom: 180px;
+    left: 12px;
+    width: auto;
+    box-sizing: border-box;
     }
 
 }
