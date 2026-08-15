@@ -1,6 +1,9 @@
 :root { /* define global vars here */
     --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
                                     will take the full lot of space */ 
+
+    --start-node-highlight-fill: #9900ff;
+    --end-node-highlight-fill: #e5ff00;
 }
 
 * {
@@ -48,90 +51,18 @@ body {
     box-sizing: border-box;
 }
 
-/* =========================================================
-    Brand Styling (for the true page header)
-   ========================================================= */
+/* ==========================================================================
+   Header overrides + header toggle button (overrides header_template.css)
+   ========================================================================== */
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand__logo {
-    /* Sized off the adjacent brand name's line-height so it stays
-    proportional to the text no matter where the brand mark is used. */
-    height: 1.6em;
-    width: auto;
-    flex-shrink: 0;
-}
-
-.brand__logo--sm {
-    height: 1.4em;
-}
-
-.brand__name {
-    font-size: 16px;
-    font-weight: 800;
-    color: #1a4fd6;
-    letter-spacing: 0.5px;
-}
-
-.brand__name--sm {
-    font-size: 12px;
-}
-
-/* ==================================================================
-   Header — fixed, absolutely-positioned inner bar + toggle button
-   ================================================================== */
-
-.site-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
+.site-header__station-map-override {
     height: var(--site-header-height);
     background: #000000;
 
     transition: transform .25s ease-in-out;
 }
-.site-header.retracted {
+.site-header__station-map-override.retracted {
     transform: translateY(-60px);
-}
-
-.site-header__inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px 0 10px;
-}
-
-.site-header__nav {
-    display: flex;
-    gap: 36px;
-}
-
-.site-header__nav a {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #ffffff;
-
-    transition: color 0.25s ease-in-out;
-}
-@media (hover:hover) {
-    .site-header__nav a:hover {
-        color: #1a4fd6;
-    }
-}
-.site-header__nav a:active {
-    color: #5400a3;
 }
 
 .site-header__toggle-button {
@@ -235,9 +166,9 @@ to work properly; we use a custom keyframe animation */
     100% {opacity: 1;}
 }
 
-/* ================================================================================================
-   Map overlays (headers, level stack, route form (includes filter checklist), step ui, map rotate button)
-   ================================================================================================ */
+/* ====================================================================================================================
+   Map overlays (headers, level stack, route form (includes filter checklist, step ui, map rotate button, map legend)
+   ==================================================================================================================== */
 
 /* All controls sit above the SVG and never pan with it. */
 .map-overlay {
@@ -279,6 +210,7 @@ to work properly; we use a custom keyframe animation */
     border: 3px solid #3b3b3b;
     border-radius: 10px;
     background: #1d1d1d;
+    z-index: 1;
 }
 
 .level-rail {
@@ -422,7 +354,7 @@ to work properly; we use a custom keyframe animation */
 
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    z-index: 2;
     max-height: 400px;
     overflow: auto;
     /* popovers are position:fixed hence they don't actually behave relative to parent containers as they usually do, instead we have
@@ -697,12 +629,12 @@ will keep it with the standard highlight animation which applies original fill *
 }
 .start-node-highlight,
 .start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: #9900ff;
+    --target-fill: var(--start-node-highlight-fill);
     fill: var(--target-fill);
 }
 .end-node-highlight,
 .end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: #e5ff00;
+    --target-fill: var(--end-node-highlight-fill);
     fill: var(--target-fill);
 }
 /* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
@@ -764,26 +696,70 @@ if the arrow has the class (.route-direction__label) and target any paths within
         filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
 }
 
+/* ======== map legend ======== */
+.map-legend {
+    display: flex;
+    flex-direction: column;
+    top: 10%;
+    right: 1%;
+    background: #2b2b2b;
+    color: #ffffff;
+    z-index: 2; /* the legend should be on top of the level stack*/
+    max-height: 400px;
+    overflow: auto;
+}
+
+.map-legend__info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.map-legend__section {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 5px;
+    gap: 5px;
+    background: #525252;
+    border-radius: 10px;
+}
+
+.map-legend__section strong {
+    font-size: 20px;
+}
+
+.map-legend__item {
+    display: flex;
+    align-items: center; /* align-items is stretch by default for flex items it seems...*/
+    gap: 10px;
+    padding: 5px 0;
+}
+
+.color-code__box {
+    width: 20px;
+    aspect-ratio: 1/1;
+    border: solid 1px #000000;
+    border-radius: 3px;
+}
+
+.start-node__highlight-color .color-code__box {
+    background: var(--start-node-highlight-fill);
+}
+.end-node__highlight-color .color-code__box {
+    background: var(--end-node-highlight-fill);
+}
+
 
 /* =========================================================
    Footer
    ========================================================= */
 
-.site-footer {
+.site-footer__station-map-override {
     position: absolute;
     bottom: 1%;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 7px;
-}
-
-.site-footer__legal {
-    display: flex;
-    gap: 24px;
-    font-size: 10px;
-    color: #7a7a7a;
-    text-align: center;
+    padding: 0px;
 }
 
 /* Mobile styling */

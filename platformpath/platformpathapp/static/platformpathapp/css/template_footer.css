@@ -1,0 +1,26 @@
+/* =========================================================
+   Generic Page Footer Styling
+   ========================================================= */
+
+.site-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 36px;
+}
+
+.site-footer__legal {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    color: #7a7a7a;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .site-footer__legal {
+        flex-direction: column;
+        gap: 4px;
+    }
+}

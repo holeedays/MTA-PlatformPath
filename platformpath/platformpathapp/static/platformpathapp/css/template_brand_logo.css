@@ -1,0 +1,28 @@
+/* =========================================================
+    Generic styling for the brand logos
+   ========================================================= */
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand__logo {
+    /* Sized off the adjacent brand name's line-height so it stays
+    proportional to the text no matter where the brand mark is used. */
+    height: 1.6em;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.brand__logo--sm {
+    height: 1.6em;
+}
+
+.brand__name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #1a4fd6;
+    letter-spacing: 0.5px;
+}

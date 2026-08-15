@@ -7,11 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
+		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
+		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
+		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
 </head>
 
 <body>
 	<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
-	<header class="site-header">
+	<header class="site-header site-header__station-map-override">
 		<div class="site-header__inner">
 			<a class="brand" href="#">
 					<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo big">
@@ -106,11 +109,160 @@
 					alt="Rotate map button icon base"
 				>
 			</button>
+
+			<!-- ================= LEGEND ================= -->
+			<div class="map-overlay map-legend">
+				<button class="map-legend__toggle-button">
+					<img 
+						class="toggle-button__animated-parts-img"
+						src="" 
+						alt="Toggle map legend button icon animated parts"
+					>
+					<img 
+						class="toggle-button__base-img"
+						src="" 
+						alt="Toggle map button icon base"
+					>
+				</button>
+				<div class="map-legend__info-container">
+					<div class="map-legend__section map-legend__color-codes-info">
+						<strong>COLOR CODES</strong>
+						<ul>
+							<li class="map-legend__item start-node__highlight-color">
+								<span>START NODE</span>
+								<div class="color-code__box"></div>
+							</li>
+							<li class="map-legend__item end-node__highlight-color">
+								<span>END NODE</span>
+								<div class="color-code__box"></div>
+							</li>
+						</ul>
+					</div>
+					<div class="map-legend__section map-legend__icons-info">
+						<strong>ICONS</strong>
+						<ul>
+							<li class="map-legend__item stairs">
+								<span>STAIRS</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Stairs legend icon"
+								>
+							</li>
+							<li class="map-legend__item ramp">
+								<span>RAMP</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Ramp legend icon"
+								>
+							</li>
+							<li class="map-legend__item elevator">
+								<span>ELEVATOR</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Elevator legend icon"
+								>
+							</li>
+							<li class="map-legend__item mini-kiosk">
+								<span>MINI KIOSK</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Mini kiosk legend icon"
+								>
+							</li>
+							<li class="map-legend__item kiosk">
+								<span>KIOSK</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Kiosk legend icon"
+								>
+							</li>
+							<li class="map-legend__item door">
+								<span>DOOR</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Door legend icon"
+								>
+							</li>
+							<li class="map-legend__item exit">
+								<span>EMERGENCY EXIT</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Exit legend icon"
+								>
+							</li>
+							<li class="map-legend__item trash-bin">
+								<span>TRASH BIN</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Trash bin legend icon"
+								>
+							</li>
+							<li class="map-legend__item bench">
+								<span>BENCH</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Bench legend icon"
+								>
+							</li>
+							<li class="map-legend__item omny-machine">
+								<span>OMNY MACHINE</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Omny machine legend icon"
+								>
+							</li>
+							<li class="map-legend__item turnstile">
+								<span>TURNSTILE</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Turnstile legend icon"
+								>
+							</li>
+							<li class="map-legend__item iron-maiden-turnstile">
+								<span>IRON MAIDEN TURNSTILE</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Iron maiden turnstile legend icon"
+								>
+							</li>
+							<li class="map-legend__item booth">
+								<span>BOOTH</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Booth legend icon"
+								>
+							</li>
+							<li class="map-legend__item misc">
+								<span>IRON MAIDEN TURNSTILE</span>
+								<img 
+									class="legend-icon" 
+									src=""
+									alt="Misc legend icon"
+								>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
 		</section>
 	</main>
 
 	<!-- ================= FOOTER ================= -->
-	<footer class="site-footer">
+	<footer class="site-footer site-footer__station-map-override">
 		<div class="brand brand--footer">
 			<img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
 			<span class="brand__name brand__name--sm">PLATFORMPATH</span>

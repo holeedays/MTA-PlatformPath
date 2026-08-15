@@ -858,7 +858,7 @@ export class StationMapPage {
     // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
     // (and map/station header) ideally should retract the header so that the diagram can be completely unobstructed
     private initSiteHeaderToggleButton(): void {
-        const siteHeaderContainer: HTMLHeadElement | null = document.querySelector(".site-header");
+        const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header__station-map-override");
         const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
             siteHeaderContainer?.querySelector(".site-header__toggle-button"));
         const stationHeaderContainer: HTMLDivElement | null = document.querySelector(".map-header");
