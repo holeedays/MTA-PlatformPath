@@ -112,18 +112,6 @@
 
 			<!-- ================= LEGEND ================= -->
 			<div class="map-overlay map-legend">
-				<button class="map-legend__toggle-button">
-					<img 
-						class="toggle-button__animated-parts-img"
-						src="" 
-						alt="Toggle map legend button icon animated parts"
-					>
-					<img 
-						class="toggle-button__base-img"
-						src="" 
-						alt="Toggle map button icon base"
-					>
-				</button>
 				<div class="map-legend__info-container">
 					<div class="map-legend__section map-legend__color-codes-info">
 						<strong>COLOR CODES</strong>
@@ -145,7 +133,7 @@
 								<span>STAIRS</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_stairs.svg' %}"
 									alt="Stairs legend icon"
 								>
 							</li>
@@ -153,7 +141,7 @@
 								<span>RAMP</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_ramp.svg' %}"
 									alt="Ramp legend icon"
 								>
 							</li>
@@ -161,7 +149,7 @@
 								<span>ELEVATOR</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_elevator.svg' %}"
 									alt="Elevator legend icon"
 								>
 							</li>
@@ -169,7 +157,7 @@
 								<span>MINI KIOSK</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_mini_kiosk.svg' %}"
 									alt="Mini kiosk legend icon"
 								>
 							</li>
@@ -177,7 +165,7 @@
 								<span>KIOSK</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_kiosk.svg' %}"
 									alt="Kiosk legend icon"
 								>
 							</li>
@@ -185,7 +173,7 @@
 								<span>DOOR</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_door.svg' %}"
 									alt="Door legend icon"
 								>
 							</li>
@@ -193,7 +181,7 @@
 								<span>EMERGENCY EXIT</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_exit.svg' %}"
 									alt="Exit legend icon"
 								>
 							</li>
@@ -201,7 +189,7 @@
 								<span>TRASH BIN</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_trash_bin.svg' %}"
 									alt="Trash bin legend icon"
 								>
 							</li>
@@ -209,7 +197,7 @@
 								<span>BENCH</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_bench.svg' %}"
 									alt="Bench legend icon"
 								>
 							</li>
@@ -217,7 +205,7 @@
 								<span>OMNY MACHINE</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_omny_machine.svg' %}"
 									alt="Omny machine legend icon"
 								>
 							</li>
@@ -225,7 +213,7 @@
 								<span>TURNSTILE</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_turnstile.svg' %}"
 									alt="Turnstile legend icon"
 								>
 							</li>
@@ -233,7 +221,7 @@
 								<span>IRON MAIDEN TURNSTILE</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_iron_maiden_turnstile.svg' %}"
 									alt="Iron maiden turnstile legend icon"
 								>
 							</li>
@@ -241,21 +229,33 @@
 								<span>BOOTH</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_booth.svg' %}"
 									alt="Booth legend icon"
 								>
 							</li>
 							<li class="map-legend__item misc">
-								<span>IRON MAIDEN TURNSTILE</span>
+								<span>MISCELLANEOUS STRUCTURES</span>
 								<img 
 									class="legend-icon" 
-									src=""
+									src="{% static 'platformpathapp/decals/legend_misc.svg' %}"
 									alt="Misc legend icon"
 								>
 							</li>
 						</ul>
 					</div>
 				</div>
+				<button class="map-legend__toggle-button">
+					<img 
+						class="toggle-button__animated-parts-img"
+						src="" 
+						alt="Toggle map legend button icon animated parts"
+					>
+					<img 
+						class="toggle-button__base-img"
+						src="" 
+						alt="Toggle map button icon base"
+					>
+				</button>
 			</div>
 
 		</section>

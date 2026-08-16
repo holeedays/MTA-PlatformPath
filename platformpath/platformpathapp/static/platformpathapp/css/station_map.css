@@ -2,6 +2,7 @@
     --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
                                     will take the full lot of space */ 
 
+    /* these two fill variables are for the start/end node highlight (and for the legend) */
     --start-node-highlight-fill: #9900ff;
     --end-node-highlight-fill: #e5ff00;
 }
@@ -699,20 +700,20 @@ if the arrow has the class (.route-direction__label) and target any paths within
 /* ======== map legend ======== */
 .map-legend {
     display: flex;
-    flex-direction: column;
     top: 10%;
     right: 1%;
     background: #2b2b2b;
     color: #ffffff;
     z-index: 2; /* the legend should be on top of the level stack*/
-    max-height: 400px;
-    overflow: auto;
 }
 
 .map-legend__info-container {
     display: flex;
     flex-direction: column;
+    max-height: 400px;
+    overflow: auto;
     gap: 10px;
+    padding: 10px;
 }
 
 .map-legend__section {
@@ -726,21 +727,52 @@ if the arrow has the class (.route-direction__label) and target any paths within
 
 .map-legend__section strong {
     font-size: 20px;
+    background: #3b3b3b;
+    border: solid 2px #2b2b2b;
+    padding: 5px;
+    border-radius: 10px;
 }
 
 .map-legend__item {
-    display: flex;
-    align-items: center; /* align-items is stretch by default for flex items it seems...*/
+    display: grid;  /* NOTE: display grid/flex overrides the list-item display hence there's no bullet points*/
+    grid-template-columns: 1fr auto;
+    height: var(--container-height, auto); /* 
+            container height only exists for the map legend items for the icon info legend section since their dimensions are
+            not regularized compared to the color code boxes
+    */
+    align-items: center;
     gap: 10px;
-    padding: 5px 0;
+    padding: 5px 25px;
+}
+/* creating a custom bullet for the map legend items */
+.map-legend__color-codes-info .map-legend__item {
+    background-image: url("../decals/legend_item_color_code_bullet.svg"); 
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-position: left center; 
+}
+/* creating a custom bullet for the map legend items */
+.map-legend__icons-info .map-legend__item {
+    background-image: url("../decals/legend_item_icon_bullet.svg"); 
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-position: left center; 
+}
+
+.map-legend__item span {
+    font-size: 15px;
+    max-width: 130px;
+    overflow-wrap: break-word;
 }
 
 .color-code__box {
     width: 20px;
     aspect-ratio: 1/1;
-    border: solid 1px #000000;
+    border: solid 2px #000000;
     border-radius: 3px;
 }
+
+/* individual color code boxes */
 
 .start-node__highlight-color .color-code__box {
     background: var(--start-node-highlight-fill);
@@ -748,6 +780,58 @@ if the arrow has the class (.route-direction__label) and target any paths within
 .end-node__highlight-color .color-code__box {
     background: var(--end-node-highlight-fill);
 }
+
+/* individual legend icons */
+.legend-icon {
+    --scale-factor: 2;
+    --true-width: 0px;
+
+    width: calc(var(--true-width) * var(--scale-factor));
+    height: auto;
+}
+.stairs .legend-icon {
+    --true-width: 40px;
+}
+.ramp .legend-icon {
+    --true-width: 40px;
+}
+.elevator .legend-icon {
+    --true-width: 27px;
+}
+.mini-kiosk .legend-icon {
+    --true-width: 4px;
+}
+.kiosk .legend-icon {
+    --true-width: 9px;
+}
+.door .legend-icon {
+    --true-width: 9px;
+}
+.exit .legend-icon {
+    --true-width: 12px;
+}
+.trash-bin .legend-icon {
+    --true-width: 9px;
+}
+.bench .legend-icon {
+    --true-width: 32px;
+}
+.omny-machine .legend-icon {
+    --true-width: 11px;
+}
+.turnstile .legend-icon {
+    --true-width: 18px;
+}
+.iron-maiden-turnstile .legend-icon {
+    --true-width: 17px;
+}
+.booth .legend-icon {
+    --true-width: 18px;
+}
+.misc .legend-icon {
+    --true-width: 32px;
+}
+
 
 
 /* =========================================================

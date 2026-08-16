@@ -43,6 +43,7 @@ export class StationMapPage {
         // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
         // lower resolutions/dimensions)
         this.initSiteHeaderToggleButton();
+        this.initMapLegend();
 
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
@@ -766,11 +767,11 @@ export class StationMapPage {
             this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.startNode);
         if (this.selectedNodeOptions.endNode !== null)
             this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.endNode);
+        // reinit the route direction labels
+        this.svgRenderer.initRouteDirectionLabels();
 
         // if navigation is already in progress
         if (this.currentPath !== null) {
-            // hide the route direction labels
-            this.svgRenderer.hideRouteDirectionLabels();
             // and get back all the direction label ids to display the proper ones
             const labelIDs: Set<string> = this.getRouteDirectionLabelIds(this.currentPath);
             this.svgRenderer.showRouteDirectionLabels(labelIDs);
@@ -914,5 +915,37 @@ export class StationMapPage {
         });
     }
 
+    private initMapLegend(): void {
+        const iconsInfoLegend: HTMLDivElement | null = document.querySelector(".map-legend__icons-info");
+        const iconsInfoLegendItems: NodeListOf<HTMLLIElement> | null | undefined = iconsInfoLegend?.querySelectorAll(".map-legend__item");
+
+        if (
+            iconsInfoLegend === null ||
+            iconsInfoLegendItems === null ||
+            iconsInfoLegendItems === undefined
+        ) {
+            console.warn(
+                "Icons info part of the legend and/or it's items don't exist",
+                `Icon Info Legend Status: ${iconsInfoLegend}; Icon Info Legend Items Status: ${iconsInfoLegendItems}`
+            );
+            return;
+        }
+
+        // regularize the height of the icons info legend items
+        let maxHeight: number = 0;
+        // get the largest height item (content height only, no padding)
+        iconsInfoLegendItems.forEach((legendItem: HTMLLIElement) => {
+            const computedStyles: CSSStyleDeclaration = window.getComputedStyle(legendItem);
+            const height: number = (
+                legendItem.clientHeight - parseInt(computedStyles.paddingTop) - parseInt(computedStyles.paddingBottom)
+            );  
+            if (height > maxHeight)
+                maxHeight = height;
+        });
+        // set the height of each of these items to this max height
+        iconsInfoLegendItems.forEach((legendItem: HTMLLIElement) => {
+            legendItem.style.setProperty("--container-height", maxHeight.toString() + "px");
+        });
+    }
 }
 

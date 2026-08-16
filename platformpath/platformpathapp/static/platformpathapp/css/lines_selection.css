@@ -98,7 +98,7 @@ body {
     position: absolute;
     left: 75%;
     width: 25px;
-    z-index: 1000;
+    z-index: 1;
 
     transition: transform 0.25s ease-in-out;
 }
