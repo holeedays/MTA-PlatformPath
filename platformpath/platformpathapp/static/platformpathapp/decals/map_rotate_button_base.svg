@@ -1,6 +1,6 @@
 <svg width="273" height="273" viewBox="0 0 273 273" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="button base">
-<rect id="Rectangle 2" width="273" height="273" rx="50" fill="white"/>
-<rect id="Rectangle 3" x="17.5" y="19.5" width="238" height="233" rx="38.5" fill="white" stroke="black" stroke-width="13"/>
+<rect id="Rectangle 2" width="273" height="273" rx="50" fill="#464646"/>
+<rect id="Rectangle 3" x="17.5" y="19.5" width="238" height="233" rx="38.5" fill="#464646" stroke="white" stroke-width="13"/>
 </g>
 </svg>

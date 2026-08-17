@@ -195,15 +195,8 @@ export class StationMapPage {
         let pressed: boolean = false;
         // toggle event handling of toggle button here (it's all styling for the other elements)
         filterChecklistToggleButton.addEventListener("click", () => {
-            if (!pressed) {
-                filterChecklistToggleButtonGraphic.classList.add("reversed");
-                filterChecklistCheckboxesContainer.classList.remove("hidden");
-            }
-            else {
-                filterChecklistToggleButtonGraphic.classList.remove("reversed");
-                filterChecklistCheckboxesContainer.classList.add("hidden");
-            }
-
+                filterChecklistToggleButtonGraphic.classList.toggle("reversed", !pressed);
+                filterChecklistCheckboxesContainer.classList.toggle("hidden", pressed);
             pressed = !pressed;
         });
     }
@@ -856,6 +849,8 @@ export class StationMapPage {
         return labelIds;
     }
 
+    ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA
+
     // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
     // (and map/station header) ideally should retract the header so that the diagram can be completely unobstructed
     private initSiteHeaderToggleButton(): void {
@@ -889,18 +884,11 @@ export class StationMapPage {
             if (siteHeaderButtonIsAnimating) 
                 return;
 
-            if (!pressed) {
-                // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
-                siteHeaderToggleButton.classList.add("reversed", "animating");
-                siteHeaderContainer.classList.add("retracted");
-                stationHeaderContainer.classList.add("shifted-up");
-            }
-            else {
-                siteHeaderToggleButton.classList.add("animating");
-                siteHeaderToggleButton.classList.remove("reversed");
-                siteHeaderContainer.classList.remove("retracted");
-                stationHeaderContainer.classList.remove("shifted-up");
-            }
+            // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
+            siteHeaderToggleButton.classList.add("animating");
+            siteHeaderToggleButton.classList.toggle("reversed", !pressed);
+            siteHeaderContainer.classList.toggle("retracted", !pressed);
+            stationHeaderContainer.classList.toggle("shifted-up", !pressed);
 
             siteHeaderButtonIsAnimating = true;
             pressed = !pressed;
@@ -915,36 +903,52 @@ export class StationMapPage {
         });
     }
 
+    // initialize the map legend
     private initMapLegend(): void {
-        const iconsInfoLegend: HTMLDivElement | null = document.querySelector(".map-legend__icons-info");
-        const iconsInfoLegendItems: NodeListOf<HTMLLIElement> | null | undefined = iconsInfoLegend?.querySelectorAll(".map-legend__item");
+        // init the toggle button here
+        this.initMapLegendToggleButton();
+    }
 
-        if (
-            iconsInfoLegend === null ||
-            iconsInfoLegendItems === null ||
-            iconsInfoLegendItems === undefined
-        ) {
+    // initialize the event handling logic of the map legend toggle button
+    private initMapLegendToggleButton(): void {
+        const mapLegendInfoContainer: HTMLDivElement | null = document.querySelector(".map-legend__info-container");
+        const mapLegendToggleButton: HTMLButtonElement | null = document.querySelector(".map-legend__toggle-button");
+
+        if (mapLegendInfoContainer === null || mapLegendToggleButton === null) {
             console.warn(
-                "Icons info part of the legend and/or it's items don't exist",
-                `Icon Info Legend Status: ${iconsInfoLegend}; Icon Info Legend Items Status: ${iconsInfoLegendItems}`
+                "Map legend info container and/or the map toggle button doesn't exist",
+                `Map Legend Info Container Status: ${mapLegendInfoContainer}`,
+                `Map Legend Toggle Button Status: ${mapLegendToggleButton}`
             );
             return;
         }
 
-        // regularize the height of the icons info legend items
-        let maxHeight: number = 0;
-        // get the largest height item (content height only, no padding)
-        iconsInfoLegendItems.forEach((legendItem: HTMLLIElement) => {
-            const computedStyles: CSSStyleDeclaration = window.getComputedStyle(legendItem);
-            const height: number = (
-                legendItem.clientHeight - parseInt(computedStyles.paddingTop) - parseInt(computedStyles.paddingBottom)
-            );  
-            if (height > maxHeight)
-                maxHeight = height;
+        let pressed: boolean = false;
+        let toggleButtonIsAnimating: boolean = false;
+
+        // make sure the hidden class is added to the info container (it should already exist in the html template)
+        mapLegendInfoContainer.classList.add("hidden");
+
+        // add event handler for the toggle button (mainly for styling)
+        mapLegendToggleButton.addEventListener("click", () => {
+            if (toggleButtonIsAnimating)
+                return;
+
+            mapLegendInfoContainer.classList.toggle("hidden", pressed);
+            // same as the site header toggle button + map rotate button, add a temp animating class 
+            mapLegendToggleButton.classList.add("animating");
+            mapLegendToggleButton.classList.toggle("reversed", !pressed);
+            
+            toggleButtonIsAnimating = true;
+            pressed = !pressed;
         });
-        // set the height of each of these items to this max height
-        iconsInfoLegendItems.forEach((legendItem: HTMLLIElement) => {
-            legendItem.style.setProperty("--container-height", maxHeight.toString() + "px");
+
+        // event handling to remove the 'animating' class once the animation is done
+        mapLegendToggleButton.addEventListener("animationend", (ev: AnimationEvent) => {
+            if (ev.animationName === "MapLegendToggleButtonAnimation") {
+                mapLegendToggleButton.classList.remove("animating");
+                toggleButtonIsAnimating = false;
+            }
         });
     }
 }

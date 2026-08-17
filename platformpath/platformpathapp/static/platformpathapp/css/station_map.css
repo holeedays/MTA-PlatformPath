@@ -95,7 +95,7 @@ body {
     }
 }
 .site-header__toggle-button:active {
-        filter: 1; 
+    filter: 1; 
 }
 .site-header__toggle-button .toggle-button__animated-parts-img {
     width: 50px;
@@ -106,10 +106,10 @@ body {
 .site-header__toggle-button.reversed .toggle-button__animated-parts-img {
     transform: scaleY(-1);
 }
-.site-header__toggle-button.animating .toggle-button__animated-parts-img {
+.site-header__toggle-button.animating > .toggle-button__animated-parts-img {
     /* we're using an animation here instead of transition since we want opacity to be 0 instantaneously*/
     animation: SiteHeaderButtonAnimation;
-    animation-duration: .25s; 
+    animation-duration: .4s; 
     animation-timing-function: cubic-bezier(0.05, 0.2, 0.8, 0.91);
 }
 
@@ -179,7 +179,7 @@ to work properly; we use a custom keyframe animation */
 
 .map-header {
     top: calc(var(--site-header-height) + 20px); /* the map header should be ideally header height + a little margin */
-    left: 24px;
+    right: 48px;
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
@@ -192,7 +192,7 @@ to work properly; we use a custom keyframe animation */
 
 .map-header h1 {
     margin: 0;
-    font-size: 30px;
+    font-size: 45px;
     color: white;
 }
 
@@ -204,9 +204,9 @@ to work properly; we use a custom keyframe animation */
     align-items: center;
     gap: 16px;
     top: 50%;
-    right: 1%;
-    width: 140px;
+    left: 1%;
     transform: translateY(-50%);
+    width: 140px;
     padding: 8px;
     border: 3px solid #3b3b3b;
     border-radius: 10px;
@@ -286,7 +286,7 @@ to work properly; we use a custom keyframe animation */
     flex-direction: column;
     align-items: center;
     bottom: 5%;
-    left: 2%;
+    left: 1%;
     transform: none;
     padding: 12px;
     border: 3px solid #3f3f3f;
@@ -366,7 +366,7 @@ to work properly; we use a custom keyframe animation */
 }
 /* custom scrollbar styling since route-field__dropdown can overflow */
 .route-field__dropdown:popover-open::-webkit-scrollbar {
-    width: 5px;
+    width: 10px;
 }
 .route-field__dropdown:popover-open::-webkit-scrollbar-track {
     background: #1f1f1f;
@@ -449,10 +449,10 @@ to work properly; we use a custom keyframe animation */
                                 put the transition to be the same time as transform: translate for a smooth pull out */
 
     transition: 
-        transform .25s ease-in-out,
-        padding .25s ease-in-out,
-        clip-path 0.25s ease-in-out,
-        display 0.25s ease-in-out allow-discrete;
+        transform .25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        padding .25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        clip-path 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        display 0.25s allow-discrete;
 }
 .filter-checklist__checkboxes-container.hidden {
     padding: 0px;
@@ -659,6 +659,20 @@ if the arrow has the class (.route-direction__label) and target any paths within
     bottom: 5%;
     right: 1%;
     cursor: pointer;
+    z-index: 2;
+
+    transition: filter .25s ease-in-out;
+}
+.map__rotate-button:active {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
+}
+@media (hover:hover) {
+    .map__rotate-button:hover {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000); /* cannot use bg-color, fill, etc for img tags... filter is the alternative */ 
+    }
+}
+.map__rotate-button.animating {
+    filter: none;
 }
 
 .map__rotate-button > * { /* target every child element here*/
@@ -682,40 +696,71 @@ if the arrow has the class (.route-direction__label) and target any paths within
     width: 45px;
     height: auto;
     z-index: 0;
-
-    transition: filter .25s ease-in-out;
-}
-.animating > .rotate-button__base-img {
-    filter: none !important;
-}
-@media (hover:hover) {
-    .map__rotate-button:hover > .rotate-button__base-img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000); /* cannot use bg-color, fill, etc for img tags... filter is the alternative */ 
-    }
-}
-.map__rotate-button:active > .rotate-button__base-img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
 }
 
 /* ======== map legend ======== */
+
 .map-legend {
-    display: flex;
-    top: 10%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    bottom: 1%;
     right: 1%;
-    background: #2b2b2b;
+    height: 400px;
+    width: auto;
+    gap: 10px;
+    background: none;
     color: #ffffff;
-    z-index: 2; /* the legend should be on top of the level stack*/
+    z-index: 1; /* NOTE: since this legend is positioned next to the rotate map button, this z-index has to be lower */
+}
+.map-legend:has(.map-legend__info-container.hidden) {
+    gap: 0px;
 }
 
+/* actual legend of the container */
 .map-legend__info-container {
     display: flex;
     flex-direction: column;
-    max-height: 400px;
     overflow: auto;
     gap: 10px;
-    padding: 10px;
+    padding: 0 10px;
+    clip-path: inset(0 0 0 0); /* this info container functions much like the filter checklist container (e.g. item slides
+                                    in and out when toggled by their respective button) */
+    /* the info container will similar logic as the filter checklist */
+    transition:
+        clip-path .25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        transform .25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        display .25s allow-discrete;
 }
-
+.map-legend__info-container.hidden {
+    display: none;
+    transform: translateX(100%);
+    clip-path: inset(0 100% 0 0);
+}
+@starting-style {
+    .map-legend__info-container {
+        transform: translateX(100%);
+        clip-path: inset(0 100% 0 0);
+    }
+}
+.map-legend__info-container::-webkit-scrollbar {
+    width: 10px;
+}
+.map-legend__info-container::-webkit-scrollbar-thumb {
+    border-radius: 100px;
+    background-color: #ffffff;
+}
+.map-legend__info-container::-webkit-scrollbar-track {
+    background: #424242;
+}
+.map-legend__info-container::-webkit-scrollbar-thumb:active {
+    background-color: #cacaca;
+}
+@media (hover:hover) {
+    .map-legend__info-container::-webkit-scrollbar-thumb:hover {
+        background-color: #cacaca;
+    }
+}
+/* there are currently two sections for the legend: the color codes and the legend icon sections */
 .map-legend__section {
     display: flex;
     flex-direction: column;
@@ -725,6 +770,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     border-radius: 10px;
 }
 
+/* labelling for each legend section */
 .map-legend__section strong {
     font-size: 20px;
     background: #3b3b3b;
@@ -733,32 +779,61 @@ if the arrow has the class (.route-direction__label) and target any paths within
     border-radius: 10px;
 }
 
+/* the individual row for a single legend item */
 .map-legend__item {
     display: grid;  /* NOTE: display grid/flex overrides the list-item display hence there's no bullet points*/
     grid-template-columns: 1fr auto;
-    height: var(--container-height, auto); /* 
-            container height only exists for the map legend items for the icon info legend section since their dimensions are
-            not regularized compared to the color code boxes
-    */
     align-items: center;
     gap: 10px;
     padding: 5px 25px;
+    border-radius: 5px;
+
+    transition: 
+        background .25s ease-in-out,
+        transform .25s ease-in-out;
 }
+.map-legend__item:active  {
+    background: #363636;
+    transform: scale(1.1);
+}
+.map-legend__item:active :is(.legend-icon, .color-code__box) {
+    transform: scale(1.2);
+}
+@media (hover:hover) {
+    .map-legend__item:hover  {
+        background: #363636;
+        transform: scale(1.1);
+    }
+    /* apply a small transform scale to the legend images/symbols themselves */
+    .map-legend__item:hover :is(.legend-icon, .color-code__box) {
+        transform: scale(1.2);
+    }
+}
+
+/* set the base height of the map legend items depending in which category they're in */
+.map-legend__icons-info .map-legend__item {
+    height: 75px;
+}
+.map-legend__color-codes-info .map-legend__item {
+    height: auto;
+}
+
 /* creating a custom bullet for the map legend items */
 .map-legend__color-codes-info .map-legend__item {
     background-image: url("../decals/legend_item_color_code_bullet.svg"); 
     background-repeat: no-repeat;
     background-size: 16px 16px; 
-    background-position: left center; 
+    background-position: left 5px center; 
 }
 /* creating a custom bullet for the map legend items */
 .map-legend__icons-info .map-legend__item {
     background-image: url("../decals/legend_item_icon_bullet.svg"); 
     background-repeat: no-repeat;
     background-size: 16px 16px; 
-    background-position: left center; 
+    background-position: left 5px center; 
 }
 
+/* styling for the label of each legend item */
 .map-legend__item span {
     font-size: 15px;
     max-width: 130px;
@@ -782,12 +857,15 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 /* individual legend icons */
+
 .legend-icon {
     --scale-factor: 2;
     --true-width: 0px;
 
     width: calc(var(--true-width) * var(--scale-factor));
     height: auto;
+
+    transition: transform .1s cubic-bezier(0.19, 1, 0.22, 1);
 }
 .stairs .legend-icon {
     --true-width: 40px;
@@ -832,7 +910,61 @@ if the arrow has the class (.route-direction__label) and target any paths within
     --true-width: 32px;
 }
 
+/* toggle button */
+.map-legend__toggle-button {
+    padding: 0;
+    border: none;
+    background: none;
 
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-items: center;
+    align-self: center;
+    height: fit-content; /* should only be the height of its children, not its parent */
+
+    transition: filter .25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.map-legend__toggle-button:active {
+    filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+}
+@media (hover:hover) {
+    .map-legend__toggle-button:hover {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+    }
+}
+.map-legend__toggle-button.reversed {
+    transform: scaleX(-1);
+}
+.map-legend__toggle-button.animating {
+    filter: none;
+}
+.animating > .toggle-button__animated-parts-img {
+    animation-name: MapLegendToggleButtonAnimation;
+    animation-timing-function: ease-in-out;
+    animation-duration: .4s;
+}
+@keyframes MapLegendToggleButtonAnimation {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.map-legend__toggle-button > * {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.map-legend__toggle-button .toggle-button__animated-parts-img {
+    width: 35px;
+    height: auto;
+    z-index: 2;
+}
+
+.map-legend__toggle-button .toggle-button__base-img {
+    width: 45px;
+    height: auto;
+    z-index: 1;
+}
 
 /* =========================================================
    Footer
