@@ -122,7 +122,7 @@ body {
     justify-content: center;
 
     transition: 
-        display var(--li-item-wrapper-transition-duration) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
+        display calc(var(--li-item-wrapper-transition-duration) + 0.05s) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
         opacity var(--li-item-wrapper-transition-duration) ease-in-out;
 }
 /* this is the sauce for allow-discrete to work properly... 

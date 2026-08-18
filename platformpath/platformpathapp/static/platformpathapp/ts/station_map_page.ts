@@ -193,12 +193,24 @@ export class StationMapPage {
         filterChecklistCheckboxesContainer.classList.add("hidden");
 
         let pressed: boolean = false;
+        let filterChecklistToggleButtonIsTransitioning: boolean = false;
         // toggle event handling of toggle button here (it's all styling for the other elements)
         filterChecklistToggleButton.addEventListener("click", () => {
+            if (filterChecklistToggleButtonIsTransitioning)
+                return;
+
                 filterChecklistToggleButtonGraphic.classList.toggle("reversed", !pressed);
                 filterChecklistCheckboxesContainer.classList.toggle("hidden", pressed);
+
+            filterChecklistToggleButtonIsTransitioning = true;
             pressed = !pressed;
         });
+
+        // add a boolean to prevent the toggle button from transitioning multiple times before its animation is finished
+        filterChecklistToggleButton.addEventListener("transitionend", (ev: TransitionEvent) => {
+            if (ev.propertyName === "transform") 
+                filterChecklistToggleButtonIsTransitioning = false;
+        })
     }
 
     // init the logic for the path step buttons
