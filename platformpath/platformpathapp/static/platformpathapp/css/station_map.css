@@ -620,7 +620,8 @@ have an animation from display: none -> display: something else (e.g. the backwa
 
 /* ======== step ui ======== */
 
-.step-ui {
+.step-ui,
+.route-preview {
     right: 220px;
     bottom: 100px;
     display: grid;
@@ -631,7 +632,9 @@ have an animation from display: none -> display: something else (e.g. the backwa
     background: rgb(255 255 255 / 90%);
 }
 
-.step-ui__instruction-text {
+.step-ui__instruction-text,
+.route-preview > strong,
+#route-preview-summary {
     display: block;
     min-height: 3.6rem;
     max-height: 3.6rem;
@@ -640,13 +643,15 @@ have an animation from display: none -> display: something else (e.g. the backwa
     text-align: center;
 }
 
-.step-ui__step-controls {
+.step-ui__step-controls,
+.route-preview__controls {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
-.step-ui__step-controls button {
+.step-ui__step-controls button,
+.route-preview__controls button {
     min-height: 38px;
     border: 1px solid #1a1a1a;
     border-radius: 4px;
@@ -767,41 +772,34 @@ if the arrow has the class (.route-direction__label) and target any paths within
 /*
 Route preview styling
 */
-.route-preview {
-    right: 220px;
-    bottom: 100px;
-    display: grid;
-    gap: 10px;
-    width: clamp(260px, 34vw, 420px);
-    padding: 14px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #111111;
+
+.route-preview-node {
+    --preview-base-fill: var(--original-fill);
 }
 
-.route-preview__controls {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+.route-preview-node.start-node-highlight {
+    --preview-base-fill: #9900ff;
 }
 
-.route-preview__controls button {
-    min-height: 38px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #111111;
-    cursor: pointer;
+.route-preview-node.end-node-highlight {
+    --preview-base-fill: #e5ff00;
 }
 
 @keyframes RoutePreviewPulse {
-    0%, 8%, 100% {
-        fill: var(--original-fill);
+    0%, 100% {
+        fill: var(--preview-base-fill);
     }
 
     4% {
-        fill: #b4ff1b;
+        fill: color-mix(
+            in srgb,
+            var(--original-fill),
+            #000000 50%
+        );
+    }
+
+    8% {
+        fill: var(--preview-base-fill);
     }
 }
 
@@ -811,7 +809,7 @@ Route preview styling
     animation-duration: var(--preview-duration);
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
-    animation-delay: calc(var(--preview-index) * -1s);
+    animation-delay: calc(var(--preview-index) * 1s);
 }
 
 /* =========================================================
@@ -871,7 +869,8 @@ Route preview styling
         width: 100%;
     }
 
-    .step-ui {
+    .step-ui,
+    .route-preview {
         right: 12px;
         bottom: 180px;
         left: 12px;
@@ -887,14 +886,6 @@ Route preview styling
 
     .step-controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .route-preview {
-    right: 12px;
-    bottom: 180px;
-    left: 12px;
-    width: auto;
-    box-sizing: border-box;
     }
 
 }
