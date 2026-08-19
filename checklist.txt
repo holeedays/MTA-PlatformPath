@@ -1,10 +1,5 @@
 This is where we add stuff we did and things to do...
 
-ISSUES CURRENTLY:
-> Weird bug when step ui is visible (and a step is pressed) and the map legend is enabled... the clip path + transform css looks
-very choppy and doesn't work normally.
-
-
 PLANS FOR THE FUTURE:
 ------------------------------
 
@@ -73,6 +68,8 @@ FIXED THE BUGS BELOW:
         - right now, path is included in the highlighting for all highlights but we don't want to do that or else arrows/texts are hard to see
         ; is there a way to address this issue???
     )
+    > Weird bug when step ui is visible (and a step is pressed) and the map legend is enabled... the clip path + transform css looks
+    very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method
 
 
 Ivan ----
