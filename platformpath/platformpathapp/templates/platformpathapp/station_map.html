@@ -66,7 +66,9 @@
 			<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST ================= -->
 			<div class="map-overlay route-form-filter-checklist__container">
 				<div class="filter-checklist" aria-label="Filters toggle">
-					<div class="filter-checklist__checkboxes-container hidden"></div>
+					<div class="filter-checklist__checkboxes-container-wrapper hidden">
+						<div class="filter-checklist__checkboxes-container"></div>
+					</div>
 					<button class="filter-checklist__toggle-button">
 						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Toggle button icon">
 						SELECT FILTERS
@@ -88,11 +90,21 @@
 			</div>
 
 			<!-- ================= STEP UI BLOCK ================= -->
-			<div id="step-ui" class="map-overlay step-ui" style="display: none;" aria-label="Steps Instructions/Buttons">
+			<div id="step-ui" class="map-overlay step-ui" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
-					<button id="btn-prev" type="button">Previous</button>
-					<button id="btn-next" type="button">Next</button>
+					<button id="btn-prev" class="step-ui__btn-prev" type="button">
+						<img 
+							src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}"
+							alt="Step ui previous button img"
+						>
+					</button>
+					<button id="btn-next" class="step-ui__btn-next" type="button">
+						<img 
+							src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}"
+							alt="Step ui next button img"
+						>
+					</button>
 				</div>
 			</div>
 
@@ -112,136 +124,138 @@
 
 			<!-- ================= LEGEND ================= -->
 			<div class="map-overlay map-legend">
-				<div class="map-legend__info-container hidden">
-					<div class="map-legend__section map-legend__color-codes-info">
-						<strong>COLOR CODES</strong>
-						<ul>
-							<li class="map-legend__item start-node__highlight-color">
-								<span>START NODE</span>
-								<div class="color-code__box"></div>
-							</li>
-							<li class="map-legend__item end-node__highlight-color">
-								<span>END NODE</span>
-								<div class="color-code__box"></div>
-							</li>
-						</ul>
-					</div>
-					<div class="map-legend__section map-legend__icons-info">
-						<strong>ICONS</strong>
-						<ul>
-							<li class="map-legend__item stairs">
-								<span>STAIRS</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_stairs.svg' %}"
-									alt="Stairs legend icon"
-								>
-							</li>
-							<li class="map-legend__item ramp">
-								<span>RAMP</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_ramp.svg' %}"
-									alt="Ramp legend icon"
-								>
-							</li>
-							<li class="map-legend__item elevator">
-								<span>ELEVATOR</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_elevator.svg' %}"
-									alt="Elevator legend icon"
-								>
-							</li>
-							<li class="map-legend__item mini-kiosk">
-								<span>MINI KIOSK</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_mini_kiosk.svg' %}"
-									alt="Mini kiosk legend icon"
-								>
-							</li>
-							<li class="map-legend__item kiosk">
-								<span>KIOSK</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_kiosk.svg' %}"
-									alt="Kiosk legend icon"
-								>
-							</li>
-							<li class="map-legend__item door">
-								<span>DOOR</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_door.svg' %}"
-									alt="Door legend icon"
-								>
-							</li>
-							<li class="map-legend__item exit">
-								<span>EMERGENCY EXIT</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_exit.svg' %}"
-									alt="Exit legend icon"
-								>
-							</li>
-							<li class="map-legend__item trash-bin">
-								<span>TRASH BIN</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_trash_bin.svg' %}"
-									alt="Trash bin legend icon"
-								>
-							</li>
-							<li class="map-legend__item bench">
-								<span>BENCH</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_bench.svg' %}"
-									alt="Bench legend icon"
-								>
-							</li>
-							<li class="map-legend__item omny-machine">
-								<span>OMNY MACHINE</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_omny_machine.svg' %}"
-									alt="Omny machine legend icon"
-								>
-							</li>
-							<li class="map-legend__item turnstile">
-								<span>TURNSTILE</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_turnstile.svg' %}"
-									alt="Turnstile legend icon"
-								>
-							</li>
-							<li class="map-legend__item iron-maiden-turnstile">
-								<span>IRON MAIDEN TURNSTILE</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_iron_maiden_turnstile.svg' %}"
-									alt="Iron maiden turnstile legend icon"
-								>
-							</li>
-							<li class="map-legend__item booth">
-								<span>BOOTH</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_booth.svg' %}"
-									alt="Booth legend icon"
-								>
-							</li>
-							<li class="map-legend__item misc">
-								<span>MISCELLANEOUS STRUCTURES</span>
-								<img 
-									class="legend-icon" 
-									src="{% static 'platformpathapp/decals/legend_misc.svg' %}"
-									alt="Misc legend icon"
-								>
-							</li>
-						</ul>
+				<div class="map-legend__info-container-wrapper hidden">
+					<div class="map-legend__info-container">
+						<div class="map-legend__section map-legend__color-codes-info">
+							<strong>COLOR CODES</strong>
+							<ul>
+								<li class="map-legend__item start-node__highlight-color">
+									<span>START NODE</span>
+									<div class="color-code__box"></div>
+								</li>
+								<li class="map-legend__item end-node__highlight-color">
+									<span>END NODE</span>
+									<div class="color-code__box"></div>
+								</li>
+							</ul>
+						</div>
+						<div class="map-legend__section map-legend__icons-info">
+							<strong>ICONS</strong>
+							<ul>
+								<li class="map-legend__item stairs">
+									<span>STAIRS</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_stairs.svg' %}"
+										alt="Stairs legend icon"
+									>
+								</li>
+								<li class="map-legend__item ramp">
+									<span>RAMP</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_ramp.svg' %}"
+										alt="Ramp legend icon"
+									>
+								</li>
+								<li class="map-legend__item elevator">
+									<span>ELEVATOR</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_elevator.svg' %}"
+										alt="Elevator legend icon"
+									>
+								</li>
+								<li class="map-legend__item mini-kiosk">
+									<span>MINI KIOSK</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_mini_kiosk.svg' %}"
+										alt="Mini kiosk legend icon"
+									>
+								</li>
+								<li class="map-legend__item kiosk">
+									<span>KIOSK</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_kiosk.svg' %}"
+										alt="Kiosk legend icon"
+									>
+								</li>
+								<li class="map-legend__item door">
+									<span>DOOR</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_door.svg' %}"
+										alt="Door legend icon"
+									>
+								</li>
+								<li class="map-legend__item exit">
+									<span>EMERGENCY EXIT</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_exit.svg' %}"
+										alt="Exit legend icon"
+									>
+								</li>
+								<li class="map-legend__item trash-bin">
+									<span>TRASH BIN</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_trash_bin.svg' %}"
+										alt="Trash bin legend icon"
+									>
+								</li>
+								<li class="map-legend__item bench">
+									<span>BENCH</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_bench.svg' %}"
+										alt="Bench legend icon"
+									>
+								</li>
+								<li class="map-legend__item omny-machine">
+									<span>OMNY MACHINE</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_omny_machine.svg' %}"
+										alt="Omny machine legend icon"
+									>
+								</li>
+								<li class="map-legend__item turnstile">
+									<span>TURNSTILE</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_turnstile.svg' %}"
+										alt="Turnstile legend icon"
+									>
+								</li>
+								<li class="map-legend__item iron-maiden-turnstile">
+									<span>IRON MAIDEN TURNSTILE</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_iron_maiden_turnstile.svg' %}"
+										alt="Iron maiden turnstile legend icon"
+									>
+								</li>
+								<li class="map-legend__item booth">
+									<span>BOOTH</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_booth.svg' %}"
+										alt="Booth legend icon"
+									>
+								</li>
+								<li class="map-legend__item misc">
+									<span>MISCELLANEOUS STRUCTURES</span>
+									<img 
+										class="legend-icon" 
+										src="{% static 'platformpathapp/decals/legend_misc.svg' %}"
+										alt="Misc legend icon"
+									>
+								</li>
+							</ul>
+						</div>
 					</div>
 				</div>
 				<button class="map-legend__toggle-button">

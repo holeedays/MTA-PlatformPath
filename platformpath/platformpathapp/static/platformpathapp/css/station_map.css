@@ -431,42 +431,64 @@ to work properly; we use a custom keyframe animation */
     gap: 10px;
 }
 
+.filter-checklist__checkboxes-container-wrapper {
+    overflow: hidden;
+    height: 80px; /* this height allows the checklist container to show ~1.3 rows worth of filter checkboxes (each filter checkbox row
+                        is about 55px)*/
+
+    transition: display 0.3s allow-discrete;
+}
+.filter-checklist__checkboxes-container-wrapper.hidden {
+    display: none;
+}
+.filter-checklist__checkboxes-container-wrapper.hidden .filter-checklist__checkboxes-container {
+    padding: 0px;
+    transform: translateY(100%);
+}
+@starting-style {
+    .filter-checklist__checkboxes-container-wrapper .filter-checklist__checkboxes-container {
+        padding: 0px;
+        transform: translateY(100%);
+    }
+}
+
 .filter-checklist__checkboxes-container {
+    box-sizing: border-box; /* this makes sure that the checkboxes container contents is viewable (padding included); this is
+                                because the scroll behavior is vertical (which coincides with the vertical padding), thus the  
+                                entire height of the container is rendered unless this property is stated */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     width: 100%;
+    height: 100%;
+    overflow: auto;
     background: #252525;
-    padding: 5px 0;
+    padding: 10px;
     border-radius: 5px;
     gap: 10px;
 
-    /* settings to set to allow for proper animation transitions */
-    overflow: hidden; /* forces height/width changes onto the children, making them accomodate the changes in dimensions */
-    transform-origin: bottom center; /* transforms stuff occurs at the bottom center anchor point now instead of the center */
-    clip-path: inset(0 0 0 0); /* this is the magic here... creates an invisible mask relative to the entire container allowing
-                                us to have cool pull out effect when used with transform: translate; 
-                                put the transition to be the same time as transform: translate for a smooth pull out */
-
     transition: 
-        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
         padding 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
-        clip-path 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
-        display 0.3s allow-discrete;
+        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.filter-checklist__checkboxes-container.hidden {
-    padding: 0px;
-    display: none;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(100%);
+.filter-checklist__checkboxes-container::-webkit-scrollbar {
+    width: 10px;
 }
-/* like station selection, we copy and paste all animatable stylings when we have .container__hidden allowing us to properly 
-have an animation from display: none -> display: something else (e.g. the backward animation) */
-@starting-style {
-    .filter-checklist__checkboxes-container {
-        padding: 0px;
-        transform: translateY(100%);
-        clip-path: inset(0 0 100% 0);
+.filter-checklist__checkboxes-container::-webkit-scrollbar-track {
+    background: #424242;
+    border-radius: 100px;
+}
+.filter-checklist__checkboxes-container::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;
+}
+.filter-checklist__checkboxes-container::-webkit-scrollbar-thumb:active {
+    background-color: #cacaca;
+}
+@media (hover:hover) {
+    .filter-checklist__checkboxes-container::-webkit-scrollbar-thumb:hover {
+        background-color: #cacaca;
     }
 }
 
@@ -474,9 +496,11 @@ have an animation from display: none -> display: something else (e.g. the backwa
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     background: #333333;
     border-radius: 5px;
-    padding: 4px;
+    height: 45px;
+    padding: 5px;
     gap: 5px;
 }
 
@@ -554,38 +578,47 @@ have an animation from display: none -> display: something else (e.g. the backwa
 /* ======== step ui ======== */
 
 .step-ui {
-    right: 220px;
-    bottom: 100px;
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 20%;
     gap: 10px;
     width: clamp(260px, 34vw, 420px);
     padding: 10px 12px;
     border-radius: 8px;
-    background: rgb(255 255 255 / 90%);
 }
 
 .step-ui__instruction-text {
     display: block;
     min-height: 3.6rem;
     max-height: 3.6rem;
+    color: #ffffff;
     overflow-y: auto;
     line-height: 1.2;
     text-align: center;
 }
 
 .step-ui__step-controls {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    gap: 20px;
 }
 
 .step-ui__step-controls button {
+    padding: 0px;
+    border: none;
+
     min-height: 38px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #111111;
-    cursor: pointer;
+    border-radius: 10px;
+    padding: 5px;
+    background: #3b3b3b;
+    color: #ffffff;
+}
+
+:is(.step-ui__btn-prev, .step-ui__btn-next) img {
+    width: 30px;
+    height: auto;
 }
 
 .step-controls button:disabled {
@@ -712,41 +745,46 @@ if the arrow has the class (.route-direction__label) and target any paths within
     z-index: 1; /* NOTE: since this legend is positioned next to the rotate map button, this z-index has to be lower */
 }
 
+/* wrapper of the actual legend of the container (for animation purposes) */
+.map-legend__info-container-wrapper {
+    overflow: hidden;
+    height: 100%;
+    width: 300px;
+    transition: display 0.3s allow-discrete;
+}
+.map-legend__info-container-wrapper.hidden {
+    display: none;
+}
+.map-legend__info-container-wrapper.hidden .map-legend__info-container {
+    transform: translateX(100%);
+}
+@starting-style {
+    .map-legend__info-container-wrapper .map-legend__info-container {
+        transform: translateX(100%);
+    }
+}
+
 /* actual legend of the container */
 .map-legend__info-container {
     display: flex;
     flex-direction: column;
     overflow: auto;
+    height: 100%; /* need a definitive height for overflow to work */
     gap: 10px;
     padding: 0 10px;
-    clip-path: inset(0 0 0 0); /* this info container functions much like the filter checklist container (e.g. item slides
-                                    in and out when toggled by their respective button) */
-    /* the info container will similar logic as the filter checklist */
     transition:
-        clip-path 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
-        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
-        display 0.3s allow-discrete;
-}
-.map-legend__info-container.hidden {
-    display: none;
-    transform: translateX(100%);
-    clip-path: inset(0 100% 0 0);
-}
-@starting-style {
-    .map-legend__info-container {
-        transform: translateX(100%);
-        clip-path: inset(0 100% 0 0);
-    }
+        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .map-legend__info-container::-webkit-scrollbar {
     width: 10px;
 }
 .map-legend__info-container::-webkit-scrollbar-thumb {
-    border-radius: 100px;
     background-color: #ffffff;
+    border-radius: 100px;
 }
 .map-legend__info-container::-webkit-scrollbar-track {
     background: #424242;
+    border-radius: 100px;
 }
 .map-legend__info-container::-webkit-scrollbar-thumb:active {
     background-color: #cacaca;
@@ -762,15 +800,14 @@ if the arrow has the class (.route-direction__label) and target any paths within
     flex-direction: column;
     padding: 5px 5px;
     gap: 5px;
-    background: #525252;
+    background: #383838;
     border-radius: 10px;
 }
 
 /* labelling for each legend section */
 .map-legend__section strong {
     font-size: 20px;
-    background: #3b3b3b;
-    border: solid 2px #2b2b2b;
+    background: #252525;
     padding: 5px;
     border-radius: 10px;
 }
@@ -797,7 +834,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 @media (hover:hover) {
     .map-legend__item:hover  {
-        background: #363636;
+        background: #4d4d4d;
         transform: scale(1.1);
     }
     /* apply a small transform scale to the legend images/symbols themselves */
@@ -833,7 +870,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 .map-legend__item span {
     font-size: 15px;
     max-width: 130px;
-    overflow-wrap: break-word;
+    overflow-wrap: break-word; /* break very long contiguous words */
 }
 
 .color-code__box {
@@ -918,6 +955,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     justify-items: center;
     align-self: center;
     height: fit-content; /* should only be the height of its children, not its parent */
+    cursor: pointer;
 
     transition: filter 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

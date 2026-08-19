@@ -170,27 +170,33 @@ export class StationMapPage {
     private initFilterChecklistToggleButton(): void {
         const filterChecklistToggleButton: HTMLButtonElement | null = document.querySelector(".filter-checklist__toggle-button");
         const filterChecklistToggleButtonGraphic: HTMLImageElement | null| undefined = filterChecklistToggleButton?.querySelector("img");
-        const filterChecklistCheckboxesContainer: HTMLDivElement | null = document.querySelector(".filter-checklist__checkboxes-container");
+        // the checkbox container will receive the styling since it is responsible for the actual css state styling of the 
+        // acrual container
+        const filterChecklistCheckboxesContainerWrapper: HTMLDivElement | null = (
+            document.querySelector(".filter-checklist__checkboxes-container-wrapper")
+        );
 
         if (
             filterChecklistToggleButton === null || 
             // technically don't need both lines just null check but typescript won't allow just a singular check
             filterChecklistToggleButtonGraphic === null || 
             filterChecklistToggleButtonGraphic === undefined || 
-            filterChecklistCheckboxesContainer === null
+            filterChecklistCheckboxesContainerWrapper === null
         ) {
             console.warn(
                 "Filter checklist toggle button doesn't exist and/or it's image graphic doesn't exist", 
-                "and/or the filter checklist checkboxes container does not exist",
+                "and/or the filter checklist checkboxes container wrapper does not exist",
                 `Filter Checklist Toggle Button Status: ${filterChecklistToggleButton}`,
                 `Toggle Button Image Graphic Status: ${filterChecklistToggleButtonGraphic}`,
-                `Filter Checklist Checkboxes Container Status: ${filterChecklistCheckboxesContainer}`
+                `Filter Checklist Checkboxes Container Wrapper Status: ${filterChecklistCheckboxesContainerWrapper}`
             );
             return;
         }
 
-        // though hidden should already be added, make sure the checkboxes container is already hidden to begin with 
-        filterChecklistCheckboxesContainer.classList.add("hidden");
+        // though hidden should already be added, make sure the checkboxes container wrapper is already hidden to begin with 
+        // NOTE: do note that since there are already transition properties, on page load, you can see the animation of the checklist
+        // being hidden, we'll compensate for this with a longer opacity load of the entire page
+        filterChecklistCheckboxesContainerWrapper.classList.add("hidden");
 
         let pressed: boolean = false;
         let filterChecklistToggleButtonIsTransitioning: boolean = false;
@@ -200,7 +206,7 @@ export class StationMapPage {
                 return;
 
                 filterChecklistToggleButtonGraphic.classList.toggle("reversed", !pressed);
-                filterChecklistCheckboxesContainer.classList.toggle("hidden", pressed);
+                filterChecklistCheckboxesContainerWrapper.classList.toggle("hidden", pressed);
 
             filterChecklistToggleButtonIsTransitioning = true;
             pressed = !pressed;
@@ -923,13 +929,15 @@ export class StationMapPage {
 
     // initialize the event handling logic of the map legend toggle button
     private initMapLegendToggleButton(): void {
-        const mapLegendInfoContainer: HTMLDivElement | null = document.querySelector(".map-legend__info-container");
+        // we need the wrapper over the actual info container since it'll be responsible for most of the css state changes when 
+        // class attributes are added
+        const mapLegendInfoContainerWrapper: HTMLDivElement | null = document.querySelector(".map-legend__info-container-wrapper");
         const mapLegendToggleButton: HTMLButtonElement | null = document.querySelector(".map-legend__toggle-button");
 
-        if (mapLegendInfoContainer === null || mapLegendToggleButton === null) {
+        if (mapLegendInfoContainerWrapper === null || mapLegendToggleButton === null) {
             console.warn(
-                "Map legend info container and/or the map toggle button doesn't exist",
-                `Map Legend Info Container Status: ${mapLegendInfoContainer}`,
+                "Map legend info container wrapper and/or the map toggle button doesn't exist",
+                `Map Legend Info Container Wrapper Status: ${mapLegendInfoContainerWrapper}`,
                 `Map Legend Toggle Button Status: ${mapLegendToggleButton}`
             );
             return;
@@ -938,15 +946,16 @@ export class StationMapPage {
         let pressed: boolean = false;
         let toggleButtonIsAnimating: boolean = false;
 
-        // make sure the hidden class is added to the info container (it should already exist in the html template)
-        mapLegendInfoContainer.classList.add("hidden");
+        // make sure the hidden class is added to the info container wrapper (it should already exist in the html template)
+        // this is the same as the filterChecklistCheckboxesContainer
+        mapLegendInfoContainerWrapper.classList.add("hidden");
 
         // add event handler for the toggle button (mainly for styling)
         mapLegendToggleButton.addEventListener("click", () => {
             if (toggleButtonIsAnimating)
                 return;
 
-            mapLegendInfoContainer.classList.toggle("hidden", pressed);
+            mapLegendInfoContainerWrapper.classList.toggle("hidden", pressed);
             // same as the site header toggle button + map rotate button, add a temp animating class 
             mapLegendToggleButton.classList.add("animating");
             mapLegendToggleButton.classList.toggle("reversed", !pressed);

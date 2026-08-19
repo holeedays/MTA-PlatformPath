@@ -110,20 +110,31 @@ body {
 }
 .stations__list::-webkit-scrollbar-track {
     background: #1f1f1f;
+    border-radius: 100px;
 }
 .stations__list::-webkit-scrollbar-thumb {
     background: #ffffff;
     border-radius: 100px;                    
+}
+.stations__list::-webkit-scrollbar-thumb:active {
+    background: #cacaca;
+}
+@media (hover:hover) {
+    .stations__list::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
 }
 
 .stations__list li {
     display: flex;
     gap: 10px;
     justify-content: center;
+    cursor: pointer;
 
     transition: 
         display calc(var(--li-item-wrapper-transition-duration) + 0.05s) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
-        opacity var(--li-item-wrapper-transition-duration) ease-in-out;
+        opacity var(--li-item-wrapper-transition-duration) ease-in-out,
+        transform var(--li-item-wrapper-transition-duration) ease-in-out;
 }
 /* this is the sauce for allow-discrete to work properly... 
 it basically tells the animation what to do when display: none -> display: whatever */
@@ -133,10 +144,7 @@ it basically tells the animation what to do when display: none -> display: whate
         opacity: 0;
     }
 }
-@media(hover:hover) {
-    .stations__list::-webkit-scrollbar-thumb:hover {
-        background: #cacaca;
-    }
+@media (hover:hover) {
     .stations__list li:hover {
         transform: scale(1.02);
     }
@@ -175,6 +183,8 @@ it basically tells the animation what to do when display: none -> display: whate
     background: #727272;
     font-weight: bolder;
     font-size: 17px;
+    cursor: pointer;
+
     /* reset/alter button styling here...*/
     margin: 0;
     padding: 0;
@@ -246,6 +256,7 @@ it basically tells the animation what to do when display: none -> display: whate
     background: var(--slider-track-color);
     border: var(--slider-border-width) solid #000000;
     border-radius: 1000px;
+    cursor: pointer;
 
     transition: background var(--slider-transition-duration) ease-in-out;
 }
@@ -368,26 +379,28 @@ it basically tells the animation what to do when display: none -> display: whate
     padding: 0;
     margin: 0;
 
+    cursor: pointer;
+
     transition: 
         color 0.25s ease-in-out,
         background 0.25s ease-in-out;
-}
-@media(hover:hover) {
-    .stations__line-logo-button:hover {
-        color: color-mix(in srgb, var(--text-color, white), #000000 20%);
-        background: color-mix(in srgb, var(--line-color), #000000 20%);
-    }
-    .stations__line-logo-button:hover ~ .stations__line-logo-button-description { /* tilda selects all siblings  vs + which is
-                                                                                    the immediate sibling only (next sibling) */
-        opacity: 1;
-    }
 }
 .stations__line-logo-button:active {
     color: color-mix(in srgb, var(--text-color, white), #000000 40%);
     background: color-mix(in srgb, var(--line-color), #000000 40%);
 }
-.stations__line-logo-button:active ~ .stations__line-logo-button-description{
+.stations__line-logo-button:active ~ .stations__line-logo-button-description {
     opacity: 1;
+}
+@media (hover:hover) {
+    .stations__line-logo-button:hover {
+        color: color-mix(in srgb, var(--text-color, white), #000000 20%);
+        background: color-mix(in srgb, var(--line-color), #000000 20%);
+    }
+    .stations__line-logo-button:hover ~ .stations__line-logo-button-description { /* tilda targets all siblings, while +
+                                                                                        targets only adjacent siblings  */
+        opacity: 1;
+    }
 }
 
 .stations__line-logo-button-description {

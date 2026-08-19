@@ -194,6 +194,7 @@ body {
     .line__container button:hover {
         background: color-mix(in srgb, var(--line-color), #000000 20%);
         color: var(--text-color, #b3b3b3);
+        cursor: pointer;
     }
 }
 /* this works for both desktop and mobile */
