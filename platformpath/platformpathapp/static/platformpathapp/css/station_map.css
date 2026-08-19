@@ -345,9 +345,11 @@ to work properly; we use a custom keyframe animation */
 }
 
 .route-field__dropdown-button {
+    display: flex;
     width: 100%;
 }
 
+/* actual dropdown of the route field */
 .route-field__dropdown:popover-open {
     /* reset the automatically set popover options here*/
     inset: auto;
@@ -383,6 +385,32 @@ to work properly; we use a custom keyframe animation */
         background: #cacaca;
     }
 }
+
+.route-field__dropdown-button img {
+    display: none;
+    margin-left: auto; /* justify-self property doesn't work for flex items at all :/ (though align-self does); 
+                            opting for margin-auto hack instead */
+    height: 20px;
+    width: auto;
+    transform: scale(0);
+
+    transition: transform 0.25s ease-in-out, display 0.3s allow-discrete;
+}
+@media (hover:hover) {
+    .route-field__dropdown-button:hover img {
+        transform: scale(1.1);
+    }
+}
+.route-field__dropdown-button.option-selected img {
+    display: block;
+    transform: scale(1);
+}
+@starting-style {
+    .route-field__dropdown-button.option-selected img {
+        transform: scale(0);
+    }
+}
+
 
 .route-field__dropdown-option {
     display: flex;
@@ -582,43 +610,73 @@ to work properly; we use a custom keyframe animation */
     flex-direction: column;
     align-items: center;
     right: 50%;
-    transform: translateX(50%);
+    transform: translateX(50%); /* center the element horizontally */
     bottom: 20%;
     gap: 10px;
-    width: clamp(260px, 34vw, 420px);
-    padding: 10px 12px;
-    border-radius: 8px;
+
+    transition: 
+        opacity 0.25s ease-in-out,
+        display 0.3s allow-discrete;
+}
+.step-ui.hidden {
+    opacity: 0;
+    display: none;
+}
+@starting-style {
+    .step-ui {
+        opacity: 0;
+    }
 }
 
 .step-ui__instruction-text {
-    display: block;
-    min-height: 3.6rem;
-    max-height: 3.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    max-width: 300px;
+    border-radius: 100px;
     color: #ffffff;
+    background: rgba(60, 60, 60, 50%); /* no background-opacity property... this will be the best bet here */
     overflow-y: auto;
     line-height: 1.2;
     text-align: center;
+    padding: 10px;
 }
 
 .step-ui__step-controls {
     display: flex;
+    justify-content: center;
     gap: 20px;
 }
 
-.step-ui__step-controls button {
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next) {
+    --bg-color: #3b3b3b;
+
     padding: 0px;
     border: none;
 
     min-height: 38px;
     border-radius: 10px;
     padding: 5px;
-    background: #3b3b3b;
+    background: var(--bg-color);
     color: #ffffff;
+    cursor: pointer;
+
+    transition: background 0.25s ease-in-out;
+}
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active {
+    background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+}
+@media (hover:hover) {
+    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover {
+        background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+    }
 }
 
 :is(.step-ui__btn-prev, .step-ui__btn-next) img {
     width: 30px;
     height: auto;
+    filter: none;
 }
 
 .step-controls button:disabled {
@@ -626,7 +684,7 @@ to work properly; we use a custom keyframe animation */
     opacity: 0.5;
 }
 
-/* Highlighting styles for diagram paths */
+/* ======== HIGHLIGHTING STYLES FOR THE DIAGRAM CONTAINER ======== */
 
 .muted,
 .muted :is(path, rect, circle, ellipse, polygon, polyline) {

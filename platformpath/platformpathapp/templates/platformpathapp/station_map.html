@@ -76,12 +76,18 @@
 				</div>
 				<div id="route-form" class="route-form" aria-label="Nodes selection">
 					<div class="route-field">
-						<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">START</button>
+						<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
+							START
+							<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+						</button>
 						<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
 					</div>
 
 					<div class="route-field">
-						<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">END</button>
+						<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
+							END
+							<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+						</button>
 						<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
 					</div>
 
@@ -90,20 +96,14 @@
 			</div>
 
 			<!-- ================= STEP UI BLOCK ================= -->
-			<div id="step-ui" class="map-overlay step-ui" aria-label="Steps Instructions/Buttons">
+			<div id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
 					<button id="btn-prev" class="step-ui__btn-prev" type="button">
-						<img 
-							src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}"
-							alt="Step ui previous button img"
-						>
+						<img src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}" alt="Step ui previous button img">
 					</button>
 					<button id="btn-next" class="step-ui__btn-next" type="button">
-						<img 
-							src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}"
-							alt="Step ui next button img"
-						>
+						<img src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}" alt="Step ui next button img">
 					</button>
 				</div>
 			</div>

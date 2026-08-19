@@ -378,7 +378,7 @@ export class StationMapPage {
             }
 
             // make the stepui visible now
-            stepUI.style.display = 'block';
+            stepUI.classList.remove("hidden");
             // render the current style
             this.renderCurrentStep(instructionText, btnPrev, btnNext);
         } else {
@@ -409,7 +409,7 @@ export class StationMapPage {
         // hide route direction labels
         this.svgRenderer.hideRouteDirectionLabels();
         // remove the step ui from view
-        stepUI.style.display = 'none';
+        stepUI.classList.add("hidden");
         // click the all layers button to reveal all layers again
         allLayersButton?.click();
     }
@@ -517,8 +517,8 @@ export class StationMapPage {
             });
 
             // create our node options and add it to our dropdown
-            const startNodeOption: NodeOption | null = this.createNewOption(startNodeDropdown, node, filters);
-            const endNodeOption: NodeOption | null = this.createNewOption(endNodeDropdown, node, filters);
+            const startNodeOption: NodeOption | null = this.createNewNodeOption(startNodeDropdown, node, filters);
+            const endNodeOption: NodeOption | null = this.createNewNodeOption(endNodeDropdown, node, filters);
 
             if (startNodeOption === null || endNodeOption === null) {
                 console.warn(
@@ -541,13 +541,14 @@ export class StationMapPage {
         this.initFilterCheckboxes(filterCheckboxesContainer, nodeTypesHashMap, nodeOptions);
     }
 
-    // adds new option based on the given node data to the given dropdown and returns it
-    private createNewOption(
+    // adds new node option based on the given node data to the given dropdown and returns it
+    private createNewNodeOption(
         dropdown: HTMLDivElement, 
         node: NodeData,
         filters: Map<string,string>
     ): NodeOption | null {
 
+        // check if the data exists and 
         const layer: LayerData | undefined = this.station?.layer_models.find(
             (layer: LayerData) => layer.id === node.layer
         );
@@ -566,29 +567,43 @@ export class StationMapPage {
             filters
         );
 
-        // event listener here deals with the selection of the item
+        // event listener here deals with the selection of the item (mainly its own styling and some state changes)
         nodeOption.Self.addEventListener("click", () => {
-            // check if the parent has an option that is selected
-            const previouslySelectedOption: HTMLButtonElement | null = nodeOption.Parent.querySelector<HTMLButtonElement>(".selected");
-            // determine if the previously selected option matches our current option
-            if (previouslySelectedOption !== nodeOption.Self) {
-                // and then apply class changes
-                previouslySelectedOption?.classList.remove("selected");
-                nodeOption.Self.classList.add("selected");
+            // check if there is an option already selected (depending on whether this node option is a start or end node option)
+            // and if it matches our current nodeOption
+            const role: SelectionRole = nodeOption.selectionRole();
+            if (role === "start") {
+                // if the start node doesn't match this node option, remove the .selected class from it
+                if (this.selectedNodeOptions.startNode !== null && this.selectedNodeOptions.startNode !== nodeOption)
+                    this.selectedNodeOptions.startNode.Self.classList.remove("selected");
+                // and then set the start node option as this one
+                this.selectedNodeOptions.startNode = nodeOption;
             }
+            // do the same for the end node
+            else if (role === "end") {
+                if (this.selectedNodeOptions.endNode !== null && this.selectedNodeOptions.endNode !== nodeOption)
+                    this.selectedNodeOptions.endNode.Self.classList.remove("selected");
+
+                this.selectedNodeOptions.endNode = nodeOption;
+            }
+            // add the .selected class to our node option
+            nodeOption.Self.classList.add("selected");
             // hide dropdown afterwards
             nodeOption.Parent.hidePopover();
+            // and add the selected class to the dropdown's toggle button (for styling purposes)... might change the logic here
+            // later since it makes a lot of calls to the document redundantly
+            const parentToggleButton: HTMLButtonElement | null = nodeOption.getParentToggleButton();
+            if (parentToggleButton === null) {
+                console.warn(`There is no toggle button for the dropdown: ${nodeOption.Parent.id}`);
+            }
+            else {
+                parentToggleButton.classList.add("option-selected");
+            }
         });
         // event listener here deals with the extraneous effects of the selection (highlighting, current path interruption, etc)
         nodeOption.Self.addEventListener("click", () => {
             // highlight the selected node (it'll be either a start or end node, svg renderer will handle all the logic from here)
             this.svgRenderer.highlightSelectedNode(nodeOption);
-            // also add the node option to our selectedNodeOptions depending on which one it represents
-            const role: SelectionRole = nodeOption.selectionRole();
-            if (role === "start")
-                this.selectedNodeOptions.startNode = nodeOption;
-            else
-                this.selectedNodeOptions.endNode = nodeOption;
 
             // toggle off any navigation if it exists
             if (this.currentPath !== null) {
@@ -649,7 +664,7 @@ export class StationMapPage {
             // clear our active filters list
             activeFilters.clear();
             // clear all the styling for the other enabled checkboxes
-            document.querySelectorAll(".filter-checklist__checkbox, .enabled").forEach((filterCheckbox: Element) => {
+            document.querySelectorAll(".filter-checklist__checkbox.enabled").forEach((filterCheckbox: Element) => {
                 filterCheckbox.classList.remove("enabled");
             });
 
@@ -702,7 +717,7 @@ export class StationMapPage {
 
                 // now check if any other active filters are enabled
                 if (activeFilters.size === 0) {
-                    // activate the event listener for this
+                    // if not, activate our all option filter checkbox (e.g. enable all node options again)
                     allOptionFilterCheckbox.ButtonElement.click();
                     return;
                 }
@@ -717,38 +732,63 @@ export class StationMapPage {
                             break;
                         }
                     }
-                    // if not just hide it and remove the selected value
+                    // if not just hide it and update all styling relating to that deselection
                     if (!matchesAFilter) {
                         nodeOption.Self.classList.add("hidden");
                         // also remove the option__selected class if it is to be hidden
                         nodeOption.Self.classList.remove("selected");
 
                         // if navigating is already happening, just ignore the following statements below
+                        // (e.g. won't break the current navigation despite the option not existing no more)
                         if (this.currentPath !== null)
                             return;
 
                         // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
-                        // and remove the highlighting corresponding to the selection role of that node option
+                        // and remove highlighting and other styling attributes from it
+                        const role: SelectionRole = nodeOption.selectionRole();
                         if (
+                            role === "start" && 
                             this.selectedNodeOptions.startNode !== null && 
-                            nodeOption.SVGID === this.selectedNodeOptions.startNode.SVGID
+                            this.selectedNodeOptions.startNode === nodeOption 
                         ) {
-                            this.svgRenderer.unhighlightSelectedNode(
-                                this.selectedNodeOptions.startNode.selectionRole()
-                            );
+                            // unhighlight the node
+                            this.svgRenderer.unhighlightSelectedNode(role);
+                            // remove this class on the dropdown parent's toggle button (mainly just for styling 
+                            // (removing this class removes an image indicator that signals an option has been selected on the button))
+                            const parentToggleButton: HTMLButtonElement | null = nodeOption.getParentToggleButton();
+                            if (parentToggleButton === null) {
+                                console.warn(
+                                    "There is no toggle button for the dropdown:",
+                                    nodeOption.Self.id
+                                );
+                            }
+                            else {
+                                parentToggleButton.classList.remove("option-selected");
+                            }
+                            // set our selected node option for this start node as null
                             this.selectedNodeOptions.startNode = null;
                         }
-                        if (
-                            this.selectedNodeOptions.endNode !== null && 
-                            nodeOption.SVGID === this.selectedNodeOptions.endNode.SVGID
+                        // same logic as for the start node goes for the end node
+                        else if (
+                            role === "end" && 
+                            this.selectedNodeOptions.endNode !== null &&
+                            this.selectedNodeOptions.endNode === nodeOption
                         ) {
-                            this.svgRenderer.unhighlightSelectedNode(
-                                this.selectedNodeOptions.endNode.selectionRole()
-                            );
+                            this.svgRenderer.unhighlightSelectedNode(role);
+                            const parentToggleButton: HTMLButtonElement | null = nodeOption.getParentToggleButton();
+                            if (parentToggleButton === null) {
+                                console.warn(
+                                    "There is no toggle button for the dropdown:",
+                                    this.selectedNodeOptions.endNode.Self.id
+                                );
+                            }
+                            else {
+                                parentToggleButton.classList.remove("option-selected");
+                            }
                             this.selectedNodeOptions.endNode = null;
                         }
                     }
-                    // else remove the hidden class if it exists
+                    // else remove the hidden class if it exists (since it an option that may be visible)
                     else {
                         nodeOption.Self.classList.remove("hidden");
                     }
