@@ -632,13 +632,18 @@ have an animation from display: none -> display: something else (e.g. the backwa
     background: rgb(255 255 255 / 90%);
 }
 
-.step-ui__instruction-text,
-.route-preview > strong,
-#route-preview-summary {
+.step-ui__instruction-text {
     display: block;
     min-height: 3.6rem;
     max-height: 3.6rem;
     overflow-y: auto;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.route-preview > strong,
+#route-preview-summary {
+    display: block;
     line-height: 1.2;
     text-align: center;
 }
