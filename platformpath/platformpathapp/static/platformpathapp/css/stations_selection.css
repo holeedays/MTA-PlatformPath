@@ -311,8 +311,6 @@ it basically tells the animation what to do when display: none -> display: whate
 }
 
 .stations__input-container {
-    --bg-color: #313131;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -320,8 +318,8 @@ it basically tells the animation what to do when display: none -> display: whate
     height: 30px;
     width: 90%;
 
-    border: 25px solid var(--bg-color);
-    background: var(--bg-color);
+    padding: 25px;
+    background: #313131;
     border-radius: 1000px;
 }
 
@@ -404,8 +402,6 @@ it basically tells the animation what to do when display: none -> display: whate
 }
 
 .stations__line-logo-button-description {
-    --bg-color: #4e4e4e;
-
     position: absolute;
     width: 100px;
     height: auto;
@@ -417,9 +413,9 @@ it basically tells the animation what to do when display: none -> display: whate
     font-size: 15px;
 
     color: #e0e0e0;
-    background: var(--bg-color);
-    border: 5px solid var(--bg-color);
-    border-radius: 1000px;
+    background: #4e4e4e;
+    padding: 5px;
+    border-radius: 100px;
     /* hide the item onload, only when the button is hovered on the description appears*/
     opacity: 0;
 
@@ -459,6 +455,7 @@ it basically tells the animation what to do when display: none -> display: whate
     }
 
     .stations__input-container {
+        padding: 10px;
         border-width: 10px;
         flex: 0.8;
         width: 90%;

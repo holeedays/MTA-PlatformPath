@@ -17,6 +17,7 @@ export class StationMapPage {
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
+    private accessiblePathingOnly: boolean = false;
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -40,10 +41,17 @@ export class StationMapPage {
             return;
         }
 
+        // methods that don't require station data
+
         // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
         // lower resolutions/dimensions)
         this.initSiteHeaderToggleButton();
+        // init the map legend
         this.initMapLegend();
+        // init the base styling for step ui
+        this.initStepUI();
+
+        // methods that require station data
 
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
@@ -51,6 +59,7 @@ export class StationMapPage {
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
         // init the route direction labels
         this.svgRenderer.initRouteDirectionLabels();
+        this.initStepUI();
         // init our layer controls (toggling the different layers of the svg)
         this.initLayerControls();
 
@@ -58,6 +67,8 @@ export class StationMapPage {
 
         // init our find route button, which will handle activating the pathfinding between the start/end nodes
         this.initRouteFindButton();
+        // init our override toggle container and its buttons
+        this.initOverrideToggles();
         // init our filter toggle button (will be responsible for revealing all of our filter checkboxes)
         this.initFilterChecklistToggleButton();
         // init all dropdowns with node options and the filter checkbox (e.g. anything involving node data)
@@ -68,7 +79,7 @@ export class StationMapPage {
         this.initMapRotateButton();
     }
 
-    // Set the station name in the heading element 
+    // Set the station name in the heading element + add some event handling logic 
     private initStationHeading(): void {
         const stationHeading: HTMLDivElement | null = document.querySelector('#diagram-name');
         if (stationHeading === null || this.station === null) {
@@ -80,6 +91,15 @@ export class StationMapPage {
             return;
         }
         stationHeading.innerText = this.station.station_model.name;
+        
+        // add event logic for the station header (just redirects the user back to the stations selection page)
+        const currentURL: string = URLHandler.getFullURLRoute();
+        const currentURLSplit: string[] = currentURL.split("/");
+        let stationsSelectionURL: string = "";
+        for (let i = 0; i < currentURLSplit.length - 3; i++) {
+            stationsSelectionURL += i === 0? currentURLSplit[i]: "/" + currentURLSplit[i];
+        }
+        stationHeading.addEventListener("click", () => URLHandler.redirectTo(stationsSelectionURL));
     }
 
     // init the layer("levels") buttons 
@@ -142,6 +162,17 @@ export class StationMapPage {
             }
         }
     }
+
+    // init certain styling for the stepUI (the container to see all the steps from the path found) during page load
+    private initStepUI(): void {
+        const stepUI: HTMLDivElement | null = document.querySelector("#step-ui");
+        if (stepUI === null) {
+            console.warn("Step UI doesn't exist");
+            return;
+        }
+        // make sure the stepui has the hidden element (though it should already be set in the template)
+        stepUI.classList.add("hidden");
+    }
     
     // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
     private async handleFormSubmit(): Promise<void> {
@@ -156,14 +187,70 @@ export class StationMapPage {
         await this.startNavigation(startNodeID, endNodeID);
     }
 
-    // Set up event listeners for the find route button (form submission after selecting start/end nodes)
+    // set up event listeners for the find route button (form submission after selecting start/end nodes)
     private initRouteFindButton(): void {
         const findRouteButton: HTMLButtonElement | null = document.querySelector("#find-route");
         if (findRouteButton === null) {
             console.warn("Find route button doesn't exist");
             return;
         }
-        findRouteButton.addEventListener("click", () => this.handleFormSubmit());
+        findRouteButton.addEventListener("click", async () => await this.handleFormSubmit());
+    }
+
+    // add styling + event handling for the override toggle container and its override toggle buttons (e.g. like accessibility only 
+    // button) that may exist
+    private initOverrideToggles(): void {
+        const overrideTogglesParentContainer: HTMLDivElement | null = document.querySelector(".override-toggles");
+        const accessibilityOnlyToggleButton: HTMLButtonElement | null | undefined = (
+            overrideTogglesParentContainer?.querySelector(".override-toggles__accessibility-only-toggle-button")
+        );
+
+        if (
+            overrideTogglesParentContainer === null ||
+            accessibilityOnlyToggleButton === null ||
+            accessibilityOnlyToggleButton === undefined
+        ) {
+            console.warn(
+                "Override toggles parent container and/or the accessibility only toggle button doesn't exist",
+                `Override Toggles Parent Container Status: ${overrideTogglesParentContainer}`,
+                `Accessibility Only Toggle Button Status: ${accessibilityOnlyToggleButton}`
+            );
+            return;
+        }
+
+        // also check if the station has data or else all the override toggle buttons would be useless
+        if (this.station === null) {
+            console.warn("There is no station data, cannot modify override toggles section without the data");
+            return;
+        }   
+
+        // now checking whether to validate the accessibility only toggle button
+        if (this.station.station_model.accessible_station) {
+            let isPressed: boolean = false;
+            // also add a human readable label (just for human legibility, does not have styling significance, 
+            // this attribute will exist in the template already)
+            accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
+
+            accessibilityOnlyToggleButton.addEventListener("click", () => {
+                // set our accessiblePathingOnly boolean (this boolean will determine whether the pathfinding algorithm will
+                // choose to select accessible nodes)
+                this.accessiblePathingOnly = !isPressed;
+                // this is for visual styling to confirm whether this override is selected
+                accessibilityOnlyToggleButton.classList.toggle("enabled", !isPressed);
+                // toggle our readable label
+                const ariaSelectedVal: string = isPressed === false? "true": "false";
+                accessibilityOnlyToggleButton.setAttribute("aria-selected", ariaSelectedVal);
+
+                isPressed = !isPressed;
+            });
+        }
+        // if the station is not accessible
+        else {
+            // since the accessibility only toggle button is the only toggle button, we don't have to configure more logic to
+            // determine to hide the parent container or just hide the accessibility button (if there are more buttons)
+            // right now, just make the parent container hidden
+            overrideTogglesParentContainer.classList.add("hidden");
+        }
     }
 
     // add event handling of the toggle button 
@@ -356,10 +443,10 @@ export class StationMapPage {
             this.svgRenderer.showRouteDirectionLabels(labelIds);
 
             // get the relevant ui elements
-            const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
+            const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
             const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
-            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
-            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
+            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev");    
+            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next");
 
             if (
                 stepUI === null ||
@@ -388,11 +475,18 @@ export class StationMapPage {
 
     // end the navigation process (the opposite of StartNavigation)
     private endNavigation(): void {
-        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
-        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
+        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
+        const allLayersButton: HTMLButtonElement | null | undefined = stepUI?.querySelector("#show-all-layers");
 
-        if (stepUI === null) {
-            console.warn("There is no step ui element");
+        if (
+            stepUI === null ||
+            allLayersButton === null ||
+            allLayersButton === undefined
+        ) {
+            console.warn(
+                "There is no step ui element and/or all layers button within it",
+                `Step UI Status: ${stepUI}; All Layers Button Status: ${allLayersButton}`
+            );
             return;
         }
 
@@ -411,7 +505,7 @@ export class StationMapPage {
         // remove the step ui from view
         stepUI.classList.add("hidden");
         // click the all layers button to reveal all layers again
-        allLayersButton?.click();
+        allLayersButton.click();
     }
 
     // renders the entirety of the path 
@@ -456,6 +550,7 @@ export class StationMapPage {
         this.svgRenderer.highlightNode(step.svgId);
         this.svgRenderer.centerOnNode(step.svgId);
 
+        // prevent more clicks depending on what current index we have on the prev btn and next btn
         btnPrev.disabled = (this.currentIndex === 0);
         btnNext.disabled = (this.currentIndex === this.currentPath.length - 1);
     }

@@ -61,20 +61,41 @@
 					<div id="layer-options" class="layer-options"></div>
 					<p class="level-boundary">BOTTOM LEVEL ↓</p>
 				</div>
+
+				<div class="element-description__container">
+					<img 
+						src="{% static 'platformpathapp/decals/element_description_hover_element.svg' %}" 
+						alt="Element description hover element hover icon"
+					>
+					<span class="element-description">Change what level/floor of the station is in view</span>
+				</div>
 			</aside>
 
-			<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST ================= -->
-			<div class="map-overlay route-form-filter-checklist__container">
-				<div class="filter-checklist" aria-label="Filters toggle">
+			<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST + OVERRIDE TOGGLES  ================= -->
+			<aside class="map-overlay route-form-filter-checklist-override-toggles__container">
+				<section class="filter-checklist" aria-label="Filters toggle">
 					<div class="filter-checklist__checkboxes-container-wrapper hidden">
 						<div class="filter-checklist__checkboxes-container"></div>
 					</div>
 					<button class="filter-checklist__toggle-button">
-						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Toggle button icon">
+						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
 						SELECT FILTERS
 					</button>
-				</div>
-				<div id="route-form" class="route-form" aria-label="Nodes selection">
+				</section>
+
+				<section class="override-toggles">
+					<strong>OVERRIDES</strong>
+					<div class="override-toggles__toggle-buttons-container">
+						<button class="override-toggles__accessibility-only-toggle-button" aria-selected="false">
+							<img 
+								src="{% static 'platformpathapp/decals/override_toggles_accessibility_only_toggle_button.svg' %}" 
+								alt="Accessibility only toggle button icon"
+							>
+						</button>
+					</div>
+				</section>
+
+				<section id="route-form" class="route-form" aria-label="Nodes selection">
 					<div class="route-field">
 						<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
 							START
@@ -82,7 +103,6 @@
 						</button>
 						<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
 					</div>
-
 					<div class="route-field">
 						<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
 							END
@@ -92,21 +112,21 @@
 					</div>
 
 					<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
-				</div>
-			</div>
+				</section>
+			</aside>
 
 			<!-- ================= STEP UI BLOCK ================= -->
-			<div id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
+			<aside id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
 					<button id="btn-prev" class="step-ui__btn-prev" type="button">
-						<img src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}" alt="Step ui previous button img">
+						<img src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}" alt="Step ui previous button icon">
 					</button>
 					<button id="btn-next" class="step-ui__btn-next" type="button">
-						<img src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}" alt="Step ui next button img">
+						<img src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}" alt="Step ui next button icon">
 					</button>
 				</div>
-			</div>
+			</aside>
 
 			<!-- ================= MAP ROTATE BUTTON ================= -->
 			<button class="map-overlay map__rotate-button">
@@ -123,7 +143,7 @@
 			</button>
 
 			<!-- ================= LEGEND ================= -->
-			<div class="map-overlay map-legend">
+			<aside class="map-overlay map-legend">
 				<div class="map-legend__info-container-wrapper hidden">
 					<div class="map-legend__info-container">
 						<div class="map-legend__section map-legend__color-codes-info">
@@ -270,7 +290,7 @@
 						alt="Toggle map button icon base"
 					>
 				</button>
-			</div>
+			</aside>
 
 		</section>
 	</main>

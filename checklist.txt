@@ -69,7 +69,7 @@ FIXED THE BUGS BELOW:
         ; is there a way to address this issue???
     )
     > Weird bug when step ui is visible (and a step is pressed) and the map legend is enabled... the clip path + transform css looks
-    very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method
+    very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method8
 
 
 Ivan ----

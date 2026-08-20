@@ -183,6 +183,7 @@ to work properly; we use a custom keyframe animation */
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
+    cursor: pointer;
 
     transition: top 0.25s ease-in-out;
 }
@@ -193,7 +194,17 @@ to work properly; we use a custom keyframe animation */
 .map-header h1 {
     margin: 0;
     font-size: 45px;
-    color: white;
+    color: #ffffff;
+
+    transition: color 0.25s ease-in-out;
+}
+.map-header:active h1 {
+    color: #c5c5c5;
+}
+@media (hover:hover) {
+    .map-header:hover h1 {
+        color: #c5c5c5;
+    }
 }
 
 /* ======== level stack (to select layers on the station map) ======== */
@@ -279,9 +290,9 @@ to work properly; we use a custom keyframe animation */
     border: 3px solid #ffffff;
 }
 
-/* ======== routing form (generate path) + filter checklist ======== */
+/* ======== routing form (generate path) + filter checklist + override toggles ======== */
 
-.route-form-filter-checklist__container {
+.route-form-filter-checklist-override-toggles__container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -295,6 +306,8 @@ to work properly; we use a custom keyframe animation */
     gap: 15px;
     width: 650px;
 }
+
+/* ======== route form ======== */
 
 .route-form {
     display: flex;
@@ -410,7 +423,6 @@ to work properly; we use a custom keyframe animation */
         transform: scale(0);
     }
 }
-
 
 .route-field__dropdown-option {
     display: flex;
@@ -603,6 +615,60 @@ to work properly; we use a custom keyframe animation */
     transform: rotate(180deg);
 }
 
+/* ======== override toggles ======== */
+.override-toggles {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 5px 0px;
+    border-radius: 5px;
+    background: #252525;
+}
+/* no transitions here for the hidden property, we want it instantaneously */
+.override-toggles.hidden {
+    display: none;
+}
+
+.override-toggles strong {
+    font-size: 18px;
+    color: #ffffff;
+    padding: 0px 5px;
+}
+
+/* the container for all override toggle buttons */
+.override-toggles__toggle-buttons-container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0px 10px;
+}
+/* accessibility override toggle button */
+.override-toggles__accessibility-only-toggle-button {
+    background: none;
+    border: none;
+
+    cursor: pointer;
+}
+
+.override-toggles__accessibility-only-toggle-button img {
+    width: 40px;
+    height: auto;
+
+    transition: filter 0.25s ease-in-out;
+}
+.override-toggles__accessibility-only-toggle-button:active img {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+    }
+@media (hover:hover) {
+    .override-toggles__accessibility-only-toggle-button:hover img {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+    }
+}
+.override-toggles__accessibility-only-toggle-button.enabled img {
+        filter: opacity(0.5) drop-shadow(0 0 0 #000000);
+}
+
+
 /* ======== step ui ======== */
 
 .step-ui {
@@ -664,11 +730,11 @@ to work properly; we use a custom keyframe animation */
 
     transition: background 0.25s ease-in-out;
 }
-.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active {
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled) {
     background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
 }
 @media (hover:hover) {
-    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover {
+    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled) {
         background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
     }
 }
@@ -676,63 +742,19 @@ to work properly; we use a custom keyframe animation */
 :is(.step-ui__btn-prev, .step-ui__btn-next) img {
     width: 30px;
     height: auto;
-    filter: none;
+    transition: filter 0.25s ease-in-out;
+}
+:is(.step-ui__btn-prev, .step-ui__btn-next):disabled {
+    background: color-mix(in srgb, var(--bg-color), #000000 20%);
+    cursor: default;
+}
+:is(.step-ui__btn-prev, .step-ui__btn-next):disabled img {
+    filter: opacity(0.5) drop-shadow(0 0 0 #000000);
 }
 
 .step-controls button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
-}
-
-/* ======== HIGHLIGHTING STYLES FOR THE DIAGRAM CONTAINER ======== */
-
-.muted,
-.muted :is(path, rect, circle, ellipse, polygon, polyline) {
-    fill: color-mix(in srgb, var(--original-fill), #000000 80%)
-}
-
-@keyframes NodeHighlightAnimation {
-    0% {fill: color-mix(in srgb, var(--original-fill), #000000 50%)}
-    100% {fill: var(--original-fill)}
-}
-@keyframes StartEndNodeHighlightAnimation {
-    0% {fill: color-mix(in srgb, var(--target-fill), #000000 50%)}
-    100% {fill: var(--target-fill)}
-}
-
-/* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
-the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
-will keep it with the standard highlight animation which applies original fill */
-.highlighted,
-.highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
-    animation-name: NodeHighlightAnimation;
-    animation-duration: 0.5s;
-    animation-direction: alternate;
-    animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
-    animation-iteration-count: infinite;
-}
-
-.highlighted.start-node-highlight,
-.highlighted.end-node-highlight,
-.highlighted.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline),
-.highlighted.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline)
-{
-    animation-name: StartEndNodeHighlightAnimation;
-}
-.start-node-highlight,
-.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: var(--start-node-highlight-fill);
-    fill: var(--target-fill);
-}
-.end-node-highlight,
-.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: var(--end-node-highlight-fill);
-    fill: var(--target-fill);
-}
-/* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
-if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
-:is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
-    --target-fill: var(--original-fill);
 }
 
 /* ======== map rotate button ======== */
@@ -1057,6 +1079,135 @@ if the arrow has the class (.route-direction__label) and target any paths within
     height: auto;
     z-index: 1;
 }
+
+/* ==========================================================================
+   HIGHLIGHTING STYLES FOR THE DIAGRAM CONTAINER
+   ========================================================================== */
+
+.muted,
+.muted :is(path, rect, circle, ellipse, polygon, polyline) {
+    fill: color-mix(in srgb, var(--original-fill), #000000 80%)
+}
+
+@keyframes NodeHighlightAnimation {
+    0% {fill: color-mix(in srgb, var(--original-fill), #000000 50%)}
+    100% {fill: var(--original-fill)}
+}
+@keyframes StartEndNodeHighlightAnimation {
+    0% {fill: color-mix(in srgb, var(--target-fill), #000000 50%)}
+    100% {fill: var(--target-fill)}
+}
+
+/* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
+the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
+will keep it with the standard highlight animation which applies original fill */
+.highlighted,
+.highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
+    animation-name: NodeHighlightAnimation;
+    animation-duration: 0.5s;
+    animation-direction: alternate;
+    animation-timing-function: cubic-bezier(0.39, 0.575, 0.565, 1);
+    animation-iteration-count: infinite;
+}
+
+.highlighted.start-node-highlight,
+.highlighted.end-node-highlight,
+.highlighted.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline),
+.highlighted.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline)
+{
+    animation-name: StartEndNodeHighlightAnimation;
+}
+.start-node-highlight,
+.start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
+    --target-fill: var(--start-node-highlight-fill);
+    fill: var(--target-fill);
+}
+.end-node-highlight,
+.end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
+    --target-fill: var(--end-node-highlight-fill);
+    fill: var(--target-fill);
+}
+/* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
+if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
+:is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
+    --target-fill: var(--original-fill);
+}
+
+/* ==========================================================================
+   MISC ITEMS (element descriptions)
+   ========================================================================== */
+
+.element-description__container {
+    position: absolute;
+}
+
+.element-description__container img {
+    width: 25px;
+    height: auto;
+
+    transition: 
+        filter 0.25s ease-in-out,
+        transform 0.25s ease-in-out;
+}
+.element-description__container:active img {
+    filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+    transform: scale(1.1);
+}
+@media (hover:hover) {
+    .element-description__container:hover img {
+        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+        transform: scale(1.1);
+    }
+}
+
+/* NOTE: element description can exist without a container or an img, I just give a container and image for certain elements (where
+    it'd be a pain in the ass to see an element description text repeatedly just for hovering over that element) */
+.element-description {
+    display: none;
+    position: absolute;
+    padding: 5px;
+    width: 150px;
+    border-radius: 100px;
+    text-align: center;
+    align-content: center;
+    font-size: 15px;
+    opacity: 0;
+    color: #ffffff;
+    background: #4e4e4e;
+
+    transition: 
+        display 0.3s allow-discrete,
+        opacity 0.25s ease-in-out;
+}
+.element-description__container:active .element-description {
+    display: block;
+    opacity: 1;
+}
+@media (hover:hover) {
+    .element-description__container:hover .element-description {
+        display: block;
+        opacity: 1;
+    }
+}
+@starting-style {
+    .element-description__container:hover .element-description {
+        display: block;
+        opacity: 0;
+    }
+}
+
+.level-stack .element-description__container {
+    bottom: 90%;
+    left: 90%;
+}
+.level-stack .element-description__container .element-description {
+    left: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+
 
 /* =========================================================
    Footer
