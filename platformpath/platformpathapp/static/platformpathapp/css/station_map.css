@@ -805,6 +805,8 @@ Route preview styling
 
 .route-preview-node,
 .route-preview-node :is(path, rect, circle, ellipse, polygon, polyline) {
+    opacity: 0.65;
+
     animation-name: RoutePreviewPulse;
     animation-duration: var(--preview-duration);
     animation-timing-function: ease-in-out;
