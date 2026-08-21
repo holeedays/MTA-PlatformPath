@@ -1,4 +1,5 @@
 :root { /* define global vars here */
+    --site-diagram-container-bg-color: #171717; /* bg color for the site and the diagram container */
     --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
                                     will take the full lot of space */ 
 
@@ -18,6 +19,16 @@ a {
     text-decoration: none;
 }
 
+@keyframes page_load_in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 html,
 body {
     height: 100%;
@@ -28,6 +39,9 @@ body {
 }
 
 body {
+    animation: page_load_in 0.5s ease-in-out both;
+    background: var(--site-diagram-container-bg-color);
+
     position: relative;
     display: flex;
     flex-direction: column;
@@ -151,7 +165,7 @@ body {
     overflow: hidden;
     touch-action: none;
     isolation: isolate;
-    background: #171717;
+    background: var(--site-diagram-container-bg-color);
 }
 
 .diagram-container svg {
@@ -179,9 +193,9 @@ to work properly; we use a custom keyframe animation */
     100% {opacity: 1;}
 }
 
-/* ====================================================================================================================
-   Map overlays (headers, level stack, route form (includes filter checklist, step ui, map rotate button, map legend)
-   ==================================================================================================================== */
+/* ============================================================================================================================
+   Map overlays (headers, level stack, route form (includes filter checklist, step ui + preview, map rotate button, map legend)
+   ============================================================================================================================ */
 
 /* All controls sit above the SVG and never pan with it. */
 .map-overlay {
@@ -682,7 +696,7 @@ to work properly; we use a custom keyframe animation */
 }
 
 
-/* ======== step ui ======== */
+/* ======== step ui + route preview ======== */
 
 .step-ui,
 .route-preview {
@@ -1133,7 +1147,7 @@ to work properly; we use a custom keyframe animation */
 
 /* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
 the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
-will keep it with the standard highlight animation which applies original fill */
+have to change the target fill var to the original fill for the arrows at least in the case of the start and end nodes */
 .highlighted,
 .highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
     animation-name: NodeHighlightAnimation;
@@ -1310,6 +1324,11 @@ if the arrow has the class (.route-direction__label) and target any paths within
     overflow: auto;
     text-align: start;
     border-radius: 10px;
+}
+/* might remove later and add some ts side logic to better solve the issue of the .element-description__container on the filter
+    checklist */
+.route-form-filter-checklist-override-toggles__container .override-toggles.hidden ~ .element-description__container {
+    bottom: 60px;
 }
 /* the route form filter override element description container contains a ul hence the styling here */
 .element-description ul {

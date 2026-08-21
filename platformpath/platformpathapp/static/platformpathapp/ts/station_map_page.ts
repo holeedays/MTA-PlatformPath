@@ -486,19 +486,22 @@ export class StationMapPage {
             return;
         }
             // get the relevant ui elements
+            const preview: HTMLDivElement | null = document.querySelector("#route-preview");
             const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
             const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
             const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev");    
             const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next");
 
             if (
+                preview === null ||
                 stepUI === null ||
                 instructionText === null ||
                 btnPrev === null ||
                 btnNext === null
             ) {
                 console.warn(
-                    "stepUI parent object, instruction text, previous node button, and/or next node button does not exist",
+                    "Preview UI, stepUI parent object, instruction text, previous node button, and/or next node button does not exist",
+                    `Preview UI Status: ${preview}`,
                     `StepUI Status: ${stepUI}`,
                     `Instruction Text Status: ${instructionText}`,
                     `Previous Node Button Status: ${btnPrev}`,
@@ -507,37 +510,10 @@ export class StationMapPage {
                 return;
             }
 
-            const preview = document.querySelector(
-                "#route-preview"
-            ) as HTMLDivElement | null;
-
-            const stepUI = document.querySelector(
-                "#step-ui"
-            ) as HTMLDivElement | null;
-
-            const instructionText = document.querySelector(
-                "#instruction-text"
-            ) as HTMLElement | null;
-
-            const btnPrev = document.querySelector(
-                "#btn-prev"
-            ) as HTMLButtonElement | null;
-
-            const btnNext = document.querySelector(
-                "#btn-next"
-            ) as HTMLButtonElement | null;
-
-            if (!preview || !stepUI || !instructionText || !btnPrev || !btnNext) {
-                console.warn("Preview or navigation UI does not exist");
-                return;
-            }
-
             this.isPreviewingRoute = false;
             this.svgRenderer.stopRoutePreview();
 
             preview.style.display = "none";
-            stepUI.style.display = "block";
-
             // make the stepui visible now
             stepUI.classList.remove("hidden");
             // render the current style
@@ -550,23 +526,20 @@ export class StationMapPage {
         this.isPreviewingRoute = false;
         this.svgRenderer.stopRoutePreview();
 
-        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
-        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
-        const preview = document.querySelector("#route-preview") as HTMLDivElement | null;
-
-        if (stepUI === null) {
-            console.warn("There is no step ui element");
         const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
-        const allLayersButton: HTMLButtonElement | null | undefined = stepUI?.querySelector("#show-all-layers");
+        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
+        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
 
         if (
             stepUI === null ||
             allLayersButton === null ||
-            allLayersButton === undefined
+            preview === null
         ) {
             console.warn(
-                "There is no step ui element and/or all layers button within it",
-                `Step UI Status: ${stepUI}; All Layers Button Status: ${allLayersButton}`
+                "There is no step ui element, all layers button, and or preview ui",
+                `Step UI Status: ${stepUI};`,
+                `All Layers Button Status: ${allLayersButton}`,
+                `Preview UI Status: ${preview}`
             );
             return;
         }
