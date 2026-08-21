@@ -72,88 +72,6 @@ body {
 }
 
 /* =========================================================
-    Brand Styling (for the header)
-   ========================================================= */
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand__logo {
-    /* Sized off the adjacent brand name's line-height so it stays
-    proportional to the text no matter where the brand mark is used. */
-    height: 1.6em;
-    width: auto;
-    flex-shrink: 0;
-}
-
-.brand__logo--sm {
-    height: 1.6em;
-}
-
-.brand__name {
-    font-size: 16px;
-    font-weight: 800;
-    color: #1a4fd6;
-    letter-spacing: 0.5px;
-}
-
-/* =========================================================
-   Header — fixed, absolutely-positioned inner bar
-   ========================================================= */
-
-.site-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: #000000;
-    z-index: 1000;
-}
-
-.site-header__inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px 0 10px;
-}
-
-.site-header__nav {
-    display: flex;
-    gap: 36px;
-}
-
-.site-header__nav a {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #ffffff;
-
-    transition: color 0.25s ease-in-out;
-}
-@media (hover:hover) {
-    .site-header__nav a:hover {
-        color: #1a4fd6;
-    }
-}
-.site-header__nav a:active {
-    color: #5400a3;
-}
-
-.header-spacer {
-    height: 60px;
-    flex-shrink: 0; /* prevent other flex items from forcing the space to shrink */
-}
-
-/* =========================================================
    Stations selection container
    ========================================================= */
 
@@ -192,20 +110,31 @@ body {
 }
 .stations__list::-webkit-scrollbar-track {
     background: #1f1f1f;
+    border-radius: 100px;
 }
 .stations__list::-webkit-scrollbar-thumb {
     background: #ffffff;
     border-radius: 100px;                    
+}
+.stations__list::-webkit-scrollbar-thumb:active {
+    background: #cacaca;
+}
+@media (hover:hover) {
+    .stations__list::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
 }
 
 .stations__list li {
     display: flex;
     gap: 10px;
     justify-content: center;
+    cursor: pointer;
 
     transition: 
-        display var(--li-item-wrapper-transition-duration) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
-        opacity var(--li-item-wrapper-transition-duration) ease-in-out;
+        display calc(var(--li-item-wrapper-transition-duration) + 0.05s) allow-discrete, /* allow-discrete allows the browser to actually transition display property...*/
+        opacity var(--li-item-wrapper-transition-duration) ease-in-out,
+        transform var(--li-item-wrapper-transition-duration) ease-in-out;
 }
 /* this is the sauce for allow-discrete to work properly... 
 it basically tells the animation what to do when display: none -> display: whatever */
@@ -215,10 +144,7 @@ it basically tells the animation what to do when display: none -> display: whate
         opacity: 0;
     }
 }
-@media(hover:hover) {
-    .stations__list::-webkit-scrollbar-thumb:hover {
-        background: #cacaca;
-    }
+@media (hover:hover) {
     .stations__list li:hover {
         transform: scale(1.02);
     }
@@ -257,6 +183,8 @@ it basically tells the animation what to do when display: none -> display: whate
     background: #727272;
     font-weight: bolder;
     font-size: 17px;
+    cursor: pointer;
+
     /* reset/alter button styling here...*/
     margin: 0;
     padding: 0;
@@ -328,6 +256,7 @@ it basically tells the animation what to do when display: none -> display: whate
     background: var(--slider-track-color);
     border: var(--slider-border-width) solid #000000;
     border-radius: 1000px;
+    cursor: pointer;
 
     transition: background var(--slider-transition-duration) ease-in-out;
 }
@@ -382,8 +311,6 @@ it basically tells the animation what to do when display: none -> display: whate
 }
 
 .stations__input-container {
-    --bg-color: #313131;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -391,8 +318,8 @@ it basically tells the animation what to do when display: none -> display: whate
     height: 30px;
     width: 90%;
 
-    border: 25px solid var(--bg-color);
-    background: var(--bg-color);
+    padding: 25px;
+    background: #313131;
     border-radius: 1000px;
 }
 
@@ -450,31 +377,31 @@ it basically tells the animation what to do when display: none -> display: whate
     padding: 0;
     margin: 0;
 
+    cursor: pointer;
+
     transition: 
         color 0.25s ease-in-out,
         background 0.25s ease-in-out;
-}
-@media(hover:hover) {
-    .stations__line-logo-button:hover {
-        color: color-mix(in srgb, var(--text-color, white), #000000 20%);
-        background: color-mix(in srgb, var(--line-color), #000000 20%);
-    }
-    .stations__line-logo-button:hover ~ .stations__line-logo-button-description { /* tilda selects all siblings  vs + which is
-                                                                                    the immediate sibling only (next sibling) */
-        opacity: 1;
-    }
 }
 .stations__line-logo-button:active {
     color: color-mix(in srgb, var(--text-color, white), #000000 40%);
     background: color-mix(in srgb, var(--line-color), #000000 40%);
 }
-.stations__line-logo-button:active ~ .stations__line-logo-button-description{
+.stations__line-logo-button:active ~ .stations__line-logo-button-description {
     opacity: 1;
+}
+@media (hover:hover) {
+    .stations__line-logo-button:hover {
+        color: color-mix(in srgb, var(--text-color, white), #000000 20%);
+        background: color-mix(in srgb, var(--line-color), #000000 20%);
+    }
+    .stations__line-logo-button:hover ~ .stations__line-logo-button-description { /* tilda targets all siblings, while +
+                                                                                        targets only adjacent siblings  */
+        opacity: 1;
+    }
 }
 
 .stations__line-logo-button-description {
-    --bg-color: #4e4e4e;
-
     position: absolute;
     width: 100px;
     height: auto;
@@ -486,9 +413,9 @@ it basically tells the animation what to do when display: none -> display: whate
     font-size: 15px;
 
     color: #e0e0e0;
-    background: var(--bg-color);
-    border: 5px solid var(--bg-color);
-    border-radius: 1000px;
+    background: #4e4e4e;
+    padding: 5px;
+    border-radius: 100px;
     /* hide the item onload, only when the button is hovered on the description appears*/
     opacity: 0;
 
@@ -508,53 +435,11 @@ it basically tells the animation what to do when display: none -> display: whate
 .GRAY { --line-color: #A7A9AC; }
 .DARK_GRAY { --line-color: #808183; }
 
-/* =========================================================
-   Footer
-   ========================================================= */
-
-.site-footer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 24px 36px;
-}
-
-.site-footer__legal {
-    display: flex;
-    gap: 24px;
-    font-size: 10px;
-    color: #7a7a7a;
-    text-align: center;
-}
-
 /* =========================================================================================
    Mobile/Tablet (<768px) [Don't need a dedicated mobile resolution resizing this time]
    ========================================================================================= */
+   
 @media (max-width: 768px) { 
-    .site-header {
-        height: 100px;
-    }
-
-    .site-header__inner {
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 30px;
-        padding: 8px 20px;
-    }
-
-    .site-header__nav {
-        align-items: center;
-        justify-content: center;
-        gap: 60px;
-        width: 100%;
-    }
-
-    .header-spacer {
-        height: 100px;
-    }
-
     .user-prompt {
         font-size: 30px;
     }
@@ -570,6 +455,7 @@ it basically tells the animation what to do when display: none -> display: whate
     }
 
     .stations__input-container {
+        padding: 10px;
         border-width: 10px;
         flex: 0.8;
         width: 90%;
@@ -592,11 +478,6 @@ it basically tells the animation what to do when display: none -> display: whate
 
     .stations__selection-container {
         width: 95%;
-    }
-
-    .site-footer__legal {
-        flex-direction: column;
-        gap: 4px;
     }
 }
 

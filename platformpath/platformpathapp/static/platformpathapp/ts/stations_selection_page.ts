@@ -406,13 +406,13 @@ export class StationsSelectionPage {
         // add this class if it doesn't exist already
         stationButton.self.classList.add("station__btn");
         // configure the URL redirecting for each button 
+        // we have to clear event listeners because initStationButton is called multiple times (on page load + flipping the direction
+        // of the buttons)
         stationButton.clearEventListeners();
-        const handler = () => {
-            const currentURL: string = URLHandler.getFullURLRoute();
-            const stationSlug: string = slugify(stationName, stationID);
-            URLHandler.redirectTo(currentURL + stationSlug + "/map/");
-        };
-        stationButton.addEventListener("click", handler);
+        // this is the actual event handler logic for the station button (redirects user to the station map of the selective station)
+        const currentURL: string = URLHandler.getFullURLRoute();
+        const stationSlug: string = slugify(stationName, stationID);
+        stationButton.addEventListener("click", () => URLHandler.redirectTo(currentURL + stationSlug + "/map/"));
     }
 
     // configures each order identifier span element for our station list items

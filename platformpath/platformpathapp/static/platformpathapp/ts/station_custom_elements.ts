@@ -103,6 +103,11 @@ export class NodeOption {
         else
             return "end"
     }
+
+    // get the dropdown toggle button of the parent
+    public getParentToggleButton(): HTMLButtonElement | null {
+        return document.querySelector(`button[popovertarget="${this.Parent.id}"]`);
+    }
 }
 
 // a filter checkbox class used to house custom properties for a compound html object ("The filter checkbox")

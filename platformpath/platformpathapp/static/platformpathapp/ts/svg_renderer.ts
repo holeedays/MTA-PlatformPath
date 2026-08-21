@@ -223,7 +223,7 @@ export class SvgRenderer {
         this.hideRouteDirectionLabels();
 
         for (const labelId of labelIds) {
-            const labelElement: SVGGraphicsElement | null = document.querySelector(`#${labelId}`);
+            const labelElement: SVGGraphicsElement | null = document.querySelector(`[id="${labelId}"]`);
 
             if (labelElement === null) {
                 console.warn(

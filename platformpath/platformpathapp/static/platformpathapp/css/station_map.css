@@ -1,6 +1,11 @@
 :root { /* define global vars here */
+    --site-diagram-container-bg-color: #171717; /* bg color for the site and the diagram container */
     --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
                                     will take the full lot of space */ 
+
+    /* these two fill variables are for the start/end node highlight (and for the legend) */
+    --start-node-highlight-fill: #9900ff;
+    --end-node-highlight-fill: #e5ff00;
 }
 
 * {
@@ -14,6 +19,16 @@ a {
     text-decoration: none;
 }
 
+@keyframes page_load_in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 html,
 body {
     height: 100%;
@@ -24,6 +39,9 @@ body {
 }
 
 body {
+    animation: page_load_in 0.5s ease-in-out both;
+    background: var(--site-diagram-container-bg-color);
+
     position: relative;
     display: flex;
     flex-direction: column;
@@ -48,92 +66,21 @@ body {
     box-sizing: border-box;
 }
 
-/* =========================================================
-    Brand Styling (for the true page header)
-   ========================================================= */
+/* ==========================================================================
+   Header overrides + header toggle button (overrides header_template.css)
+   ========================================================================== */
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand__logo {
-    /* Sized off the adjacent brand name's line-height so it stays
-    proportional to the text no matter where the brand mark is used. */
-    height: 1.6em;
-    width: auto;
-    flex-shrink: 0;
-}
-
-.brand__logo--sm {
-    height: 1.4em;
-}
-
-.brand__name {
-    font-size: 16px;
-    font-weight: 800;
-    color: #1a4fd6;
-    letter-spacing: 0.5px;
-}
-
-.brand__name--sm {
-    font-size: 12px;
-}
-
-/* ==================================================================
-   Header — fixed, absolutely-positioned inner bar + toggle button
-   ================================================================== */
-
-.site-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
+.site-header__station-map-override {
     height: var(--site-header-height);
     background: #000000;
 
-    transition: transform .25s ease-in-out;
+    transition: transform 0.25s ease-in-out;
 }
-.site-header.retracted {
+.site-header__station-map-override.retracted {
     transform: translateY(-60px);
 }
 
-.site-header__inner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px 0 10px;
-}
-
-.site-header__nav {
-    display: flex;
-    gap: 36px;
-}
-
-.site-header__nav a {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #ffffff;
-
-    transition: color 0.25s ease-in-out;
-}
-@media (hover:hover) {
-    .site-header__nav a:hover {
-        color: #1a4fd6;
-    }
-}
-.site-header__nav a:active {
-    color: #5400a3;
-}
-
+/* toggle button */
 .site-header__toggle-button {
     border: none;
     background: none;
@@ -150,34 +97,47 @@ body {
     /* these 2 lines is a hack to center the absolute positioned button*/
     left: 50%; 
     transform: translateX(-50%);
-    opacity: 0.7;
     cursor: pointer;
 }
+
 .site-header__toggle-button > * { /* assign all children to the same row/column on grid */
     grid-column: 1;
     grid-row: 1;
 }
+
+/* general toggle button img styling */
+.site-header__toggle-button img {
+    opacity: 0.7;
+
+    transition: 
+        opacity 0.25s ease-in-out,
+        filter 0.25s ease-in-out;
+}
+.site-header__toggle-button:active img {
+    opacity: 1;
+    filter: brightness(1.1);
+}
 @media (hover:hover) {
-    .site-header__toggle-button:hover{
+    .site-header__toggle-button:hover img{
         opacity: 1; 
+        filter: brightness(1.1);
     }
 }
-.site-header__toggle-button:active {
-        filter: 1; 
-}
+
+/* specific img styling */
 .site-header__toggle-button .toggle-button__animated-parts-img {
     width: 50px;
     height: auto;
     z-index: 1;
 }
 
-.site-header__toggle-button.reversed .toggle-button__animated-parts-img {
+.site-header__toggle-button.enabled .toggle-button__animated-parts-img {
     transform: scaleY(-1);
 }
-.site-header__toggle-button.animating .toggle-button__animated-parts-img {
+.site-header__toggle-button.animating > .toggle-button__animated-parts-img {
     /* we're using an animation here instead of transition since we want opacity to be 0 instantaneously*/
     animation: SiteHeaderButtonAnimation;
-    animation-duration: .25s; 
+    animation-duration: 0.4s; 
     animation-timing-function: cubic-bezier(0.05, 0.2, 0.8, 0.91);
 }
 
@@ -185,12 +145,10 @@ body {
     width: 150px;
     height: auto;
     z-index: 0;
-
-    transition: filter .25s ease-in-out;
 }
 @keyframes SiteHeaderButtonAnimation {
     0% {opacity: 0;}
-    100% {opacity: 1;}
+    100% {opacity: 0.7;} /* should match the starting opacity of the button imgs (e.g. 0.7) */
 }
 
 /* =========================================================
@@ -207,7 +165,7 @@ body {
     overflow: hidden;
     touch-action: none;
     isolation: isolate;
-    background: #171717;
+    background: var(--site-diagram-container-bg-color);
 }
 
 .diagram-container svg {
@@ -224,7 +182,7 @@ body {
 
 .diagram-container.swapping {
     animation: SVGSwappingAnimation;
-    animation-duration: .35s;
+    animation-duration: 0.35s;
     animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
 
@@ -235,9 +193,9 @@ to work properly; we use a custom keyframe animation */
     100% {opacity: 1;}
 }
 
-/* ================================================================================================
-   Map overlays (headers, level stack, route form (includes filter checklist), step ui, map rotate button)
-   ================================================================================================ */
+/* ============================================================================================================================
+   Map overlays (headers, level stack, route form (includes filter checklist, step ui + preview, map rotate button, map legend)
+   ============================================================================================================================ */
 
 /* All controls sit above the SVG and never pan with it. */
 .map-overlay {
@@ -247,12 +205,13 @@ to work properly; we use a custom keyframe animation */
 
 .map-header {
     top: calc(var(--site-header-height) + 20px); /* the map header should be ideally header height + a little margin */
-    left: 24px;
+    right: 48px;
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
+    cursor: pointer;
 
-    transition: top .25s ease-in-out;
+    transition: top 0.25s ease-in-out;
 }
 .map-header.shifted-up {
     top: 30px;
@@ -260,8 +219,18 @@ to work properly; we use a custom keyframe animation */
 
 .map-header h1 {
     margin: 0;
-    font-size: 30px;
-    color: white;
+    font-size: 45px;
+    color: #ffffff;
+
+    transition: color 0.25s ease-in-out;
+}
+.map-header:active h1 {
+    color: #c5c5c5;
+}
+@media (hover:hover) {
+    .map-header:hover h1 {
+        color: #c5c5c5;
+    }
 }
 
 /* ======== level stack (to select layers on the station map) ======== */
@@ -272,13 +241,14 @@ to work properly; we use a custom keyframe animation */
     align-items: center;
     gap: 16px;
     top: 50%;
-    right: 1%;
-    width: 140px;
+    left: 1%;
     transform: translateY(-50%);
+    width: 140px;
     padding: 8px;
     border: 3px solid #3b3b3b;
     border-radius: 10px;
     background: #1d1d1d;
+    z-index: 1;
 }
 
 .level-rail {
@@ -346,14 +316,14 @@ to work properly; we use a custom keyframe animation */
     border: 3px solid #ffffff;
 }
 
-/* ======== routing form (generate path) + filter checklist ======== */
+/* ======== routing form (generate path) + filter checklist + override toggles ======== */
 
-.route-form-filter-checklist__container {
+.route-form-filter-checklist-override-toggles__container {
     display: flex;
     flex-direction: column;
     align-items: center;
     bottom: 5%;
-    left: 2%;
+    left: 1%;
     transform: none;
     padding: 12px;
     border: 3px solid #3f3f3f;
@@ -362,6 +332,8 @@ to work properly; we use a custom keyframe animation */
     gap: 15px;
     width: 650px;
 }
+
+/* ======== route form ======== */
 
 .route-form {
     display: flex;
@@ -385,7 +357,7 @@ to work properly; we use a custom keyframe animation */
     color: #ffffff;
     cursor: pointer;
 
-    transition: background .25s ease-in-out;
+    transition: background 0.25s ease-in-out;
 }
 .route-form__button:active {
     background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
@@ -403,7 +375,6 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* dropdown portion of the route form */
-
 .route-field {
     display: flex;
     flex-direction: column;
@@ -412,9 +383,11 @@ to work properly; we use a custom keyframe animation */
 }
 
 .route-field__dropdown-button {
+    display: flex;
     width: 100%;
 }
 
+/* actual dropdown of the route field */
 .route-field__dropdown:popover-open {
     /* reset the automatically set popover options here*/
     inset: auto;
@@ -422,7 +395,7 @@ to work properly; we use a custom keyframe animation */
 
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    z-index: 2;
     max-height: 400px;
     overflow: auto;
     /* popovers are position:fixed hence they don't actually behave relative to parent containers as they usually do, instead we have
@@ -433,7 +406,7 @@ to work properly; we use a custom keyframe animation */
 }
 /* custom scrollbar styling since route-field__dropdown can overflow */
 .route-field__dropdown:popover-open::-webkit-scrollbar {
-    width: 5px;
+    width: 10px;
 }
 .route-field__dropdown:popover-open::-webkit-scrollbar-track {
     background: #1f1f1f;
@@ -448,6 +421,31 @@ to work properly; we use a custom keyframe animation */
 @media (hover:hover) {
     .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:hover {
         background: #cacaca;
+    }
+}
+
+.route-field__dropdown-button img {
+    display: none;
+    margin-left: auto; /* justify-self property doesn't work for flex items at all :/ (though align-self does); 
+                            opting for margin-auto hack instead */
+    height: 20px;
+    width: auto;
+    transform: scale(0);
+
+    transition: transform 0.25s ease-in-out, display 0.3s allow-discrete;
+}
+@media (hover:hover) {
+    .route-field__dropdown-button:hover img {
+        transform: scale(1.1);
+    }
+}
+.route-field__dropdown-button.option-selected img {
+    display: block;
+    transform: scale(1);
+}
+@starting-style {
+    .route-field__dropdown-button.option-selected img {
+        transform: scale(0);
     }
 }
 
@@ -498,42 +496,64 @@ to work properly; we use a custom keyframe animation */
     gap: 10px;
 }
 
+.filter-checklist__checkboxes-container-wrapper {
+    overflow: hidden;
+    height: 80px; /* this height allows the checklist container to show ~1.3 rows worth of filter checkboxes (each filter checkbox row
+                        is about 55px)*/
+
+    transition: display 0.3s allow-discrete;
+}
+.filter-checklist__checkboxes-container-wrapper.hidden {
+    display: none;
+}
+.filter-checklist__checkboxes-container-wrapper.hidden .filter-checklist__checkboxes-container {
+    padding: 0px;
+    transform: translateY(100%);
+}
+@starting-style {
+    .filter-checklist__checkboxes-container-wrapper .filter-checklist__checkboxes-container {
+        padding: 0px;
+        transform: translateY(100%);
+    }
+}
+
 .filter-checklist__checkboxes-container {
+    box-sizing: border-box; /* this makes sure that the checkboxes container contents is viewable (padding included); this is
+                                because the scroll behavior is vertical (which coincides with the vertical padding), thus the  
+                                entire height of the container is rendered unless this property is stated */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     width: 100%;
+    height: 100%;
+    overflow: auto;
     background: #252525;
-    padding: 5px 0;
+    padding: 10px;
     border-radius: 5px;
     gap: 10px;
 
-    /* settings to set to allow for proper animation transitions */
-    overflow: hidden; /* forces height/width changes onto the children, making them accomodate the changes in dimensions */
-    transform-origin: bottom center; /* transforms stuff occurs at the bottom center anchor point now instead of the center */
-    clip-path: inset(0 0 0 0); /* this is the magic here... creates an invisible mask relative to the entire container allowing
-                                us to have cool pull out effect when used with transform: translate; 
-                                put the transition to be the same time as transform: translate for a smooth pull out */
-
     transition: 
-        transform .25s ease-in-out,
-        padding .25s ease-in-out,
-        clip-path 0.25s ease-in-out,
-        display 0.25s ease-in-out allow-discrete;
+        padding 0.25s cubic-bezier(0.075, 0.82, 0.165, 1),
+        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.filter-checklist__checkboxes-container.hidden {
-    padding: 0px;
-    display: none;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(100%);
+.filter-checklist__checkboxes-container::-webkit-scrollbar {
+    width: 10px;
 }
-/* like station selection, we copy and paste all animatable stylings when we have .container__hidden allowing us to properly 
-have an animation from display: none -> display: something else (e.g. the backward animation) */
-@starting-style {
-    .filter-checklist__checkboxes-container {
-        padding: 0px;
-        transform: translateY(100%);
-        clip-path: inset(0 0 100% 0);
+.filter-checklist__checkboxes-container::-webkit-scrollbar-track {
+    background: #424242;
+    border-radius: 100px;
+}
+.filter-checklist__checkboxes-container::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;
+}
+.filter-checklist__checkboxes-container::-webkit-scrollbar-thumb:active {
+    background-color: #cacaca;
+}
+@media (hover:hover) {
+    .filter-checklist__checkboxes-container::-webkit-scrollbar-thumb:hover {
+        background-color: #cacaca;
     }
 }
 
@@ -541,9 +561,11 @@ have an animation from display: none -> display: something else (e.g. the backwa
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     background: #333333;
     border-radius: 5px;
-    padding: 4px;
+    height: 45px;
+    padding: 5px;
     gap: 5px;
 }
 
@@ -608,37 +630,111 @@ have an animation from display: none -> display: something else (e.g. the backwa
     }
 }
 
+/* styling for the toggle button img */
 .filter-checklist__toggle-button img {
     height: 23px;
     width: auto;
 
-    transition: transform .5s cubic-bezier(0.075, 0.82, 0.165, 1);
+    transition: transform 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.filter-checklist__toggle-button img.reversed {
+.filter-checklist__toggle-button.enabled img {
     transform: rotate(180deg);
 }
 
-/* ======== step ui ======== */
+/* ======== override toggles ======== */
+.override-toggles {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 5px 0px;
+    border-radius: 5px;
+    background: #252525;
+}
+/* no transitions here for the hidden property, we want it instantaneously */
+.override-toggles.hidden {
+    display: none;
+}
+
+.override-toggles strong {
+    font-size: 18px;
+    color: #ffffff;
+    padding: 0px 5px;
+}
+
+/* the container for all override toggle buttons */
+.override-toggles__toggle-buttons-container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0px 10px;
+}
+/* accessibility override toggle button */
+.override-toggles__accessibility-only-toggle-button {
+    background: none;
+    border: none;
+
+    cursor: pointer;
+}
+
+/* img styling of the accessibility button */
+.override-toggles__accessibility-only-toggle-button img {
+    width: 40px;
+    height: auto;
+
+    transition: filter 0.25s ease-in-out;
+}
+.override-toggles__accessibility-only-toggle-button:active img {
+        filter: brightness(0.7);
+    }
+@media (hover:hover) {
+    .override-toggles__accessibility-only-toggle-button:hover img {
+        filter: brightness(0.7);
+    }
+}
+.override-toggles__accessibility-only-toggle-button.enabled img {
+        filter: brightness(0.5);
+}
+
+
+/* ======== step ui + route preview ======== */
 
 .step-ui,
 .route-preview {
-    right: 220px;
-    bottom: 100px;
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    right: 50%;
+    transform: translateX(50%); /* center the element horizontally */
+    bottom: 20%;
     gap: 10px;
-    width: clamp(260px, 34vw, 420px);
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: rgb(255 255 255 / 90%);
+
+    transition: 
+        opacity 0.25s ease-in-out,
+        display 0.3s allow-discrete;
+}
+.step-ui.hidden {
+    opacity: 0;
+    display: none;
+}
+@starting-style {
+    .step-ui {
+        opacity: 0;
+    }
 }
 
 .step-ui__instruction-text {
-    display: block;
-    min-height: 3.6rem;
-    max-height: 3.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    max-width: 300px;
+    border-radius: 100px;
+    color: #ffffff;
+    background: rgba(60, 60, 60, 50%); /* no background-opacity property... this will be the best bet here */
     overflow-y: auto;
     line-height: 1.2;
     text-align: center;
+    padding: 10px;
 }
 
 .route-preview > strong,
@@ -650,19 +746,47 @@ have an animation from display: none -> display: something else (e.g. the backwa
 
 .step-ui__step-controls,
 .route-preview__controls {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
 }
 
-.step-ui__step-controls button,
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next),
 .route-preview__controls button {
+    --bg-color: #3b3b3b;
+
+    padding: 0px;
+    border: none;
+
     min-height: 38px;
-    border: 1px solid #1a1a1a;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #111111;
+    border-radius: 10px;
+    padding: 5px;
+    background: var(--bg-color);
+    color: #ffffff;
     cursor: pointer;
+
+    transition: background 0.25s ease-in-out;
+}
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled) {
+    background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+}
+@media (hover:hover) {
+    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled) {
+        background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
+    }
+}
+
+:is(.step-ui__btn-prev, .step-ui__btn-next) img {
+    width: 30px;
+    height: auto;
+    transition: filter 0.25s ease-in-out;
+}
+:is(.step-ui__btn-prev, .step-ui__btn-next):disabled {
+    background: color-mix(in srgb, var(--bg-color), #000000 20%);
+    cursor: default;
+}
+:is(.step-ui__btn-prev, .step-ui__btn-next):disabled img {
+    filter: brightness(0.5);
 }
 
 .step-controls button:disabled {
@@ -670,7 +794,342 @@ have an animation from display: none -> display: something else (e.g. the backwa
     opacity: 0.5;
 }
 
-/* Highlighting styles for diagram paths */
+/* ======== map rotate button ======== */
+
+.map__rotate-button {
+    background: none;
+    border: none;
+
+    /* we're using grid display to stack the 2 button images on top of one another */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    align-items: center;
+    justify-items: center; /* centers item within a grid cell while justify-content centers items for entire grid-rows*/
+    bottom: 5%;
+    right: 1%;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.map__rotate-button > * { /* target every child element here*/
+    /* assign them all the same column and row grid (so they're overlapping) */
+    grid-column: 1;
+    grid-row: 1;
+}
+
+/* general styling for the rotate button imgs */
+.map__rotate-button img {
+    transition: filter 0.25s ease-in-out;
+}
+.map__rotate-button:active img {
+        filter: brightness(0.7);  
+}
+@media (hover:hover) {
+    .map__rotate-button:hover img {
+        filter: brightness(0.7); /* cannot use bg-color, fill, etc for img tags... filter is the alternative 
+                                    for color accents use filter: opacity(0.7) drop-shadow(0 0 0 #whatevercolorhere)
+                                    in this case, just using it to add black (e.g. darken) the image slightly */ 
+    }
+}
+.map__rotate-button.animating img {
+    filter: none;
+}
+
+/* specific styling for the rotate button imgs*/
+.rotate-button__animated-parts-img {
+    width: 35px;
+    height: auto;
+    z-index: 1;
+}
+.animating > .rotate-button__animated-parts-img {
+    transition: transform 0.4s cubic-bezier(0.075, 0.82, 0.165, 1); /* this is a one way transition hence we put it here instead of
+                                                                    on .rotate-button__animated-parts-img*/
+    transform: rotate(-360deg); /* rotate counter clockwise cause the arrows are in that direction*/
+}
+
+.rotate-button__base-img {
+    width: 45px;
+    height: auto;
+    z-index: 0;
+}
+
+/* ======== map legend ======== */
+
+.map-legend {
+    display: flex;
+    bottom: 1%;
+    right: 1%;
+    height: 400px;
+    width: auto;
+    gap: 10px;
+    background: none;
+    color: #ffffff;
+    z-index: 1; /* NOTE: since this legend is positioned next to the rotate map button, this z-index has to be lower */
+}
+
+/* wrapper of the actual legend of the container (for animation purposes) */
+.map-legend__info-container-wrapper {
+    overflow: hidden;
+    height: 100%;
+    width: 300px;
+    transition: display 0.3s allow-discrete;
+}
+.map-legend__info-container-wrapper.hidden {
+    display: none;
+}
+.map-legend__info-container-wrapper.hidden .map-legend__info-container {
+    transform: translateX(100%);
+}
+@starting-style {
+    .map-legend__info-container-wrapper .map-legend__info-container {
+        transform: translateX(100%);
+    }
+}
+
+/* actual legend of the container */
+.map-legend__info-container {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    height: 100%; /* need a definitive height for overflow to work */
+    gap: 10px;
+    padding: 0 10px;
+    transition:
+        transform 0.25s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+.map-legend__info-container::-webkit-scrollbar {
+    width: 10px;
+}
+.map-legend__info-container::-webkit-scrollbar-thumb {
+    background-color: #ffffff;
+    border-radius: 100px;
+}
+.map-legend__info-container::-webkit-scrollbar-track {
+    background: #424242;
+    border-radius: 100px;
+}
+.map-legend__info-container::-webkit-scrollbar-thumb:active {
+    background-color: #cacaca;
+}
+@media (hover:hover) {
+    .map-legend__info-container::-webkit-scrollbar-thumb:hover {
+        background-color: #cacaca;
+    }
+}
+/* there are currently two sections for the legend: the color codes and the legend icon sections */
+.map-legend__section {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 5px;
+    gap: 5px;
+    background: #383838;
+    border-radius: 10px;
+}
+
+/* labelling for each legend section */
+.map-legend__section strong {
+    font-size: 20px;
+    background: #252525;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+/* the individual row for a single legend item */
+.map-legend__item {
+    display: grid;  /* NOTE: display grid/flex overrides the list-item display hence there's no bullet points*/
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 25px;
+    border-radius: 5px;
+
+    transition: 
+        background 0.25s ease-in-out,
+        transform 0.25s ease-in-out;
+}
+.map-legend__item:active  {
+    background: #363636;
+    transform: scale(1.1);
+}
+.map-legend__item:active :is(.legend-icon, .color-code__box) {
+    transform: scale(1.2);
+}
+@media (hover:hover) {
+    .map-legend__item:hover  {
+        background: #4d4d4d;
+        transform: scale(1.1);
+    }
+    /* apply a small transform scale to the legend images/symbols themselves */
+    .map-legend__item:hover :is(.legend-icon, .color-code__box) {
+        transform: scale(1.2);
+    }
+}
+
+/* set the base height of the map legend items depending in which category they're in */
+.map-legend__icons-info .map-legend__item {
+    height: 75px;
+}
+.map-legend__color-codes-info .map-legend__item {
+    height: auto;
+}
+
+/* creating a custom bullet for the map legend items */
+.map-legend__color-codes-info .map-legend__item {
+    background-image: url("../decals/legend_item_color_code_bullet.svg"); 
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-position: left 5px center; 
+}
+/* creating a custom bullet for the map legend items */
+.map-legend__icons-info .map-legend__item {
+    background-image: url("../decals/legend_item_icon_bullet.svg"); 
+    background-repeat: no-repeat;
+    background-size: 16px 16px; 
+    background-position: left 5px center; 
+}
+
+/* styling for the label of each legend item */
+.map-legend__item span {
+    font-size: 15px;
+    max-width: 130px;
+    overflow-wrap: break-word; /* break very long contiguous words */
+}
+
+.color-code__box {
+    width: 20px;
+    aspect-ratio: 1/1;
+    border: solid 2px #000000;
+    border-radius: 3px;
+}
+
+/* individual color code boxes */
+
+.start-node__highlight-color .color-code__box {
+    background: var(--start-node-highlight-fill);
+}
+.end-node__highlight-color .color-code__box {
+    background: var(--end-node-highlight-fill);
+}
+
+/* individual legend icons */
+
+.legend-icon {
+    --scale-factor: 2;
+    --true-width: 0px;
+
+    width: calc(var(--true-width) * var(--scale-factor));
+    height: auto;
+
+    transition: transform 0.1s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.stairs .legend-icon {
+    --true-width: 40px;
+}
+.ramp .legend-icon {
+    --true-width: 40px;
+}
+.elevator .legend-icon {
+    --true-width: 27px;
+}
+.mini-kiosk .legend-icon {
+    --true-width: 4px;
+}
+.kiosk .legend-icon {
+    --true-width: 9px;
+}
+.door .legend-icon {
+    --true-width: 9px;
+}
+.exit .legend-icon {
+    --true-width: 12px;
+}
+.trash-bin .legend-icon {
+    --true-width: 9px;
+}
+.bench .legend-icon {
+    --true-width: 32px;
+}
+.omny-machine .legend-icon {
+    --true-width: 11px;
+}
+.turnstile .legend-icon {
+    --true-width: 18px;
+}
+.iron-maiden-turnstile .legend-icon {
+    --true-width: 17px;
+}
+.booth .legend-icon {
+    --true-width: 18px;
+}
+.misc .legend-icon {
+    --true-width: 32px;
+}
+
+/* toggle button */
+.map-legend__toggle-button {
+    padding: 0;
+    border: none;
+    background: none;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-items: center;
+    align-self: center;
+    height: fit-content; /* should only be the height of its children, not its parent */
+    cursor: pointer;
+}
+.map-legend__toggle-button > * {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+/* button images general styling*/
+.map-legend__toggle-button img {
+    transition: filter 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.map-legend__toggle-button.enabled img {
+    transform: scaleX(-1);
+}
+.map-legend__toggle-button:active img {
+    filter: brightness(0.7);
+}
+@media (hover:hover) {
+    .map-legend__toggle-button:hover img {
+        filter: brightness(0.7);
+    }
+}
+.map-legend__toggle-button.animating img {
+    filter: none;
+}
+
+/* specific button images styling */
+.animating > .toggle-button__animated-parts-img {
+    animation-name: MapLegendToggleButtonAnimation;
+    animation-timing-function: ease-in-out;
+    animation-duration: .4s;
+}
+@keyframes MapLegendToggleButtonAnimation {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.map-legend__toggle-button .toggle-button__animated-parts-img {
+    width: 35px;
+    height: auto;
+    z-index: 2;
+}
+
+.map-legend__toggle-button .toggle-button__base-img {
+    width: 45px;
+    height: auto;
+    z-index: 1;
+}
+
+/* ==========================================================================
+   HIGHLIGHTING STYLES FOR THE DIAGRAM CONTAINER
+   ========================================================================== */
 
 .muted,
 .muted :is(path, rect, circle, ellipse, polygon, polyline) {
@@ -688,7 +1147,7 @@ have an animation from display: none -> display: something else (e.g. the backwa
 
 /* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
 the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
-will keep it with the standard highlight animation which applies original fill */
+have to change the target fill var to the original fill for the arrows at least in the case of the start and end nodes */
 .highlighted,
 .highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
     animation-name: NodeHighlightAnimation;
@@ -707,12 +1166,12 @@ will keep it with the standard highlight animation which applies original fill *
 }
 .start-node-highlight,
 .start-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: #9900ff;
+    --target-fill: var(--start-node-highlight-fill);
     fill: var(--target-fill);
 }
 .end-node-highlight,
 .end-node-highlight :is(path, rect, circle, ellipse, polygon, polyline) {
-    --target-fill: #e5ff00;
+    --target-fill: var(--end-node-highlight-fill);
     fill: var(--target-fill);
 }
 /* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
@@ -721,58 +1180,195 @@ if the arrow has the class (.route-direction__label) and target any paths within
     --target-fill: var(--original-fill);
 }
 
-/* ======== map rotate button ======== */
+/* ==========================================================================
+   MISC ITEMS (element descriptions)
+   ========================================================================== */
 
-.map__rotate-button {
-    background: none;
+/* element descrip parent container */
+.element-description__container {
+    position: absolute;
+}
+
+/* toggle button (in the container, button, element description structure) */
+.element-description__toggle-button {
     border: none;
-
-    /* we're using grid display to stack the 2 button images on top of one another */
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    align-items: center;
-    justify-items: center; /* centers item within a grid cell while justify-content centers items for entire grid-rows*/
-    bottom: 5%;
-    right: 1%;
-    cursor: pointer;
+    background: none;
 }
 
-.map__rotate-button > * { /* target every child element here*/
-    /* assign them all the same column and row grid (so they're overlapping) */
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.rotate-button__animated-parts-img {
-    width: 35px;
+.element-description__container img {
+    width: 25px;
     height: auto;
-    z-index: 1;
-}
-.animating > .rotate-button__animated-parts-img {
-    transition: transform 0.4s cubic-bezier(0.075, 0.82, 0.165, 1); /* this is a one way transition hence we put it here instead of
-                                                                    on .rotate-button__animated-parts-img*/
-    transform: rotate(-360deg); /* rotate counter clockwise cause the arrows are in that direction*/
-}
 
-.rotate-button__base-img {
-    width: 45px;
-    height: auto;
-    z-index: 0;
-
-    transition: filter .25s ease-in-out;
+    transition: 
+        filter 0.25s ease-in-out,
+        transform 0.25s ease-in-out;
 }
-.animating > .rotate-button__base-img {
-    filter: none !important;
+.element-description__toggle-button:active img {
+    filter: brightness(0.7);
+    transform: scale(1.1);
 }
 @media (hover:hover) {
-    .map__rotate-button:hover > .rotate-button__base-img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000); /* cannot use bg-color, fill, etc for img tags... filter is the alternative */ 
+    .element-description__toggle-button:hover img {
+        filter: brightness(0.7);
+        transform: scale(1.1);
     }
 }
-.map__rotate-button:active > .rotate-button__base-img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
+.element-description__toggle-button.enabled img {
+    filter: brightness(0.5);
 }
+
+/* NOTE: element description can exist without a container or a button, I just give a container and button for certain elements (where
+    it'd be a pain in the ass to see an element description text repeatedly just for hovering over that element OR it'd stylistically
+    make more sense and reduces redundancy of these element descriptions) */
+.element-description {
+    display: none;
+    position: absolute;
+    padding: 10px;
+    border-radius: 100px;
+    text-align: center;
+    font-size: 15px;
+    opacity: 0;
+    color: #ffffff;
+    background: #4e4e4e;
+    z-index: 10; /* element descriptions should overlap any element */
+
+    transition: 
+        display 0.3s allow-discrete,
+        opacity 0.25s ease-in-out;
+}
+.element-description__toggle-button.enabled ~ .element-description {
+    display: block;
+    opacity: 1;
+}
+/* element-description__hoverable are applied to any buttons (and other misc elements) that are associated with an element description 
+    (e.g. it could be the toggle button in .element-description__container OR just a regular button like the map rotate button) */
+.element-description__hoverable:active .element-description, 
+.element-description__hoverable:active ~ .element-description {
+    display: block;
+    opacity: 1;
+}
+@media (hover:hover) {
+    .element-description__hoverable:hover .element-description,
+    .element-description__hoverable:hover ~ .element-description {
+        display: block;
+        opacity: 1;
+    }
+}
+@starting-style {
+    .element-description__hoverable:hover .element-description,
+    .element-description__hoverable:hover ~ .element-description {
+        display: block;
+        opacity: 0;
+    }
+    .element-description__hoverable:active .element-description,
+    .element-description__hoverable:active ~ .element-description {
+        display: block;
+        opacity: 0;
+    }
+}
+/* some scrollbar styling for element description (if an override were to allow overflow) */
+.element-description::-webkit-scrollbar {
+    width: 7px;
+}
+.element-description::-webkit-scrollbar-track {
+    background: #242424;
+}
+.element-description::-webkit-scrollbar-thumb {
+    border-radius: 100px;
+    background: #ffffff;
+}
+.element-description::-webkit-scrollbar-thumb:active {
+    border-radius: 100px;
+    background: #979797;
+}
+@media (hover:hover) {
+    .element-description::-webkit-scrollbar-thumb:hover {
+        border-radius: 100px;
+        background: #979797;
+    }
+}
+
+/* .map-header overrides for element description */
+.map-header .element-description {
+    top: 100%;
+    left: 50%;
+    width: 150px;
+    transform: translateX(-50%);
+}
+
+/* .level-stack overrides for element description and its container */
+.level-stack .element-description__container {
+    bottom: 90%;
+    left: 90%;
+}
+.level-stack .element-description__container .element-description {
+    left: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 150px;
+    text-align: start;
+    border-radius: 10px;
+}
+
+/* .route-form-filter-checklist-override-toggles__container overrides for element description and its container */
+.route-form-filter-checklist-override-toggles__container .element-description__container {
+    bottom: 130px;
+    right: 2%;
+}
+.route-form-filter-checklist-override-toggles__container .element-description {
+    left: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 250px;
+    max-height: 200px;
+    overflow: auto;
+    text-align: start;
+    border-radius: 10px;
+}
+/* might remove later and add some ts side logic to better solve the issue of the .element-description__container on the filter
+    checklist */
+.route-form-filter-checklist-override-toggles__container .override-toggles.hidden ~ .element-description__container {
+    bottom: 60px;
+}
+/* the route form filter override element description container contains a ul hence the styling here */
+.element-description ul {
+    padding: 0px 0px 0px 20px;
+}
+
+/* .override-toggles__accessibility-only-toggle-buttons overrides for element description */
+.override-toggles__accessibility-only-toggle-button {
+    position: relative; /* needs a position property for left, right, top, bottom in .element-description to work properly;
+                            else these properties will refer to the nearest ancestor with those properties (e.g. the route form
+                            filter checklist override container (which has map-overlay class, that has a position property); */
+}
+.override-toggles__accessibility-only-toggle-button .element-description {
+    left: 50%;
+    transform: translateX(-50%);
+    top: auto; /* have to reset top since the parent container's (route form filter checklist override container) styling is 
+                    affecting the current values */
+    bottom: 105%;
+    width: 150px;
+    text-align: center;
+    border-radius: 100px;
+}
+
+/* .map__rotate-button + .map-legend__toggle-button overrides for element description */
+:is(.map__rotate-button, .map-legend__toggle-button) .element-description {
+    right: 105%;
+    width: 150px;
+}
+/* like the override toggles buttons, I need to add the position property or else the element description will be shifted relative
+    to the map-legend parent container */
+ .map-legend__toggle-button {
+    position: relative; 
+ }
+ /* when the map legend if open... hide the element description */
+.map-legend__toggle-button.enabled .element-description {
+    display: none;
+    transition: none; /* since the display transition on the element description class is discrete (meaning there is a delay) 
+                        we have to strip the transition or else the element will be visible for 0.3s when map legend is enabled */
+}
+
 
 /*
 Route preview styling
@@ -823,21 +1419,12 @@ Route preview styling
    Footer
    ========================================================= */
 
-.site-footer {
+.site-footer__station-map-override {
     position: absolute;
     bottom: 1%;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 7px;
-}
-
-.site-footer__legal {
-    display: flex;
-    gap: 24px;
-    font-size: 10px;
-    color: #7a7a7a;
-    text-align: center;
+    padding: 0px;
 }
 
 /* Mobile styling */
