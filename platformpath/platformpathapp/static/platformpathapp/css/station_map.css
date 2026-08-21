@@ -66,6 +66,7 @@ body {
     transform: translateY(-60px);
 }
 
+/* toggle button */
 .site-header__toggle-button {
     border: none;
     background: none;
@@ -82,28 +83,41 @@ body {
     /* these 2 lines is a hack to center the absolute positioned button*/
     left: 50%; 
     transform: translateX(-50%);
-    opacity: 0.7;
     cursor: pointer;
 }
+
 .site-header__toggle-button > * { /* assign all children to the same row/column on grid */
     grid-column: 1;
     grid-row: 1;
 }
+
+/* general toggle button img styling */
+.site-header__toggle-button img {
+    opacity: 0.7;
+
+    transition: 
+        opacity 0.25s ease-in-out,
+        filter 0.25s ease-in-out;
+}
+.site-header__toggle-button:active img {
+    opacity: 1;
+    filter: brightness(1.1);
+}
 @media (hover:hover) {
-    .site-header__toggle-button:hover{
+    .site-header__toggle-button:hover img{
         opacity: 1; 
+        filter: brightness(1.1);
     }
 }
-.site-header__toggle-button:active {
-    filter: 1; 
-}
+
+/* specific img styling */
 .site-header__toggle-button .toggle-button__animated-parts-img {
     width: 50px;
     height: auto;
     z-index: 1;
 }
 
-.site-header__toggle-button.reversed .toggle-button__animated-parts-img {
+.site-header__toggle-button.enabled .toggle-button__animated-parts-img {
     transform: scaleY(-1);
 }
 .site-header__toggle-button.animating > .toggle-button__animated-parts-img {
@@ -117,12 +131,10 @@ body {
     width: 150px;
     height: auto;
     z-index: 0;
-
-    transition: filter 0.25s ease-in-out;
 }
 @keyframes SiteHeaderButtonAnimation {
     0% {opacity: 0;}
-    100% {opacity: 1;}
+    100% {opacity: 0.7;} /* should match the starting opacity of the button imgs (e.g. 0.7) */
 }
 
 /* =========================================================
@@ -349,7 +361,6 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* dropdown portion of the route form */
-
 .route-field {
     display: flex;
     flex-direction: column;
@@ -605,13 +616,14 @@ to work properly; we use a custom keyframe animation */
     }
 }
 
+/* styling for the toggle button img */
 .filter-checklist__toggle-button img {
     height: 23px;
     width: auto;
 
     transition: transform 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.filter-checklist__toggle-button img.reversed {
+.filter-checklist__toggle-button.enabled img {
     transform: rotate(180deg);
 }
 
@@ -650,6 +662,7 @@ to work properly; we use a custom keyframe animation */
     cursor: pointer;
 }
 
+/* img styling of the accessibility button */
 .override-toggles__accessibility-only-toggle-button img {
     width: 40px;
     height: auto;
@@ -657,15 +670,15 @@ to work properly; we use a custom keyframe animation */
     transition: filter 0.25s ease-in-out;
 }
 .override-toggles__accessibility-only-toggle-button:active img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+        filter: brightness(0.7);
     }
 @media (hover:hover) {
     .override-toggles__accessibility-only-toggle-button:hover img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+        filter: brightness(0.7);
     }
 }
 .override-toggles__accessibility-only-toggle-button.enabled img {
-        filter: opacity(0.5) drop-shadow(0 0 0 #000000);
+        filter: brightness(0.5);
 }
 
 
@@ -749,7 +762,7 @@ to work properly; we use a custom keyframe animation */
     cursor: default;
 }
 :is(.step-ui__btn-prev, .step-ui__btn-next):disabled img {
-    filter: opacity(0.5) drop-shadow(0 0 0 #000000);
+    filter: brightness(0.5);
 }
 
 .step-controls button:disabled {
@@ -773,19 +786,6 @@ to work properly; we use a custom keyframe animation */
     right: 1%;
     cursor: pointer;
     z-index: 2;
-
-    transition: filter 0.25s ease-in-out;
-}
-.map__rotate-button:active {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);  
-}
-@media (hover:hover) {
-    .map__rotate-button:hover {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000); /* cannot use bg-color, fill, etc for img tags... filter is the alternative */ 
-    }
-}
-.map__rotate-button.animating {
-    filter: none;
 }
 
 .map__rotate-button > * { /* target every child element here*/
@@ -794,6 +794,25 @@ to work properly; we use a custom keyframe animation */
     grid-row: 1;
 }
 
+/* general styling for the rotate button imgs */
+.map__rotate-button img {
+    transition: filter 0.25s ease-in-out;
+}
+.map__rotate-button:active img {
+        filter: brightness(0.7);  
+}
+@media (hover:hover) {
+    .map__rotate-button:hover img {
+        filter: brightness(0.7); /* cannot use bg-color, fill, etc for img tags... filter is the alternative 
+                                    for color accents use filter: opacity(0.7) drop-shadow(0 0 0 #whatevercolorhere)
+                                    in this case, just using it to add black (e.g. darken) the image slightly */ 
+    }
+}
+.map__rotate-button.animating img {
+    filter: none;
+}
+
+/* specific styling for the rotate button imgs*/
 .rotate-button__animated-parts-img {
     width: 35px;
     height: auto;
@@ -1036,23 +1055,32 @@ to work properly; we use a custom keyframe animation */
     align-self: center;
     height: fit-content; /* should only be the height of its children, not its parent */
     cursor: pointer;
+}
+.map-legend__toggle-button > * {
+    grid-column: 1;
+    grid-row: 1;
+}
 
+/* button images general styling*/
+.map-legend__toggle-button img {
     transition: filter 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.map-legend__toggle-button:active {
-    filter: opacity(0.7) drop-shadow(0 0 0 #000000);
-}
-@media (hover:hover) {
-    .map-legend__toggle-button:hover {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
-    }
-}
-.map-legend__toggle-button.reversed {
+.map-legend__toggle-button.enabled img {
     transform: scaleX(-1);
 }
-.map-legend__toggle-button.animating {
+.map-legend__toggle-button:active img {
+    filter: brightness(0.7);
+}
+@media (hover:hover) {
+    .map-legend__toggle-button:hover img {
+        filter: brightness(0.7);
+    }
+}
+.map-legend__toggle-button.animating img {
     filter: none;
 }
+
+/* specific button images styling */
 .animating > .toggle-button__animated-parts-img {
     animation-name: MapLegendToggleButtonAnimation;
     animation-timing-function: ease-in-out;
@@ -1061,11 +1089,6 @@ to work properly; we use a custom keyframe animation */
 @keyframes MapLegendToggleButtonAnimation {
     0% {opacity: 0;}
     100% {opacity: 1;}
-}
-
-.map-legend__toggle-button > * {
-    grid-column: 1;
-    grid-row: 1;
 }
 
 .map-legend__toggle-button .toggle-button__animated-parts-img {
@@ -1137,8 +1160,15 @@ if the arrow has the class (.route-direction__label) and target any paths within
    MISC ITEMS (element descriptions)
    ========================================================================== */
 
+/* element descrip parent container */
 .element-description__container {
     position: absolute;
+}
+
+/* toggle button (in the container, button, element description structure) */
+.element-description__toggle-button {
+    border: none;
+    background: none;
 }
 
 .element-description__container img {
@@ -1149,53 +1179,100 @@ if the arrow has the class (.route-direction__label) and target any paths within
         filter 0.25s ease-in-out,
         transform 0.25s ease-in-out;
 }
-.element-description__container:active img {
-    filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+.element-description__toggle-button:active img {
+    filter: brightness(0.7);
     transform: scale(1.1);
 }
 @media (hover:hover) {
-    .element-description__container:hover img {
-        filter: opacity(0.7) drop-shadow(0 0 0 #000000);
+    .element-description__toggle-button:hover img {
+        filter: brightness(0.7);
         transform: scale(1.1);
     }
 }
+.element-description__toggle-button.enabled img {
+    filter: brightness(0.5);
+}
 
-/* NOTE: element description can exist without a container or an img, I just give a container and image for certain elements (where
-    it'd be a pain in the ass to see an element description text repeatedly just for hovering over that element) */
+/* NOTE: element description can exist without a container or a button, I just give a container and button for certain elements (where
+    it'd be a pain in the ass to see an element description text repeatedly just for hovering over that element OR it'd stylistically
+    make more sense and reduces redundancy of these element descriptions) */
 .element-description {
     display: none;
     position: absolute;
-    padding: 5px;
-    width: 150px;
+    padding: 10px;
     border-radius: 100px;
     text-align: center;
-    align-content: center;
     font-size: 15px;
     opacity: 0;
     color: #ffffff;
     background: #4e4e4e;
+    z-index: 10; /* element descriptions should overlap any element */
 
     transition: 
         display 0.3s allow-discrete,
         opacity 0.25s ease-in-out;
 }
-.element-description__container:active .element-description {
+.element-description__toggle-button.enabled ~ .element-description {
+    display: block;
+    opacity: 1;
+}
+/* element-description__hoverable are applied to any buttons (and other misc elements) that are associated with an element description 
+    (e.g. it could be the toggle button in .element-description__container OR just a regular button like the map rotate button) */
+.element-description__hoverable:active .element-description, 
+.element-description__hoverable:active ~ .element-description {
     display: block;
     opacity: 1;
 }
 @media (hover:hover) {
-    .element-description__container:hover .element-description {
+    .element-description__hoverable:hover .element-description,
+    .element-description__hoverable:hover ~ .element-description {
         display: block;
         opacity: 1;
     }
 }
 @starting-style {
-    .element-description__container:hover .element-description {
+    .element-description__hoverable:hover .element-description,
+    .element-description__hoverable:hover ~ .element-description {
+        display: block;
+        opacity: 0;
+    }
+    .element-description__hoverable:active .element-description,
+    .element-description__hoverable:active ~ .element-description {
         display: block;
         opacity: 0;
     }
 }
+/* some scrollbar styling for element description (if an override were to allow overflow) */
+.element-description::-webkit-scrollbar {
+    width: 7px;
+}
+.element-description::-webkit-scrollbar-track {
+    background: #242424;
+}
+.element-description::-webkit-scrollbar-thumb {
+    border-radius: 100px;
+    background: #ffffff;
+}
+.element-description::-webkit-scrollbar-thumb:active {
+    border-radius: 100px;
+    background: #979797;
+}
+@media (hover:hover) {
+    .element-description::-webkit-scrollbar-thumb:hover {
+        border-radius: 100px;
+        background: #979797;
+    }
+}
 
+/* .map-header overrides for element description */
+.map-header .element-description {
+    top: 100%;
+    left: 50%;
+    width: 150px;
+    transform: translateX(-50%);
+}
+
+/* .level-stack overrides for element description and its container */
 .level-stack .element-description__container {
     bottom: 90%;
     left: 90%;
@@ -1204,8 +1281,64 @@ if the arrow has the class (.route-direction__label) and target any paths within
     left: 120%;
     top: 50%;
     transform: translateY(-50%);
+    width: 150px;
+    text-align: start;
+    border-radius: 10px;
 }
 
+/* .route-form-filter-checklist-override-toggles__container overrides for element description and its container */
+.route-form-filter-checklist-override-toggles__container .element-description__container {
+    bottom: 130px;
+    right: 2%;
+}
+.route-form-filter-checklist-override-toggles__container .element-description {
+    left: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 250px;
+    max-height: 200px;
+    overflow: auto;
+    text-align: start;
+    border-radius: 10px;
+}
+/* the route form filter override element description container contains a ul hence the styling here */
+.element-description ul {
+    padding: 0px 0px 0px 20px;
+}
+
+/* .override-toggles__accessibility-only-toggle-buttons overrides for element description */
+.override-toggles__accessibility-only-toggle-button {
+    position: relative; /* needs a position property for left, right, top, bottom in .element-description to work properly;
+                            else these properties will refer to the nearest ancestor with those properties (e.g. the route form
+                            filter checklist override container (which has map-overlay class, that has a position property); */
+}
+.override-toggles__accessibility-only-toggle-button .element-description {
+    left: 50%;
+    transform: translateX(-50%);
+    top: auto; /* have to reset top since the parent container's (route form filter checklist override container) styling is 
+                    affecting the current values */
+    bottom: 105%;
+    width: 150px;
+    text-align: center;
+    border-radius: 100px;
+}
+
+/* .map__rotate-button + .map-legend__toggle-button overrides for element description */
+:is(.map__rotate-button, .map-legend__toggle-button) .element-description {
+    right: 105%;
+    width: 150px;
+}
+/* like the override toggles buttons, I need to add the position property or else the element description will be shifted relative
+    to the map-legend parent container */
+ .map-legend__toggle-button {
+    position: relative; 
+ }
+ /* when the map legend if open... hide the element description */
+.map-legend__toggle-button.enabled .element-description {
+    display: none;
+    transition: none; /* since the display transition on the element description class is discrete (meaning there is a delay) 
+                        we have to strip the transition or else the element will be visible for 0.3s when map legend is enabled */
+}
 
 
 

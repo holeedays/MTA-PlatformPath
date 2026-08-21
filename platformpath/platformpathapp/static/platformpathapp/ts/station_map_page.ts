@@ -50,7 +50,8 @@ export class StationMapPage {
         this.initMapLegend();
         // init the base styling for step ui
         this.initStepUI();
-
+        // init the element description toggle buttons (to show the element descriptions: which provide guiding hints to the user)
+        this.initElementDescriptionToggleButtons();
         // methods that require station data
 
         // init the station heading (name of station) on top of the page
@@ -162,17 +163,6 @@ export class StationMapPage {
             }
         }
     }
-
-    // init certain styling for the stepUI (the container to see all the steps from the path found) during page load
-    private initStepUI(): void {
-        const stepUI: HTMLDivElement | null = document.querySelector("#step-ui");
-        if (stepUI === null) {
-            console.warn("Step UI doesn't exist");
-            return;
-        }
-        // make sure the stepui has the hidden element (though it should already be set in the template)
-        stepUI.classList.add("hidden");
-    }
     
     // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
     private async handleFormSubmit(): Promise<void> {
@@ -256,7 +246,6 @@ export class StationMapPage {
     // add event handling of the toggle button 
     private initFilterChecklistToggleButton(): void {
         const filterChecklistToggleButton: HTMLButtonElement | null = document.querySelector(".filter-checklist__toggle-button");
-        const filterChecklistToggleButtonGraphic: HTMLImageElement | null| undefined = filterChecklistToggleButton?.querySelector("img");
         // the checkbox container will receive the styling since it is responsible for the actual css state styling of the 
         // acrual container
         const filterChecklistCheckboxesContainerWrapper: HTMLDivElement | null = (
@@ -265,16 +254,12 @@ export class StationMapPage {
 
         if (
             filterChecklistToggleButton === null || 
-            // technically don't need both lines just null check but typescript won't allow just a singular check
-            filterChecklistToggleButtonGraphic === null || 
-            filterChecklistToggleButtonGraphic === undefined || 
             filterChecklistCheckboxesContainerWrapper === null
         ) {
             console.warn(
-                "Filter checklist toggle button doesn't exist and/or it's image graphic doesn't exist", 
+                "Filter checklist toggle button doesn't exist and/or its wrapper doesn't exist", 
                 "and/or the filter checklist checkboxes container wrapper does not exist",
                 `Filter Checklist Toggle Button Status: ${filterChecklistToggleButton}`,
-                `Toggle Button Image Graphic Status: ${filterChecklistToggleButtonGraphic}`,
                 `Filter Checklist Checkboxes Container Wrapper Status: ${filterChecklistCheckboxesContainerWrapper}`
             );
             return;
@@ -285,18 +270,18 @@ export class StationMapPage {
         // being hidden, we'll compensate for this with a longer opacity load of the entire page
         filterChecklistCheckboxesContainerWrapper.classList.add("hidden");
 
-        let pressed: boolean = false;
+        let isPressed: boolean = false;
         let filterChecklistToggleButtonIsTransitioning: boolean = false;
         // toggle event handling of toggle button here (it's all styling for the other elements)
         filterChecklistToggleButton.addEventListener("click", () => {
             if (filterChecklistToggleButtonIsTransitioning)
                 return;
 
-                filterChecklistToggleButtonGraphic.classList.toggle("reversed", !pressed);
-                filterChecklistCheckboxesContainerWrapper.classList.toggle("hidden", pressed);
+                filterChecklistToggleButton.classList.toggle("enabled", !isPressed);
+                filterChecklistCheckboxesContainerWrapper.classList.toggle("hidden", isPressed);
 
             filterChecklistToggleButtonIsTransitioning = true;
-            pressed = !pressed;
+            isPressed = !isPressed;
         });
 
         // add a boolean to prevent the toggle button from transitioning multiple times before its animation is finished
@@ -349,7 +334,7 @@ export class StationMapPage {
             return;
         }
 
-        let pressed: boolean = false;
+        let isPressed: boolean = false;
         // booleans to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
         let diagramContainerIsAnimating: boolean = false;
         let mapRotateButtonIsTransitioning: boolean = false;
@@ -367,7 +352,7 @@ export class StationMapPage {
 
             // if the button hasn't been toggled before and the diagram rotated path exists 
             if (
-                !pressed && 
+                !isPressed && 
                 diagramRotatedPath !== null &&
                 diagramRotatedPath !== undefined
             ) {
@@ -384,7 +369,7 @@ export class StationMapPage {
 
             diagramContainerIsAnimating = true;
             mapRotateButtonIsTransitioning = true;
-            pressed = !pressed;
+            isPressed = !isPressed;
         });
 
         // since the classes are temporary, we want to remove the class for both the button and container 
@@ -1028,7 +1013,7 @@ export class StationMapPage {
         }
 
         // button switch boolean
-        let pressed: boolean = false;
+        let isPressed: boolean = false;
         // boolean to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
         let siteHeaderButtonIsAnimating: boolean = false;
 
@@ -1039,12 +1024,12 @@ export class StationMapPage {
 
             // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
             siteHeaderToggleButton.classList.add("animating");
-            siteHeaderToggleButton.classList.toggle("reversed", !pressed);
-            siteHeaderContainer.classList.toggle("retracted", !pressed);
-            stationHeaderContainer.classList.toggle("shifted-up", !pressed);
+            siteHeaderToggleButton.classList.toggle("enabled", !isPressed);
+            siteHeaderContainer.classList.toggle("retracted", !isPressed);
+            stationHeaderContainer.classList.toggle("shifted-up", !isPressed);
 
             siteHeaderButtonIsAnimating = true;
-            pressed = !pressed;
+            isPressed = !isPressed;
         });
 
         // also add event listener for animation end for the button
@@ -1078,7 +1063,7 @@ export class StationMapPage {
             return;
         }
 
-        let pressed: boolean = false;
+        let isPressed: boolean = false;
         let toggleButtonIsAnimating: boolean = false;
 
         // make sure the hidden class is added to the info container wrapper (it should already exist in the html template)
@@ -1090,13 +1075,13 @@ export class StationMapPage {
             if (toggleButtonIsAnimating)
                 return;
 
-            mapLegendInfoContainerWrapper.classList.toggle("hidden", pressed);
+            mapLegendInfoContainerWrapper.classList.toggle("hidden", isPressed);
             // same as the site header toggle button + map rotate button, add a temp animating class 
             mapLegendToggleButton.classList.add("animating");
-            mapLegendToggleButton.classList.toggle("reversed", !pressed);
+            mapLegendToggleButton.classList.toggle("enabled", !isPressed);
             
             toggleButtonIsAnimating = true;
-            pressed = !pressed;
+            isPressed = !isPressed;
         });
 
         // event handling to remove the 'animating' class once the animation is done
@@ -1105,6 +1090,41 @@ export class StationMapPage {
                 mapLegendToggleButton.classList.remove("animating");
                 toggleButtonIsAnimating = false;
             }
+        });
+    }
+
+    // init certain styling for the stepUI (the container to see all the steps from the path found) during page load
+    private initStepUI(): void {
+        const stepUI: HTMLDivElement | null = document.querySelector("#step-ui");
+        if (stepUI === null) {
+            console.warn("Step UI doesn't exist");
+            return;
+        }
+        // make sure the stepui has the hidden element (though it should already be set in the template)
+        stepUI.classList.add("hidden");
+    }
+
+    // init the styling for element description toggle buttons (these are the buttons that resemble a question mark and show text
+    // when hovered... we're just adding the click (and focusout) logic to it as well)
+    // these buttons reveal element descriptions, little helper texts that guide the user on how to navigate the interface
+    private initElementDescriptionToggleButtons(): void {
+        // get all the description toggle buttons
+        const elementDescriptionToggleButtons: NodeListOf<HTMLButtonElement> = (
+            document.querySelectorAll(".element-description__toggle-button")
+        );
+        // iterate through them
+        elementDescriptionToggleButtons.forEach((toggleButton: HTMLButtonElement) => {
+            let isPressed: boolean = false;
+            // and add the event handler that deals with the styling
+            toggleButton.addEventListener("click", () => {
+                toggleButton.classList.toggle("enabled", !isPressed);
+                isPressed = !isPressed;
+            });
+            // also remove the class and set isPressed to false if the item is out of focus
+            toggleButton.addEventListener("focusout", () => {
+                toggleButton.classList.remove("enabled");
+                isPressed = false;
+            });
         });
     }
 }
