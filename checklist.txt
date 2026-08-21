@@ -74,8 +74,9 @@ FIXED THE BUGS BELOW:
 Ivan ----
 TO DO:
 (Priority)
-
 - Add checkbox feature for accessible stations
+- Make the animation for preview to opacity rather than highlighting
+- Fix the arrow thing being filled by refilling them with their orignal color (code already exists in station map css above)
 
 (Non-priority)
 Create a new test page to navigate between two different stations (This page is for integration with Google Maps)
