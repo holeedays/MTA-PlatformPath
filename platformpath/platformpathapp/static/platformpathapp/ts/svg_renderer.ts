@@ -10,6 +10,7 @@ export type SelectionRole = "start" | "end";
 export class SvgRenderer {
     // @ts-ignore
     private currentPanZoom: PanZoom | null = null;
+    private svgSize: number = 0;
 
     constructor() {}
 
@@ -114,14 +115,36 @@ export class SvgRenderer {
 
     // Helper method to center on the entire station map
     public centerMap(zoom: number = 0.9): void {
-        if (!this.currentPanZoom) {
-            console.warn("Cannot reset map: panzoom is not initialized");
+        const container: HTMLDivElement | null = document.querySelector("#diagram-container");
+        const svg: SVGSVGElement | null | undefined = container?.querySelector("svg");
+
+        if (!container || !svg || !this.currentPanZoom) {
+            console.warn(
+                "Diagram container, station svg, and/or this current pan zoom doesn't exist",
+                `Diagram Container Status: ${container}`,
+                `Station SVG Status: ${svg}`,
+                `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
+            );
             return;
         }
+        
+        const containerWidth: number = container.clientWidth;
+        const containerHeight: number = container.clientHeight;
 
-        // Return to the SVG's normal, full-map transform.
-        this.currentPanZoom.zoomAbs(0, 0, .90);
-        this.currentPanZoom.moveTo(0, 0);
+        // clientWidth/clientHeight are unaffected by panzoom's CSS transform.
+        const svgWidth: number = svg.clientWidth;
+        const svgHeight: number = svg.clientHeight;
+
+        // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
+        // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
+        // the value to 1920x.9 1080*.9 with the top left still being at (0,0) since we passed the anchor at 0,0). It technically doesn't
+        // matter, the svg size still gets scaled the same way 
+        // MoveTo actually MOVES the svg back based on its top left corner 
+        this.currentPanZoom.zoomAbs(0, 0, zoom);
+        this.currentPanZoom.moveTo(
+            (containerWidth - svgWidth * zoom) / 2,
+            (containerHeight - svgHeight * zoom) / 2
+        );
     }
 
     // Pan, zoom, and scroll controls for the station diagram
