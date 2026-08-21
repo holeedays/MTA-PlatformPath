@@ -18,6 +18,7 @@ export class StationMapPage {
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
     private accessiblePathingOnly: boolean = false;
+    private isPreviewingRoute:boolean = false;
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -78,6 +79,8 @@ export class StationMapPage {
         this.initPathStepButtons();
         // init our map rotate button
         this.initMapRotateButton();
+        // init our route preview controls
+        this.initRoutePreviewControls();
     }
 
     // Set the station name in the heading element + add some event handling logic 
@@ -401,6 +404,10 @@ export class StationMapPage {
             return;
         }
 
+        if (this.currentPath !== null) {
+            this.endNavigation();
+        }
+
         // Find the path using the PathFinder
         this.currentPath = this.pathFinder.findPath(
             this.station,
@@ -422,11 +429,62 @@ export class StationMapPage {
             // render the entire path
             this.renderPath();
 
-            // get label ids
+            // Restore route direction label
             const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
-            // Enables all stair labels for the complete route
             this.svgRenderer.showRouteDirectionLabels(labelIds);
 
+            this.startRoutePreview();
+        } else {
+            console.warn('No path found');
+        }
+    }
+
+    // Function that sets up the UI elements for the preview and
+    // makes them visible
+    private startRoutePreview(): void {
+        if (!this.currentPath || this.currentPath.length === 0) {
+            console.warn('No path available for preview');
+            return;
+        }
+
+        // Retrieving all the UI elements for the preview
+        const preview = document.querySelector(
+            "#route-preview"
+        ) as HTMLDivElement | null;
+
+        const summary = document.querySelector(
+            "#route-preview-summary"
+        ) as HTMLSpanElement | null;
+
+        const allLayersButton = document.querySelector(
+            "#show-all-layers"
+        ) as HTMLButtonElement | null;
+
+        if (!preview || !summary || !allLayersButton) {
+            console.warn("Route preview UI does not exist");
+            return;
+        }
+
+        this.isPreviewingRoute = true;
+
+        // Keep the full map visible during preview
+        allLayersButton.click();
+
+        const movementCount = Math.max(this.currentPath.length - 1, 0);
+        summary.innerText = `${movementCount} movement${movementCount === 1 ? "" : "s"} in this route`;
+        preview.style.display = "grid";
+
+        this.svgRenderer.startRoutePreview(
+            this.currentPath.map((step) => step.svgId)
+        );
+    }
+
+    // Function that starts the step by step navigation of the route
+    private beginStepNavigation(): void {
+        if (!this.currentPath || this.currentIndex >= this.currentPath.length) {
+            console.warn('No valid step to navigate to');
+            return;
+        }
             // get the relevant ui elements
             const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
             const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
@@ -449,17 +507,55 @@ export class StationMapPage {
                 return;
             }
 
+            const preview = document.querySelector(
+                "#route-preview"
+            ) as HTMLDivElement | null;
+
+            const stepUI = document.querySelector(
+                "#step-ui"
+            ) as HTMLDivElement | null;
+
+            const instructionText = document.querySelector(
+                "#instruction-text"
+            ) as HTMLElement | null;
+
+            const btnPrev = document.querySelector(
+                "#btn-prev"
+            ) as HTMLButtonElement | null;
+
+            const btnNext = document.querySelector(
+                "#btn-next"
+            ) as HTMLButtonElement | null;
+
+            if (!preview || !stepUI || !instructionText || !btnPrev || !btnNext) {
+                console.warn("Preview or navigation UI does not exist");
+                return;
+            }
+
+            this.isPreviewingRoute = false;
+            this.svgRenderer.stopRoutePreview();
+
+            preview.style.display = "none";
+            stepUI.style.display = "block";
+
             // make the stepui visible now
             stepUI.classList.remove("hidden");
             // render the current style
             this.renderCurrentStep(instructionText, btnPrev, btnNext);
-        } else {
-            console.warn('No path found');
-        }
     }
 
     // end the navigation process (the opposite of StartNavigation)
     private endNavigation(): void {
+        // Ends route preview if it is currently enabled
+        this.isPreviewingRoute = false;
+        this.svgRenderer.stopRoutePreview();
+
+        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui') as HTMLDivElement;
+        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
+        const preview = document.querySelector("#route-preview") as HTMLDivElement | null;
+
+        if (stepUI === null) {
+            console.warn("There is no step ui element");
         const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
         const allLayersButton: HTMLButtonElement | null | undefined = stepUI?.querySelector("#show-all-layers");
 
@@ -473,6 +569,10 @@ export class StationMapPage {
                 `Step UI Status: ${stepUI}; All Layers Button Status: ${allLayersButton}`
             );
             return;
+        }
+
+        if (preview) {
+            preview.style.display = "none";
         }
 
         // NOTE: we will not clear the selectedNodeOptions because we want the state of those to be saved (for now at least)
@@ -901,6 +1001,12 @@ export class StationMapPage {
         // reinit the route direction labels
         this.svgRenderer.initRouteDirectionLabels();
 
+        // if preview is already in progress
+        if (this.isPreviewingRoute) {
+            this.startRoutePreview();
+            return;
+        }
+
         // if navigation is already in progress
         if (this.currentPath !== null) {
             // and get back all the direction label ids to display the proper ones
@@ -1127,5 +1233,30 @@ export class StationMapPage {
             });
         });
     }
+    private initRoutePreviewControls(): void {
+        const startButton = document.querySelector(
+            "#start-navigation"
+        ) as HTMLButtonElement | null;
+
+        const cancelButton = document.querySelector(
+            "#cancel-route-preview"
+        ) as HTMLButtonElement | null;
+
+        if (!startButton || !cancelButton) {
+            console.warn("Route preview buttons don't exist");
+            return;
+        }
+
+        startButton.addEventListener("click", () => {
+            // Handle start navigation logic
+            this.beginStepNavigation();
+        });
+
+        cancelButton.addEventListener("click", () => {
+            // Handle cancel route preview logic
+            this.endNavigation();
+        });
+    }
+
 }
 

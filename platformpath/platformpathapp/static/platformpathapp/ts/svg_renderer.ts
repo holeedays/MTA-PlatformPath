@@ -112,34 +112,16 @@ export class SvgRenderer {
         });
     }
 
-    // Helper method to center the station map
+    // Helper method to center on the entire station map
     public centerMap(zoom: number = 0.9): void {
-        const container = document.getElementById("diagram-container");
-        const svg = container?.querySelector("svg") as SVGSVGElement | null;
-
-        if (!container || !svg || !this.currentPanZoom) {
-            console.warn(
-                "Diagram container, station svg, and/or this current pan zoom doesn't exist",
-                `Diagram Container Status: ${container}`,
-                `Station SVG Status: ${svg}`,
-                `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
-            );
+        if (!this.currentPanZoom) {
+            console.warn("Cannot reset map: panzoom is not initialized");
             return;
         }
 
-        // make sure the svg size is consistent with the container size (the external css should already deal with this but this
-        // is just for safe measures so that centering is good)
-        container.style.width = "100%";
-        container.style.height = "100%";
-        svg.style.width = "100%";
-        svg.style.height = "100%";
-
-        // once we made sure the container and the svg are the same size, we can just check the bounding box for the client rect
-        // NOTE: this is how much space the svg occupies on the page; since we set width + height to coincide with the container
-        // the svg will assume the same dimensions as the container rather its listed width and height (which would overflow the page)
-        const svgRect = svg.getBoundingClientRect();
-        // get center of screen and apply zoom
-        this.currentPanZoom.zoomAbs(svgRect.width/2, svgRect.height/2, zoom);
+        // Return to the SVG's normal, full-map transform.
+        this.currentPanZoom.zoomAbs(0, 0, .90);
+        this.currentPanZoom.moveTo(0, 0);
     }
 
     // Pan, zoom, and scroll controls for the station diagram
@@ -253,5 +235,39 @@ export class SvgRenderer {
             // make the label visible
             labelElement.style.display = "inline";
         }
+    }
+
+    // Function to start the route preview given the svgId of
+    // all nodes that are part of the route by setting their styles
+    // and relevant properties (preview-index, preview-duration)
+    public startRoutePreview(pathNodeIds: string[]): void {
+        // reset map
+        this.stopRoutePreview();
+        this.centerMap();
+
+        const previewDurationSeconds = Math.max(pathNodeIds.length, 1);
+
+        // Sets the style for all nodes on the path
+        pathNodeIds.forEach((nodeId, index) => {
+            const node = document.getElementById(nodeId);
+
+            if (!node) {
+                console.warn("Preview node not found:", nodeId);
+                return;
+            }
+
+            node.classList.add("route-preview-node");
+            node.style.setProperty("--preview-index", index.toString());
+            node.style.setProperty("--preview-duration", (previewDurationSeconds.toString() + "s"));
+        })
+    }
+
+    // Function that removes all the styling applied on the path nodes for the preview
+    public stopRoutePreview(): void {
+        document.querySelectorAll<SVGGraphicsElement>(".route-preview-node").forEach((node) => {
+            node.classList.remove("route-preview-node");
+            node.style.removeProperty("--preview-index");
+            node.style.removeProperty("--preview-duration");
+        });
     }
 }

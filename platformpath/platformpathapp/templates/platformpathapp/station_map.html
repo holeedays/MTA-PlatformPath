@@ -152,7 +152,26 @@
 					</span>
 				</div>
 			</aside>
+			<!-- ================= ROUTE PREVIEW ================= -->
+			<div
+				id="route-preview"
+				class="map-overlay route-preview"
+				style="display: none;"
+				aria-label="Route preview"
+			>
+				<strong>Route preview</strong>
+				<span id="route-preview-summary"></span>
 
+				<div class="route-preview__controls">
+					<button id="start-navigation" type="button">
+						Start Navigation
+					</button>
+
+					<button id="cancel-route-preview" type="button">
+						Change Route
+					</button>
+				</div>
+			</div>
 			<!-- ================= STEP UI BLOCK ================= -->
 			<aside id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
