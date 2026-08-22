@@ -1267,32 +1267,24 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 @keyframes RoutePreviewPulse {
-    0%, 100% {
-        fill: var(--preview-base-fill);
-    }
-
-    4% {
-        fill: color-mix(
-            in srgb,
-            var(--original-fill),
-            #000000 50%
-        );
-    }
-
-    8% {
-        fill: var(--preview-base-fill);
-    }
+    0%, 100% { opacity : 0.50; }
+    4% { opacity : 1; }
+    8% { opacity : 0.50; }
 }
 
 .route-preview-node,
 .route-preview-node :is(path, rect, circle, ellipse, polygon, polyline) {
-    opacity: 0.65;
+    opacity: 0.5;
 
     animation-name: RoutePreviewPulse;
     animation-duration: var(--preview-duration);
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-delay: calc(var(--preview-index) * 1s);
+}
+
+:is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
+    --target-fill: var(--original-fill);
 }
 
 /* ==========================================================================
@@ -1508,6 +1500,12 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 .element-description__map-legend-toggle-button span {
     width: 120px;
+}
+
+/* we don't want the target fill to change the look of the arrows or else it's practically invisible, as such, we just check
+if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
+:is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
+    --target-fill: var(--original-fill);
 }
 
 

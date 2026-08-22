@@ -74,7 +74,6 @@ FIXED THE BUGS BELOW:
 Ivan ----
 TO DO:
 (Priority)
-
 - Add checkbox feature for accessible stations
 
 (Non-priority)
@@ -85,6 +84,8 @@ Create a new test page to navigate between two different stations (This page is 
     - (Potential) Make the phase tracker interactable to move to different phases
 
 DONE:
+- Make the animation for preview to opacity rather than highlighting
+- Fix the arrow thing being filled by refilling them with their orignal color (code already exists in station map css above)
 - Add preview before steps (current vision is to lower opacity of everything other than path steps and show path steps at normal opacity
     the full map layer is in view and ther will be a looping brightening/coloring of each sequenctial node until user starts the steps)
 - Add new bay 50, 25th av diagrams and modifiy seed to add the new selections
