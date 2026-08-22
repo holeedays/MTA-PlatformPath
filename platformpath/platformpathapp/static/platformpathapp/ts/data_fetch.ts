@@ -77,7 +77,7 @@ export class DataFetch {
 
     // fetch all edges/nodes/layers (all relevant metadata of the station) for the given station id
     public static async fetchEdgesNodesLayers(stationID: number): Promise<any | null> {
-        const fetchURL: string = `/api/stations/${stationID}/edges_nodes`;
+        const fetchURL: string = `/api/stations/${stationID}/edges_nodes_layers`;
 
         try {
             const response = await fetch(fetchURL, {

@@ -15,7 +15,11 @@ urlpatterns = [
     # api panel for discover panel
     path('api/lines/', views_api_new.LinesFetchAPI.as_view(), name='lines_fetch'),
     path('api/lines/<int:line_id>/stations/', views_api_new.StationsFetchAPI.as_view(), name='stations_fetch'),
-    path('api/stations/<int:station_id>/edges_nodes/', views_api_new.EdgesNodesLayersFetchAPI.as_view(), name='edges_nodes_fetch'),
+    path(
+        'api/stations/<int:station_id>/edges_nodes_layers/', 
+         views_api_new.EdgesNodesLayersFetchAPI.as_view(), 
+         name='edges_nodes_layers_fetch'
+    ),
 
     # manual 404 error path
     path('not-found/', views.not_found, name='not_found'),

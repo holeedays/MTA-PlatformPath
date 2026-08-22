@@ -35,6 +35,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # django RESTFUL API framework 
     'rest_framework',
+    # django user agent middleware
+    'django_user_agents',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -46,6 +48,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # django user agent middleware
+    'django_user_agents.middleware.UserAgentMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,6 +59,18 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Caching configuration for user-agent parsing.
+# For local development, we use Django's built-in in-memory cache (LocMemCache) to avoid managing external dependencies 
+# (like Docker or Memcached binaries on Windows). In production, this should be switched to a dedicated Memcached or 
+# Redis service.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'temp-local-cache',
+    }
+}
+USER_AGENTS_CACHE = 'default'
 
 ROOT_URLCONF = 'platformpath.urls'
 

@@ -32,16 +32,19 @@ def station_map(request: HttpRequest, line_slug: str, station_slug: str) -> Http
     line_model: Line | None = check_line_slug(line_slug)
     station_model: Station | None = check_station_slug(station_slug)
 
-    if (line_model is None or station_model is None):
-        return HttpResponseNotFound("<h3>Invalid line and/or station slug<h3>")
-    
     # in our slug verifier, we have prefetched the corresponding line and station models already so we can just compare as is
     # make sure to check that even if the line is valid, does belong with this list of stations
+    if (line_model is None or station_model is None):
+        return HttpResponseNotFound("<h3>Invalid line and/or station slug<h3>")
     if (not line_model in station_model.lines.all()):
         return HttpResponseNotFound("<h3>Current station does not match with the given subway line<h3>")
-    
 
-    return render(request, "platformpathapp/station_map.html")
+    # also we have to decide which template for station map we should show based on the device type
+    # -- station map has two dedicated layouts
+    if (request.user_agent.is_mobile or request.user_agent.is_tablet):
+        return render(request, "platformpathapp/station_map_mobile_tablet.html")
+    else:
+        return render(request, "platformpathapp/station_map_desktop.html")
 
 def not_found(request: HttpRequest) -> HttpResponseNotFound:
     return HttpResponseNotFound("<h3>This page doesn't exist currently, come back later<h3>")
