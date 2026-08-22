@@ -46,10 +46,13 @@
 					<!-- SVG loads here -->
 			</div>
 
-			<header class="map-overlay map-header element-description__hoverable">
+			<header class="map-overlay map-header">
 				<h1 id="diagram-name"></h1>
 
-				<span class="element-description">Go back to stations selection</span>
+				<div class="element-description element-description__map-header hidden">
+					<span><i>(If pressed)</i> Go back to stations selection</span>
+					<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+				</div>
 			</header>
 
 			<!-- ================= LAYERS/LEVELS VIEW TOGGLE ================= -->
@@ -64,14 +67,9 @@
 					<p class="level-boundary">BOTTOM LEVEL ↓</p>
 				</div>
 
-				<div class="element-description__container">
-					<button class="element-description__toggle-button element-description__hoverable">
-						<img 
-							src="{% static 'platformpathapp/decals/element_description_hover_element.svg' %}" 
-							alt="Element description toggle button icon"
-						>
-					</button>
-					<span class="element-description">
+				<div class="element-description element-description__level-stack hidden">
+					<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+					<span>
 						Change what level or floor of the station you are currently viewing.
 						<br>
 						<i>*Depending on the station, there can be many different levels.*</i>
@@ -99,7 +97,10 @@
 								src="{% static 'platformpathapp/decals/override_toggles_accessibility_only_toggle_button.svg' %}" 
 								alt="Accessibility only toggle button icon"
 							>
-							<span class="element-description">Prioritize routes that are ADA accessible</span>
+							<div class="element-description element-description__accessibility-only-toggle-button hidden">
+								<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+								<span><i>(If enabled)</i> Prioritize routes that are ADA accessible</span>
+							</div>
 						</button>
 					</div>
 				</section>
@@ -123,14 +124,12 @@
 					<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
 				</section>
 
-				<div class="element-description__container">
-					<button class="element-description__toggle-button element-description__hoverable">
-						<img 
-							src="{% static 'platformpathapp/decals/element_description_hover_element.svg' %}" 
-							alt="Element description toggle button icon"
-						>
-					</button>
-					<span class="element-description">
+				<div class="element-description element-description__route-form-filter-checklist-override-toggles-container hidden">
+					<img 
+						src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" 
+						alt="Element description toggle button icon"
+					>
+					<span>
 						This is the pathfinding bar — a bunch of buttons and tools to help you find your way through the station.
 						There are a total of 3 tools on this bar.
 						<ul>
@@ -153,25 +152,31 @@
 				</div>
 			</aside>
 			<!-- ================= ROUTE PREVIEW ================= -->
-			<div
-				id="route-preview"
-				class="map-overlay route-preview"
-				style="display: none;"
-				aria-label="Route preview"
-			>
-				<strong>Route preview</strong>
-				<span id="route-preview-summary"></span>
+			<aside id="route-preview" class="map-overlay route-preview hidden" aria-label="Route preview">
+				<div class="route-preview__summary">
+					<strong>Route preview</strong>
+					<span class="route-preview__description" id="route-preview-description"></span>
+				</div>
 
 				<div class="route-preview__controls">
-					<button id="start-navigation" type="button">
+					<button class="route-preview__btn-start-navigation" id="start-navigation" type="button">
+						<img 
+							src="{% static 'platformpathapp/decals/preview_start_navigation_button.svg' %}" 
+							alt="Preview start navigation button icon"
+						>
 						Start Navigation
 					</button>
 
-					<button id="cancel-route-preview" type="button">
+					<button class="route-preview__btn-cancel-route" id="cancel-route-preview" type="button">
 						Change Route
+						<img 
+							src="{% static 'platformpathapp/decals/preview_cancel_route_button.svg' %}" 
+							alt="Preview cancel current route button icon"
+						>
 					</button>
 				</div>
-			</div>
+			</aside>
+
 			<!-- ================= STEP UI BLOCK ================= -->
 			<aside id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
@@ -185,8 +190,19 @@
 				</div>
 			</aside>
 
+			<!-- ================= STEP UI + ROUTE PREVIEW ELEMENT DESCRIPTION ================= -->
+			<div class="element-description element-description__step-ui-route-preview hidden">
+				<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+				<span>
+					This area is where the <b>Step and Route Preview Interface</b> is located. They allow you to manage and navigate through 
+					the set path the algorithm finds for you. 
+					<br>
+					<i>*Whenever a start and end destination is set and the find route button is pressed, these interfaces will appear.*</i>
+				</span>
+			</div>
+
 			<!-- ================= MAP ROTATE BUTTON ================= -->
-			<button class="map-overlay map__rotate-button element-description__hoverable">
+			<button class="map-overlay map__rotate-button">
 				<img 
 					class="rotate-button__animated-parts-img" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
@@ -198,7 +214,10 @@
 					alt="Rotate map button icon base"
 				>
 
-				<span class="element-description">Rotate the map view</span>
+				<div class="element-description element-description__map-rotate-button hidden">
+					<span><i>(When toggled)</i> Rotates the map view — switches between two views of the station</span>
+					<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+				</div>
 			</button>
 
 			<!-- ================= LEGEND ================= -->
@@ -349,9 +368,26 @@
 						alt="Toggle map button icon base"
 					>
 
-					<span class="element-description">Look at the station legend</span>
+					<div class="element-description element-description__map-legend-toggle-button hidden">
+						<span><i>(When toggled)</i> Shows the map legend</span>
+						<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+					</div>
 				</button>
 			</aside>
+
+			<!-- ================= ELEMENT DESCRIPTIONS TOGGLE INFO BUTTON ================= -->
+			<button class="map-overlay element-descriptions__toggle-info-button">
+				<img 
+					class="toggle-info-button__enabled-button-img"
+					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button_enabled.svg' %}"
+					alt="Element descriptions toggle info button enabled icon"
+				>
+				<img
+					class="toggle-info-button__button-img"
+					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button.svg' %}"
+					alt="Element descriptions toggle info button enabled icon"
+				>
+			</button>
 
 		</section>
 	</main>

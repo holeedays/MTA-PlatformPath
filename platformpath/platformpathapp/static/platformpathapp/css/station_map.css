@@ -1,3 +1,7 @@
+/* =========================================================
+    Macro Styling
+   ========================================================= */
+
 :root { /* define global vars here */
     --site-diagram-container-bg-color: #171717; /* bg color for the site and the diagram container */
     --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
@@ -6,6 +10,11 @@
     /* these two fill variables are for the start/end node highlight (and for the legend) */
     --start-node-highlight-fill: #9900ff;
     --end-node-highlight-fill: #e5ff00;
+    /* this variable is for the map legend z-index (used in tangent with the map rotate button z-index) */
+    --map-legend-z-index: 0;
+    /* this variable established the bottom shift the route form filter checklist override toggles container is from the bottom of the page (or diagram container if you 
+        want to be specific */
+    --route-form-filter-checklist-override-toggles-bottom: 5%;
 }
 
 * {
@@ -106,32 +115,32 @@ body {
 }
 
 /* general toggle button img styling */
-.site-header__toggle-button img {
+.site-header__toggle-button > img {
     opacity: 0.7;
 
     transition: 
         opacity 0.25s ease-in-out,
         filter 0.25s ease-in-out;
 }
-.site-header__toggle-button:active img {
+.site-header__toggle-button:active > img {
     opacity: 1;
     filter: brightness(1.1);
 }
 @media (hover:hover) {
-    .site-header__toggle-button:hover img{
+    .site-header__toggle-button:hover > img{
         opacity: 1; 
         filter: brightness(1.1);
     }
 }
 
 /* specific img styling */
-.site-header__toggle-button .toggle-button__animated-parts-img {
+.site-header__toggle-button > .toggle-button__animated-parts-img {
     width: 50px;
     height: auto;
     z-index: 1;
 }
 
-.site-header__toggle-button.enabled .toggle-button__animated-parts-img {
+.site-header__toggle-button.enabled > .toggle-button__animated-parts-img {
     transform: scaleY(-1);
 }
 .site-header__toggle-button.animating > .toggle-button__animated-parts-img {
@@ -141,7 +150,7 @@ body {
     animation-timing-function: cubic-bezier(0.05, 0.2, 0.8, 0.91);
 }
 
-.site-header__toggle-button .toggle-button__base-img {
+.site-header__toggle-button > .toggle-button__base-img {
     width: 150px;
     height: auto;
     z-index: 0;
@@ -322,7 +331,7 @@ to work properly; we use a custom keyframe animation */
     display: flex;
     flex-direction: column;
     align-items: center;
-    bottom: 5%;
+    bottom: var(--route-form-filter-checklist-override-toggles-bottom);
     left: 1%;
     transform: none;
     padding: 12px;
@@ -395,7 +404,7 @@ to work properly; we use a custom keyframe animation */
 
     display: flex;
     flex-direction: column;
-    z-index: 2;
+    z-index: 1;
     max-height: 400px;
     overflow: auto;
     /* popovers are position:fixed hence they don't actually behave relative to parent containers as they usually do, instead we have
@@ -424,7 +433,7 @@ to work properly; we use a custom keyframe animation */
     }
 }
 
-.route-field__dropdown-button img {
+.route-field__dropdown-button > img {
     display: none;
     margin-left: auto; /* justify-self property doesn't work for flex items at all :/ (though align-self does); 
                             opting for margin-auto hack instead */
@@ -435,16 +444,16 @@ to work properly; we use a custom keyframe animation */
     transition: transform 0.25s ease-in-out, display 0.3s allow-discrete;
 }
 @media (hover:hover) {
-    .route-field__dropdown-button:hover img {
+    .route-field__dropdown-button:hover > img {
         transform: scale(1.1);
     }
 }
-.route-field__dropdown-button.option-selected img {
+.route-field__dropdown-button.option-selected > img {
     display: block;
     transform: scale(1);
 }
 @starting-style {
-    .route-field__dropdown-button.option-selected img {
+    .route-field__dropdown-button.option-selected > img {
         transform: scale(0);
     }
 }
@@ -631,13 +640,13 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* styling for the toggle button img */
-.filter-checklist__toggle-button img {
+.filter-checklist__toggle-button > img {
     height: 23px;
     width: auto;
 
     transition: transform 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.filter-checklist__toggle-button.enabled img {
+.filter-checklist__toggle-button.enabled > img {
     transform: rotate(180deg);
 }
 
@@ -677,27 +686,28 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* img styling of the accessibility button */
-.override-toggles__accessibility-only-toggle-button img {
+.override-toggles__accessibility-only-toggle-button > img {
     width: 40px;
     height: auto;
 
     transition: filter 0.25s ease-in-out;
 }
-.override-toggles__accessibility-only-toggle-button:active img {
+.override-toggles__accessibility-only-toggle-button:active > img {
         filter: brightness(0.7);
     }
 @media (hover:hover) {
-    .override-toggles__accessibility-only-toggle-button:hover img {
+    .override-toggles__accessibility-only-toggle-button:hover > img {
         filter: brightness(0.7);
     }
 }
-.override-toggles__accessibility-only-toggle-button.enabled img {
+.override-toggles__accessibility-only-toggle-button.enabled > img {
         filter: brightness(0.5);
 }
 
 
 /* ======== step ui + route preview ======== */
 
+/* general styling */
 .step-ui,
 .route-preview {
     display: flex;
@@ -705,14 +715,19 @@ to work properly; we use a custom keyframe animation */
     align-items: center;
     right: 50%;
     transform: translateX(50%); /* center the element horizontally */
-    bottom: 20%;
+    bottom: calc(var(--route-form-filter-checklist-override-toggles-bottom) + 190px); /* currently, the height of the route form
+                                                                                            filter override toggles container is about
+                                                                                            176px; the step ui and route preview should
+                                                                                            be slightly above that to deal with decreases
+                                                                                            in horizontal height */
     gap: 10px;
 
     transition: 
         opacity 0.25s ease-in-out,
         display 0.3s allow-discrete;
 }
-.step-ui.hidden {
+.step-ui.hidden,
+.route-preview.hidden {
     opacity: 0;
     display: none;
 }
@@ -720,8 +735,12 @@ to work properly; we use a custom keyframe animation */
     .step-ui {
         opacity: 0;
     }
+    .route-preview {
+        opacity: 0;
+    }
 }
 
+/* text styling */
 .step-ui__instruction-text {
     display: flex;
     align-items: center;
@@ -736,12 +755,36 @@ to work properly; we use a custom keyframe animation */
     text-align: center;
     padding: 10px;
 }
+.route-preview__summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    border-radius: 100px;
+    background: rgba(60, 60, 60, 50%);
+    padding: 10px 15px;
+    gap: 10px;
+}
 
-.route-preview > strong,
-#route-preview-summary {
+
+.route-preview__summary strong,
+.route-preview__description {   
+    --txt-color: #ffffff;
+    --txt-size: 16px;
+    
     display: block;
     line-height: 1.2;
     text-align: center;
+    color: var(--txt-color);
+    font-size: var(--txt-size);
+}
+.route-preview__summary strong {
+    --txt-color: #ffffff;
+    --txt-size: 18px;
+}
+.route-preview__description {
+    --txt-color: #b6b6b6;
+    --txt-size: 14px;
 }
 
 .step-ui__step-controls,
@@ -751,8 +794,9 @@ to work properly; we use a custom keyframe animation */
     gap: 20px;
 }
 
+/* button styling */
 .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next),
-.route-preview__controls button {
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) {
     --bg-color: #3b3b3b;
 
     padding: 0px;
@@ -762,36 +806,62 @@ to work properly; we use a custom keyframe animation */
     border-radius: 10px;
     padding: 5px;
     background: var(--bg-color);
-    color: #ffffff;
     cursor: pointer;
 
     transition: background 0.25s ease-in-out;
 }
-.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled) {
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) {
+    display: flex;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 14px;
+    gap: 10px;
+    align-items: center;
+}
+
+.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled), /* disabled step ui buttons will have
+                                                                                                different styling applied to them*/
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):active {
     background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
 }
 @media (hover:hover) {
-    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled) {
+    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled),
+    .route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):hover {
         background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
     }
 }
 
-:is(.step-ui__btn-prev, .step-ui__btn-next) img {
+:is(.step-ui__btn-prev, .step-ui__btn-next) > img {
     width: 30px;
     height: auto;
-    transition: filter 0.25s ease-in-out;
+    transition: 
+        transform 0.25s ease-in-out,
+        filter 0.25s ease-in-out;
 }
 :is(.step-ui__btn-prev, .step-ui__btn-next):disabled {
     background: color-mix(in srgb, var(--bg-color), #000000 20%);
     cursor: default;
 }
-:is(.step-ui__btn-prev, .step-ui__btn-next):disabled img {
+:is(.step-ui__btn-prev, .step-ui__btn-next):disabled > img {
     filter: brightness(0.5);
 }
 
-.step-controls button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+:is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) > img {
+    width: 30px;
+    height: auto;
+
+    transition: transform 0.25s ease-in-out;
+}
+
+:is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled) > img,
+:is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):active > img {
+    transform: scale(0.9);
+}
+@media (hover:hover) {
+    :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled) > img,
+    :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):hover > img {
+        transform: scale(0.9);
+    }
 }
 
 /* ======== map rotate button ======== */
@@ -809,7 +879,9 @@ to work properly; we use a custom keyframe animation */
     bottom: 5%;
     right: 1%;
     cursor: pointer;
-    z-index: 2;
+    z-index: calc(var(--map-legend-z-index) + 1); /* remember! the size of the map legend container actually overlaps the the map
+                                                        rotate button so we have to set the z=index of the map rotate button higher 
+                                                        than the container for us to click the button */
 }
 
 .map__rotate-button > * { /* target every child element here*/
@@ -819,20 +891,20 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* general styling for the rotate button imgs */
-.map__rotate-button img {
+.map__rotate-button > img {
     transition: filter 0.25s ease-in-out;
 }
-.map__rotate-button:active img {
+.map__rotate-button:active > img {
         filter: brightness(0.7);  
 }
 @media (hover:hover) {
-    .map__rotate-button:hover img {
+    .map__rotate-button:hover > img {
         filter: brightness(0.7); /* cannot use bg-color, fill, etc for img tags... filter is the alternative 
                                     for color accents use filter: opacity(0.7) drop-shadow(0 0 0 #whatevercolorhere)
                                     in this case, just using it to add black (e.g. darken) the image slightly */ 
     }
 }
-.map__rotate-button.animating img {
+.map__rotate-button.animating > img {
     filter: none;
 }
 
@@ -865,7 +937,7 @@ to work properly; we use a custom keyframe animation */
     gap: 10px;
     background: none;
     color: #ffffff;
-    z-index: 1; /* NOTE: since this legend is positioned next to the rotate map button, this z-index has to be lower */
+    z-index: var(--map-legend-z-index); /* NOTE: since this legend is positioned next to the rotate map button, this z-index has to be lower */
 }
 
 /* wrapper of the actual legend of the container (for animation purposes) */
@@ -1086,21 +1158,21 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* button images general styling*/
-.map-legend__toggle-button img {
+.map-legend__toggle-button > img {
     transition: filter 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.map-legend__toggle-button.enabled img {
+.map-legend__toggle-button.enabled > img {
     transform: scaleX(-1);
 }
-.map-legend__toggle-button:active img {
+.map-legend__toggle-button:active > img {
     filter: brightness(0.7);
 }
 @media (hover:hover) {
-    .map-legend__toggle-button:hover img {
+    .map-legend__toggle-button:hover > img {
         filter: brightness(0.7);
     }
 }
-.map-legend__toggle-button.animating img {
+.map-legend__toggle-button.animating > img {
     filter: none;
 }
 
@@ -1115,16 +1187,16 @@ to work properly; we use a custom keyframe animation */
     100% {opacity: 1;}
 }
 
-.map-legend__toggle-button .toggle-button__animated-parts-img {
+.map-legend__toggle-button > .toggle-button__animated-parts-img {
     width: 35px;
     height: auto;
-    z-index: 2;
+    z-index: 1;
 }
 
-.map-legend__toggle-button .toggle-button__base-img {
+.map-legend__toggle-button > .toggle-button__base-img {
     width: 45px;
     height: auto;
-    z-index: 1;
+    z-index: 0;
 }
 
 /* ==========================================================================
@@ -1180,199 +1252,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     --target-fill: var(--original-fill);
 }
 
-/* ==========================================================================
-   MISC ITEMS (element descriptions)
-   ========================================================================== */
-
-/* element descrip parent container */
-.element-description__container {
-    position: absolute;
-}
-
-/* toggle button (in the container, button, element description structure) */
-.element-description__toggle-button {
-    border: none;
-    background: none;
-}
-
-.element-description__container img {
-    width: 25px;
-    height: auto;
-
-    transition: 
-        filter 0.25s ease-in-out,
-        transform 0.25s ease-in-out;
-}
-.element-description__toggle-button:active img {
-    filter: brightness(0.7);
-    transform: scale(1.1);
-}
-@media (hover:hover) {
-    .element-description__toggle-button:hover img {
-        filter: brightness(0.7);
-        transform: scale(1.1);
-    }
-}
-.element-description__toggle-button.enabled img {
-    filter: brightness(0.5);
-}
-
-/* NOTE: element description can exist without a container or a button, I just give a container and button for certain elements (where
-    it'd be a pain in the ass to see an element description text repeatedly just for hovering over that element OR it'd stylistically
-    make more sense and reduces redundancy of these element descriptions) */
-.element-description {
-    display: none;
-    position: absolute;
-    padding: 10px;
-    border-radius: 100px;
-    text-align: center;
-    font-size: 15px;
-    opacity: 0;
-    color: #ffffff;
-    background: #4e4e4e;
-    z-index: 10; /* element descriptions should overlap any element */
-
-    transition: 
-        display 0.3s allow-discrete,
-        opacity 0.25s ease-in-out;
-}
-.element-description__toggle-button.enabled ~ .element-description {
-    display: block;
-    opacity: 1;
-}
-/* element-description__hoverable are applied to any buttons (and other misc elements) that are associated with an element description 
-    (e.g. it could be the toggle button in .element-description__container OR just a regular button like the map rotate button) */
-.element-description__hoverable:active .element-description, 
-.element-description__hoverable:active ~ .element-description {
-    display: block;
-    opacity: 1;
-}
-@media (hover:hover) {
-    .element-description__hoverable:hover .element-description,
-    .element-description__hoverable:hover ~ .element-description {
-        display: block;
-        opacity: 1;
-    }
-}
-@starting-style {
-    .element-description__hoverable:hover .element-description,
-    .element-description__hoverable:hover ~ .element-description {
-        display: block;
-        opacity: 0;
-    }
-    .element-description__hoverable:active .element-description,
-    .element-description__hoverable:active ~ .element-description {
-        display: block;
-        opacity: 0;
-    }
-}
-/* some scrollbar styling for element description (if an override were to allow overflow) */
-.element-description::-webkit-scrollbar {
-    width: 7px;
-}
-.element-description::-webkit-scrollbar-track {
-    background: #242424;
-}
-.element-description::-webkit-scrollbar-thumb {
-    border-radius: 100px;
-    background: #ffffff;
-}
-.element-description::-webkit-scrollbar-thumb:active {
-    border-radius: 100px;
-    background: #979797;
-}
-@media (hover:hover) {
-    .element-description::-webkit-scrollbar-thumb:hover {
-        border-radius: 100px;
-        background: #979797;
-    }
-}
-
-/* .map-header overrides for element description */
-.map-header .element-description {
-    top: 100%;
-    left: 50%;
-    width: 150px;
-    transform: translateX(-50%);
-}
-
-/* .level-stack overrides for element description and its container */
-.level-stack .element-description__container {
-    bottom: 90%;
-    left: 90%;
-}
-.level-stack .element-description__container .element-description {
-    left: 120%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 150px;
-    text-align: start;
-    border-radius: 10px;
-}
-
-/* .route-form-filter-checklist-override-toggles__container overrides for element description and its container */
-.route-form-filter-checklist-override-toggles__container .element-description__container {
-    bottom: 130px;
-    right: 2%;
-}
-.route-form-filter-checklist-override-toggles__container .element-description {
-    left: 120%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 250px;
-    max-height: 200px;
-    overflow: auto;
-    text-align: start;
-    border-radius: 10px;
-}
-/* might remove later and add some ts side logic to better solve the issue of the .element-description__container on the filter
-    checklist */
-.route-form-filter-checklist-override-toggles__container .override-toggles.hidden ~ .element-description__container {
-    bottom: 60px;
-}
-/* the route form filter override element description container contains a ul hence the styling here */
-.element-description ul {
-    padding: 0px 0px 0px 20px;
-}
-
-/* .override-toggles__accessibility-only-toggle-buttons overrides for element description */
-.override-toggles__accessibility-only-toggle-button {
-    position: relative; /* needs a position property for left, right, top, bottom in .element-description to work properly;
-                            else these properties will refer to the nearest ancestor with those properties (e.g. the route form
-                            filter checklist override container (which has map-overlay class, that has a position property); */
-}
-.override-toggles__accessibility-only-toggle-button .element-description {
-    left: 50%;
-    transform: translateX(-50%);
-    top: auto; /* have to reset top since the parent container's (route form filter checklist override container) styling is 
-                    affecting the current values */
-    bottom: 105%;
-    width: 150px;
-    text-align: center;
-    border-radius: 100px;
-}
-
-/* .map__rotate-button + .map-legend__toggle-button overrides for element description */
-:is(.map__rotate-button, .map-legend__toggle-button) .element-description {
-    right: 105%;
-    width: 150px;
-}
-/* like the override toggles buttons, I need to add the position property or else the element description will be shifted relative
-    to the map-legend parent container */
- .map-legend__toggle-button {
-    position: relative; 
- }
- /* when the map legend if open... hide the element description */
-.map-legend__toggle-button.enabled .element-description {
-    display: none;
-    transition: none; /* since the display transition on the element description class is discrete (meaning there is a delay) 
-                        we have to strip the transition or else the element will be visible for 0.3s when map legend is enabled */
-}
-
-
-/*
-Route preview styling
-*/
+/* ========= preview highlighting styles  ========= */
 
 .route-preview-node {
     --preview-base-fill: var(--original-fill);
@@ -1415,71 +1295,245 @@ Route preview styling
     animation-delay: calc(var(--preview-index) * 1s);
 }
 
+/* ==========================================================================
+   MISC ITEMS (element descriptions toggle button + element descriptions)
+   ========================================================================== */
+
+/* element description toggle button*/
+.element-descriptions__toggle-info-button {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    top: calc(var(--site-header-height) + 20px);
+    left: 1%;
+    background: none;
+    border: none;
+
+    transition: top 0.25s ease-in-out;
+}
+.element-descriptions__toggle-info-button.shifted-up {
+    top: 30px;
+}
+
+/* general styling for the button imgs */
+.element-descriptions__toggle-info-button > img {
+    grid-column: 1;
+    grid-row: 1;
+    width: 30px;
+    height: auto;
+
+    transition: 
+        filter 0.25s ease-in-out,
+        transform 0.25s ease-in-out;
+}
+.element-descriptions__toggle-info-button:active img {
+    filter: brightness(0.7);
+    transform: scale(1.1);
+}
+@media (hover:hover) {
+    .element-descriptions__toggle-info-button:hover img {
+        filter: brightness(0.7);
+        transform: scale(1.1);
+    }
+}
+/* specific styling for the button imgs */
+.toggle-info-button__enabled-button-img {
+    display: none;
+}
+.toggle-info-button__button-img {
+    display: block;
+}
+.element-descriptions__toggle-info-button.enabled > .toggle-info-button__enabled-button-img {
+    display: block;
+}
+.element-descriptions__toggle-info-button.enabled > .toggle-info-button__button-img {
+    display: none;
+}
+
+/* element description containers */
+.element-description {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 5;
+
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+
+    transition:
+        opacity 0.25s cubic-bezier(0.165, 0.84, 0.44, 1),
+        display 0.3s allow-discrete;
+}
+.element-description.hidden {
+    display: none;
+    opacity: 0;
+}
+@starting-style {
+    .element-description {
+        opacity: 0;
+    }
+}
+
+.element-description > img {
+    width: 25px;
+    height: auto;
+}
+
+.element-description span {
+    text-align: center;
+    padding: 10px;
+    border-radius: 100px;
+    font-size: 15px;
+    color: #ffffff;
+    background: #4e4e4e;
+}
+
+/* map header overrides */
+.element-description__map-header {
+    width: 200px;
+    bottom: 45%;
+    right: 100%;
+    transform: translateX(15px); /* this right + translation combo with an absolute px width works better than just a percentage*/
+}
+
+/* level stack overrides */
+.element-description__level-stack {
+    left: 95%;
+    bottom: 63%;
+    width: 175px;
+}
+.element-description__level-stack span {
+    border-radius: 10px;
+    text-align: start;
+}
+
+/* accessibility only toggle button overrides */
+.override-toggles__accessibility-only-toggle-button { 
+    position: relative; /* need to set positioning for the toggle button or else top/bottom/left/right for toggle button will be based
+                            on the route form filter override container (since it is the closest ancestor that has the position property) */
+}
+.element-description__accessibility-only-toggle-button {
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%);
+    gap: 2px;
+    flex-direction: column;
+}
+.element-description__accessibility-only-toggle-button span {
+    width: 150px;
+}
+
+/* route form filter checklist override toggles container overrides */
+.route-form-filter-checklist-override-toggles__container {
+    z-index: 5; /* since the stepui and route preview is technically higher than this container and the element description overlaps
+                    it, it causes a weird overlap where the element description is below the step ui, so we have to shift z-index of
+                    this container */
+}
+.element-description__route-form-filter-checklist-override-toggles-container {
+    left: 98%;
+    bottom: 60px;
+}
+.override-toggles.hidden ~ .element-description__route-form-filter-checklist-override-toggles-container {
+    bottom: -10px; /* sometimes the override toggles option might be hidden so we have to readjust the position of the element description
+                        in that case */
+}
+.element-description__route-form-filter-checklist-override-toggles-container span {
+    width: 300px;
+    max-height: 200px;
+    text-align: start;
+    border-radius: 10px;
+    overflow: auto; /* enable overflow for this because there is a lot of text here */
+}
+.element-description__route-form-filter-checklist-override-toggles-container ul {
+    padding: 0px 0px 0px 20px;
+}
+.element-description__route-form-filter-checklist-override-toggles-container span::-webkit-scrollbar {
+    width: 7px;
+}
+.element-description__route-form-filter-checklist-override-toggles-container span::-webkit-scrollbar-track {
+    background: #1f1f1f;
+}
+.element-description__route-form-filter-checklist-override-toggles-container span::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;                    
+}
+.element-description__route-form-filter-checklist-override-toggles-container span::-webkit-scrollbar-thumb:active {
+    background: #cacaca;
+}
+@media (hover:hover) {
+    .element-description__route-form-filter-checklist-override-toggles-container span::-webkit-scrollbar-thumb:hover {
+        background: #cacaca;
+    }
+}
+
+/* step ui + route preview overrides */
+.element-description__step-ui-route-preview {
+    bottom: calc(var(--route-form-filter-checklist-override-toggles-bottom) + 290px);
+    left: 50%;
+    transform: translateX(80px); /* like the shifting for map-header, a consistent % like 50 or 100 + an absolute px transform 
+                                    provides a much more consistent item when dimensions are resized */
+
+}
+.element-description__step-ui-route-preview span {
+    position: absolute;
+    bottom: 95%;
+    left: 100%;
+    text-align: start;
+    width: 250px;
+    border-radius: 10px;
+}
+
+/* map rotate button overrides */
+.element-description__map-rotate-button {
+    top: 50%;
+    transform: translateY(-50%);
+    right: 75%;
+}
+
+.element-description__map-rotate-button span {
+    width: 140px
+}
+
+/* map legend toggle button overrides */
+.map-legend__toggle-button { /* like the accessibility only toggle button, we have to set the position property here */
+    position: relative;
+}
+.element-description__map-legend-toggle-button {
+    top: 50%;
+    transform: translateY(-50%);
+    right: 75%;
+}
+.element-description__map-legend-toggle-button span {
+    width: 120px;
+}
+
+
 /* =========================================================
    Footer
    ========================================================= */
 
 .site-footer__station-map-override {
     position: absolute;
-    bottom: 1%;
-    display: flex;
-    gap: 7px;
-    padding: 0px;
+    flex-direction: row !important;
+    bottom: 0.1%;
+    z-index: 0;
+    gap: 20px !important;
+    padding: 5px 0px !important;
 }
 
-/* Mobile styling */
-@media (max-width: 760px) {
-    .station-map-page {
-        padding: 12px;
-    }
-
-    .station-map-stage {
-        min-height: 760px;
-        border-width: 6px;
-    }
-
-    .level-stack {
-        top: 82px;
-        right: 12px;
-        bottom: auto;
-        transform: none;
-        width: 140px;
-    }
-
-    .route-form {
-        bottom: 14px;
-        right: 12px;
-        left: 12px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: auto;
-        box-sizing: border-box;
-        gap: 8px;
-        transform: none;
-    }
-
-    .route-field select {
-        min-width: 135px;
-        width: 100%;
-    }
-
-    .step-ui,
-    .route-preview {
-        right: 12px;
-        bottom: 180px;
-        left: 12px;
-        width: auto;
-        box-sizing: border-box;
-        z-index: 2;
-    }
-
-    .route-form button {
-        grid-column: 1 / -1;
-        width: 100%;
-    }
-
-    .step-controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
+.site-footer__station-map-override .brand__logo--sm {
+    width: 15px;
+    height: auto;
 }
+
+.site-footer__station-map-override .brand__name--sm {
+    font-size: 12px;
+}
+
+.site-footer__station-map-override .site-footer__legal {
+    gap: 10px;
+}
+
