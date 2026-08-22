@@ -1,5 +1,5 @@
 import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
-import { PathFinder, type PathStep } from "./path_finder.ts";
+import { PathFinder, type PathStep, type AccessibilityOption } from "./path_finder.ts";
 import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
 import { NodeOption, FilterCheckBox, NodeSVG } from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
@@ -17,8 +17,8 @@ export class StationMapPage {
     private currentIndex: number = 0;
     private station: StationResponse | null = null;
     private svgRenderer: SvgRenderer;
-    private accessiblePathingOnly: boolean = false;
     private isPreviewingRoute:boolean = false;
+    private accessibleOption: AccessibilityOption = "none";
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -191,22 +191,28 @@ export class StationMapPage {
     }
 
     // add styling + event handling for the override toggle container and its override toggle buttons (e.g. like accessibility only 
-    // button) that may exist
+    // button and avoid accessible nodes) that may exist
     private initOverrideToggles(): void {
         const overrideTogglesParentContainer: HTMLDivElement | null = document.querySelector(".override-toggles");
         const accessibilityOnlyToggleButton: HTMLButtonElement | null | undefined = (
             overrideTogglesParentContainer?.querySelector(".override-toggles__accessibility-only-toggle-button")
         );
+        const accessibilityNoneToggleButton: HTMLButtonElement | null | undefined = (
+            overrideTogglesParentContainer?.querySelector(".override-toggles__accessibility-none-toggle-button")
+        );
 
         if (
             overrideTogglesParentContainer === null ||
             accessibilityOnlyToggleButton === null ||
-            accessibilityOnlyToggleButton === undefined
+            accessibilityOnlyToggleButton === undefined ||
+            accessibilityNoneToggleButton === null ||
+            accessibilityNoneToggleButton === undefined
         ) {
             console.warn(
                 "Override toggles parent container and/or the accessibility only toggle button doesn't exist",
                 `Override Toggles Parent Container Status: ${overrideTogglesParentContainer}`,
-                `Accessibility Only Toggle Button Status: ${accessibilityOnlyToggleButton}`
+                `Accessibility Only Toggle Button Status: ${accessibilityOnlyToggleButton}`,
+                `Accessibility None Toggle Button Status: ${accessibilityNoneToggleButton}`
             );
             return;
         }
@@ -219,22 +225,51 @@ export class StationMapPage {
 
         // now checking whether to validate the accessibility only toggle button
         if (this.station.station_model.accessible_station) {
-            let isPressed: boolean = false;
+            let isAccessibleOnly: boolean = false;
+            let isAccessibleNone: boolean = false;
+            
             // also add a human readable label (just for human legibility, does not have styling significance, 
             // this attribute will exist in the template already)
             accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
+            accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
 
             accessibilityOnlyToggleButton.addEventListener("click", () => {
-                // set our accessiblePathingOnly boolean (this boolean will determine whether the pathfinding algorithm will
+                // if the accessibileNone button is toggled then we want to turn it off
+                if (isAccessibleNone) {
+                    isAccessibleNone = false;
+                    accessibilityNoneToggleButton.classList.remove("enabled");
+                    accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
+                }
+                // set our isAccessibleOnly boolean (this boolean will determine whether the pathfinding algorithm will
                 // choose to select accessible nodes)
-                this.accessiblePathingOnly = !isPressed;
+                this.accessibleOption = isAccessibleOnly ? "none" : "accessible-only";
+                isAccessibleOnly = !isAccessibleOnly;
+
                 // this is for visual styling to confirm whether this override is selected
-                accessibilityOnlyToggleButton.classList.toggle("enabled", !isPressed);
+                accessibilityOnlyToggleButton.classList.toggle("enabled", isAccessibleOnly);
                 // toggle our readable label
-                const ariaSelectedVal: string = isPressed === false? "true": "false";
+                const ariaSelectedVal: string = isAccessibleOnly.toString();
                 accessibilityOnlyToggleButton.setAttribute("aria-selected", ariaSelectedVal);
 
-                isPressed = !isPressed;
+            });
+
+            accessibilityNoneToggleButton.addEventListener("click", () => {
+                // if the accessibileOnly button is toggled then we want to turn it off
+                if (isAccessibleOnly) {
+                    isAccessibleOnly = false;
+                    accessibilityOnlyToggleButton.classList.remove("enabled");
+                    accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
+                }
+                // set our isAccessibleNone boolean (this boolean will determine whether the pathfinding algorithm will
+                // choose to select non-accessible nodes)
+                this.accessibleOption = isAccessibleNone ? "none" : "avoid-accessible";
+                isAccessibleNone = !isAccessibleNone;
+
+                // this is for visual styling to confirm whether this override is selected
+                accessibilityNoneToggleButton.classList.toggle("enabled", isAccessibleNone);
+                // toggle our readable label
+                const ariaSelectedVal: string = isAccessibleNone.toString();
+                accessibilityNoneToggleButton.setAttribute("aria-selected", ariaSelectedVal);
             });
         }
         // if the station is not accessible
@@ -396,8 +431,7 @@ export class StationMapPage {
     // Uses the PathFinder to get a path and initializes the UI for navigation
     public async startNavigation(
         fromNodeId: number,
-        toNodeId: number,
-        accessibleOnly: boolean = false
+        toNodeId: number
     ): Promise<void> {
         if (!this.station) {
             console.error('No station data available');
@@ -413,7 +447,7 @@ export class StationMapPage {
             this.station,
             fromNodeId,
             toNodeId,
-            accessibleOnly
+            this.accessibleOption
         );
         // reset our current index for our path so we start at the first step
         this.currentIndex = 0;

@@ -1394,14 +1394,14 @@ Route preview styling
 }
 
 @keyframes RoutePreviewPulse {
-    0%, 100% { opacity : 0.50; }
+    0%, 100% { opacity : 0.70; }
     4% { opacity : 1; }
-    8% { opacity : 0.50; }
+    8% { opacity : 0.70; }
 }
 
 .route-preview-node,
 .route-preview-node :is(path, rect, circle, ellipse, polygon, polyline) {
-    opacity: 0.50;
+    opacity: 0.70;
 
     animation-name: RoutePreviewPulse;
     animation-duration: var(--preview-duration);
