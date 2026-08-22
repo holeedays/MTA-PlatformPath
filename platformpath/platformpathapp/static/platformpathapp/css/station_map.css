@@ -668,8 +668,9 @@ to work properly; we use a custom keyframe animation */
     justify-content: flex-end;
     padding: 0px 10px;
 }
-/* accessibility override toggle button */
-.override-toggles__accessibility-only-toggle-button {
+/* accessibility override toggle buttons */
+.override-toggles__accessibility-only-toggle-button,
+.override-toggles__accessibility-none-toggle-button {
     background: none;
     border: none;
 
@@ -677,21 +678,25 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* img styling of the accessibility button */
-.override-toggles__accessibility-only-toggle-button img {
+.override-toggles__accessibility-only-toggle-button img,
+.override-toggles__accessibility-none-toggle-button img {
     width: 40px;
     height: auto;
 
     transition: filter 0.25s ease-in-out;
 }
-.override-toggles__accessibility-only-toggle-button:active img {
+.override-toggles__accessibility-only-toggle-button:active img,
+.override-toggles__accessibility-none-toggle-button:active img {
         filter: brightness(0.7);
     }
 @media (hover:hover) {
-    .override-toggles__accessibility-only-toggle-button:hover img {
+    .override-toggles__accessibility-only-toggle-button:hover img,
+    .override-toggles__accessibility-none-toggle-button:hover img {
         filter: brightness(0.7);
     }
 }
-.override-toggles__accessibility-only-toggle-button.enabled img {
+.override-toggles__accessibility-only-toggle-button.enabled img,
+.override-toggles__accessibility-none-toggle-button.enabled img {
         filter: brightness(0.5);
 }
 
@@ -1336,12 +1341,14 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 /* .override-toggles__accessibility-only-toggle-buttons overrides for element description */
-.override-toggles__accessibility-only-toggle-button {
+.override-toggles__accessibility-only-toggle-button,
+.override-toggles__accessibility-none-toggle-button {
     position: relative; /* needs a position property for left, right, top, bottom in .element-description to work properly;
                             else these properties will refer to the nearest ancestor with those properties (e.g. the route form
                             filter checklist override container (which has map-overlay class, that has a position property); */
 }
-.override-toggles__accessibility-only-toggle-button .element-description {
+.override-toggles__accessibility-only-toggle-button .element-description,
+.override-toggles__accessibility-none-toggle-button .element-description {
     left: 50%;
     transform: translateX(-50%);
     top: auto; /* have to reset top since the parent container's (route form filter checklist override container) styling is 
