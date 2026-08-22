@@ -1,0 +1,15 @@
+<svg width="273" height="273" viewBox="0 0 273 273" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="accessibility_none_toggle_button">
+<rect id="Rectangle 39" width="273" height="273" rx="32" fill="#EFEFEF"/>
+<rect id="Rectangle 40" x="15.5" y="15.5" width="242" height="242" rx="25.5" stroke="black" stroke-width="13"/>
+<g id="wheelchair icon">
+<circle id="Ellipse 12" cx="161.792" cy="166.949" r="72.2076" stroke="black" stroke-width="14"/>
+<circle id="Ellipse 13" cx="161.727" cy="166.627" r="13.7793" fill="black"/>
+<path id="mask" d="M98.3214 177.964L83.6339 223.6L33 90.9286L159.694 77.25L137.663 177.964H98.3214Z" fill="#EFEFEF"/>
+<path id="Ellipse 11" d="M159.286 48.6786C159.286 61.7559 148.684 72.3571 135.607 72.3571C122.53 72.3571 111.929 61.7559 111.929 48.6786C111.929 35.6013 122.53 25 135.607 25C148.684 25 159.286 35.6013 159.286 48.6786Z" fill="black"/>
+<path id="Vector 2" d="M148.154 59.9397L132.765 125.509L124.025 162.752H87.3058L68.4219 218.879L37.4732 216.257M132.765 125.509H96.2232" stroke="black" stroke-width="17"/>
+</g>
+<circle id="Ellipse 21" cx="137" cy="136" r="95" stroke="#FF0000" stroke-width="10"/>
+<line id="Line 9" x1="75.5753" y1="65.5047" x2="206.575" y2="199.505" stroke="#FF0000" stroke-width="10"/>
+</g>
+</svg>

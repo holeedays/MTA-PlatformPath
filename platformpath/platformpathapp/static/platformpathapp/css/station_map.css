@@ -682,22 +682,23 @@ to work properly; we use a custom keyframe animation */
 .override-toggles__accessibility-none-toggle-button img {
     width: 40px;
     height: auto;
+    filter: brightness(0.5);
 
     transition: filter 0.25s ease-in-out;
 }
 .override-toggles__accessibility-only-toggle-button:active img,
 .override-toggles__accessibility-none-toggle-button:active img {
-        filter: brightness(0.7);
+        filter: brightness(0.5);
     }
 @media (hover:hover) {
     .override-toggles__accessibility-only-toggle-button:hover img,
     .override-toggles__accessibility-none-toggle-button:hover img {
-        filter: brightness(0.7);
+        filter: brightness(0.5);
     }
 }
 .override-toggles__accessibility-only-toggle-button.enabled img,
 .override-toggles__accessibility-none-toggle-button.enabled img {
-        filter: brightness(0.5);
+        filter: brightness(1.0);
 }
 
 
