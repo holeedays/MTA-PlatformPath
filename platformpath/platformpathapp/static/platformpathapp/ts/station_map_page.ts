@@ -25,8 +25,23 @@ export class StationMapPage {
         this.svgRenderer = new SvgRenderer();
     }
 
-    // initializes the page: loads diagram, fetches station data, sets up event listeners
+    // umbrella function for all init methods (desktop specific and general init methods)
     public async init(): Promise<void> {
+        // init base methods
+        await this.initBase();
+        // init desktop specific methods
+        this.initDesktop();
+    }
+
+    // initializes methods specifically belonging to the desktop version of the station map page
+    public initDesktop(): void {
+        // create logic to handle enforcing user page sizing for the desktop version of the page
+        this.initDesktopDimensionsEnforcement();
+    }
+
+    // initializes the page: loads diagram, fetches station data, sets up event listeners
+    // this part is reusable (e.g. can be used in the station map mobile page)
+    public async initBase(): Promise<void> {
 
         // get the id from our url
         const stationID: number | null = URLHandler.getIDFromURL();
@@ -43,9 +58,6 @@ export class StationMapPage {
         }
 
         // METHODS THAT DON'T REQUIRE STATION DATA
-
-        // create an event listener to turn the page to mobile view once the horizontal width threshold is met
-        this.listenForWindowDimensionsChange();
 
         // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
         // lower resolutions/dimensions)
@@ -89,22 +101,63 @@ export class StationMapPage {
         this.initMapRotateButton();
     }
 
-    // add an event listener to the window that is trigged when the viewport dimension size reaches a certain threshold
-    // this should move us to the mobile view of the page if the threshold is met
+    // initially enforce desktop dimensions as well as 
+    // create an event handler that enforces desktop users to stick to specific website viewing dimensions for the desktop
+    private initDesktopDimensionsEnforcement(): void {
+        const djangoConfig: HTMLDivElement | null = document.querySelector("#django_config");
+        if (djangoConfig === null || djangoConfig.dataset.staticPath === undefined) {
+            console.warn("Django config element doesn't exist or 'data-static-path' attribute doesn't exist on it");
+            return;
+        }
 
-    // NOTE: the horizontal resize threshold number doesn't truly determine what page gets shown; if we changed the dimensions
-    // with dev tools, it would most likely go to the mobile view and stay that way despite changing it to a standard 1920x1080
-    // resolution (since the responsive layout is recognized as non PC); this is okay as in almost all other cases, no one would
-    // be dynamically resizing their windows; in those cases our display logic works perfectly fine
-    public listenForWindowDimensionsChange(): void {
         // this is our threshold number (in pixels)
         const horizontalResizeThreshold: number = 1270;
+
+        // create our element and the base styling of it
+        const dimensionEnforcementOverlay: HTMLDivElement = document.createElement("div");
+        const enforcementTextBlock: HTMLSpanElement = document.createElement("span");
+        const enforcementImageBlock: HTMLImageElement = document.createElement("img");
+
+        // style the parent containr here
+        dimensionEnforcementOverlay.classList.add("dimension-enforcement-overlay", "hidden");
+        dimensionEnforcementOverlay.addEventListener("transitionend", (ev: TransitionEvent) => {
+            if (ev.propertyName === "opacity" && dimensionEnforcementOverlay.classList.contains("hidden")) {
+                dimensionEnforcementOverlay.remove();
+            }
+        });
+        // style the text block here
+        enforcementTextBlock.innerHTML = `
+            <b>Please expand your window.</b> <br><br>
+            The page's layout is meant for desktop dimensions, not tablet or mobile.
+            To see the mobile view of the station map, please use a tablet or phone. <br><br>
+            Thank you for understanding.`
+        // style the image block here
+        enforcementImageBlock.src = (
+            djangoConfig.dataset.staticPath + "platformpathapp/decals/dimension_enforcement_window_expand_icon.svg"
+        );
+        enforcementImageBlock.alt = "Dimension enforcement window expand icon"
+
+        dimensionEnforcementOverlay.append(enforcementImageBlock, enforcementTextBlock);
+        // do our initial check here
+        if (window.innerWidth < horizontalResizeThreshold) {
+            document.body.prepend(dimensionEnforcementOverlay);
+            dimensionEnforcementOverlay.classList.remove("hidden");
+        }
         // add our event listener here (CSS queries are a lot more foolproof and efficient than doing a window resize
         // event listener here)
         const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${horizontalResizeThreshold}px)`);
         mediaQuery.addEventListener("change", (ev: MediaQueryListEvent) => {
-            if (ev.matches)
-                URLHandler.refreshCurrentURL();
+            if (ev.matches) {
+                document.body.prepend(dimensionEnforcementOverlay);
+                // currently, prepending the overlay and then removing the hidden attribute doesn't trigger the transition
+                // so, the best other bet is to force a layout recalculation to cause the transition (or an arbitrary set timeout
+                // or request animation frame... though these are finnicky and may cause race conditions)
+                dimensionEnforcementOverlay.offsetWidth; 
+                dimensionEnforcementOverlay.classList.remove("hidden");
+            }
+            else {
+                dimensionEnforcementOverlay.classList.add("hidden");
+            }
         })
     }
 
@@ -248,7 +301,7 @@ export class StationMapPage {
             return;
         }   
 
-        // now checking whether to validate the accessibility only toggle button
+        // now checking whether to validate the accessibility only/none toggle buttons
         if (this.station.station_model.accessible_station) {
             let isAccessibleOnly: boolean = false;
             let isAccessibleNone: boolean = false;
@@ -299,10 +352,8 @@ export class StationMapPage {
         }
         // if the station is not accessible
         else {
-            // since the accessibility only toggle button is the only toggle button, we don't have to configure more logic to
-            // determine to hide the parent container or just hide the accessibility button (if there are more buttons)
-            // right now, just make the parent container hidden
-            overrideTogglesParentContainer.classList.add("hidden");
+            // remove the override toggles completely
+            overrideTogglesParentContainer.remove();
         }
     }
 

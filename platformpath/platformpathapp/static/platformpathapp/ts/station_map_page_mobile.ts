@@ -12,21 +12,6 @@ export class StationMapPageMobile extends StationMapPage {
     // For instance: though StationMapPage's init(): Promise<void> is a method, it is being treated as init: () => Promise<void>
     // in the d.ts file (which is the transpiled version of our ts code)
     public override async init(): Promise<void> {
-        await super.init();
-    }
-
-    // this method is called in init, we can override the method so this version of the method is ran instead of the parent's
-    // this will do the opposite of station map page: it triggers the desktop view once the threshold is met
-    public override listenForWindowDimensionsChange(): void {
-        // this is our threshold number (in pixels)
-        const horizontalResizeThreshold: number = 1270;
-        // add our event listener here
-        const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${horizontalResizeThreshold}px)`);
-        mediaQuery.addEventListener("change", (ev: MediaQueryListEvent) => {
-            // since this is the max-width media query, we want to find the opposite (e.g. the max-width property doesn't match)
-            // since we want to go back to desktop view
-            if (!ev.matches)
-                URLHandler.refreshCurrentURL();
-        })
+        await super.initBase();
     }
 }

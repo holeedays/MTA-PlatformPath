@@ -1,0 +1,21 @@
+<svg width="966" height="779" viewBox="0 0 966 779" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="dimension_enforcement_window_expand_icon">
+<g id="pc silhouette">
+<rect id="Rectangle 41" x="17.5" y="17.5" width="931" height="529" stroke="white" stroke-width="35"/>
+<path id="Rectangle 42" d="M430 585H536V621L430 673V585Z" fill="white"/>
+<path id="Rectangle 43" d="M430 691H536L636 779H330L430 691Z" fill="white"/>
+<circle id="Ellipse 26" cx="815" cy="547" r="10" fill="#282828"/>
+<circle id="Ellipse 27" cx="778" cy="547" r="10" fill="#838383"/>
+</g>
+<g id="arrow">
+<path id="Polygon 8" d="M96 281.5L182.25 231.704L182.25 331.296L96 281.5Z" fill="white"/>
+<rect id="Rectangle 44" x="180" y="267" width="143" height="29" fill="white"/>
+<path id="Vector 6" d="M880 375C880 365.4 880 247 880 189" stroke="white" stroke-width="14"/>
+</g>
+<g id="arrow_2">
+<path id="Polygon 8_2" d="M862 280.5L775.75 230.704L775.75 330.296L862 280.5Z" fill="white"/>
+<rect id="Rectangle 44_2" width="143" height="29" transform="matrix(-1 0 0 1 778 266)" fill="white"/>
+<path id="Vector 5" d="M82 375C82 365.4 82 247 82 189" stroke="white" stroke-width="14"/>
+</g>
+</g>
+</svg>

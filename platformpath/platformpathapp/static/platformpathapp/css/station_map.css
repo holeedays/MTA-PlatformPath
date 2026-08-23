@@ -659,10 +659,6 @@ to work properly; we use a custom keyframe animation */
     border-radius: 5px;
     background: #252525;
 }
-/* no transitions here for the hidden property, we want it instantaneously */
-.override-toggles.hidden {
-    display: none;
-}
 
 .override-toggles strong {
     font-size: 18px;
@@ -675,7 +671,8 @@ to work properly; we use a custom keyframe animation */
     flex: 1;
     display: flex;
     justify-content: flex-end;
-    padding: 0px 10px;
+    gap: 15px;
+    padding: 0px 15px;
 }
 /* accessibility override toggle buttons */
 .override-toggles__accessibility-only-toggle-button,
@@ -1294,7 +1291,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 /* ==========================================================================
-   MISC ITEMS (element descriptions toggle button + element descriptions)
+   ELEMENT DESCRIPTIONS (including the element description toggle button)
    ========================================================================== */
 
 /* element description toggle button*/
@@ -1324,12 +1321,12 @@ if the arrow has the class (.route-direction__label) and target any paths within
         filter 0.25s ease-in-out,
         transform 0.25s ease-in-out;
 }
-.element-descriptions__toggle-info-button:active img {
+.element-descriptions__toggle-info-button:active > img {
     filter: brightness(0.7);
     transform: scale(1.1);
 }
 @media (hover:hover) {
-    .element-descriptions__toggle-info-button:hover img {
+    .element-descriptions__toggle-info-button:hover > img {
         filter: brightness(0.7);
         transform: scale(1.1);
     }
@@ -1355,6 +1352,9 @@ if the arrow has the class (.route-direction__label) and target any paths within
     align-items: center;
     gap: 5px;
     z-index: 5;
+    pointer-events: none; /* some of these element descriptions are on buttons, to avoid extending their click range
+                                (e.g. the element description text is considered part of the button and therefore receives 
+                                the onclick function), set pointer events off for these items */
 
     top: auto;
     bottom: auto;
@@ -1422,7 +1422,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     flex-direction: column;
 }
 .element-description__accessibility-only-toggle-button span {
-    width: 150px;
+    width: 120px;
 }
 .element-description__accessibility-none-toggle-button {
     left: 50%;
@@ -1432,7 +1432,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     flex-direction: column;
 }
 .element-description__accessibility-none-toggle-button span {
-    width: 150px;
+    width: 120px;
 }
 
 /* route form filter checklist override toggles container overrides */
@@ -1523,6 +1523,41 @@ if the arrow has the class (.route-direction__label) and target any paths within
 if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
 :is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
     --target-fill: var(--original-fill);
+}
+
+/* =========================================================
+   DIMENSION ENFORCEMENT OVERLAY
+   ========================================================= */
+.dimension-enforcement-overlay {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    background: #242424;
+    z-index: 999; /* this should overlay on anything on the page so just set the z-index as high as possible */
+
+    transition: opacity 0.25s cubic-bezier(0.86, 0, 0.07, 1);
+}
+.dimension-enforcement-overlay.hidden {
+    opacity: 0;
+}
+
+.dimension-enforcement-overlay span {
+    width: 80%;
+    text-align: center;
+    font-size: 14px;
+    color: #ffffff;
+    background: #1b1b1b;
+    padding: 20px;
+    border-radius: 100px;
+}
+
+.dimension-enforcement-overlay img {
+    width: 20%;
+    height: auto;
 }
 
 
