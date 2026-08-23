@@ -109,4 +109,9 @@ export class URLHandler {
         else 
             return Number(ID);     
     }
+
+    // refresh the current url/page
+    public static refreshCurrentURL(): void {
+        window.location.reload();
+    }
 }

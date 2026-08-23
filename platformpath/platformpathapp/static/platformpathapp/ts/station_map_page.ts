@@ -6,19 +6,19 @@ import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
 
 export class StationMapPage {
-    private pathFinder: PathFinder;
-    private currentPath: PathStep[] | null = null;
-    private currentPathNodeIDs: Set<string> = new Set();
-    private nodeSVGs: NodeSVG[] = [];
-    private selectedNodeOptions: {
+    public pathFinder: PathFinder;
+    public currentPath: PathStep[] | null = null;
+    public currentPathNodeIDs: Set<string> = new Set();
+    public nodeSVGs: NodeSVG[] = [];
+    public selectedNodeOptions: {
         startNode: NodeOption | null, 
         endNode: NodeOption | null
     } = {startNode: null, endNode: null};
-    private currentIndex: number = 0;
-    private station: StationResponse | null = null;
-    private svgRenderer: SvgRenderer;
-    private accessiblePathingOnly: boolean = false;
-    private isPreviewingRoute:boolean = false;
+    public currentIndex: number = 0;
+    public station: StationResponse | null = null;
+    public svgRenderer: SvgRenderer;
+    public accessiblePathingOnly: boolean = false;
+    public isPreviewingRoute: boolean = false;
 
     constructor() {
         this.pathFinder = new PathFinder();
@@ -43,6 +43,9 @@ export class StationMapPage {
         }
 
         // METHODS THAT DON'T REQUIRE STATION DATA
+
+        // create an event listener to turn the page to mobile view once the horizontal width threshold is met
+        this.listenForWindowDimensionsChange();
 
         // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
         // lower resolutions/dimensions)
@@ -86,7 +89,26 @@ export class StationMapPage {
         this.initMapRotateButton();
     }
 
-    // Set the station name in the heading element + add some event handling logic 
+    // add an event listener to the window that is trigged when the viewport dimension size reaches a certain threshold
+    // this should move us to the mobile view of the page if the threshold is met
+
+    // NOTE: the horizontal resize threshold number doesn't truly determine what page gets shown; if we changed the dimensions
+    // with dev tools, it would most likely go to the mobile view and stay that way despite changing it to a standard 1920x1080
+    // resolution (since the responsive layout is recognized as non PC); this is okay as in almost all other cases, no one would
+    // be dynamically resizing their windows; in those cases our display logic works perfectly fine
+    public listenForWindowDimensionsChange(): void {
+        // this is our threshold number (in pixels)
+        const horizontalResizeThreshold: number = 1270;
+        // add our event listener here (CSS queries are a lot more foolproof and efficient than doing a window resize
+        // event listener here)
+        const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${horizontalResizeThreshold}px)`);
+        mediaQuery.addEventListener("change", (ev: MediaQueryListEvent) => {
+            if (ev.matches)
+                URLHandler.refreshCurrentURL();
+        })
+    }
+
+    // set the station name in the heading element + add some event handling logic 
     private initStationHeading(): void {
         const stationHeading: HTMLDivElement | null = document.querySelector('#diagram-name');
         if (stationHeading === null || this.station === null) {
@@ -1091,7 +1113,7 @@ export class StationMapPage {
     // (and map/station header/element descriptions toggle info button) ideally should retract the header so that the diagram can be 
     // completely unobstructed
     private initSiteHeaderToggleButton(): void {
-        const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header__station-map-override");
+        const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header--station-map");
         const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
             siteHeaderContainer?.querySelector(".site-header__toggle-button"));
         const stationHeaderContainer: HTMLDivElement | null = document.querySelector(".map-header");

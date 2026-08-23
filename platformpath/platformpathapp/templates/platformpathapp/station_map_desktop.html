@@ -6,15 +6,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
 </head>
 
-<body>
+<body data-is-mobile="false">
 	<!-- ================= HEADER (fixed / absolutely positioned nav bar) ================= -->
-	<header class="site-header site-header__station-map-override">
+	<header class="site-header site-header--station-map">
 		<div class="site-header__inner">
 			<a class="brand" href="#">
 					<img class="brand__logo" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo big">
@@ -393,12 +393,12 @@
 	</main>
 
 	<!-- ================= FOOTER ================= -->
-	<footer class="site-footer site-footer__station-map-override">
+	<footer class="site-footer site-footer--station-map">
 		<div class="brand brand--footer">
-			<img class="brand__logo brand__logo--sm" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
-			<span class="brand__name brand__name--sm">PLATFORMPATH</span>
+			<img class="brand__logo brand__logo--sm brand__logo--station-map" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
+			<span class="brand__name brand__name--sm brand__logo--station-map">PLATFORMPATH</span>
 		</div>
-		<div class="site-footer__legal">
+		<div class="site-footer__legal site-footer__legal--station-map">
 			<span>2026 All rights reserved.</span>
 			<span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
 		</div>

@@ -42,7 +42,7 @@ def station_map(request: HttpRequest, line_slug: str, station_slug: str) -> Http
     # also we have to decide which template for station map we should show based on the device type
     # -- station map has two dedicated layouts
     if (request.user_agent.is_mobile or request.user_agent.is_tablet):
-        return render(request, "platformpathapp/station_map_mobile_tablet.html")
+        return render(request, "platformpathapp/station_map_mobile.html")
     else:
         return render(request, "platformpathapp/station_map_desktop.html")
 

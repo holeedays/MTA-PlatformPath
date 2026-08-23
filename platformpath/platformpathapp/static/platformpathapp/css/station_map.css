@@ -79,13 +79,13 @@ body {
    Header overrides + header toggle button (overrides header_template.css)
    ========================================================================== */
 
-.site-header__station-map-override {
+.site-header--station-map {
     height: var(--site-header-height);
     background: #000000;
 
     transition: transform 0.25s ease-in-out;
 }
-.site-header__station-map-override.retracted {
+.site-header--station-map.retracted {
     transform: translateY(-60px);
 }
 
@@ -1513,7 +1513,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
    Footer
    ========================================================= */
 
-.site-footer__station-map-override {
+.site-footer--station-map {
     position: absolute;
     flex-direction: row !important;
     bottom: 0.1%;
@@ -1522,16 +1522,16 @@ if the arrow has the class (.route-direction__label) and target any paths within
     padding: 5px 0px !important;
 }
 
-.site-footer__station-map-override .brand__logo--sm {
+.brand__logo--station-map.brand__logo--sm {
     width: 15px;
     height: auto;
 }
 
-.site-footer__station-map-override .brand__name--sm {
+.brand__logo--station-map.brand__name--sm {
     font-size: 12px;
 }
 
-.site-footer__station-map-override .site-footer__legal {
+.site-footer__legal--station-map {
     gap: 10px;
 }
 
