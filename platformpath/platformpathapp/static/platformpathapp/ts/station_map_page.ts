@@ -42,7 +42,7 @@ export class StationMapPage {
             return;
         }
 
-        // methods that don't require station data
+        // METHODS THAT DON'T REQUIRE STATION DATA
 
         // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
         // lower resolutions/dimensions)
@@ -51,9 +51,12 @@ export class StationMapPage {
         this.initMapLegend();
         // init the base styling for step ui
         this.initStepUI();
-        // init the element description toggle buttons (to show the element descriptions: which provide guiding hints to the user)
-        this.initElementDescriptionToggleButtons();
-        // methods that require station data
+        // init the base styling for the preview ui
+        this.initPreview();
+        // init the event handling for the element descriptions toggle button
+        this.initElementDescriptionsToggleInfoButton();
+
+        // METHODS THAT REQUIRE STATION DATA
 
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
@@ -77,10 +80,10 @@ export class StationMapPage {
         this.initNodes();
         // init our path step buttons
         this.initPathStepButtons();
-        // init our map rotate button
-        this.initMapRotateButton();
         // init our route preview controls
         this.initRoutePreviewControls();
+        // init our map rotate button
+        this.initMapRotateButton();
     }
 
     // Set the station name in the heading element + add some event handling logic 
@@ -354,6 +357,25 @@ export class StationMapPage {
         btnNext.addEventListener("click", () => this.nextStep(instructionText, btnPrev, btnNext))
     }
 
+    // init the buttons on the route preview 
+    private initRoutePreviewControls(): void {
+        const startButton: HTMLButtonElement | null = document.querySelector("#start-navigation");
+        const cancelButton: HTMLButtonElement | null = document.querySelector("#cancel-route-preview");
+
+        if (startButton === null || cancelButton === null) {
+            console.warn(
+                "Route preview buttons don't exist",
+                `Start Navigation Button Status: ${startButton}; Cancel Route Button Status: ${cancelButton}`
+            );
+            return;
+        }
+
+        // Handle start navigation logic
+        startButton.addEventListener("click", () => this.beginStepNavigation());
+        // Handle cancel route preview logic
+        cancelButton.addEventListener("click", () => this.endNavigation());
+    }
+
     // adds event handling of the map rotate button as well as the map SVG (since the map rotate button works in tandem with
     // switching the svg)
     private initMapRotateButton(): void {
@@ -463,10 +485,11 @@ export class StationMapPage {
             // render the entire path
             this.renderPath();
 
-            // Restore route direction label
+            // restore route direction label
             const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
             this.svgRenderer.showRouteDirectionLabels(labelIds);
 
+            // start the route preview
             this.startRoutePreview();
         } else {
             console.warn('No path found');
@@ -482,38 +505,36 @@ export class StationMapPage {
         }
 
         // Retrieving all the UI elements for the preview
-        const preview = document.querySelector(
-            "#route-preview"
-        ) as HTMLDivElement | null;
+        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
+        const previewDescription: HTMLSpanElement | null = document.querySelector("#route-preview-description");
+        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
 
-        const summary = document.querySelector(
-            "#route-preview-summary"
-        ) as HTMLSpanElement | null;
-
-        const allLayersButton = document.querySelector(
-            "#show-all-layers"
-        ) as HTMLButtonElement | null;
-
-        if (!preview || !summary || !allLayersButton) {
-            console.warn("Route preview UI does not exist");
+        if (preview === null || previewDescription === null || allLayersButton === null) {
+            console.warn(
+                "Route preview container, preview description, or the all layers button does not exist",
+                `Preview Container Status: ${preview}`,
+                `Preview Description Status: ${previewDescription}`,
+                `All Layers Button Status: ${allLayersButton}`
+            );
             return;
         }
 
+        // toggle global boolean that we are previewing the route
         this.isPreviewingRoute = true;
-
         // Keep the full map visible during preview
         allLayersButton.click();
-
-        const movementCount = Math.max(this.currentPath.length - 1, 0);
-        summary.innerText = `${movementCount} movement${movementCount === 1 ? "" : "s"} in this route`;
-        preview.style.display = "grid";
-
+        // style the preview elements
+        const movementCount: number = Math.max(this.currentPath.length, 0);
+        previewDescription.innerHTML = `There are <b>${movementCount} step${movementCount === 1 ? "" : "s"}</b> in this route`;
+        // preview.style.display = "grid";
+        preview.classList.remove("hidden");
+        // start our route preview for the svg
         this.svgRenderer.startRoutePreview(
-            this.currentPath.map((step) => step.svgId)
+            this.currentPath.map((step: PathStep) => step.svgId)
         );
     }
 
-    // Function that starts the step by step navigation of the route
+    // function that starts the step by step navigation of the route
     private beginStepNavigation(): void {
         if (!this.currentPath || this.currentIndex >= this.currentPath.length) {
             console.warn('No valid step to navigate to');
@@ -544,11 +565,12 @@ export class StationMapPage {
                 return;
             }
 
+            // remove previewing syling (node highligting + hiding preview)
             this.isPreviewingRoute = false;
             this.svgRenderer.stopRoutePreview();
+            preview.classList.add("hidden");
 
-            preview.style.display = "none";
-            // make the stepui visible now
+            // make the stepui insvisible
             stepUI.classList.remove("hidden");
             // render the current style
             this.renderCurrentStep(instructionText, btnPrev, btnNext);
@@ -556,10 +578,6 @@ export class StationMapPage {
 
     // end the navigation process (the opposite of StartNavigation)
     private endNavigation(): void {
-        // Ends route preview if it is currently enabled
-        this.isPreviewingRoute = false;
-        this.svgRenderer.stopRoutePreview();
-
         const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
         const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
         const preview: HTMLDivElement | null = document.querySelector("#route-preview");
@@ -578,9 +596,6 @@ export class StationMapPage {
             return;
         }
 
-        if (preview) {
-            preview.style.display = "none";
-        }
 
         // NOTE: we will not clear the selectedNodeOptions because we want the state of those to be saved (for now at least)
 
@@ -590,12 +605,16 @@ export class StationMapPage {
         this.currentPathNodeIDs.clear();
         // derender the existing path
         this.derenderPath();
+        // end route preview if it is currently enabled
+        this.isPreviewingRoute = false;
+        this.svgRenderer.stopRoutePreview();
         // unhighlight all the other nodes
         this.svgRenderer.unhighlightNodes();
         // hide route direction labels
         this.svgRenderer.hideRouteDirectionLabels();
-        // remove the step ui from view
+        // remove the step ui + preview ui from view
         stepUI.classList.add("hidden");
+        preview.classList.add("hidden");
         // click the all layers button to reveal all layers again
         allLayersButton.click();
     }
@@ -1103,24 +1122,30 @@ export class StationMapPage {
     ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA
 
     // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
-    // (and map/station header) ideally should retract the header so that the diagram can be completely unobstructed
+    // (and map/station header/element descriptions toggle info button) ideally should retract the header so that the diagram can be 
+    // completely unobstructed
     private initSiteHeaderToggleButton(): void {
         const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header__station-map-override");
         const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
             siteHeaderContainer?.querySelector(".site-header__toggle-button"));
         const stationHeaderContainer: HTMLDivElement | null = document.querySelector(".map-header");
+        const elementDescriptionsToggleInfoButton: HTMLButtonElement | null = (
+            document.querySelector(".element-descriptions__toggle-info-button")
+        );
 
         if (
             siteHeaderContainer === null ||
             siteHeaderToggleButton === null ||
             siteHeaderToggleButton === undefined ||
-            stationHeaderContainer === null
+            stationHeaderContainer === null ||
+            elementDescriptionsToggleInfoButton === null
         ) {
             console.warn(
-                "Site header, site header toggle button, and/or station header doesn't exist",
+                "Site header, site header toggle button, station header doesn't exist, and/or element descriptions toggle info button",
                 `Site Header Status: ${siteHeaderContainer}`,
                 `Site Header Toggle Button Status: ${siteHeaderToggleButton}`,
-                `Station Header Status: ${stationHeaderContainer}`
+                `Station Header Status: ${stationHeaderContainer}`,
+                `Element Descriptions Toggle Info Button Status: ${elementDescriptionsToggleInfoButton}`
             );
             return;
         }
@@ -1140,6 +1165,7 @@ export class StationMapPage {
             siteHeaderToggleButton.classList.toggle("enabled", !isPressed);
             siteHeaderContainer.classList.toggle("retracted", !isPressed);
             stationHeaderContainer.classList.toggle("shifted-up", !isPressed);
+            elementDescriptionsToggleInfoButton.classList.toggle("shifted-up", !isPressed);
 
             siteHeaderButtonIsAnimating = true;
             isPressed = !isPressed;
@@ -1217,53 +1243,46 @@ export class StationMapPage {
         stepUI.classList.add("hidden");
     }
 
-    // init the styling for element description toggle buttons (these are the buttons that resemble a question mark and show text
-    // when hovered... we're just adding the click (and focusout) logic to it as well)
-    // these buttons reveal element descriptions, little helper texts that guide the user on how to navigate the interface
-    private initElementDescriptionToggleButtons(): void {
-        // get all the description toggle buttons
-        const elementDescriptionToggleButtons: NodeListOf<HTMLButtonElement> = (
-            document.querySelectorAll(".element-description__toggle-button")
-        );
-        // iterate through them
-        elementDescriptionToggleButtons.forEach((toggleButton: HTMLButtonElement) => {
-            let isPressed: boolean = false;
-            // and add the event handler that deals with the styling
-            toggleButton.addEventListener("click", () => {
-                toggleButton.classList.toggle("enabled", !isPressed);
-                isPressed = !isPressed;
-            });
-            // also remove the class and set isPressed to false if the item is out of focus
-            toggleButton.addEventListener("focusout", () => {
-                toggleButton.classList.remove("enabled");
-                isPressed = false;
-            });
-        });
+    // init certain styling for the preview (the container that contains buttons to either find a new route or start navigation) 
+    // during page load
+    private initPreview(): void {
+        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
+        if (preview === null) {
+            console.warn("Preview UI does not exist");
+            return;
+        }
+        // make sure the preview has the hidden element (though it should already be set in the template)
+        preview.classList.add("hidden");
     }
-    private initRoutePreviewControls(): void {
-        const startButton = document.querySelector(
-            "#start-navigation"
-        ) as HTMLButtonElement | null;
 
-        const cancelButton = document.querySelector(
-            "#cancel-route-preview"
-        ) as HTMLButtonElement | null;
+    // toggles the event handling for the element descriptions toggle info button (mainly for styling purposes)
+    private initElementDescriptionsToggleInfoButton(): void {
+        const elementDescriptionsToggleInfoButton: HTMLButtonElement | null = (
+            document.querySelector(".element-descriptions__toggle-info-button")
+        );
+        const elementDescriptions: NodeListOf<HTMLDivElement> = document.querySelectorAll<HTMLDivElement>(".element-description");
 
-        if (!startButton || !cancelButton) {
-            console.warn("Route preview buttons don't exist");
+        if (elementDescriptionsToggleInfoButton === null || elementDescriptions.length === 0) {
+            console.warn(
+                "Element descriptions toggle info button does not exist and/or the element description elements",
+                `Element Descriptions Toggle Info Button Status: ${elementDescriptionsToggleInfoButton}`,
+                `Number Of Element Description Elements: ${elementDescriptions.length}`
+            );
             return;
         }
 
-        startButton.addEventListener("click", () => {
-            // Handle start navigation logic
-            this.beginStepNavigation();
+        // though the hidden class should already be added to the template, make sure all the element descriptions are hidden
+        elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.add("hidden"));
+
+        // add the event handler here 
+        let isPressed: boolean = false;
+        elementDescriptionsToggleInfoButton.addEventListener("click", () => {
+            elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
+            elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
+
+            isPressed = !isPressed;
         });
 
-        cancelButton.addEventListener("click", () => {
-            // Handle cancel route preview logic
-            this.endNavigation();
-        });
     }
-
 }
 
