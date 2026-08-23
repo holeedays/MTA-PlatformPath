@@ -26,7 +26,7 @@
 					<a href="/not-found">NAVIGATE</a>
 			</nav>
 		</div>
-		<button class="site-header__toggle-button">
+		<button class="site-header__toggle-button" type="button" aria-label="Hide site navigation" aria-expanded="true">
 			<img 
 				class="toggle-button__animated-parts-img"
 				src="{% static 'platformpathapp/decals/site_header_toggle_button_animated_parts.svg' %}" 
@@ -57,14 +57,27 @@
 
 			<!-- ================= LAYERS/LEVELS VIEW TOGGLE ================= -->
 			<aside class="map-overlay level-stack" aria-label="Map view toggles">
-				<button id="show-all-layers" class="all-layers-button active" type="button">
-					SHOW ALL LEVELS
+				<button
+					class="mobile-layers-toggle"
+					type="button"
+					aria-label="Show layer selector"
+					aria-controls="mobile-layer-selector"
+					aria-expanded="false"
+				>
+					<span>LAYERS</span>
+					<span class="mobile-layers-toggle__indicator" aria-hidden="true">⌄</span>
 				</button>
-				
-				<div class="level-rail">
-					<p class="level-boundary">TOP LEVEL ↑</p>
-					<div id="layer-options" class="layer-options"></div>
-					<p class="level-boundary">BOTTOM LEVEL ↓</p>
+
+				<div id="mobile-layer-selector" class="level-stack__selector">
+					<button id="show-all-layers" class="all-layers-button active" type="button">
+						SHOW ALL LEVELS
+					</button>
+
+					<div class="level-rail">
+						<p class="level-boundary">TOP LEVEL ↑</p>
+						<div id="layer-options" class="layer-options"></div>
+						<p class="level-boundary">BOTTOM LEVEL ↓</p>
+					</div>
 				</div>
 
 				<div class="element-description element-description__level-stack hidden">
@@ -83,7 +96,7 @@
 					<div class="filter-checklist__checkboxes-container-wrapper hidden">
 						<div class="filter-checklist__checkboxes-container"></div>
 					</div>
-					<button class="filter-checklist__toggle-button">
+				<button class="filter-checklist__toggle-button" type="button" aria-label="Show station feature filters" aria-expanded="false">
 						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
 						SELECT FILTERS
 					</button>
@@ -212,7 +225,7 @@
 			</div>
 
 			<!-- ================= MAP ROTATE BUTTON ================= -->
-			<button class="map-overlay map__rotate-button">
+			<button class="map-overlay map__rotate-button" type="button" aria-label="Switch map orientation" aria-pressed="false">
 				<img 
 					class="rotate-button__animated-parts-img" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
@@ -366,7 +379,7 @@
 						</div>
 					</div>
 				</div>
-				<button class="map-legend__toggle-button element-description__hoverable">
+				<button class="map-legend__toggle-button element-description__hoverable" type="button" aria-label="Show map legend" aria-expanded="false">
 					<img 
 						class="toggle-button__animated-parts-img"
 						src="{% static 'platformpathapp/decals/map_legend_toggle_button_animated_parts.svg' %}" 
@@ -386,7 +399,7 @@
 			</aside>
 
 			<!-- ================= ELEMENT DESCRIPTIONS TOGGLE INFO BUTTON ================= -->
-			<button class="map-overlay element-descriptions__toggle-info-button">
+			<button class="map-overlay element-descriptions__toggle-info-button" type="button" aria-label="Show interface help" aria-pressed="false">
 				<img 
 					class="toggle-info-button__enabled-button-img"
 					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button_enabled.svg' %}"

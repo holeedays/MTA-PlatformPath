@@ -55,6 +55,8 @@ export class StationMapPage {
         this.initPreview();
         // init the event handling for the element descriptions toggle button
         this.initElementDescriptionsToggleInfoButton();
+        // init the mobile layer selector before adding the station's layer buttons
+        this.initMobileLayerSelector();
 
         // METHODS THAT REQUIRE STATION DATA
 
@@ -124,6 +126,7 @@ export class StationMapPage {
         allLayersButton.addEventListener("click", () => {
             this.svgRenderer.showAllLayers(this.station?.layer_models || []);
             this.setActiveLayerButton(allLayersButton);
+            this.closeMobileLayerSelector();
         });
 
         // Create and setup buttons to show individual layers of the map of the station
@@ -132,6 +135,7 @@ export class StationMapPage {
             layerButton.addEventListener("click", () => {
                 this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
                 this.setActiveLayerButton(layerButton);
+                this.closeMobileLayerSelector();
             });
             layerOptions.appendChild(layerButton);
         }
@@ -168,6 +172,46 @@ export class StationMapPage {
                 return;
             }
         }
+    }
+
+    // Keeps the desktop-style layer stack out of the way on phones until it is needed.
+    private initMobileLayerSelector(): void {
+        const levelStack: HTMLElement | null = document.querySelector(".level-stack");
+        const toggleButton: HTMLButtonElement | null = document.querySelector(".mobile-layers-toggle");
+
+        if (levelStack === null || toggleButton === null) {
+            console.warn("Mobile layer selector or its toggle button does not exist");
+            return;
+        }
+
+        toggleButton.addEventListener("click", () => {
+            const isExpanded: boolean = !levelStack.classList.contains("is-expanded");
+            levelStack.classList.toggle("is-expanded", isExpanded);
+            toggleButton.setAttribute("aria-expanded", isExpanded.toString());
+            toggleButton.setAttribute(
+                "aria-label",
+                isExpanded ? "Hide layer selector" : "Show layer selector"
+            );
+        });
+
+        document.addEventListener("keydown", (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                this.closeMobileLayerSelector();
+            }
+        });
+    }
+
+    private closeMobileLayerSelector(): void {
+        if (!window.matchMedia("(max-width: 768px)").matches) {
+            return;
+        }
+
+        const levelStack: HTMLElement | null = document.querySelector(".level-stack");
+        const toggleButton: HTMLButtonElement | null = document.querySelector(".mobile-layers-toggle");
+
+        levelStack?.classList.remove("is-expanded");
+        toggleButton?.setAttribute("aria-expanded", "false");
+        toggleButton?.setAttribute("aria-label", "Show layer selector");
     }
     
     // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
@@ -320,6 +364,11 @@ export class StationMapPage {
 
                 filterChecklistToggleButton.classList.toggle("enabled", !isPressed);
                 filterChecklistCheckboxesContainerWrapper.classList.toggle("hidden", isPressed);
+                filterChecklistToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
+                filterChecklistToggleButton.setAttribute(
+                    "aria-label",
+                    isPressed ? "Show station feature filters" : "Hide station feature filters"
+                );
 
             filterChecklistToggleButtonIsTransitioning = true;
             isPressed = !isPressed;
@@ -430,6 +479,7 @@ export class StationMapPage {
             diagramContainerIsAnimating = true;
             mapRotateButtonIsTransitioning = true;
             isPressed = !isPressed;
+            mapRotateButton.setAttribute("aria-pressed", isPressed.toString());
         });
 
         // since the classes are temporary, we want to remove the class for both the button and container 
@@ -1166,6 +1216,11 @@ export class StationMapPage {
             siteHeaderContainer.classList.toggle("retracted", !isPressed);
             stationHeaderContainer.classList.toggle("shifted-up", !isPressed);
             elementDescriptionsToggleInfoButton.classList.toggle("shifted-up", !isPressed);
+            siteHeaderToggleButton.setAttribute("aria-expanded", isPressed.toString());
+            siteHeaderToggleButton.setAttribute(
+                "aria-label",
+                isPressed ? "Hide site navigation" : "Show site navigation"
+            );
 
             siteHeaderButtonIsAnimating = true;
             isPressed = !isPressed;
@@ -1218,6 +1273,11 @@ export class StationMapPage {
             // same as the site header toggle button + map rotate button, add a temp animating class 
             mapLegendToggleButton.classList.add("animating");
             mapLegendToggleButton.classList.toggle("enabled", !isPressed);
+            mapLegendToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
+            mapLegendToggleButton.setAttribute(
+                "aria-label",
+                isPressed ? "Show map legend" : "Hide map legend"
+            );
             
             toggleButtonIsAnimating = true;
             isPressed = !isPressed;
@@ -1279,6 +1339,7 @@ export class StationMapPage {
         elementDescriptionsToggleInfoButton.addEventListener("click", () => {
             elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
             elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
+            elementDescriptionsToggleInfoButton.setAttribute("aria-pressed", (!isPressed).toString());
 
             isPressed = !isPressed;
         });
