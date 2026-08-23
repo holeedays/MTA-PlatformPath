@@ -7,6 +7,8 @@ export interface PathStep {
     incomingEdge?: EdgeData; // The edge that leads to this step
 }
 
+export type AccessibilityOption = "none" | "accessible-only" | "avoid-accessible";
+
 /*
     This class is used for finding paths between nodes in the station graph
     given a starting node and an ending node.
@@ -19,7 +21,7 @@ export class PathFinder {
         station: StationResponse,
         fromNodeId: number,
         toNodeId: number,
-        isAccessible: boolean = false
+        isAccessible: AccessibilityOption = "none"
     ): PathStep[] | null {
         
         // Get adjacency map and node maps
@@ -124,6 +126,7 @@ export class PathFinder {
             });
         }
 
+        /* Possibliy want to display somewhere like the preview box that no path was found */
         console.warn(`No path found from ${fromNodeId} to ${toNodeId}`);
         return null;
     }
@@ -133,7 +136,7 @@ export class PathFinder {
     // Node map: A dictionary mapping each node ID to its corresponding node data
     private getAdjacencyAndNodeMap(
         station: StationResponse,
-        isAccessible: boolean = false
+        isAccessible: AccessibilityOption = "none"
     ): [Record<number, EdgeData[]>, Record<number, NodeData>] | null {
         
         // Build node lookup map by looping through every node in the station
@@ -153,24 +156,26 @@ export class PathFinder {
             const fromNode = nodeMap[edge.from_node];
             const toNode   = nodeMap[edge.to_node];
 
-            // Edges with accessible infrastructure will not be considered for the route if the accessible option is
-            // disabled since it is normally just worse to use
-            // NOTE: This feature should be removed if there are cases where the accessible infrastructure is the only
-            // reasonable node to take for the route. A solution to this might be to just not name nodes like that as
-            // accessible infrastructure since everyone has to use it.
+            // By default all nodes are considered for the route, 
+            // so if the user has not selected any accessibility options, 
+            // then all edges are considered
             
-            // if (!isAccessible) {
-            //     if(fromNode?.is_accessible_infrastructure) return;
-            //     if(toNode?.is_accessible_infrastructure) return;
-            // }
+            // If the user wants to avoid accessible nodes, then if either 
+            // the fromNode or toNode is accessible infrastructure, this edge is skipped
+            if (isAccessible ===  "avoid-accessible") {
+                if(fromNode?.is_accessible_infrastructure) return;
+                if(toNode?.is_accessible_infrastructure) return;
+            }
 
             // checks if the nodes exist
             if (!fromNode || !toNode) return null;
 
             // check if node is accessible if accessible option is enabled
             // if it is not and the accessible option is enabled this iteration of the loop is skipped
-            if (isAccessible && this.isNotAccessible(fromNode)) return;
-            if (isAccessible && this.isNotAccessible(toNode))   return;
+            if (isAccessible === "accessible-only") {
+                if(this.isNotAccessible(fromNode)) return;
+                if(this.isNotAccessible(toNode)) return;
+            }
 
             const outgoingEdges = adjacency[edge.from_node] ?? [];
             outgoingEdges.push(edge);

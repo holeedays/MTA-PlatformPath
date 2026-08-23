@@ -677,8 +677,9 @@ to work properly; we use a custom keyframe animation */
     justify-content: flex-end;
     padding: 0px 10px;
 }
-/* accessibility override toggle button */
-.override-toggles__accessibility-only-toggle-button {
+/* accessibility override toggle buttons */
+.override-toggles__accessibility-only-toggle-button,
+.override-toggles__accessibility-none-toggle-button {
     background: none;
     border: none;
 
@@ -686,22 +687,27 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* img styling of the accessibility button */
-.override-toggles__accessibility-only-toggle-button > img {
+.override-toggles__accessibility-only-toggle-button > img,
+.override-toggles__accessibility-none-toggle-button > img {
     width: 40px;
     height: auto;
+    filter: brightness(0.5);
 
     transition: filter 0.25s ease-in-out;
 }
-.override-toggles__accessibility-only-toggle-button:active > img {
-        filter: brightness(0.7);
+.override-toggles__accessibility-only-toggle-button:active > img,
+.override-toggles__accessibility-none-toggle-button:active > img {
+        filter: brightness(0.5);
     }
 @media (hover:hover) {
-    .override-toggles__accessibility-only-toggle-button:hover > img {
-        filter: brightness(0.7);
+    .override-toggles__accessibility-only-toggle-button:hover > img,
+    .override-toggles__accessibility-none-toggle-button:hover > img {
+        filter: brightness(0.5);
     }
 }
-.override-toggles__accessibility-only-toggle-button.enabled > img {
-        filter: brightness(0.5);
+.override-toggles__accessibility-only-toggle-button.enabled > img,
+.override-toggles__accessibility-none-toggle-button.enabled > img {
+        filter: brightness(1.0);
 }
 
 
@@ -1267,14 +1273,14 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 @keyframes RoutePreviewPulse {
-    0%, 100% { opacity : 0.50; }
+    0%, 100% { opacity : 0.70; }
     4% { opacity : 1; }
-    8% { opacity : 0.50; }
+    8% { opacity : 0.70; }
 }
 
 .route-preview-node,
 .route-preview-node :is(path, rect, circle, ellipse, polygon, polyline) {
-    opacity: 0.5;
+    opacity: 0.70;
 
     animation-name: RoutePreviewPulse;
     animation-duration: var(--preview-duration);
@@ -1403,7 +1409,8 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 
 /* accessibility only toggle button overrides */
-.override-toggles__accessibility-only-toggle-button { 
+.override-toggles__accessibility-only-toggle-button,
+.override-toggles__accessibility-none-toggle-button { 
     position: relative; /* need to set positioning for the toggle button or else top/bottom/left/right for toggle button will be based
                             on the route form filter override container (since it is the closest ancestor that has the position property) */
 }
@@ -1415,6 +1422,16 @@ if the arrow has the class (.route-direction__label) and target any paths within
     flex-direction: column;
 }
 .element-description__accessibility-only-toggle-button span {
+    width: 150px;
+}
+.element-description__accessibility-none-toggle-button {
+    left: 50%;
+    bottom: 70%;
+    transform: translateX(-50%);
+    gap: 2px;
+    flex-direction: column;
+}
+.element-description__accessibility-none-toggle-button span {
     width: 150px;
 }
 
