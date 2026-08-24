@@ -2,10 +2,7 @@
 /* master container that holds the level and the route form filter checklist override toggles container */
 .pull-up-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
+    justify-content: center;
     left: 50%;
     transform: translate(-50%, 50%);
     width: 100%;
@@ -15,6 +12,15 @@
     z-index: 10;
 }
 
+.pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 10px;
+}
+
 /* overrides for level stack */
 .level-stack--station-map-mobile {
     transform: none;
@@ -22,27 +28,60 @@
     border: none;
     align-items: center;
     justify-content: center;
+    gap: 10px;
     width: 100%;
-    flex-direction: row;
+    flex-direction: column;
 }
 
-.all-layers-button--station-map-mobile {
-    width: auto;
+.level-stack__description {
+    font-size: 20px;
+    font-weight: bolder;
+    color: #ffffff;
+    background: #1b1b1b;
+    padding: 10px 15px;
+    border-radius: 100px;
+}
+
+.level-stack__all-layers-button-level-rail-container {
+    display: flex;
+    align-items: center;
 }
 
 .level-rail--station-map-mobile {
     align-items: center;
-    width: auto;
+    width: 100%;
 }
 
 .level-boundaries {
     display: flex;
+    gap: 30px;
 }
 
 .layer-options--station-map-mobile {
     flex-direction: row;
     width: auto;
-    overflow: auto;
-    background: #1a1a1a;
     padding: 5px;
+    gap: 10px;
+    transform: translateX(var(--total-displacement));
+}
+.layer-options--station-map-mobile.lerpingPos {
+    transform: translateX(var(--max-displacement));
+    transition: transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1);
+}
+.layer-options--station-map-mobile.lerpingNeg {
+    transform: translateX(var(--min-displacement));
+    transition: transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1);
+}
+
+:is(.all-layers-button--station-map-mobile, .layer-option) {
+    width: auto;
+    min-height: auto;
+    white-space: nowrap; /* prevent text wrappping */
+    border-radius: 100px;
+}
+
+/* overrides for route form filter checklist override toggles */
+.route-form-filter-checklist-override-toggles__container--station-map-mobile {
+    width: 100%;
+    border: none;
 }

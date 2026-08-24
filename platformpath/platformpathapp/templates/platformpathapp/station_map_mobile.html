@@ -58,117 +58,126 @@
 
 			<!-- ================= PULL UP CONTAINER (LEVEL STACK + ROUTE FORM FILTER CHECKLIST OVERRIDE TOGGLES) ================= -->
 			<aside class="map-overlay pull-up-container">
-				<!-- ================= LAYERS/LEVELS VIEW TOGGLE ================= -->
-				<section class="level-stack level-stack--station-map-mobile" aria-label="Map view toggles">
-					<button id="show-all-layers" class="all-layers-button all-layers-button--station-map-mobile active" type="button">
-						SHOW ALL LEVELS
-					</button>
-					
-					<div class="level-rail level-rail--station-map-mobile">
-						<div id="layer-options" class="layer-options layer-options--station-map-mobile"></div>
-						<div class="level-boundaries">
-							<p class="level-boundary">← TOP LEVEL</p>
-							<p class="level-boundary">BOTTOM LEVEL →</p>
-						</div>
-					</div>
+				<div class="pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container">
+					<!-- ================= LAYERS/LEVELS VIEW TOGGLE ================= -->
+					<section class="level-stack level-stack--station-map-mobile" aria-label="Map view toggles">
+						<span class="level-stack__description">LAYERS</span>
 
-					<div class="element-description element-description__level-stack hidden">
-						<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
-						<span>
-							Change what level or floor of the station you are currently viewing.
-							<br>
-							<i>*Depending on the station, there can be many different levels.*</i>
-						</span>
-					</div>
-				</section>
-
-				<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST + OVERRIDE TOGGLES  ================= -->
-				<section class="
-					route-form-filter-checklist-override-toggles__container 
-					route-form-filter-checklist-override-toggles__container--station-map-mobile"
-				>
-					<section class="filter-checklist" aria-label="Filters toggle">
-						<div class="filter-checklist__checkboxes-container-wrapper hidden">
-							<div class="filter-checklist__checkboxes-container"></div>
-						</div>
-						<button class="filter-checklist__toggle-button">
-							<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
-							SELECT FILTERS
-						</button>
-					</section>
-
-					<section class="override-toggles">
-						<strong>OVERRIDES</strong>
-						<div class="override-toggles__toggle-buttons-container">
-							<button class="override-toggles__accessibility-none-toggle-button element-description__hoverable" aria-selected="false">
-								<img 
-									src="{% static 'platformpathapp/decals/override_toggles_accessibility_none_toggle_button.svg' %}" 
-									alt="Accessibility none toggle button icon"
-								>
-								<div class="element-description element-description__accessibility-none-toggle-button hidden">
-									<span><i>(If enabled)</i> Avoid nodes that are ADA accessible</span>
-									<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+						<div class="level-stack__all-layers-button-level-rail-container">
+							<div class="level-rail level-rail--station-map-mobile">
+								<div id="layer-options" class="layer-options layer-options--station-map-mobile">
+									<button id="show-all-layers" class="all-layers-button all-layers-button--station-map-mobile active" type="button">
+										SHOW ALL LEVELS
+									</button>
+									<button class="layer-option">MEZZANINE-A</button>
+									<button class="layer-option">MEZZANINE-B</button>
+									<button class="layer-option">MEZZANINE-C</button>
 								</div>
-							</button>
-							<button class="override-toggles__accessibility-only-toggle-button element-description__hoverable" aria-selected="false">
-								<img 
-									src="{% static 'platformpathapp/decals/override_toggles_accessibility_only_toggle_button.svg' %}" 
-									alt="Accessibility only toggle button icon"
-								>
-								<div class="element-description element-description__accessibility-only-toggle-button hidden">
-									<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
-									<span><i>(If enabled)</i> Prioritize routes that are ADA accessible</span>
+								<div class="level-boundaries">
+									<p class="level-boundary">← TOP LEVEL</p>
+									<p class="level-boundary">BOTTOM LEVEL →</p>
 								</div>
-							</button>
+							</div>
+						</div>
+
+						<div class="element-description element-description__level-stack hidden">
+							<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+							<span>
+								Change what level or floor of the station you are currently viewing.
+								<br>
+								<i>*Depending on the station, there can be many different levels.*</i>
+							</span>
 						</div>
 					</section>
 
-					<section id="route-form" class="route-form" aria-label="Nodes selection">
-						<div class="route-field">
-							<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
-								START
-								<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+					<!-- ================= ROUTE FORM (PATH FINDING) + FILTER CHECKLIST + OVERRIDE TOGGLES  ================= -->
+					<section class="
+						route-form-filter-checklist-override-toggles__container 
+						route-form-filter-checklist-override-toggles__container--station-map-mobile"
+					>
+						<section class="filter-checklist" aria-label="Filters toggle">
+							<div class="filter-checklist__checkboxes-container-wrapper hidden">
+								<div class="filter-checklist__checkboxes-container"></div>
+							</div>
+							<button class="filter-checklist__toggle-button">
+								<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
+								SELECT FILTERS
 							</button>
-							<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
-						</div>
-						<div class="route-field">
-							<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
-								END
-								<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
-							</button>
-							<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
-						</div>
+						</section>
 
-						<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
+						<section class="override-toggles">
+							<strong>OVERRIDES</strong>
+							<div class="override-toggles__toggle-buttons-container">
+								<button class="override-toggles__accessibility-none-toggle-button element-description__hoverable" aria-selected="false">
+									<img 
+										src="{% static 'platformpathapp/decals/override_toggles_accessibility_none_toggle_button.svg' %}" 
+										alt="Accessibility none toggle button icon"
+									>
+									<div class="element-description element-description__accessibility-none-toggle-button hidden">
+										<span><i>(If enabled)</i> Avoid nodes that are ADA accessible</span>
+										<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+									</div>
+								</button>
+								<button class="override-toggles__accessibility-only-toggle-button element-description__hoverable" aria-selected="false">
+									<img 
+										src="{% static 'platformpathapp/decals/override_toggles_accessibility_only_toggle_button.svg' %}" 
+										alt="Accessibility only toggle button icon"
+									>
+									<div class="element-description element-description__accessibility-only-toggle-button hidden">
+										<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+										<span><i>(If enabled)</i> Prioritize routes that are ADA accessible</span>
+									</div>
+								</button>
+							</div>
+						</section>
+
+						<section id="route-form" class="route-form" aria-label="Nodes selection">
+							<div class="route-field">
+								<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
+									START
+									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+								</button>
+								<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
+							</div>
+							<div class="route-field">
+								<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
+									END
+									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+								</button>
+								<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
+							</div>
+
+							<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
+						</section>
+
+						<div class="element-description element-description__route-form-filter-checklist-override-toggles-container hidden">
+							<img 
+								src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" 
+								alt="Element description toggle button icon"
+							>
+							<span>
+								This is the pathfinding bar — a bunch of buttons and tools to help you find your way through the station.
+								There are a total of 3 tools on this bar.
+								<ul>
+									<li>
+										<b>Filters</b> determines what type of parts you can select on the station (like stairs, platform sections, etc)
+									</li>
+									<li>
+										<b>Overrides</b> are optional buttons you can enable to affect what paths you navigate through the station (like 
+										accessibility only navigating).
+										<br>
+										<i>*If you don't see the override bar, it simply means that there are no optional buttons 
+										that exist for this station.*</i>
+									</li>
+									<li>
+										<b>Start/End/Find Route</b> are buttons where you select which part of the station you want to go from (start) and to (end).
+										You need to select a start and end destination for the find route button to work.
+									</li>
+								</ul>
+							</span>
+						</div>
 					</section>
-
-					<div class="element-description element-description__route-form-filter-checklist-override-toggles-container hidden">
-						<img 
-							src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" 
-							alt="Element description toggle button icon"
-						>
-						<span>
-							This is the pathfinding bar — a bunch of buttons and tools to help you find your way through the station.
-							There are a total of 3 tools on this bar.
-							<ul>
-								<li>
-									<b>Filters</b> determines what type of parts you can select on the station (like stairs, platform sections, etc)
-								</li>
-								<li>
-									<b>Overrides</b> are optional buttons you can enable to affect what paths you navigate through the station (like 
-									accessibility only navigating).
-									<br>
-									<i>*If you don't see the override bar, it simply means that there are no optional buttons 
-									that exist for this station.*</i>
-								</li>
-								<li>
-									<b>Start/End/Find Route</b> are buttons where you select which part of the station you want to go from (start) and to (end).
-									You need to select a start and end destination for the find route button to work.
-								</li>
-							</ul>
-						</span>
-					</div>
-				</section>
+				</div>
 			</aside>
 		
 			<!-- ================= ROUTE PREVIEW ================= -->

@@ -193,8 +193,6 @@ export class StationMapPage {
         
         if (!layerOptions || !allLayersButton) return;
 
-        layerOptions.innerHTML = "";
-
         // Setup button to display all layers of the station map and hook control to 
         allLayersButton.addEventListener("click", () => {
             this.svgRenderer.showAllLayers(this.station?.layer_models || []);
