@@ -63,8 +63,8 @@
 					<section class="level-stack level-stack--station-map-mobile" aria-label="Map view toggles">
 						<span class="level-stack__description">LAYERS</span>
 
-						<div class="level-stack__all-layers-button-level-rail-container">
-							<div class="level-rail level-rail--station-map-mobile">
+						<div class="level-rail level-rail--station-map-mobile">
+							<div class="layer-options__wrapper">
 								<div id="layer-options" class="layer-options layer-options--station-map-mobile">
 									<button id="show-all-layers" class="all-layers-button all-layers-button--station-map-mobile active" type="button">
 										SHOW ALL LEVELS
@@ -72,11 +72,15 @@
 									<button class="layer-option">MEZZANINE-A</button>
 									<button class="layer-option">MEZZANINE-B</button>
 									<button class="layer-option">MEZZANINE-C</button>
+									<button class="layer-option">MEZZANINE-D</button>
+									<button class="layer-option">MEZZANINE-E</button>
+									<button class="layer-option">MEZZANINE-F</button>
+									<button class="layer-option">MEZZANINE-G</button>
 								</div>
-								<div class="level-boundaries">
-									<p class="level-boundary">← TOP LEVEL</p>
-									<p class="level-boundary">BOTTOM LEVEL →</p>
-								</div>
+							</div>
+							<div class="level-boundaries">
+								<p class="level-boundary">← TOP LEVEL</p>
+								<p class="level-boundary">BOTTOM LEVEL →</p>
 							</div>
 						</div>
 
@@ -137,14 +141,14 @@
 									START
 									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
 								</button>
-								<div id="start-node-dropdown" class="route-field__dropdown" popover></div>
+								<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
 							</div>
 							<div class="route-field">
 								<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
 									END
 									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
 								</button>
-								<div id="end-node-dropdown" class="route-field__dropdown" popover></div>
+								<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
 							</div>
 
 							<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>

@@ -5,11 +5,6 @@ PLANS FOR THE FUTURE:
 
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport)
-    - Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
-        - Modify pathfinder to ignore ADA accessible nodes unless toggled
-        - Add checkbox to look for an accessible route if the station is accessible
-    - Add a legend (map elements + coloring explanation)
-    - Add a button (maybe to the station heading) to return back to the station selection part of the website
 > Change the station map diagrams (maybe alter the arrows and names on them??)
     - we are currently doing this...
     - add more nodes (2 rules have been instated for creating nodes in figma doc)
@@ -68,8 +63,12 @@ FIXED THE BUGS BELOW:
         ; is there a way to address this issue???
     )
     > Weird bug when step ui is visible (and a step is pressed) and the map legend is enabled... the clip path + transform css looks
-    very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method8
-
+    very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method
+- Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
+    - Modify pathfinder to ignore ADA accessible nodes unless toggled
+    - Add checkbox to look for an accessible route if the station is accessible
+- Add a legend (map elements + coloring explanation)
+- Add a button (maybe to the station heading) to return back to the station selection part of the website
 
 Ivan ----
 TO DO:

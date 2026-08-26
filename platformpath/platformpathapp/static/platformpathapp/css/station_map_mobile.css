@@ -21,7 +21,9 @@
     gap: 10px;
 }
 
-/* overrides for level stack */
+/* ========== overrides for level stack ========== */
+
+/* level stack (parent) container */
 .level-stack--station-map-mobile {
     transform: none;
     background: none;
@@ -42,11 +44,7 @@
     border-radius: 100px;
 }
 
-.level-stack__all-layers-button-level-rail-container {
-    display: flex;
-    align-items: center;
-}
-
+/* level rail container (includes layer options + layer boundaries) */
 .level-rail--station-map-mobile {
     align-items: center;
     width: 100%;
@@ -57,6 +55,12 @@
     gap: 30px;
 }
 
+.layer-options__wrapper {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
 .layer-options--station-map-mobile {
     flex-direction: row;
     width: auto;
@@ -64,14 +68,13 @@
     gap: 10px;
     transform: translateX(var(--total-displacement));
 }
-.layer-options--station-map-mobile.lerpingPos {
-    transform: translateX(var(--max-displacement));
-    transition: transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1);
+.layer-options--station-map-mobile.lerping {
+    --transition-time: 1s;
+
+    transform: translateX(var(--total-displacement));
+    transition: transform var(--transition-time) cubic-bezier(0.215, 0.610, 0.355, 1);
 }
-.layer-options--station-map-mobile.lerpingNeg {
-    transform: translateX(var(--min-displacement));
-    transition: transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1);
-}
+
 
 :is(.all-layers-button--station-map-mobile, .layer-option) {
     width: auto;
@@ -80,8 +83,21 @@
     border-radius: 100px;
 }
 
-/* overrides for route form filter checklist override toggles */
+/* ========== overrides for route form filter checklist override toggles ========== */
+
+/* master (parent) container */
 .route-form-filter-checklist-override-toggles__container--station-map-mobile {
     width: 100%;
     border: none;
+    background: none;
+}
+
+.route-field__dropdown--station-map-mobile:popover-open {
+    left: 50%;
+    width: 90%;
+    transform: translate(-50%);
+    box-shadow: 5px 5px 10px 2px rgba(0, 0, 0, 0.3);
+}
+.route-field__dropdown--station-map-mobile:popover-open::-webkit-scrollbar {
+    width: 5px;
 }
