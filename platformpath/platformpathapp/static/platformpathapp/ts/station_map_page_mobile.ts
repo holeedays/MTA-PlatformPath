@@ -178,7 +178,10 @@ export class StationMapPageMobile extends StationMapPage {
 
     private initPullUpContainer(): void {
         const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
-        const pullUpContainerTab: HTMLDivElement | null | undefined = document.querySelector(".pull-up-container__tab");
+        const pullUpContainerTab: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".pull-up-container__tab");
+        const levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
+            pullUpContainer?.querySelector(".pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container")
+        );
         const levelStack: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".level-stack");
         const routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
             pullUpContainer?.querySelector(".route-form-filter-checklist-override-toggles__container")
@@ -188,16 +191,19 @@ export class StationMapPageMobile extends StationMapPage {
             pullUpContainer === null ||
             pullUpContainerTab === null ||
             pullUpContainerTab === undefined ||
+            levelStackRouteFormFilterChecklistOverrideTogglesContainer === null ||
+            levelStackRouteFormFilterChecklistOverrideTogglesContainer === undefined ||
             levelStack === null ||
             levelStack === undefined ||
             routeFormFilterChecklistOverrideTogglesContainer === null ||
             routeFormFilterChecklistOverrideTogglesContainer === undefined
         ) {
             console.warn(
-                "Pull up container, children pull up tab, level stack container,",
+                "Pull up container, children pull up tab, level stack route form filter overrides container, level stack container,",
                 "and/or route form filter checklist override toggles container does not exist",
                 `Pull Up Container Status: ${pullUpContainer}`,
                 `Pull Up Container Tab Status: ${pullUpContainerTab}`,
+                `Level Stack Route Form Filter Overrides Container Status: ${levelStackRouteFormFilterChecklistOverrideTogglesContainer}`,
                 `Level Statck Status: ${levelStack}`,
                 `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`
             );
@@ -225,11 +231,12 @@ export class StationMapPageMobile extends StationMapPage {
             levelStackIncrement: number,
             routeFormFilterChecklistOverrideTogglesContainerIncrement: number
         } = this.getPullUpContainerItemIncrements(
-            pullUpContainer, 
             pullUpContainerTab,
+            levelStackRouteFormFilterChecklistOverrideTogglesContainer,
             levelStack,
             routeFormFilterChecklistOverrideTogglesContainer
         );
+        console.log(increments);
 
         currentPosY = increments.pullUpTabIncrement;
         pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
@@ -249,6 +256,22 @@ export class StationMapPageMobile extends StationMapPage {
                 return;
 
             currentPosY += displacementY;
+            // get the closest increment to our currentposy
+            let closestPos: number = 0;
+            const incrementsArray: number[] = Object.values(increments);
+            for (let i = 0; i < incrementsArray.length; i++) {
+                const pos: number | undefined = incrementsArray[i];
+                // this should never occur but typescript compiler is strict
+                if (pos === undefined)
+                    return;
+                if (i === 0) 
+                    closestPos = pos;
+                // there's gotta be a better way than using math.abs() ...
+                if (Math.abs(pos - currentPosY) < Math.abs(closestPos - currentPosY))
+                    closestPos = pos;
+            }
+            currentPosY = closestPos;
+            pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
 
             displacementY = 0;
             displacementYArray.splice(0);
@@ -273,8 +296,8 @@ export class StationMapPageMobile extends StationMapPage {
     // get increments based on the vertical heights of the children in the pull up container
     // to be used for initPullUpContainer
     private getPullUpContainerItemIncrements(
-        pullUpContainer: HTMLDivElement,
         pullUpContainerTab: HTMLDivElement, 
+        levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement,
         levelStack: HTMLDivElement, 
         routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement
     ): 
@@ -283,7 +306,9 @@ export class StationMapPageMobile extends StationMapPage {
         levelStackIncrement: number,
         routeFormFilterChecklistOverrideTogglesContainerIncrement: number
     } {
-        const pullUpContainerStyle: CSSStyleDeclaration = window.getComputedStyle(pullUpContainer);
+        const levelStackRouteFormFilterChecklistOverrideTogglesContainerStyle: CSSStyleDeclaration = (
+            window.getComputedStyle(levelStackRouteFormFilterChecklistOverrideTogglesContainer)
+        );
         const pullUpTabStyle: CSSStyleDeclaration = window.getComputedStyle(pullUpContainerTab);
         const routeFormFilterChecklistOverrideTogglesContainerStyle: CSSStyleDeclaration = (
             window.getComputedStyle(routeFormFilterChecklistOverrideTogglesContainer)
@@ -293,12 +318,12 @@ export class StationMapPageMobile extends StationMapPage {
         // get our vertical increments
         const pullUpTabIncrement: number = -(parseFloat(pullUpTabStyle.marginTop) + parseFloat(pullUpTabStyle.marginBottom));
         const levelStackIncrement: number = (
-            pullUpTabIncrement - parseFloat(pullUpContainerStyle.gap) 
+            pullUpTabIncrement - parseFloat(levelStackRouteFormFilterChecklistOverrideTogglesContainerStyle.gap) 
             - parseFloat(levelStackStyle.marginTop) - parseFloat(levelStackStyle.marginBottom) 
             - levelStack.offsetHeight
         );
         const routeFormFilterChecklistOverrideTogglesContainerIncrement: number = (
-            levelStackIncrement - parseFloat(pullUpContainerStyle.gap) 
+            levelStackIncrement - parseFloat(levelStackRouteFormFilterChecklistOverrideTogglesContainerStyle.gap) 
             - parseFloat(routeFormFilterChecklistOverrideTogglesContainerStyle.marginTop) 
             - parseFloat(routeFormFilterChecklistOverrideTogglesContainerStyle.marginBottom)
             - routeFormFilterChecklistOverrideTogglesContainer.offsetHeight
