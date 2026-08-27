@@ -2,6 +2,9 @@ import { StationMapPage } from './station_map_page.ts';
 import { URLHandler } from './url_handler.ts';
 
 export class StationMapPageMobile extends StationMapPage {
+    // only one element can be moved at the same time (prevents some weird desyncing problems)
+    private currentMovingElement: HTMLElement | null = null;
+
     constructor() {
         super();
     }
@@ -20,6 +23,7 @@ export class StationMapPageMobile extends StationMapPage {
     public initMobile(): void {
         // init dragging/touch behavior of the layer options panel
         this.initLayerOptionsPanel();
+        this.initPullUpContainer();
     }
 
     // this is a mobile specific layer options
@@ -72,8 +76,14 @@ export class StationMapPageMobile extends StationMapPage {
             layerOptionsWrapper.setPointerCapture(ev.pointerId);
             // set start pos x
             startPosX = ev.x;
+
+            if (this.currentMovingElement === null)
+                this.currentMovingElement = layerOptionsWrapper;
         });
         layerOptionsWrapper.addEventListener("pointerup", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== layerOptionsWrapper)
+                return;
+
             // set the highest value and lowest value of layer options... we have to adjust it dynamically to account
             // for browser viewport shift (e.g. layeOptionsWrapper occupies 100% of browser viewport width)
             if (layerOptions.offsetWidth > layerOptionsWrapper.offsetWidth) {
@@ -86,6 +96,7 @@ export class StationMapPageMobile extends StationMapPage {
             }
             // update our current pos
             currentPosX += displacementX;
+            // check if the currentPosX is over our clamp values
             if (currentPosX > maxClampPosX) {
                 currentPosX = maxClampPosX;
                 layerOptions.classList.add("lerping");
@@ -113,6 +124,7 @@ export class StationMapPageMobile extends StationMapPage {
                 currentPosX += additionalDisplacementX;
                 layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
                 layerOptions.classList.add("lerping");
+                // speed up the lerping animation if the total displacement is going to go over one of the clamp values
                 if (currentPosX > maxClampPosX || currentPosX < minClampPosX)
                     layerOptions.style.setProperty("--transition-time", "0.3s");
             }
@@ -120,15 +132,20 @@ export class StationMapPageMobile extends StationMapPage {
             displacementXArray.splice(0);
             // reset displacementX
             displacementX = 0;
+
+            this.currentMovingElement = null;
         });
         layerOptionsWrapper.addEventListener("pointermove", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== layerOptionsWrapper)
+                return;
+
             // calculate the change in x-axis from the startPosX (which is set on touchdown)
             displacementX = ev.x - startPosX;
             // push it to our displacement array (for swipe gestures)
             // we're capping the size of the array to avoid possible memory leaks
             if (displacementXArray.length === arraySizeLimit) 
                 displacementXArray.shift();
-            displacementXArray.push(ev.x - startPosX);
+            displacementXArray.push(displacementX);
             // find the total displacement
             const totalDisplacementX: number = currentPosX + displacementX;
             // translate by that value
@@ -139,6 +156,8 @@ export class StationMapPageMobile extends StationMapPage {
         // resets the total displacement property back to the clamped value
         layerOptionsWrapper.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "transform") {
+                // for the case of a swipe gesture that goes over the clamp values...
+                // shift the total displacement back to clamp value (sort of like a rebound effect: overshoot -> clamp back)
                 if (currentPosX > maxClampPosX) {
                     currentPosX = maxClampPosX;
                     layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
@@ -155,6 +174,137 @@ export class StationMapPageMobile extends StationMapPage {
                 layerOptions.style.setProperty("--transition-time", "1s");
             }
         });
+    }
+
+    private initPullUpContainer(): void {
+        const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
+        const pullUpContainerTab: HTMLDivElement | null | undefined = document.querySelector(".pull-up-container__tab");
+        const levelStack: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".level-stack");
+        const routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
+            pullUpContainer?.querySelector(".route-form-filter-checklist-override-toggles__container")
+        );
+
+        if (
+            pullUpContainer === null ||
+            pullUpContainerTab === null ||
+            pullUpContainerTab === undefined ||
+            levelStack === null ||
+            levelStack === undefined ||
+            routeFormFilterChecklistOverrideTogglesContainer === null ||
+            routeFormFilterChecklistOverrideTogglesContainer === undefined
+        ) {
+            console.warn(
+                "Pull up container, children pull up tab, level stack container,",
+                "and/or route form filter checklist override toggles container does not exist",
+                `Pull Up Container Status: ${pullUpContainer}`,
+                `Pull Up Container Tab Status: ${pullUpContainerTab}`,
+                `Level Statck Status: ${levelStack}`,
+                `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`
+            );
+            return;
+        }
+
+        // like layer options, turn off any touch actions and gesture overrides from the css
+        pullUpContainer.style.touchAction = "none";
+        // also set up some initial variables (mainly for orienting the pull up container during page loads)
+        pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");;
+
+        // init variables for our touch like movement
+        let startPosY: number = 0;
+        let currentPosY: number = 0;
+        let displacementY: number = 0;
+        // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
+        const displacementYArray: number[] = [];
+        const arraySizeLimit: number = 500;
+        // these values hold the min and max translation the layer options slider can move
+        let minClampPosY: number = 0;
+        let maxClampPosY: number = 0;
+
+        const increments: { 
+            pullUpTabIncrement: number,
+            levelStackIncrement: number,
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+        } = this.getPullUpContainerItemIncrements(
+            pullUpContainer, 
+            pullUpContainerTab,
+            levelStack,
+            routeFormFilterChecklistOverrideTogglesContainer
+        );
+
+        currentPosY = increments.pullUpTabIncrement;
+        pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
+
+        pullUpContainer.addEventListener("pointerdown", (ev: PointerEvent) => {
+            // don't set pointer capture because it basically prevents any children on pull up container from being interacted
+            // with at all
+            // pullUpContainer.setPointerCapture(ev.pointerId); 
+            startPosY = ev.y;
+
+            if (this.currentMovingElement === null)
+                this.currentMovingElement = pullUpContainer;
+        });
+
+        pullUpContainer.addEventListener("pointerup", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== pullUpContainer)
+                return;
+
+            currentPosY += displacementY;
+
+            displacementY = 0;
+            displacementYArray.splice(0);
+
+            this.currentMovingElement = null;
+        });
+
+        pullUpContainer.addEventListener("pointermove", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== pullUpContainer)
+                return;
+
+            displacementY = ev.y - startPosY;
+            if (displacementYArray.length === arraySizeLimit) 
+                displacementYArray.shift();
+            displacementYArray.push(displacementY);
+
+            const totalDisplacement: number = currentPosY + displacementY;
+            pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
+        });
+    }
+
+    // get increments based on the vertical heights of the children in the pull up container
+    // to be used for initPullUpContainer
+    private getPullUpContainerItemIncrements(
+        pullUpContainer: HTMLDivElement,
+        pullUpContainerTab: HTMLDivElement, 
+        levelStack: HTMLDivElement, 
+        routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement
+    ): 
+    {
+        pullUpTabIncrement: number,
+        levelStackIncrement: number,
+        routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+    } {
+        const pullUpContainerStyle: CSSStyleDeclaration = window.getComputedStyle(pullUpContainer);
+        const pullUpTabStyle: CSSStyleDeclaration = window.getComputedStyle(pullUpContainerTab);
+        const routeFormFilterChecklistOverrideTogglesContainerStyle: CSSStyleDeclaration = (
+            window.getComputedStyle(routeFormFilterChecklistOverrideTogglesContainer)
+        );
+        const levelStackStyle: CSSStyleDeclaration = window.getComputedStyle(levelStack);
+
+        // get our vertical increments
+        const pullUpTabIncrement: number = -(parseFloat(pullUpTabStyle.marginTop) + parseFloat(pullUpTabStyle.marginBottom));
+        const levelStackIncrement: number = (
+            pullUpTabIncrement - parseFloat(pullUpContainerStyle.gap) 
+            - parseFloat(levelStackStyle.marginTop) - parseFloat(levelStackStyle.marginBottom) 
+            - levelStack.offsetHeight
+        );
+        const routeFormFilterChecklistOverrideTogglesContainerIncrement: number = (
+            levelStackIncrement - parseFloat(pullUpContainerStyle.gap) 
+            - parseFloat(routeFormFilterChecklistOverrideTogglesContainerStyle.marginTop) 
+            - parseFloat(routeFormFilterChecklistOverrideTogglesContainerStyle.marginBottom)
+            - routeFormFilterChecklistOverrideTogglesContainer.offsetHeight
+        );
+
+        return { pullUpTabIncrement, levelStackIncrement, routeFormFilterChecklistOverrideTogglesContainerIncrement };
     }
 
     // bool to determine if an item is a swipe gesture
