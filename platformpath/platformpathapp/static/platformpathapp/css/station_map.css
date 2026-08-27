@@ -694,12 +694,12 @@ to work properly; we use a custom keyframe animation */
 }
 .override-toggles__accessibility-only-toggle-button:active > img,
 .override-toggles__accessibility-none-toggle-button:active > img {
-        filter: brightness(0.5);
+        filter: brightness(0.6);
     }
 @media (hover:hover) {
     .override-toggles__accessibility-only-toggle-button:hover > img,
     .override-toggles__accessibility-none-toggle-button:hover > img {
-        filter: brightness(0.5);
+        filter: brightness(0.6);
     }
 }
 .override-toggles__accessibility-only-toggle-button.enabled > img,
@@ -1352,9 +1352,10 @@ if the arrow has the class (.route-direction__label) and target any paths within
     align-items: center;
     gap: 5px;
     z-index: 5;
-    pointer-events: none; /* some of these element descriptions are on buttons, to avoid extending their click range
-                                (e.g. the element description text is considered part of the button and therefore receives 
-                                the onclick function), set pointer events off for these items */
+
+    cursor: default; /* these elements are sometimes embedded in buttons, BUT they shouldn't be clickable; the actual logic handling
+                    to prevent the button click logic from extending to element desciptions are done in the .ts file; the physical
+                    look of it will be amended here */
 
     top: auto;
     bottom: auto;
@@ -1389,6 +1390,42 @@ if the arrow has the class (.route-direction__label) and target any paths within
     background: #4e4e4e;
 }
 
+/* some universal overrides for buttons/other elements that have hover properties containing element descriptions (this is important! 
+we dont't want :hover or :active pseudo classes to apply to the button styling */
+button:not(
+    .override-toggles__accessibility-only-toggle-button,
+    .override-toggles__accessibility-none-toggle-button
+    ):has(.element-description:active) > img {
+    filter: none
+}
+:is(
+    .override-toggles__accessibility-only-toggle-button, 
+    .override-toggles__accessibility-none-toggle-button
+    ):has(.element-description:active) > img {
+    filter: brightness(0.5);
+}
+.map-header:has(.element-description:active) h1 {
+    color: #ffffff;
+}
+@media (hover:hover) {
+    button:not(
+    .override-toggles__accessibility-only-toggle-button,
+    .override-toggles__accessibility-none-toggle-button
+    ):has(.element-description:hover) > img {
+        filter: none
+    }
+    :is(
+    .override-toggles__accessibility-only-toggle-button, 
+    .override-toggles__accessibility-none-toggle-button
+    ):has(.element-description:hover) > img {
+        filter: brightness(0.5);
+    }
+    .map-header:has(.element-description:hover) h1 {
+        color: #ffffff;
+    }
+}
+
+
 /* map header overrides */
 .element-description__map-header {
     width: 200px;
@@ -1414,9 +1451,10 @@ if the arrow has the class (.route-direction__label) and target any paths within
     position: relative; /* need to set positioning for the toggle button or else top/bottom/left/right for toggle button will be based
                             on the route form filter override container (since it is the closest ancestor that has the position property) */
 }
+
 .element-description__accessibility-only-toggle-button {
     left: 50%;
-    top: 70%;
+    top: 90%;
     transform: translateX(-50%);
     gap: 2px;
     flex-direction: column;
@@ -1426,7 +1464,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 }
 .element-description__accessibility-none-toggle-button {
     left: 50%;
-    bottom: 70%;
+    bottom: 90%;
     transform: translateX(-50%);
     gap: 2px;
     flex-direction: column;
@@ -1445,8 +1483,9 @@ if the arrow has the class (.route-direction__label) and target any paths within
     left: 98%;
     bottom: 60px;
 }
-.override-toggles.hidden ~ .element-description__route-form-filter-checklist-override-toggles-container {
-    bottom: -10px; /* sometimes the override toggles option might be hidden so we have to readjust the position of the element description
+.route-form-filter-checklist-override-toggles__container:not(:has(.override-toggles)) 
+.element-description__route-form-filter-checklist-override-toggles-container {
+    bottom: -10px; /* sometimes the override toggles option might not exist so we have to readjust the position of the element description
                         in that case */
 }
 .element-description__route-form-filter-checklist-override-toggles-container span {
@@ -1499,7 +1538,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 .element-description__map-rotate-button {
     top: 50%;
     transform: translateY(-50%);
-    right: 75%;
+    right: 95%;
 }
 
 .element-description__map-rotate-button span {
@@ -1513,7 +1552,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
 .element-description__map-legend-toggle-button {
     top: 50%;
     transform: translateY(-50%);
-    right: 75%;
+    right: 95%;
 }
 .element-description__map-legend-toggle-button span {
     width: 120px;

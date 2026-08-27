@@ -70,6 +70,8 @@ export class StationMapPage {
         this.initPreview();
         // init the event handling for the element descriptions toggle button
         this.initElementDescriptionsToggleInfoButton();
+        // init the event handling for the element descriptions
+        this.initElementDescriptions();
 
         // METHODS THAT REQUIRE STATION DATA
 
@@ -79,7 +81,6 @@ export class StationMapPage {
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
         // init the route direction labels
         this.svgRenderer.initRouteDirectionLabels();
-        this.initStepUI();
         // init our layer controls (toggling the different layers of the svg)
         this.initLayerControls();
 
@@ -181,7 +182,7 @@ export class StationMapPage {
         for (let i = 0; i < currentURLSplit.length - 3; i++) {
             stationsSelectionURL += i === 0? currentURLSplit[i]: "/" + currentURLSplit[i];
         }
-        stationHeading.addEventListener("click", () => URLHandler.redirectTo(stationsSelectionURL));
+        stationHeading.addEventListener("click",  () => URLHandler.redirectTo(stationsSelectionURL));
     }
 
     // init the layer("levels") buttons 
@@ -309,7 +310,7 @@ export class StationMapPage {
             accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
             accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
 
-            accessibilityOnlyToggleButton.addEventListener("click", () => {
+            accessibilityOnlyToggleButton.addEventListener("click", (ev: MouseEvent) => {
                 // if the accessibileNone button is toggled then we want to turn it off
                 if (isAccessibleNone) {
                     isAccessibleNone = false;
@@ -1355,5 +1356,16 @@ export class StationMapPage {
         });
 
     }
+
+    // inits some event logic for the element descriptions
+    private initElementDescriptions(): void {
+        const elementDescriptions: NodeListOf<HTMLDivElement> = document.querySelectorAll<HTMLDivElement>(".element-description");
+        // since some of these element descriptions are literally embedded in buttons, it's included as part of the event listners
+        // of those buttons (which we don't want); this prevents bubbling from occuring 
+        elementDescriptions.forEach((elementDescription: HTMLDivElement) => {
+            elementDescription.addEventListener("click", (ev: MouseEvent) => ev.stopPropagation());
+        });
+    }
+
 }
 
