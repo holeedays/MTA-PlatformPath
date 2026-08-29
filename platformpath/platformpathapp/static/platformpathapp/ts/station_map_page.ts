@@ -37,6 +37,9 @@ export class StationMapPage {
     public initDesktop(): void {
         // create logic to handle enforcing user page sizing for the desktop version of the page
         this.initDesktopDimensionsEnforcement();
+        // init our filter toggle button (will be responsible for revealing all of our filter checkboxes) and is only a 
+        // desktop item
+        this.initFilterChecklistToggleButton();
     }
 
     // initializes the page: loads diagram, fetches station data, sets up event listeners
@@ -90,8 +93,6 @@ export class StationMapPage {
         this.initRouteFindButton();
         // init our override toggle container and its buttons
         this.initOverrideToggles();
-        // init our filter toggle button (will be responsible for revealing all of our filter checkboxes)
-        this.initFilterChecklistToggleButton();
         // init all dropdowns with node options and the filter checkbox (e.g. anything involving node data)
         this.initNodes();
         // init our path step buttons
@@ -356,6 +357,7 @@ export class StationMapPage {
         }
     }
 
+    // NOTE: FOR DESKTOP ONLY 
     // add event handling of the toggle button 
     private initFilterChecklistToggleButton(): void {
         const filterChecklistToggleButton: HTMLButtonElement | null = document.querySelector(".filter-checklist__toggle-button");
@@ -1354,7 +1356,6 @@ export class StationMapPage {
 
             isPressed = !isPressed;
         });
-
     }
 
     // inits some event logic for the element descriptions

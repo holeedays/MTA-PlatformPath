@@ -15,12 +15,17 @@
     background: #333333;
     z-index: 10;
 }
+.pull-up-container.lerping {
+    transform: translate(-50%, calc(var(--initial-vertical-offset) + var(--total-displacement)));
+
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 
 .pull-up-container__tab {
     background: #adadad;
     width: 100px;
     height: 5px;
-    margin: 10px 0px 30px 0px;
+    margin: 10px 0px 20px 0px;
     border-radius: 100px;
 }
 
@@ -47,7 +52,9 @@
     flex-direction: column;
 }
 
-.level-stack__description {
+/* this description applies to the level stack and route form filter override toggles */
+.level-stack__description,
+.route-form-filter-checklist-override-toggles__description {
     font-size: 20px;
     font-weight: bolder;
     color: #ffffff;
@@ -80,15 +87,16 @@
     width: auto;
     padding: 5px;
     gap: 10px;
+
     transform: translateX(var(--total-displacement));
 }
-.layer-options--station-map-mobile.lerping {
+.layer-options--station-map-mobile.lerping,
+.filter-checklist__checkboxes-container--station-map-mobile.lerping {
     --transition-time: 1s; /* will be modified in .ts file */
 
     transform: translateX(var(--total-displacement));
     transition: transform var(--transition-time) cubic-bezier(0.215, 0.610, 0.355, 1);
 }
-
 
 :is(.all-layers-button--station-map-mobile, .layer-option) {
     width: auto;
@@ -114,4 +122,33 @@
 }
 .route-field__dropdown--station-map-mobile:popover-open::-webkit-scrollbar {
     width: 5px;
+}
+
+/* filter checklist */
+.filter-checklist--station-map-mobile {
+    gap: 0px;
+    border-radius: 0px;
+}
+
+.filter-checklist__checkboxes-container--station-map-mobile {
+    --total-displacement: 0px; /* will be modified in .ts file */
+
+    box-sizing: content-box;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    background: none;
+    padding: 0px;
+    width: auto; /* do not set it to 100%, it will clip its children to fit the width of the filter checklist (e.g. 100%
+                    of browser width) */
+
+    transform: translateX(var(--total-displacement));
+}
+
+.filter-checklist__checkboxes-container--station-map-mobile .filter-checklist__checkbox {
+    flex-direction: row;
+    background: #272727;
+}
+
+.filter-checklist__checkboxes-container--station-map-mobile .filter-checklist__checkbox button {
+    flex-shrink: 0;
 }

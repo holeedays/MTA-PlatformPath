@@ -101,14 +101,25 @@
 						route-form-filter-checklist-override-toggles__container 
 						route-form-filter-checklist-override-toggles__container--station-map-mobile"
 					>
-						<section class="filter-checklist" aria-label="Filters toggle">
-							<div class="filter-checklist__checkboxes-container-wrapper hidden">
-								<div class="filter-checklist__checkboxes-container"></div>
+						<span class="route-form-filter-checklist-override-toggles__description">SELECT ROUTE</span>
+
+						<section id="route-form" class="route-form" aria-label="Nodes selection">
+							<div class="route-field">
+								<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
+									START
+									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+								</button>
+								<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
 							</div>
-							<button class="filter-checklist__toggle-button">
-								<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
-								SELECT FILTERS
-							</button>
+							<div class="route-field">
+								<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
+									END
+									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+								</button>
+								<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
+							</div>
+
+							<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
 						</section>
 
 						<section class="override-toggles">
@@ -137,23 +148,8 @@
 							</div>
 						</section>
 
-						<section id="route-form" class="route-form" aria-label="Nodes selection">
-							<div class="route-field">
-								<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
-									START
-									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
-								</button>
-								<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
-							</div>
-							<div class="route-field">
-								<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
-									END
-									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
-								</button>
-								<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
-							</div>
-
-							<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
+						<section class="filter-checklist filter-checklist--station-map-mobile" aria-label="Filters toggle">
+								<div class="filter-checklist__checkboxes-container filter-checklist__checkboxes-container--station-map-mobile"></div>
 						</section>
 
 						<div class="element-description element-description__route-form-filter-checklist-override-toggles-container hidden">

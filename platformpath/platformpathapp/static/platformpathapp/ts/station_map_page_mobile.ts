@@ -21,15 +21,18 @@ export class StationMapPageMobile extends StationMapPage {
 
     // umbrella container for mobile only functions
     public initMobile(): void {
-        // init dragging/touch behavior of the layer options panel
+        // init horizontal dragging/touch behavior for the layer options panel
         this.initLayerOptionsPanel();
+        // init horizontal dragging/touch behavior for the filter checklist
+        this.initFilterChecklist();
+        // init vertical dragging/touch behavior of the pull up container
         this.initPullUpContainer();
     }
 
-    // this is a mobile specific layer options
+    // inits the touch/interaction handling of the layer options panel (horizontal scrolling)
     private initLayerOptionsPanel(): void {
         const layerOptionsWrapper: HTMLDivElement | null = document.querySelector(".layer-options__wrapper");
-        const layerOptions: HTMLDivElement | null = document.querySelector("#layer-options");
+        const layerOptions: HTMLDivElement | null | undefined = layerOptionsWrapper?.querySelector("#layer-options");
 
         // user touches layer options container, let's say it's overflowing off the screen
         // on touch the user's xy position is marked
@@ -38,7 +41,7 @@ export class StationMapPageMobile extends StationMapPage {
         // same goes for a non overflowing layer options container. HOWEVER, if the container's left or right limit is in view
         // of the browser and the user continually swipes that way, move the container back on touch release
 
-        if (layerOptionsWrapper === null || layerOptions === null) {
+        if (layerOptionsWrapper === null || layerOptions === null || layerOptions === undefined) {
             console.warn(
                 "Layer options wrapper and/or the layer options container doesn't exist",
                 `Layer Options Wrapper Status: ${layerOptionsWrapper}`,
@@ -47,10 +50,41 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
+        // init the scroll logic for the layer options panel
+        this.initHorizontalScrollItems(layerOptions, layerOptionsWrapper);
+    }
+
+    // inits the touch/interaction handling of the filter checklist (horizontal scrolling)
+    private initFilterChecklist(): void {
+        const filterChecklist: HTMLDivElement | null = document.querySelector(".filter-checklist");
+        const filterChecklistCheckboxesContainer: HTMLDivElement | null | undefined = (
+            filterChecklist?.querySelector(".filter-checklist__checkboxes-container")
+        );
+
+        if (
+            filterChecklist === null || 
+            filterChecklistCheckboxesContainer === null || 
+            filterChecklistCheckboxesContainer === undefined
+        ) {
+            console.warn(
+                "Filter checklist and/or the child filter checkboxes container doesn't exist",
+                `Filter Checklist Status: ${filterChecklist}`,
+                `Filter Checklist Checkboxes Container Status: ${filterChecklistCheckboxesContainer}`
+            );
+            return;
+        }
+
+        // same as the layer options panel, init the same scroll logic for the filter checklist 
+        this.initHorizontalScrollItems(filterChecklistCheckboxesContainer, filterChecklist);
+    }
+
+    // init horizontally scrolling items
+    private initHorizontalScrollItems(movingElement: HTMLElement, scrollElement: HTMLElement): void {
         // removes css determination for swiping behavior, now pointer move behaves like touchmove
-        // btw, we add the event listeners to the wrapper so that the user can interact with the layer options panel
+        // btw, we add the event listeners to the scroll element (usually a wrapper element or really any container element
+        // that is static and occupies about 100% of the width) so that the user can interact with the layer options panel
         // for the entire width of their mobile screen 
-        layerOptionsWrapper.style.touchAction = "none"; 
+        scrollElement.style.touchAction = "none"; 
         // init variables for our touch like movement
         let startPosX: number = 0;
         let currentPosX: number = 0;
@@ -58,60 +92,57 @@ export class StationMapPageMobile extends StationMapPage {
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementXArray: number[] = [];
         const arraySizeLimit: number = 500;
-        // these values hold the min and max translation the layer options slider can move
-        let minClampPosX: number = 0;
-        let maxClampPosX: number = 0;
-        
+        // these values hold the min and max translation the movingElement can move
+        let minClampPosX: number = -movingElement.offsetWidth/2 + scrollElement.offsetWidth/2;
+        let maxClampPosX: number = movingElement.offsetWidth/2 - scrollElement.offsetWidth/2;
+
+        // set the moving element to its start position if the moving element is still wider than the scroll element
+        // (which, assuming the scroll element is 100% width, means the browser viewport can't see the entire length of the
+        // moving element)
+        if (movingElement.offsetWidth > scrollElement.offsetWidth) {
+            currentPosX = maxClampPosX;
+            movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+        }
+
         // set event listeners for pointerdown, pointerup, pointermove (basically a hybrid event listener for pc and touch devices)
-        layerOptionsWrapper.addEventListener("pointerdown", (ev: PointerEvent) => {
-            // provide a pause from lerping or any animations if screen is held down
-            const currentStyle: CSSStyleDeclaration = window.getComputedStyle(layerOptions);
-            const matrix: DOMMatrix = new DOMMatrix(currentStyle.transform);
-            // m41 returns the current x transform from the transform matrix (m42 returns y)
-            currentPosX = matrix.m41;
-            layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
-            layerOptions.style.setProperty("--transition-time", "1s");
-            layerOptions.classList.remove("lerping");
+        scrollElement.addEventListener("pointerdown", (ev: PointerEvent) => {
+            if (movingElement.classList.contains("lerping")) {
+                // provide a pause from lerping or any animations if screen is held down
+                const matrix: DOMMatrix = this.getCurrentTransformMatrix(movingElement);
+                // m41 returns the current x transform from the transform matrix (m42 returns y, m43 z)
+                currentPosX = matrix.m41;
+                movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+                movingElement.style.setProperty("--transition-time", "1s");
+                movingElement.classList.remove("lerping");
+            }
             // NOTE: this is important, this makes sure that focus is kept on the item
-            layerOptionsWrapper.setPointerCapture(ev.pointerId);
+            scrollElement.setPointerCapture(ev.pointerId);
             // set start pos x
             startPosX = ev.x;
 
             if (this.currentMovingElement === null)
-                this.currentMovingElement = layerOptionsWrapper;
+                this.currentMovingElement = scrollElement;
         });
-        layerOptionsWrapper.addEventListener("pointerup", (ev: PointerEvent) => {
-            if (this.currentMovingElement !== layerOptionsWrapper)
+        scrollElement.addEventListener("pointerup", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== scrollElement)
                 return;
 
             // set the highest value and lowest value of layer options... we have to adjust it dynamically to account
-            // for browser viewport shift (e.g. layeOptionsWrapper occupies 100% of browser viewport width)
-            if (layerOptions.offsetWidth > layerOptionsWrapper.offsetWidth) {
-                minClampPosX = -layerOptions.offsetWidth/2 + layerOptionsWrapper.offsetWidth/2;
-                maxClampPosX = layerOptions.offsetWidth/2 - layerOptionsWrapper.offsetWidth/2;
+            // for browser viewport shift (IDEALLY, the scroll element should be 100% of the viewport height in this case)
+            if (movingElement.offsetWidth > scrollElement.offsetWidth) {
+                minClampPosX = -movingElement.offsetWidth/2 + scrollElement.offsetWidth/2;
+                maxClampPosX = movingElement.offsetWidth/2 - scrollElement.offsetWidth/2;
             }
             else {
-                minClampPosX = -layerOptions.offsetWidth/3;
-                maxClampPosX = layerOptions.offsetWidth/3;
+                minClampPosX = -movingElement.offsetWidth/4;
+                maxClampPosX = movingElement.offsetWidth/4;
             }
+                        
             // update our current pos
             currentPosX += displacementX;
-            // check if the currentPosX is over our clamp values
-            if (currentPosX > maxClampPosX) {
-                currentPosX = maxClampPosX;
-                layerOptions.classList.add("lerping");
-                layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
-                return;
-            }
-            else if (currentPosX < minClampPosX) {
-                currentPosX = minClampPosX;
-                layerOptions.classList.add("lerping");
-                layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
-                return;
-            }
 
-            // for swipe gestures....
-                        
+            // determine whether we're dealing with swipe gesture logic or just plain drag logic (no swiping)
+
             // generally the last moments of a swipe gesture matter the most hence a smaller frame interval would be
             // might be better
             const framesInterval: number = 5;
@@ -122,21 +153,35 @@ export class StationMapPageMobile extends StationMapPage {
                 const offset: number = 15;
                 const additionalDisplacementX: number = averageVelocityDuringFrameDuration*offset;
                 currentPosX += additionalDisplacementX;
-                layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
-                layerOptions.classList.add("lerping");
                 // speed up the lerping animation if the total displacement is going to go over one of the clamp values
                 if (currentPosX > maxClampPosX || currentPosX < minClampPosX)
-                    layerOptions.style.setProperty("--transition-time", "0.3s");
+                    movingElement.style.setProperty("--transition-time", "0.3s");
             }
+            else {
+                // check if the currentPosX is over our clamp values
+                if (currentPosX > maxClampPosX) 
+                    currentPosX = maxClampPosX;
+                else if (currentPosX < minClampPosX)
+                    currentPosX = minClampPosX;
+            }
+
+            // update our moving element with the appropriate styling and translation position
+            movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+            movingElement.classList.add("lerping");
+            // release focus on our elements here
+            scrollElement.releasePointerCapture(ev.pointerId);
+
+            // reset our variables here
+
             // clear our array of displacements
             displacementXArray.splice(0);
             // reset displacementX
             displacementX = 0;
-
+            // remove the current moving element reference (so that other elements can be scrolled thru)
             this.currentMovingElement = null;
         });
-        layerOptionsWrapper.addEventListener("pointermove", (ev: PointerEvent) => {
-            if (this.currentMovingElement !== layerOptionsWrapper)
+        scrollElement.addEventListener("pointermove", (ev: PointerEvent) => {
+            if (this.currentMovingElement !== scrollElement) 
                 return;
 
             // calculate the change in x-axis from the startPosX (which is set on touchdown)
@@ -149,35 +194,37 @@ export class StationMapPageMobile extends StationMapPage {
             // find the total displacement
             const totalDisplacementX: number = currentPosX + displacementX;
             // translate by that value
-            layerOptions.style.setProperty("--total-displacement", `${totalDisplacementX}px`);
+            movingElement.style.setProperty("--total-displacement", `${totalDisplacementX}px`);
         });
 
         // this removes the lerpingMax/Min/lerping class after the item reaches back the clamp value and 
         // resets the total displacement property back to the clamped value
-        layerOptionsWrapper.addEventListener("transitionend", (ev: TransitionEvent) => {
+        scrollElement.addEventListener("transitionend", (ev: TransitionEvent) => {
             if (ev.propertyName === "transform") {
                 // for the case of a swipe gesture that goes over the clamp values...
                 // shift the total displacement back to clamp value (sort of like a rebound effect: overshoot -> clamp back)
                 if (currentPosX > maxClampPosX) {
                     currentPosX = maxClampPosX;
-                    layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
+                    movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
                     return;
                 }
                 else if (currentPosX < minClampPosX) {
                     currentPosX = minClampPosX;
-                    layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
+                    movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
                     return;
                 }
 
-                // layerOptions.style.setProperty("--total-displacement", `${currentPosX}px`);
-                layerOptions.classList.remove("lerping");
-                layerOptions.style.setProperty("--transition-time", "1s");
+                movingElement.classList.remove("lerping");
+                movingElement.style.setProperty("--transition-time", "1s");
             }
         });
     }
 
+    // init the event and interaction logic for the pull up container
     private initPullUpContainer(): void {
         const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
+        // the following elements are used to calculate vertical increments with which the pull up container will lock onto
+        // if close enough
         const pullUpContainerTab: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".pull-up-container__tab");
         const levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
             pullUpContainer?.querySelector(".pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container")
@@ -186,6 +233,9 @@ export class StationMapPageMobile extends StationMapPage {
         const routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
             pullUpContainer?.querySelector(".route-form-filter-checklist-override-toggles__container")
         );
+        // used to prevent scrolling behavior when these dropdowns are open
+        const startNodeDropdown: HTMLDivElement | null | undefined = pullUpContainer?.querySelector("#start-node-dropdown");
+        const endNodeDropdown: HTMLDivElement | null | undefined = pullUpContainer?.querySelector("#end-node-dropdown");
 
         if (
             pullUpContainer === null ||
@@ -196,16 +246,22 @@ export class StationMapPageMobile extends StationMapPage {
             levelStack === null ||
             levelStack === undefined ||
             routeFormFilterChecklistOverrideTogglesContainer === null ||
-            routeFormFilterChecklistOverrideTogglesContainer === undefined
+            routeFormFilterChecklistOverrideTogglesContainer === undefined ||
+            startNodeDropdown === null ||
+            startNodeDropdown === undefined ||
+            endNodeDropdown === null ||
+            endNodeDropdown === undefined
         ) {
             console.warn(
                 "Pull up container, children pull up tab, level stack route form filter overrides container, level stack container,",
-                "and/or route form filter checklist override toggles container does not exist",
+                ", route form filter checklist override toggles container, and/or start/end node dropdowns does not exist",
                 `Pull Up Container Status: ${pullUpContainer}`,
                 `Pull Up Container Tab Status: ${pullUpContainerTab}`,
                 `Level Stack Route Form Filter Overrides Container Status: ${levelStackRouteFormFilterChecklistOverrideTogglesContainer}`,
                 `Level Statck Status: ${levelStack}`,
-                `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`
+                `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`,
+                `Start Node Dropdown Status: ${startNodeDropdown}`,
+                `End Node Dropdown Status: ${endNodeDropdown}`
             );
             return;
         }
@@ -213,7 +269,7 @@ export class StationMapPageMobile extends StationMapPage {
         // like layer options, turn off any touch actions and gesture overrides from the css
         pullUpContainer.style.touchAction = "none";
         // also set up some initial variables (mainly for orienting the pull up container during page loads)
-        pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");;
+        pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");
 
         // init variables for our touch like movement
         let startPosY: number = 0;
@@ -222,10 +278,8 @@ export class StationMapPageMobile extends StationMapPage {
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementYArray: number[] = [];
         const arraySizeLimit: number = 500;
-        // these values hold the min and max translation the layer options slider can move
-        let minClampPosY: number = 0;
-        let maxClampPosY: number = 0;
 
+        // get our increments (for which the pull up container will increment to when pulled up)
         const increments: { 
             pullUpTabIncrement: number,
             levelStackIncrement: number,
@@ -236,12 +290,18 @@ export class StationMapPageMobile extends StationMapPage {
             levelStack,
             routeFormFilterChecklistOverrideTogglesContainer
         );
-        console.log(increments);
 
         currentPosY = increments.pullUpTabIncrement;
         pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
 
         pullUpContainer.addEventListener("pointerdown", (ev: PointerEvent) => {
+            if (pullUpContainer.classList.contains("lerping")) {
+                const matrix: DOMMatrix = this.getCurrentTransformMatrix(pullUpContainer);
+                currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
+                pullUpContainer.style.setProperty("--total--displacement", `${currentPosY}px`)
+                pullUpContainer.classList.remove("lerping");
+            }
+
             // don't set pointer capture because it basically prevents any children on pull up container from being interacted
             // with at all
             // pullUpContainer.setPointerCapture(ev.pointerId); 
@@ -252,44 +312,69 @@ export class StationMapPageMobile extends StationMapPage {
         });
 
         pullUpContainer.addEventListener("pointerup", (ev: PointerEvent) => {
-            if (this.currentMovingElement !== pullUpContainer)
+            if (
+                this.currentMovingElement !== pullUpContainer ||
+                (startNodeDropdown.matches(":popover-open") || endNodeDropdown.matches(":popover-open"))
+            )
                 return;
 
+            // increment our currentPosY by the total displacement during this touch down interval
             currentPosY += displacementY;
-            // get the closest increment to our currentposy
-            let closestPos: number = 0;
-            const incrementsArray: number[] = Object.values(increments);
-            for (let i = 0; i < incrementsArray.length; i++) {
-                const pos: number | undefined = incrementsArray[i];
-                // this should never occur but typescript compiler is strict
-                if (pos === undefined)
-                    return;
-                if (i === 0) 
-                    closestPos = pos;
-                // there's gotta be a better way than using math.abs() ...
-                if (Math.abs(pos - currentPosY) < Math.abs(closestPos - currentPosY))
-                    closestPos = pos;
+
+            // deal with swiping gestures here
+            const framesInterval: number = 5;
+            const velocityThreshold: number = 5;
+            if(this.swipeGestureDetected(displacementYArray, framesInterval, velocityThreshold)) {
+                const averageVelocityDuringFrameDuration: number = this.getAverageVelocity(displacementYArray, framesInterval);
+                const offset: number = 20;
+                const additionalDisplacementX: number = averageVelocityDuringFrameDuration*offset;
+                currentPosY += additionalDisplacementX;
             }
-            currentPosY = closestPos;
+            // get the closest increment to the current pos y
+            currentPosY = this.getClosestPos(currentPosY, Object.values(increments));
+            pullUpContainer.classList.add("lerping");
             pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
 
+
+            // reset our state variables 
             displacementY = 0;
             displacementYArray.splice(0);
-
             this.currentMovingElement = null;
         });
 
         pullUpContainer.addEventListener("pointermove", (ev: PointerEvent) => {
-            if (this.currentMovingElement !== pullUpContainer)
+            // only apply move events "IF" the currently pressed element is the pull up container and none of the 
+            // popovers are open
+            if (
+                this.currentMovingElement !== pullUpContainer ||
+                (startNodeDropdown.matches(":popover-open") || endNodeDropdown.matches(":popover-open"))
+            )
                 return;
 
-            displacementY = ev.y - startPosY;
+            // clamp displacementY such that displacementY + currentPosY is < -pullUpContainterHeight 
+            // (it's negative since going vertically up means a decrease in the y value)
+            displacementY = (
+                currentPosY + ev.y - startPosY > -pullUpContainer.offsetHeight ? ev.y - startPosY: displacementY
+            );
             if (displacementYArray.length === arraySizeLimit) 
                 displacementYArray.shift();
             displacementYArray.push(displacementY);
 
-            const totalDisplacement: number = currentPosY + displacementY;
-            pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
+            // sometimes touch gestures are not smooth (e.g. slightly positional jitter); this causes the pull up container 
+            // to move so we need to filter out these noise values and update the position only if we don't deem it as 
+            // just random jitter
+
+            // jitter here is in pixels
+            const displacementJitter: number = 20;
+            if (displacementJitter < Math.abs(displacementY)) {
+                const totalDisplacement: number = currentPosY + displacementY;
+                pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
+            }
+        });
+
+        pullUpContainer.addEventListener("transitionend", (ev: TransitionEvent) => {
+            if (ev.propertyName === "transform")
+                pullUpContainer.classList.remove("lerping");
         });
     }
 
@@ -330,6 +415,32 @@ export class StationMapPageMobile extends StationMapPage {
         );
 
         return { pullUpTabIncrement, levelStackIncrement, routeFormFilterChecklistOverrideTogglesContainerIncrement };
+    }
+
+    // get the closest pos based on a given pos
+    private getClosestPos(basePos: number, comparisonPos: number[]): number {
+        // get the closest pos based on an array of different pos
+        let closestPos: number = 0;
+        for (let i = 0; i < comparisonPos.length; i++) {
+            const pos: number | undefined = comparisonPos[i];
+            // this should never occur but typescript compiler is strict
+            if (pos === undefined)
+                return 0;
+            if (i === 0) 
+                closestPos = pos;
+            // check which total distance is shorter currently
+            if (Math.abs(pos - basePos) < Math.abs(closestPos - basePos))
+                closestPos = pos;
+        }
+
+        return closestPos;
+    }
+
+    // gets the current transform of an element (returns a transform matrix)
+    private getCurrentTransformMatrix(element: HTMLElement): DOMMatrix {
+        const currentStyle: CSSStyleDeclaration = window.getComputedStyle(element);
+        const matrix: DOMMatrix = new DOMMatrix(currentStyle.transform);
+        return matrix;
     }
 
     // bool to determine if an item is a swipe gesture

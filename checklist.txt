@@ -1,5 +1,10 @@
 This is where we add stuff we did and things to do...
 
+Weird unfocus bug with buttons (in mobile view):
+If the pull up container was interacted with (or the scrollable elements within it), users have to double click each button
+for it to activate. Evidently, this is hella annoying. Setting the event listeners to pointerdown works however.
+Though we should explore possible solutions before heading for that one specifically.
+
 PLANS FOR THE FUTURE:
 ------------------------------
 
