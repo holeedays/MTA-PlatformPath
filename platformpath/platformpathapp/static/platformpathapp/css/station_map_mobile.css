@@ -114,13 +114,22 @@
     background: none;
 }
 
-.route-field__dropdown--station-map-mobile:popover-open {
+/* route form */
+.route-form__wrapper, 
+.route-form__dropdown-host {
+    width: 100%;
+}
+.route-form__dropdown-host {
+    position: relative;
+}
+
+.route-field__dropdown--station-map-mobile {
     left: 50%;
+    transform: translateX(-50%);
     width: 90%;
-    transform: translate(-50%);
     box-shadow: 5px 5px 10px 2px rgba(0, 0, 0, 0.3);
 }
-.route-field__dropdown--station-map-mobile:popover-open::-webkit-scrollbar {
+.route-field__dropdown--station-map-mobile::-webkit-scrollbar {
     width: 5px;
 }
 
@@ -151,4 +160,5 @@
 
 .filter-checklist__checkboxes-container--station-map-mobile .filter-checklist__checkbox button {
     flex-shrink: 0;
+    width: 17px;
 }

@@ -103,23 +103,26 @@
 					>
 						<span class="route-form-filter-checklist-override-toggles__description">SELECT ROUTE</span>
 
-						<section id="route-form" class="route-form" aria-label="Nodes selection">
-							<div class="route-field">
-								<button class="route-form__button route-field__dropdown-button" popovertarget="start-node-dropdown">
-									START
-									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
-								</button>
-								<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
-							</div>
-							<div class="route-field">
-								<button class="route-form__button route-field__dropdown-button" popovertarget="end-node-dropdown">
-									END
-									<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
-								</button>
-								<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile" popover></div>
-							</div>
+						<section class="route-form__wrapper">
+							<div class="route-form__dropdown-host"></div>
+							<div id="route-form" class="route-form" aria-label="Nodes selection">
+								<div class="route-field">
+									<button class="route-form__button route-field__dropdown-button" data-target="start-node-dropdown">
+										START
+										<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+									</button>
+									<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile hidden"></div>
+								</div>
+								<div class="route-field">
+									<button class="route-form__button route-field__dropdown-button" data-target="end-node-dropdown">
+										END
+										<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+									</button>
+									<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile hidden"></div>
+								</div>
 
-							<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
+								<button class="route-form__button route-form__find-route-button" id="find-route" type="button">FIND ROUTE</button>
+							</div>
 						</section>
 
 						<section class="override-toggles">

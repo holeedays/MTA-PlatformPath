@@ -12,10 +12,12 @@ export class NodeOption {
     private filters: Map<string,string>;
 
     private parent: HTMLDivElement;
+    private parentToggleButton: HTMLButtonElement;
     private self: HTMLButtonElement;
 
     constructor(
         parent: HTMLDivElement,
+        parentToggleButton: HTMLButtonElement,
         label: string,
         id: number,
         svgID: string,
@@ -31,6 +33,7 @@ export class NodeOption {
         this.filters = filters;
 
         this.parent = parent;
+        this.parentToggleButton = parentToggleButton;
         this.self = document.createElement("button");
 
         this.setStyling();
@@ -54,6 +57,9 @@ export class NodeOption {
     }
     get Parent(): HTMLDivElement {
         return this.parent;
+    }
+    get ParentToggleButton(): HTMLButtonElement {
+        return this.parentToggleButton;
     }
     get Self(): HTMLButtonElement {
         return this.self;
@@ -102,11 +108,6 @@ export class NodeOption {
             return "start"
         else
             return "end"
-    }
-
-    // get the dropdown toggle button of the parent
-    public getParentToggleButton(): HTMLButtonElement | null {
-        return document.querySelector(`button[popovertarget="${this.Parent.id}"]`);
     }
 }
 
@@ -231,4 +232,47 @@ export class SVGComponentElement {
     private setStyling(): void {
         this.baseElement.style.setProperty("--original-fill", this.originalFill);
     }
+}
+
+// interface to deal with station map handlers (allows us to modify certain event handling logic depending on whether
+// we're on mobile or desktop)
+export interface StationMapInteractionHandler {
+    element: HTMLElement,
+    handler: () => void; 
+}
+
+// another related class to NodeOptions, except has the dropdown button as the basis and different logic associated with it
+export class NodeDropdownButton {
+    private nodeOptions: NodeOption[];
+    private linkedDropdown: HTMLDivElement;
+    private self: HTMLButtonElement;
+
+    private isToggled: boolean;
+
+    constructor(self: HTMLButtonElement, linkedDropdown: HTMLDivElement) {
+        this.nodeOptions = [];
+        this.linkedDropdown = linkedDropdown;
+        this.self = self;
+
+        this.isToggled = false;
+    }
+
+    get NodeOptions(): NodeOption[] {
+        return this.nodeOptions;
+    }
+    get LinkedDropdown(): HTMLDivElement {
+        return this.linkedDropdown;
+    }
+    get Self(): HTMLButtonElement {
+        return this.self;
+    }
+
+    get IsToggled(): boolean {
+        return this.isToggled;
+    }
+
+    set IsToggled(value: boolean) {
+        this.isToggled = value;
+        this.linkedDropdown.classList.toggle("hidden", !this.isToggled);
+    } 
 }

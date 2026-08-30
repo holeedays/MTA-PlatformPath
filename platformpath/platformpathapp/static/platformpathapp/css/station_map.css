@@ -343,7 +343,6 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* ======== route form ======== */
-
 .route-form {
     display: flex;
     align-items: end;
@@ -385,6 +384,7 @@ to work properly; we use a custom keyframe animation */
 
 /* dropdown portion of the route form */
 .route-field {
+    position: relative;
     display: flex;
     flex-direction: column;
     width: 39%;
@@ -397,38 +397,35 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* actual dropdown of the route field */
-.route-field__dropdown:popover-open {
-    /* reset the automatically set popover options here*/
-    inset: auto;
-    position-area: top;
+.route-field__dropdown {
+    position: absolute;
 
     display: flex;
     flex-direction: column;
+    bottom: 100%;
     z-index: 1;
     max-height: 400px;
     overflow: auto;
-    /* popovers are position:fixed hence they don't actually behave relative to parent containers as they usually do, instead we have
-    to reference the implicit position anchor's (the button [the popover target]) width */
-    width: anchor-size(width);
-    border: none;
-    border-radius: 7px;
+}
+.route-field__dropdown.hidden {
+    display: none;
 }
 /* custom scrollbar styling since route-field__dropdown can overflow */
-.route-field__dropdown:popover-open::-webkit-scrollbar {
+.route-field__dropdown::-webkit-scrollbar {
     width: 10px;
 }
-.route-field__dropdown:popover-open::-webkit-scrollbar-track {
+.route-field__dropdown::-webkit-scrollbar-track {
     background: #1f1f1f;
 }
-.route-field__dropdown:popover-open::-webkit-scrollbar-thumb {
+.route-field__dropdown::-webkit-scrollbar-thumb {
     background: #ffffff;
     border-radius: 100px;                    
 }
-.route-field__dropdown:popover-open::-webkit-scrollbar-thumb:active {
+.route-field__dropdown:-webkit-scrollbar-thumb:active {
     background: #cacaca;
 }
 @media (hover:hover) {
-    .route-field__dropdown:popover-open::-webkit-scrollbar-thumb:hover {
+    .route-field__dropdown::-webkit-scrollbar-thumb:hover {
         background: #cacaca;
     }
 }
@@ -1303,6 +1300,7 @@ if the arrow has the class (.route-direction__label) and target any paths within
     left: 1%;
     background: none;
     border: none;
+    cursor: pointer;
 
     transition: top 0.25s ease-in-out;
 }

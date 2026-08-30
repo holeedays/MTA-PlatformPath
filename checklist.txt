@@ -1,9 +1,5 @@
 This is where we add stuff we did and things to do...
 
-Weird unfocus bug with buttons (in mobile view):
-If the pull up container was interacted with (or the scrollable elements within it), users have to double click each button
-for it to activate. Evidently, this is hella annoying. Setting the event listeners to pointerdown works however.
-Though we should explore possible solutions before heading for that one specifically.
 
 PLANS FOR THE FUTURE:
 ------------------------------
@@ -74,6 +70,12 @@ FIXED THE BUGS BELOW:
     - Add checkbox to look for an accessible route if the station is accessible
 - Add a legend (map elements + coloring explanation)
 - Add a button (maybe to the station heading) to return back to the station selection part of the website
+- Weird unfocus bug with buttons (in mobile view):
+If the pull up container was interacted with (or the scrollable elements within it), users have to double click each button
+for it to activate. Evidently, this is hella annoying. Setting the event listeners to pointerdown works however.
+Though we should explore possible solutions before heading for that one specifically.
+Evidently, it came to using "pointerdown/up" events to solve the issue. "click" should really remain on desktop and more static sites
+that don't require a lot of "focus" events.
 
 Ivan ----
 TO DO:

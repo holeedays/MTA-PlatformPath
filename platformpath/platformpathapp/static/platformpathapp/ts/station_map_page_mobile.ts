@@ -1,5 +1,5 @@
 import { StationMapPage } from './station_map_page.ts';
-import { URLHandler } from './url_handler.ts';
+import { type StationMapInteractionHandler, NodeDropdownButton } from './station_custom_elements.ts';
 
 export class StationMapPageMobile extends StationMapPage {
     // only one element can be moved at the same time (prevents some weird desyncing problems)
@@ -116,7 +116,13 @@ export class StationMapPageMobile extends StationMapPage {
                 movingElement.classList.remove("lerping");
             }
             // NOTE: this is important, this makes sure that focus is kept on the item
-            scrollElement.setPointerCapture(ev.pointerId);
+            // turns out you don't need it and it causes more issues... for one, children with pointerup/click event listeners 
+            // will  literally get intercepted so those functions will never run and two, touch devices usually already
+            // have an implicit pointer capture; moral of the story... don't set/release pointer capture if not necessary
+            // IF YOU MUST, set pointer capture later and first determine whether the touch was a "tap" vs "dragging"
+            // once you discern that, then set pointer capture (see "pointermove" for how it should be handled)
+            // scrollElement.setPointerCapture(ev.pointerId);
+
             // set start pos x
             startPosX = ev.x;
 
@@ -168,6 +174,7 @@ export class StationMapPageMobile extends StationMapPage {
             // update our moving element with the appropriate styling and translation position
             movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
             movingElement.classList.add("lerping");
+
             // release focus on our elements here
             scrollElement.releasePointerCapture(ev.pointerId);
 
@@ -184,8 +191,16 @@ export class StationMapPageMobile extends StationMapPage {
             if (this.currentMovingElement !== scrollElement) 
                 return;
 
+            // these scroll elements usually have buttons within them and so we want to prevent overriding the children's
+            // event listeners with setPointerCapture() unless we deem that the person is actually dragging the container
+            // versus tapping a button... this takes to account for this logic
+            const displacemenetJitter: number = 15;
+            if (Math.abs(displacementX) > displacemenetJitter) 
+                scrollElement.setPointerCapture(ev.pointerId);
+
             // calculate the change in x-axis from the startPosX (which is set on touchdown)
             displacementX = ev.x - startPosX;
+
             // push it to our displacement array (for swipe gestures)
             // we're capping the size of the array to avoid possible memory leaks
             if (displacementXArray.length === arraySizeLimit) 
@@ -302,9 +317,7 @@ export class StationMapPageMobile extends StationMapPage {
                 pullUpContainer.classList.remove("lerping");
             }
 
-            // don't set pointer capture because it basically prevents any children on pull up container from being interacted
-            // with at all
-            // pullUpContainer.setPointerCapture(ev.pointerId); 
+            // set the reference start pos
             startPosY = ev.y;
 
             if (this.currentMovingElement === null)
@@ -466,5 +479,73 @@ export class StationMapPageMobile extends StationMapPage {
 
         const totalVelocity: number = endFramePos - referenceFramePos;
         return totalVelocity/framesInterval;
+    }
+
+    // inits additional event handling logic for the node dropdowns specifically meant for the mobile port
+    public override initNodeDropdownButtons(): void {
+        const dropdownHost: HTMLDivElement | null = document.querySelector(".route-form__dropdown-host");
+
+        if (dropdownHost === null || this.nodeDropdownButtons.length === 0) {
+            console.warn(
+                "Route form's drop down host container doesn't exist or there are no node dropdown button instances",
+                `Dropdown Host Status: ${dropdownHost}`,
+                `Dropdown Buttons Instances Status: ${this.nodeDropdownButtons}`
+            );
+            return;
+        }
+
+        this.nodeDropdownButtons.forEach((nodeDropDownButton: NodeDropdownButton) => {
+            const routeFormParent: HTMLDivElement | null = nodeDropDownButton.Self.parentElement as HTMLDivElement | null;
+            if (routeFormParent === null) {
+                console.warn(`Route form parent for ${nodeDropDownButton.Self} doesn't exist`)
+                return;
+            }
+
+            // essentially do the exact same thing as the vanilla version of initNodeDropdownButtons, but now change
+            // the parent container it is in
+            const marginOfError: number = 15;
+            nodeDropDownButton.Self.addEventListener("pointerup", (ev: PointerEvent) => {
+                if (!this.withinBoundaries(nodeDropDownButton.Self, ev.x, ev.y, marginOfError))
+                    return;
+
+                if (!nodeDropDownButton.IsToggled) 
+                    dropdownHost.append(nodeDropDownButton.LinkedDropdown);
+                else
+                    routeFormParent.append(nodeDropDownButton.LinkedDropdown);
+
+                nodeDropDownButton.IsToggled = !nodeDropDownButton.IsToggled;
+            });
+        })
+    }
+
+    // overrides the interaction handler function logic from the base ts file
+    public override initInteractionHandlers(): void {
+        this.stationMapInteractionHandlers.forEach((stationMapInteractionHandler: StationMapInteractionHandler) => {
+            const element: HTMLElement = stationMapInteractionHandler.element;
+            const handler: () => void = stationMapInteractionHandler.handler;
+
+            // allow a small margin of error here as well for some leeway for the fingers
+            const marginOfError: number = 5;
+            // we're essentially emulating a "click" event except exclusively for touch
+            element.addEventListener("pointerup", (ev: PointerEvent) => {
+                if (this.withinBoundaries(element, ev.x, ev.y, marginOfError))
+                    handler();
+            });
+        });
+    }
+
+    // get whether a position is within the bounds of a given element (plus some marginOfError if wanted)
+    private withinBoundaries(element: HTMLElement, xPos: number, yPos: number, marginOfError: number = 0): boolean {
+        const elementPos: DOMRect = element.getBoundingClientRect();
+
+        if (
+            xPos >= elementPos.left - marginOfError &&
+            xPos <= elementPos.right + marginOfError &&
+            yPos >= elementPos.top - marginOfError &&
+            yPos <= elementPos.bottom + marginOfError
+        )
+            return true;
+        
+        return false;
     }
 }
