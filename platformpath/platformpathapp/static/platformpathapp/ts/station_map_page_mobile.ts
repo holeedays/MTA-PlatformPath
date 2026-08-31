@@ -50,8 +50,8 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-        // init the scroll logic for the layer options panel
-        this.initHorizontalScrollItems(layerOptions, layerOptionsWrapper);
+        // init the touching scroll logic for the layer options panel
+        this.initHorizontalScrollItemsTouchLogic(layerOptions, layerOptionsWrapper);
     }
 
     // inits the touch/interaction handling of the filter checklist (horizontal scrolling)
@@ -75,11 +75,11 @@ export class StationMapPageMobile extends StationMapPage {
         }
 
         // same as the layer options panel, init the same scroll logic for the filter checklist 
-        this.initHorizontalScrollItems(filterChecklistCheckboxesContainer, filterChecklist);
+        this.initHorizontalScrollItemsTouchLogic(filterChecklistCheckboxesContainer, filterChecklist);
     }
 
     // init horizontally scrolling items
-    private initHorizontalScrollItems(movingElement: HTMLElement, scrollElement: HTMLElement): void {
+    private initHorizontalScrollItemsTouchLogic(movingElement: HTMLElement, scrollElement: HTMLElement): void {
         // removes css determination for swiping behavior, now pointer move behaves like touchmove
         // btw, we add the event listeners to the scroll element (usually a wrapper element or really any container element
         // that is static and occupies about 100% of the width) so that the user can interact with the layer options panel
@@ -281,19 +281,6 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-        // like layer options, turn off any touch actions and gesture overrides from the css
-        pullUpContainer.style.touchAction = "none";
-        // also set up some initial variables (mainly for orienting the pull up container during page loads)
-        pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");
-
-        // init variables for our touch like movement
-        let startPosY: number = 0;
-        let currentPosY: number = 0;
-        let displacementY: number = 0;
-        // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
-        const displacementYArray: number[] = [];
-        const arraySizeLimit: number = 500;
-
         // get our increments (for which the pull up container will increment to when pulled up)
         const increments: { 
             pullUpTabIncrement: number,
@@ -305,6 +292,32 @@ export class StationMapPageMobile extends StationMapPage {
             levelStack,
             routeFormFilterChecklistOverrideTogglesContainer
         );
+
+        this.initPullUpContainerTouchLogic(pullUpContainer, startNodeDropdown, endNodeDropdown, increments);
+    }
+
+    // init the scroll/touch logic of the pull up container
+    private initPullUpContainerTouchLogic(
+        pullUpContainer: HTMLDivElement, 
+        startNodeDropdown: HTMLDivElement,
+        endNodeDropdown: HTMLDivElement,
+        increments: {
+            pullUpTabIncrement: number,
+            levelStackIncrement: number,
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+        }): void {
+          // like layer options, turn off any touch actions and gesture overrides from the css
+        pullUpContainer.style.touchAction = "none";
+        // also set up some initial variables (mainly for orienting the pull up container during page loads)
+        pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");
+
+        // init variables for our touch like movement
+        let startPosY: number = 0;
+        let currentPosY: number = 0;
+        let displacementY: number = 0;
+        // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
+        const displacementYArray: number[] = [];
+        const arraySizeLimit: number = 500;
 
         currentPosY = increments.pullUpTabIncrement;
         pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
@@ -327,7 +340,7 @@ export class StationMapPageMobile extends StationMapPage {
         pullUpContainer.addEventListener("pointerup", (ev: PointerEvent) => {
             if (
                 this.currentMovingElement !== pullUpContainer ||
-                (startNodeDropdown.matches(":popover-open") || endNodeDropdown.matches(":popover-open"))
+                (!startNodeDropdown.matches(".hidden") || !endNodeDropdown.matches(".hidden"))
             )
                 return;
 
@@ -357,10 +370,10 @@ export class StationMapPageMobile extends StationMapPage {
 
         pullUpContainer.addEventListener("pointermove", (ev: PointerEvent) => {
             // only apply move events "IF" the currently pressed element is the pull up container and none of the 
-            // popovers are open
+            // dropdowns are open
             if (
                 this.currentMovingElement !== pullUpContainer ||
-                (startNodeDropdown.matches(":popover-open") || endNodeDropdown.matches(":popover-open"))
+                (!startNodeDropdown.matches(".hidden") || !endNodeDropdown.matches(".hidden"))
             )
                 return;
 
@@ -494,26 +507,32 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-        this.nodeDropdownButtons.forEach((nodeDropDownButton: NodeDropdownButton) => {
-            const routeFormParent: HTMLDivElement | null = nodeDropDownButton.Self.parentElement as HTMLDivElement | null;
+        this.nodeDropdownButtons.forEach((nodeDropdownButton: NodeDropdownButton) => {
+            const routeFormParent: HTMLDivElement | null = nodeDropdownButton.Self.parentElement as HTMLDivElement | null;
             if (routeFormParent === null) {
-                console.warn(`Route form parent for ${nodeDropDownButton.Self} doesn't exist`)
+                console.warn(`Route form parent for ${nodeDropdownButton.Self} doesn't exist`)
                 return;
             }
 
             // essentially do the exact same thing as the vanilla version of initNodeDropdownButtons, but now change
             // the parent container it is in
             const marginOfError: number = 15;
-            nodeDropDownButton.Self.addEventListener("pointerup", (ev: PointerEvent) => {
-                if (!this.withinBoundaries(nodeDropDownButton.Self, ev.x, ev.y, marginOfError))
+            nodeDropdownButton.Self.addEventListener("pointerup", (ev: PointerEvent) => {
+                if (!this.withinBoundaries(nodeDropdownButton.Self, ev.x, ev.y, marginOfError))
                     return;
 
-                if (!nodeDropDownButton.IsToggled) 
-                    dropdownHost.append(nodeDropDownButton.LinkedDropdown);
+                if (!nodeDropdownButton.IsToggled) 
+                    dropdownHost.append(nodeDropdownButton.LinkedDropdown);
                 else
-                    routeFormParent.append(nodeDropDownButton.LinkedDropdown);
+                    routeFormParent.append(nodeDropdownButton.LinkedDropdown);
 
-                nodeDropDownButton.IsToggled = !nodeDropDownButton.IsToggled;
+                // also cycle through all the node drop down buttons ahain and toggle them off if they are not the current button 
+                // (only one should be up in this one)
+                this.nodeDropdownButtons.forEach((_nodeDropDownButton: NodeDropdownButton) => {
+                    if (_nodeDropDownButton !== nodeDropdownButton) 
+                        _nodeDropDownButton.IsToggled = false;
+                });
+                nodeDropdownButton.IsToggled = !nodeDropdownButton.IsToggled;
             });
         })
     }
