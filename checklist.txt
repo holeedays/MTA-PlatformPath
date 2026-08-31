@@ -6,11 +6,12 @@ PLANS FOR THE FUTURE:
 
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport)
-> Change the station map diagrams (maybe alter the arrows and names on them??)
+> Add a street view to each station map (and the corresponding logic for it)
+> Change the station map diagrams (maybe alter the arrows and names on them??) 
     - we are currently doing this...
     - add more nodes (2 rules have been instated for creating nodes in figma doc)
     - add rotated views 
-> Add all the new stations currently available
+> Add all the new stations currently available 
 > Remove old files
 
 ... get more data, add more stations
