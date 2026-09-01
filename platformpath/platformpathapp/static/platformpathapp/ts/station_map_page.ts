@@ -643,7 +643,9 @@ export class StationMapPage {
         // this essentially hides/shows all node dropdown button (IsToggled is a setter that alters isToggled and toggles the 
         // visibility of the associated dropdown)
         nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
-            nodeDropdownButton.IsToggled = !nodeDropdownButton.IsToggled;
+            nodeDropdownButton.Self.addEventListener("click", () => {
+                nodeDropdownButton.IsToggled = !nodeDropdownButton.IsToggled;
+            });
         });
     }
 
@@ -740,7 +742,7 @@ export class StationMapPage {
     }
 
     // function that starts the step by step navigation of the route
-    private beginStepNavigation(): void {
+    public beginStepNavigation(): void {
         if (!this.currentPath || this.currentIndex >= this.currentPath.length) {
             console.warn('No valid step to navigate to');
             return;
@@ -782,7 +784,7 @@ export class StationMapPage {
     }
 
     // end the navigation process (the opposite of StartNavigation)
-    private endNavigation(): void {
+    public endNavigation(): void {
         const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
         const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
         const preview: HTMLDivElement | null = document.querySelector("#route-preview");

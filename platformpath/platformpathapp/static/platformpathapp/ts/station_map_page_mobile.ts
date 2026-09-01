@@ -436,6 +436,7 @@ export class StationMapPageMobile extends StationMapPage {
         this.pullUpContainerVars.currentPosY = increments.pullUpTabIncrement;
         pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
         pullUpContainer.classList.add("lerping");
+        // and set our global bool here to prevent the pull up container from being able to be pressed
         this.ignorePullUpContainerPressEvents = true;
 
         // node dropdown buttons logic here...
@@ -451,7 +452,46 @@ export class StationMapPageMobile extends StationMapPage {
             nodeDropdownButton.IsToggled = false;
             routeFormParent.append(nodeDropdownButton.LinkedDropdown);
         });
-    }   
+    }       
+
+    // overrides the begin step nav function, just toggles off the global var of preventing the pull up container from being pressed
+    // on top of the standard begin nav logic
+    public override beginStepNavigation(): void {
+        super.beginStepNavigation();
+
+        if (this.pullUpContainerVars === null) {
+            console.warn("No pull up container variables exist");
+            return;
+        }
+
+        // toggle off this boolean
+        this.ignorePullUpContainerPressEvents = false;
+    }
+
+    // overrides the end nav function, does some logic with the pull up container (press logic + moving the container back up)
+    public override endNavigation(): void {
+        super.endNavigation();
+
+        if (this.pullUpContainerVars === null) {
+            console.warn("Pull up container variables are not initialized");
+            return;
+        }
+
+        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
+        const increments: {
+            pullUpTabIncrement: number;
+            levelStackIncrement: number;
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number;
+        } = this.pullUpContainerVars.increments;
+
+        // update the styling of the pull up container
+        this.pullUpContainerVars.currentPosY = increments.routeFormFilterChecklistOverrideTogglesContainerIncrement;
+        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
+        pullUpContainer.classList.add("lerping");
+
+        // toggle off our boolean, allow our pull up container to be pressed again
+        this.ignorePullUpContainerPressEvents = false;
+    }
 
     // get increments based on the vertical heights of the children in the pull up container
     // to be used for initPullUpContainer
