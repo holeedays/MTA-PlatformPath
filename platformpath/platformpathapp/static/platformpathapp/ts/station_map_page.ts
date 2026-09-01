@@ -10,7 +10,10 @@ export class StationMapPage {
     protected currentPath: PathStep[] | null = null;
     protected currentPathNodeIDs: Set<string> = new Set();
     protected nodeSVGs: NodeSVG[] = [];
-    protected nodeDropdownButtons: NodeDropdownButton[] = [];
+    protected nodeDropdownButtons: {
+        startNode: NodeDropdownButton,
+        endNode: NodeDropdownButton
+    } | null = null;
     protected selectedNodeOptions: {
         startNode: NodeOption | null, 
         endNode: NodeOption | null
@@ -285,13 +288,13 @@ export class StationMapPage {
     
     // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
     private async handleFormSubmit(): Promise<void> {
-        const startNodeID: number | undefined = this.selectedNodeOptions.startNode?.ID;
-        const endNodeID: number | undefined = this.selectedNodeOptions.endNode?.ID;
-
-        if (startNodeID === undefined || endNodeID === undefined) {
-            console.warn("Invalid start and/or end node ID");
+        if (this.selectedNodeOptions.startNode === null || this.selectedNodeOptions.endNode === null) {
+            console.warn("No start and/or end node is selected");
             return;
         }
+
+        const startNodeID: number | undefined = this.selectedNodeOptions.startNode.ID;
+        const endNodeID: number | undefined = this.selectedNodeOptions.endNode.ID;
 
         await this.startNavigation(startNodeID, endNodeID);
     }
@@ -629,17 +632,18 @@ export class StationMapPage {
 
     // inits the event handling logic for the node dropdown buttons (toggling their respective dropdowns)
     public initNodeDropdownButtons(): void {
-        if (this.nodeDropdownButtons.length === 0) {
+        if (this.nodeDropdownButtons === null) {
             console.warn("There are no node dropdown buttons instantiated");
             return;
         }
 
+        // create an array from our node dropdowns so the code is less redundant
+        const nodeDropdownButtonsArray: NodeDropdownButton[] = Object.values(this.nodeDropdownButtons);
+
         // this essentially hides/shows all node dropdown button (IsToggled is a setter that alters isToggled and toggles the 
         // visibility of the associated dropdown)
-        this.nodeDropdownButtons.forEach((nodeDropdownButton: NodeDropdownButton) => {
-            nodeDropdownButton.Self.addEventListener("click", () => {
-                nodeDropdownButton.IsToggled = !nodeDropdownButton.IsToggled;
-            });
+        nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
+            nodeDropdownButton.IsToggled = !nodeDropdownButton.IsToggled;
         });
     }
 
@@ -666,28 +670,37 @@ export class StationMapPage {
         );
         // reset our current index for our path so we start at the first step
         this.currentIndex = 0;
-        // Show the step UI and render the first step
+        // handle our navigation (if there was a path found)
         if (this.currentPath && this.currentPath.length > 0) {
-            // clear out the previous values from our set
-            this.currentPathNodeIDs.clear();
-            // add the new values
-            this.currentPath.forEach((step: PathStep) => {
-                this.currentPathNodeIDs.add(step.svgId);
-            });
-
-            // render the entire path
-            this.renderPath();
-
-            // restore route direction label
-            const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
-            this.svgRenderer.showRouteDirectionLabels(labelIds);
-
-            // start the route preview
-            this.startRoutePreview();
+            this.handleSuccessfulNavigation();
         } else {
             console.warn('No path found');
         }
     }
+
+    // this function handle a successful navigation
+    public handleSuccessfulNavigation(): void {
+        if (this.currentPath === null)
+            return;
+
+        // clear out the previous values from our set
+        this.currentPathNodeIDs.clear();
+        // add the new values
+        this.currentPath.forEach((step: PathStep) => {
+            this.currentPathNodeIDs.add(step.svgId);
+        });
+
+        // render the entire path
+        this.renderPath();
+
+        // restore route direction label
+        const labelIds = this.getRouteDirectionLabelIds(this.currentPath);
+        this.svgRenderer.showRouteDirectionLabels(labelIds);
+
+        // start the route preview
+        this.startRoutePreview();
+    }
+
 
     // Function that sets up the UI elements for the preview and
     // makes them visible
@@ -719,7 +732,6 @@ export class StationMapPage {
         // style the preview elements
         const movementCount: number = Math.max(this.currentPath.length, 0);
         previewDescription.innerHTML = `There are <b>${movementCount} step${movementCount === 1 ? "" : "s"}</b> in this route`;
-        // preview.style.display = "grid";
         preview.classList.remove("hidden");
         // start our route preview for the svg
         this.svgRenderer.startRoutePreview(
@@ -924,7 +936,7 @@ export class StationMapPage {
         const startNodeDropdownButton: NodeDropdownButton = new NodeDropdownButton(startNodeDropdownButtonElement, startNodeDropdown);
         const endNodeDropdownButton: NodeDropdownButton = new NodeDropdownButton(endNodeDropdownButtonElement, endNodeDropdown);
         // push them into our array of dropdown buttons
-        this.nodeDropdownButtons.push(startNodeDropdownButton, endNodeDropdownButton);
+        this.nodeDropdownButtons = { startNode: startNodeDropdownButton, endNode: endNodeDropdownButton };
 
         // initializing dropdown with node options
         this.station.node_models.forEach((node: NodeData) => {

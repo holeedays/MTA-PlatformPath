@@ -4,9 +4,20 @@ import { type StationMapInteractionHandler, NodeDropdownButton } from './station
 export class StationMapPageMobile extends StationMapPage {
     // only one element can be moved at the same time (prevents some weird desyncing problems)
     private currentMovingElement: HTMLElement | null = null;
+    private pullUpContainerVars: {
+        pullUpContainer: HTMLDivElement,
+        increments: {
+            pullUpTabIncrement: number,
+            levelStackIncrement: number,
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+        },
+        currentPosY: number
+    } | null = null;
+    private ignorePullUpContainerPressEvents: boolean = false;
 
     constructor() {
         super();
+        console.log(this.pullUpContainerVars?.increments);
     }
 
     // normally, ts, c++, c# etc... lets you modify the return type (e.g. as long as the types are similar (like promise<void> and
@@ -21,12 +32,43 @@ export class StationMapPageMobile extends StationMapPage {
 
     // umbrella container for mobile only functions
     public initMobile(): void {
+        // init our pull up container related variables
+        // NOTE: we have to load this after the filter checkboxes are made AND before any of the other methods in this init method 
+        // are called
+        this.initPullUpContainerVarsField();
         // init horizontal dragging/touch behavior for the layer options panel
         this.initLayerOptionsPanel();
         // init horizontal dragging/touch behavior for the filter checklist
         this.initFilterChecklist();
         // init vertical dragging/touch behavior of the pull up container
         this.initPullUpContainer();
+    }
+
+    // init pull up container related variables
+    private initPullUpContainerVarsField(): void {
+        const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
+
+        if (pullUpContainer === null) {
+            console.warn("Pull up container doesn't exist");
+            return;
+        }
+
+        const increments: {
+            pullUpTabIncrement: number,
+            levelStackIncrement: number,
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+        } | null = this.getPullUpContainerItemIncrements();
+
+        if (increments === null) {
+            console.warn("Couldn't get the pull up container increments");
+            return;
+        }
+
+        this.pullUpContainerVars = {
+            pullUpContainer: pullUpContainer,
+            increments: increments,
+            currentPosY: 0 
+        }
     }
 
     // inits the touch/interaction handling of the layer options panel (horizontal scrolling)
@@ -51,7 +93,7 @@ export class StationMapPageMobile extends StationMapPage {
         }
 
         // init the touching scroll logic for the layer options panel
-        this.initHorizontalScrollItemsTouchLogic(layerOptions, layerOptionsWrapper);
+        this.initHorizontalScrollItems(layerOptions, layerOptionsWrapper);
     }
 
     // inits the touch/interaction handling of the filter checklist (horizontal scrolling)
@@ -75,11 +117,11 @@ export class StationMapPageMobile extends StationMapPage {
         }
 
         // same as the layer options panel, init the same scroll logic for the filter checklist 
-        this.initHorizontalScrollItemsTouchLogic(filterChecklistCheckboxesContainer, filterChecklist);
+        this.initHorizontalScrollItems(filterChecklistCheckboxesContainer, filterChecklist);
     }
 
     // init horizontally scrolling items
-    private initHorizontalScrollItemsTouchLogic(movingElement: HTMLElement, scrollElement: HTMLElement): void {
+    private initHorizontalScrollItems(movingElement: HTMLElement, scrollElement: HTMLElement): void {
         // removes css determination for swiping behavior, now pointer move behaves like touchmove
         // btw, we add the event listeners to the scroll element (usually a wrapper element or really any container element
         // that is static and occupies about 100% of the width) so that the user can interact with the layer options panel
@@ -237,96 +279,47 @@ export class StationMapPageMobile extends StationMapPage {
 
     // init the event and interaction logic for the pull up container
     private initPullUpContainer(): void {
-        const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
-        // the following elements are used to calculate vertical increments with which the pull up container will lock onto
-        // if close enough
-        const pullUpContainerTab: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".pull-up-container__tab");
-        const levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
-            pullUpContainer?.querySelector(".pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container")
-        );
-        const levelStack: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".level-stack");
-        const routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
-            pullUpContainer?.querySelector(".route-form-filter-checklist-override-toggles__container")
-        );
-        // used to prevent scrolling behavior when these dropdowns are open
-        const startNodeDropdown: HTMLDivElement | null | undefined = pullUpContainer?.querySelector("#start-node-dropdown");
-        const endNodeDropdown: HTMLDivElement | null | undefined = pullUpContainer?.querySelector("#end-node-dropdown");
-
-        if (
-            pullUpContainer === null ||
-            pullUpContainerTab === null ||
-            pullUpContainerTab === undefined ||
-            levelStackRouteFormFilterChecklistOverrideTogglesContainer === null ||
-            levelStackRouteFormFilterChecklistOverrideTogglesContainer === undefined ||
-            levelStack === null ||
-            levelStack === undefined ||
-            routeFormFilterChecklistOverrideTogglesContainer === null ||
-            routeFormFilterChecklistOverrideTogglesContainer === undefined ||
-            startNodeDropdown === null ||
-            startNodeDropdown === undefined ||
-            endNodeDropdown === null ||
-            endNodeDropdown === undefined
-        ) {
+        if (this.pullUpContainerVars === null || this.nodeDropdownButtons === null) {
             console.warn(
-                "Pull up container, children pull up tab, level stack route form filter overrides container, level stack container,",
-                ", route form filter checklist override toggles container, and/or start/end node dropdowns does not exist",
-                `Pull Up Container Status: ${pullUpContainer}`,
-                `Pull Up Container Tab Status: ${pullUpContainerTab}`,
-                `Level Stack Route Form Filter Overrides Container Status: ${levelStackRouteFormFilterChecklistOverrideTogglesContainer}`,
-                `Level Statck Status: ${levelStack}`,
-                `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`,
-                `Start Node Dropdown Status: ${startNodeDropdown}`,
-                `End Node Dropdown Status: ${endNodeDropdown}`
+                "There are no pull up container variables and/or node dropdown button objects initialized",
+                `Pull Up Container Variables Status" ${this.pullUpContainerVars}`,
+                `Node Dropdown Button Objects Status: ${this.nodeDropdownButtons}`
             );
             return;
         }
 
-        // get our increments (for which the pull up container will increment to when pulled up)
-        const increments: { 
+        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
+        const startNodeDropdown: HTMLDivElement = this.nodeDropdownButtons.startNode.LinkedDropdown;
+        const endNodeDropdown: HTMLDivElement = this.nodeDropdownButtons.endNode.LinkedDropdown;
+        const increments: {
             pullUpTabIncrement: number,
             levelStackIncrement: number,
             routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-        } = this.getPullUpContainerItemIncrements(
-            pullUpContainerTab,
-            levelStackRouteFormFilterChecklistOverrideTogglesContainer,
-            levelStack,
-            routeFormFilterChecklistOverrideTogglesContainer
-        );
+        } = this.pullUpContainerVars.increments;
 
-        this.initPullUpContainerTouchLogic(pullUpContainer, startNodeDropdown, endNodeDropdown, increments);
-    }
-
-    // init the scroll/touch logic of the pull up container
-    private initPullUpContainerTouchLogic(
-        pullUpContainer: HTMLDivElement, 
-        startNodeDropdown: HTMLDivElement,
-        endNodeDropdown: HTMLDivElement,
-        increments: {
-            pullUpTabIncrement: number,
-            levelStackIncrement: number,
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-        }): void {
-          // like layer options, turn off any touch actions and gesture overrides from the css
+        // like layer options, turn off any touch actions and gesture overrides from the css
         pullUpContainer.style.touchAction = "none";
         // also set up some initial variables (mainly for orienting the pull up container during page loads)
         pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");
 
         // init variables for our touch like movement
         let startPosY: number = 0;
-        let currentPosY: number = 0;
         let displacementY: number = 0;
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementYArray: number[] = [];
         const arraySizeLimit: number = 500;
 
-        currentPosY = increments.pullUpTabIncrement;
-        pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
+        this.pullUpContainerVars.currentPosY = this.pullUpContainerVars.increments.pullUpTabIncrement;
+        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
 
         pullUpContainer.addEventListener("pointerdown", (ev: PointerEvent) => {
+            if (this.pullUpContainerVars === null)
+                return;
+
             if (pullUpContainer.classList.contains("lerping")) {
                 const matrix: DOMMatrix = this.getCurrentTransformMatrix(pullUpContainer);
-                currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
-                pullUpContainer.style.setProperty("--total--displacement", `${currentPosY}px`)
+                this.pullUpContainerVars.currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
+                pullUpContainer.style.setProperty("--total--displacement", `${this.pullUpContainerVars.currentPosY}px`)
                 pullUpContainer.classList.remove("lerping");
             }
 
@@ -338,14 +331,18 @@ export class StationMapPageMobile extends StationMapPage {
         });
 
         pullUpContainer.addEventListener("pointerup", (ev: PointerEvent) => {
+            if (this.pullUpContainerVars === null)
+                return;
+
             if (
+                this.ignorePullUpContainerPressEvents ||
                 this.currentMovingElement !== pullUpContainer ||
                 (!startNodeDropdown.matches(".hidden") || !endNodeDropdown.matches(".hidden"))
             )
                 return;
 
-            // increment our currentPosY by the total displacement during this touch down interval
-            currentPosY += displacementY;
+            // increment our this.pullUpContainerVars?.pullUpContainerCurrentPosY by the total displacement during this touch down interval
+            this.pullUpContainerVars.currentPosY += displacementY;
 
             // deal with swiping gestures here
             const framesInterval: number = 5;
@@ -354,12 +351,12 @@ export class StationMapPageMobile extends StationMapPage {
                 const averageVelocityDuringFrameDuration: number = this.getAverageVelocity(displacementYArray, framesInterval);
                 const offset: number = 20;
                 const additionalDisplacementX: number = averageVelocityDuringFrameDuration*offset;
-                currentPosY += additionalDisplacementX;
+                this.pullUpContainerVars.currentPosY += additionalDisplacementX;
             }
             // get the closest increment to the current pos y
-            currentPosY = this.getClosestPos(currentPosY, Object.values(increments));
+            this.pullUpContainerVars.currentPosY = this.getClosestPos(this.pullUpContainerVars?.currentPosY, Object.values(increments));
             pullUpContainer.classList.add("lerping");
-            pullUpContainer.style.setProperty("--total-displacement", `${currentPosY}px`);
+            pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars?.currentPosY}px`);
 
 
             // reset our state variables 
@@ -369,18 +366,22 @@ export class StationMapPageMobile extends StationMapPage {
         });
 
         pullUpContainer.addEventListener("pointermove", (ev: PointerEvent) => {
-            // only apply move events "IF" the currently pressed element is the pull up container and none of the 
-            // dropdowns are open
+            if (this.pullUpContainerVars === null)
+                return;
+
+            // only apply move events "IF" press events aren't ignored, and the currently pressed element is the pull up container,
+            // and none of the dropdowns are open 
             if (
+                this.ignorePullUpContainerPressEvents ||
                 this.currentMovingElement !== pullUpContainer ||
                 (!startNodeDropdown.matches(".hidden") || !endNodeDropdown.matches(".hidden"))
             )
                 return;
 
-            // clamp displacementY such that displacementY + currentPosY is < -pullUpContainterHeight 
+            // clamp displacementY such that displacementY + this.pullUpContainerVars?.pullUpContainerCurrentPosY is < -pullUpContainterHeight 
             // (it's negative since going vertically up means a decrease in the y value)
             displacementY = (
-                currentPosY + ev.y - startPosY > -pullUpContainer.offsetHeight ? ev.y - startPosY: displacementY
+                this.pullUpContainerVars?.currentPosY + ev.y - startPosY > -pullUpContainer.offsetHeight ? ev.y - startPosY: displacementY
             );
             if (displacementYArray.length === arraySizeLimit) 
                 displacementYArray.shift();
@@ -393,30 +394,106 @@ export class StationMapPageMobile extends StationMapPage {
             // jitter here is in pixels
             const displacementJitter: number = 20;
             if (displacementJitter < Math.abs(displacementY)) {
-                const totalDisplacement: number = currentPosY + displacementY;
+                const totalDisplacement: number = this.pullUpContainerVars?.currentPosY + displacementY;
                 pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
             }
         });
 
         pullUpContainer.addEventListener("transitionend", (ev: TransitionEvent) => {
+            if (this.pullUpContainerVars === null) {
+                console.warn("There are no pull up container variables initialized");
+                return;
+            }
+
             if (ev.propertyName === "transform")
                 pullUpContainer.classList.remove("lerping");
         });
     }
 
+    // overrides the handle successful nav method logic from the base ts file (mostly just adds logic for the pull up container for
+    // this section)
+    public override handleSuccessfulNavigation(): void {
+        super.handleSuccessfulNavigation();
+
+        if (this.pullUpContainerVars === null || this.nodeDropdownButtons === null) {
+            console.warn(
+                "Pull up container variables and/or node dropdown button instances aren't initialized,",
+                `Pull Up Container Variables Status: ${this.pullUpContainerVars}`,
+                `Node Dropdown Buttons Status: ${this.nodeDropdownButtons}`
+            );
+            return;
+        }
+
+        // pull up container logic here
+        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
+        const increments: {
+            pullUpTabIncrement: number;
+            levelStackIncrement: number;
+            routeFormFilterChecklistOverrideTogglesContainerIncrement: number;
+        } = this.pullUpContainerVars.increments;
+        
+        // shift the pull up container back down when the navigation is revealed
+        this.pullUpContainerVars.currentPosY = increments.pullUpTabIncrement;
+        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
+        pullUpContainer.classList.add("lerping");
+        this.ignorePullUpContainerPressEvents = true;
+
+        // node dropdown buttons logic here...
+        const nodeDropdownButtonsArray: NodeDropdownButton[] = Object.values(this.nodeDropdownButtons);
+        nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
+            // get the route form (parent container of the dropdown button)
+            const routeFormParent: HTMLDivElement | null = nodeDropdownButton.Self.parentElement as HTMLDivElement | null;
+            if (routeFormParent === null) {
+                console.warn(`Route form parent for ${nodeDropdownButton.Self} doesn't exist`)
+                return;
+            }
+            // essentially hide the dropdown here if it's open
+            nodeDropdownButton.IsToggled = false;
+            routeFormParent.append(nodeDropdownButton.LinkedDropdown);
+        });
+    }   
+
     // get increments based on the vertical heights of the children in the pull up container
     // to be used for initPullUpContainer
-    private getPullUpContainerItemIncrements(
-        pullUpContainerTab: HTMLDivElement, 
-        levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement,
-        levelStack: HTMLDivElement, 
-        routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement
-    ): 
-    {
+    private getPullUpContainerItemIncrements(): {
         pullUpTabIncrement: number,
         levelStackIncrement: number,
         routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-    } {
+    } | null {
+        const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
+        // the following elements are used to calculate vertical increments with which the pull up container will lock onto
+        // if close enough
+        const pullUpContainerTab: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".pull-up-container__tab");
+        const levelStackRouteFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
+            pullUpContainer?.querySelector(".pull-up-container__level-stack-route-form-filter-checklist-override-toggles-container")
+        );
+        const levelStack: HTMLDivElement | null | undefined = pullUpContainer?.querySelector(".level-stack");
+        const routeFormFilterChecklistOverrideTogglesContainer: HTMLDivElement | null | undefined = (
+            pullUpContainer?.querySelector(".route-form-filter-checklist-override-toggles__container")
+        );
+
+        if (
+            pullUpContainerTab === null ||
+            pullUpContainerTab === undefined ||
+            levelStackRouteFormFilterChecklistOverrideTogglesContainer === null ||
+            levelStackRouteFormFilterChecklistOverrideTogglesContainer === undefined ||
+            levelStack === null ||
+            levelStack === undefined ||
+            routeFormFilterChecklistOverrideTogglesContainer === null ||
+            routeFormFilterChecklistOverrideTogglesContainer === undefined
+        ) {
+            console.warn(
+                "Pull up container tab, level stack route form checklist override toggles container,",
+                "level stack, and/or route form filter checklist override toggles container doesn't exist",
+                `Pull Up Container Status: ${pullUpContainer}`,
+                `Pull Up Container Tab Status: ${pullUpContainerTab}`,
+                `Level Stack Route Form Filter Overrides Container Status: ${levelStackRouteFormFilterChecklistOverrideTogglesContainer}`,
+                `Level Statck Status: ${levelStack}`,
+                `Route Form Filter Checklist Override Toggles Container Status: ${routeFormFilterChecklistOverrideTogglesContainer}`
+            );
+            return null;
+        }
+
         const levelStackRouteFormFilterChecklistOverrideTogglesContainerStyle: CSSStyleDeclaration = (
             window.getComputedStyle(levelStackRouteFormFilterChecklistOverrideTogglesContainer)
         );
@@ -498,7 +575,7 @@ export class StationMapPageMobile extends StationMapPage {
     public override initNodeDropdownButtons(): void {
         const dropdownHost: HTMLDivElement | null = document.querySelector(".route-form__dropdown-host");
 
-        if (dropdownHost === null || this.nodeDropdownButtons.length === 0) {
+        if (dropdownHost === null || this.nodeDropdownButtons === null) {
             console.warn(
                 "Route form's drop down host container doesn't exist or there are no node dropdown button instances",
                 `Dropdown Host Status: ${dropdownHost}`,
@@ -507,7 +584,11 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-        this.nodeDropdownButtons.forEach((nodeDropdownButton: NodeDropdownButton) => {
+        // convert the node dropdown buttons into arrays to avoid repeating values
+        const nodeDropdownButtonsArray: NodeDropdownButton[] = Object.values(this.nodeDropdownButtons);
+
+        nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
+            // get the route form (parent container of the dropdown button)
             const routeFormParent: HTMLDivElement | null = nodeDropdownButton.Self.parentElement as HTMLDivElement | null;
             if (routeFormParent === null) {
                 console.warn(`Route form parent for ${nodeDropdownButton.Self} doesn't exist`)
@@ -516,7 +597,7 @@ export class StationMapPageMobile extends StationMapPage {
 
             // essentially do the exact same thing as the vanilla version of initNodeDropdownButtons, but now change
             // the parent container it is in
-            const marginOfError: number = 15;
+            const marginOfError: number = 5;
             nodeDropdownButton.Self.addEventListener("pointerup", (ev: PointerEvent) => {
                 if (!this.withinBoundaries(nodeDropdownButton.Self, ev.x, ev.y, marginOfError))
                     return;
@@ -528,7 +609,7 @@ export class StationMapPageMobile extends StationMapPage {
 
                 // also cycle through all the node drop down buttons ahain and toggle them off if they are not the current button 
                 // (only one should be up in this one)
-                this.nodeDropdownButtons.forEach((_nodeDropDownButton: NodeDropdownButton) => {
+                nodeDropdownButtonsArray.forEach((_nodeDropDownButton: NodeDropdownButton) => {
                     if (_nodeDropDownButton !== nodeDropdownButton) 
                         _nodeDropDownButton.IsToggled = false;
                 });
