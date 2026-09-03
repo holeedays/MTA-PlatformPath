@@ -1,23 +1,25 @@
 import { StationMapPage } from './station_map_page.ts';
 import { type StationMapInteractionHandler, NodeDropdownButton } from './station_custom_elements.ts';
 
+interface PullUpContainerIncrements {
+    pullUpTabIncrement: number,
+    levelStackIncrement: number,
+    routeFormFilterChecklistOverrideTogglesContainerIncrement: number
+}
+
 export class StationMapPageMobile extends StationMapPage {
     // only one element can be moved at the same time (prevents some weird desyncing problems)
     private currentMovingElement: HTMLElement | null = null;
     private pullUpContainerVars: {
         pullUpContainer: HTMLDivElement,
-        increments: {
-            pullUpTabIncrement: number,
-            levelStackIncrement: number,
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-        },
+        increments: PullUpContainerIncrements,
         currentPosY: number
     } | null = null;
+    private mapOverlayItems: HTMLElement[] = [];
     private ignorePullUpContainerPressEvents: boolean = false;
 
     constructor() {
         super();
-        console.log(this.pullUpContainerVars?.increments);
     }
 
     // normally, ts, c++, c# etc... lets you modify the return type (e.g. as long as the types are similar (like promise<void> and
@@ -33,9 +35,11 @@ export class StationMapPageMobile extends StationMapPage {
     // umbrella container for mobile only functions
     public initMobile(): void {
         // init our pull up container related variables
-        // NOTE: we have to load this after the filter checkboxes are made AND before any of the other methods in this init method 
-        // are called
+        // NOTE: we have to load this after the filter checkboxes are made (e.g. in initBase) AND before any of the other methods 
+        // in this init mobile method are called
         this.initPullUpContainerVarsField();
+        // init our map overlays items field
+        this.initMapOverlayItemsField();
         // init horizontal dragging/touch behavior for the layer options panel
         this.initLayerOptionsPanel();
         // init horizontal dragging/touch behavior for the filter checklist
@@ -53,11 +57,7 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-        const increments: {
-            pullUpTabIncrement: number,
-            levelStackIncrement: number,
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-        } | null = this.getPullUpContainerItemIncrements();
+        const increments: PullUpContainerIncrements | null = this.getPullUpContainerItemIncrements();
 
         if (increments === null) {
             console.warn("Couldn't get the pull up container increments");
@@ -69,6 +69,27 @@ export class StationMapPageMobile extends StationMapPage {
             increments: increments,
             currentPosY: 0 
         }
+    }
+
+    // init our map over items field (only a select few map overlay items though that we need to modify)
+    private initMapOverlayItemsField(): void {
+        const mapRotateButton: HTMLButtonElement | null = document.querySelector(".map__rotate-button");
+        const mapLegend: HTMLDivElement | null = document.querySelector(".map-legend");
+        const elementDescriptionsToggleButton: HTMLButtonElement | null = (
+            document.querySelector(".element-descriptions__toggle-info-button")
+        );
+
+        if (mapRotateButton === null || mapLegend === null || elementDescriptionsToggleButton === null) {
+            console.warn(
+                "Map rotate button, map legend, and/or the element descriptions toggle button doesn't exist",
+                `Map Rotate Button Status: ${mapRotateButton}`,
+                `Map Legend Status ${mapLegend}`,
+                `Element Descriptions Toggle Button Status: ${elementDescriptionsToggleButton}`
+            );
+            return;
+        }
+
+        this.mapOverlayItems.push(mapRotateButton, mapLegend, elementDescriptionsToggleButton);
     }
 
     // inits the touch/interaction handling of the layer options panel (horizontal scrolling)
@@ -277,7 +298,7 @@ export class StationMapPageMobile extends StationMapPage {
         });
     }
 
-    // init the event and interaction logic for the pull up container
+    // inits the event and interaction logic for the pull up container
     private initPullUpContainer(): void {
         if (this.pullUpContainerVars === null || this.nodeDropdownButtons === null) {
             console.warn(
@@ -291,18 +312,14 @@ export class StationMapPageMobile extends StationMapPage {
         const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
         const startNodeDropdown: HTMLDivElement = this.nodeDropdownButtons.startNode.LinkedDropdown;
         const endNodeDropdown: HTMLDivElement = this.nodeDropdownButtons.endNode.LinkedDropdown;
-        const increments: {
-            pullUpTabIncrement: number,
-            levelStackIncrement: number,
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-        } = this.pullUpContainerVars.increments;
+        const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
 
         // like layer options, turn off any touch actions and gesture overrides from the css
         pullUpContainer.style.touchAction = "none";
         // also set up some initial variables (mainly for orienting the pull up container during page loads)
         pullUpContainer.style.setProperty("--initial-vertical-offset", "100%");
 
-        // init variables for our touch like movement
+        // init variables for our touch like movement (currentPosY will be stored in a global var)
         let startPosY: number = 0;
         let displacementY: number = 0;
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
@@ -341,7 +358,8 @@ export class StationMapPageMobile extends StationMapPage {
             )
                 return;
 
-            // increment our this.pullUpContainerVars?.pullUpContainerCurrentPosY by the total displacement during this touch down interval
+            // increment our this.pullUpContainerVars.pullUpContainerCurrentPosY by the total displacement during this touch down 
+            // interval
             this.pullUpContainerVars.currentPosY += displacementY;
 
             // deal with swiping gestures here
@@ -349,15 +367,17 @@ export class StationMapPageMobile extends StationMapPage {
             const velocityThreshold: number = 5;
             if(this.swipeGestureDetected(displacementYArray, framesInterval, velocityThreshold)) {
                 const averageVelocityDuringFrameDuration: number = this.getAverageVelocity(displacementYArray, framesInterval);
-                const offset: number = 20;
+                const offset: number = 10;
                 const additionalDisplacementX: number = averageVelocityDuringFrameDuration*offset;
                 this.pullUpContainerVars.currentPosY += additionalDisplacementX;
             }
             // get the closest increment to the current pos y
-            this.pullUpContainerVars.currentPosY = this.getClosestPos(this.pullUpContainerVars?.currentPosY, Object.values(increments));
+            this.pullUpContainerVars.currentPosY = this.getClosestPos(this.pullUpContainerVars.currentPosY, Object.values(increments));
             pullUpContainer.classList.add("lerping");
-            pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars?.currentPosY}px`);
+            pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
 
+            // handle our related map overlay logic here
+            this.handleMapOverlayItemsReleaseLogic(increments, this.pullUpContainerVars.currentPosY);
 
             // reset our state variables 
             displacementY = 0;
@@ -378,11 +398,14 @@ export class StationMapPageMobile extends StationMapPage {
             )
                 return;
 
-            // clamp displacementY such that displacementY + this.pullUpContainerVars?.pullUpContainerCurrentPosY is < -pullUpContainterHeight 
+            // clamp displacementY such that displacementY + this.pullUpContainerVars.pullUpContainerCurrentPosY is < -pullUpContainterHeight 
             // (it's negative since going vertically up means a decrease in the y value)
             displacementY = (
-                this.pullUpContainerVars?.currentPosY + ev.y - startPosY > -pullUpContainer.offsetHeight ? ev.y - startPosY: displacementY
+                this.pullUpContainerVars.currentPosY + ev.y - startPosY > -pullUpContainer.offsetHeight ? 
+                ev.y - startPosY: 
+                displacementY
             );
+
             if (displacementYArray.length === arraySizeLimit) 
                 displacementYArray.shift();
             displacementYArray.push(displacementY);
@@ -394,8 +417,11 @@ export class StationMapPageMobile extends StationMapPage {
             // jitter here is in pixels
             const displacementJitter: number = 20;
             if (displacementJitter < Math.abs(displacementY)) {
-                const totalDisplacement: number = this.pullUpContainerVars?.currentPosY + displacementY;
+                const totalDisplacement: number = this.pullUpContainerVars.currentPosY + displacementY;
                 pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
+
+                // handle drag logic for the map overlay items
+                this.handleMapOverlayItemsDragLogic(increments, totalDisplacement);
             }
         });
 
@@ -407,6 +433,66 @@ export class StationMapPageMobile extends StationMapPage {
 
             if (ev.propertyName === "transform")
                 pullUpContainer.classList.remove("lerping");
+        });
+
+        this.handleMapOverlayItemsTransitionLogic();
+    }
+
+    // handle the pull up container pointermove's logic for the map overlay items
+    private handleMapOverlayItemsDragLogic(
+        increments: PullUpContainerIncrements,
+        totalDisplacement: number
+    ): void {
+        if (this.mapOverlayItems.length === 0) {
+            console.warn("Map overlay items field is not initialized");
+            return;
+        }
+
+        // both the displacement and increment are negative... we want the abs value of displacement to be less than the abs 
+        // value of the level stack increment 
+        if (totalDisplacement >= increments.levelStackIncrement) {
+            this.mapOverlayItems.forEach((mapOverlayItem: HTMLElement) => {
+                // subtract pull up tab increment since currentPosY is clamped between the pull tab increment and route form 
+                // filter overrides increment
+                const overlayDisplacement: number = totalDisplacement - increments.pullUpTabIncrement;
+                mapOverlayItem.style.setProperty("--total-displacement", `${overlayDisplacement}px`);
+            });
+        }
+    }
+
+    // handle the pull up container's pointerup logic for the map overlay items 
+    private handleMapOverlayItemsReleaseLogic(
+        increments: PullUpContainerIncrements,
+        currentPosY: number
+    ): void {
+        if (this.mapOverlayItems.length === 0) {
+            console.warn("Map overlay items field is not initialized");
+            return;
+        }
+
+
+        if (currentPosY >= increments.levelStackIncrement) {
+            this.mapOverlayItems.forEach((mapOverlayItem: HTMLElement) => {
+                const overlayDisplacement: number = currentPosY - increments.pullUpTabIncrement;
+                mapOverlayItem.style.setProperty("--total-displacement", `${overlayDisplacement}px`);
+                mapOverlayItem.classList.add("lerping");
+            });     
+        }
+    }
+
+    // handles the map overlay items transition logic (the logic is very similar to pull up container/horizontal 
+    // scroll items transition logic)
+    private handleMapOverlayItemsTransitionLogic() {
+        if (this.mapOverlayItems.length === 0) {
+            console.warn("Map overlay items field is not initialized");
+            return;
+        }
+
+        this.mapOverlayItems.forEach((mapOverlayItem: HTMLElement) => {
+            mapOverlayItem.addEventListener("transitionend", (ev: TransitionEvent) => {
+                if (ev.propertyName === "transform") 
+                    mapOverlayItem.classList.remove("lerping");
+            });
         });
     }
 
@@ -426,11 +512,7 @@ export class StationMapPageMobile extends StationMapPage {
 
         // pull up container logic here
         const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
-        const increments: {
-            pullUpTabIncrement: number;
-            levelStackIncrement: number;
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number;
-        } = this.pullUpContainerVars.increments;
+        const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
         
         // shift the pull up container back down when the navigation is revealed
         this.pullUpContainerVars.currentPosY = increments.pullUpTabIncrement;
@@ -463,6 +545,14 @@ export class StationMapPageMobile extends StationMapPage {
             console.warn("No pull up container variables exist");
             return;
         }
+        
+        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
+        const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
+
+        // update the styling of the pull up container
+        this.pullUpContainerVars.currentPosY = increments.levelStackIncrement;
+        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
+        pullUpContainer.classList.add("lerping");
 
         // toggle off this boolean
         this.ignorePullUpContainerPressEvents = false;
@@ -478,11 +568,7 @@ export class StationMapPageMobile extends StationMapPage {
         }
 
         const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
-        const increments: {
-            pullUpTabIncrement: number;
-            levelStackIncrement: number;
-            routeFormFilterChecklistOverrideTogglesContainerIncrement: number;
-        } = this.pullUpContainerVars.increments;
+        const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
 
         // update the styling of the pull up container
         this.pullUpContainerVars.currentPosY = increments.routeFormFilterChecklistOverrideTogglesContainerIncrement;
@@ -495,11 +581,7 @@ export class StationMapPageMobile extends StationMapPage {
 
     // get increments based on the vertical heights of the children in the pull up container
     // to be used for initPullUpContainer
-    private getPullUpContainerItemIncrements(): {
-        pullUpTabIncrement: number,
-        levelStackIncrement: number,
-        routeFormFilterChecklistOverrideTogglesContainerIncrement: number
-    } | null {
+    private getPullUpContainerItemIncrements(): PullUpContainerIncrements | null {
         const pullUpContainer: HTMLDivElement | null = document.querySelector(".pull-up-container");
         // the following elements are used to calculate vertical increments with which the pull up container will lock onto
         // if close enough
@@ -557,7 +639,9 @@ export class StationMapPageMobile extends StationMapPage {
             - routeFormFilterChecklistOverrideTogglesContainer.offsetHeight
         );
 
-        return { pullUpTabIncrement, levelStackIncrement, routeFormFilterChecklistOverrideTogglesContainerIncrement };
+        return {
+            pullUpTabIncrement, levelStackIncrement, routeFormFilterChecklistOverrideTogglesContainerIncrement 
+        } as PullUpContainerIncrements;
     }
 
     // get the closest pos based on a given pos

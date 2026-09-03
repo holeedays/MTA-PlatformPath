@@ -1,5 +1,38 @@
+:root {
+    /* overridden vars */
+    --map-legend-z-index: calc(var(--pull-up-container-z-index) - 2); /* essentially allows buttons (like the map rotate button to 
+                                                                        sit on top of the map legend but also behind the pull up
+                                                                        container; the z-index of the map legend (8) is higher than
+                                                                        the step ui/preview block (which it overlaps when extended) */
 
-/* master container that holds the level and the route form filter checklist override toggles container */
+    /* new vars */
+    --pull-up-container-z-index: 10;
+    --pull-up-container-transition-time: 0.5s;
+    --pull-up-container-transition-anim-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --pull-up-container-tab-height: 5px;
+    --pull-up-container-tab-margin-top: 10px;
+    --pull-up-container-tab-margin-bottom: 20px;
+}
+
+/* ===============================
+   Map Header Overrides
+   =============================== */
+
+.map-header--station-map-mobile {
+    right: auto;
+    top: 11%; /* change this for an absolute value later... */
+    left: 3%;
+}
+
+.map-header--station-map-mobile h1 {
+    font-size: 30px;
+}
+
+
+/* ========================================================================================================================
+   Pull Up Container (master container that holds the level and the route form filter checklist override toggles container)
+   ======================================================================================================================== */
+
 .pull-up-container {
     --total-displacement: 0px; /* will be modified in .ts file */
     --initial-vertical-offset: 0%; /* will be modified in .ts file */
@@ -13,19 +46,19 @@
     height: 100%;
     border-radius: 10px;
     background: #333333;
-    z-index: 10;
+    z-index: var(--pull-up-container-z-index);
 }
 .pull-up-container.lerping {
     transform: translate(-50%, calc(var(--initial-vertical-offset) + var(--total-displacement)));
 
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform var(--pull-up-container-transition-time) var(--pull-up-container-transition-anim-curve);
 }
 
 .pull-up-container__tab {
     background: #adadad;
     width: 100px;
-    height: 5px;
-    margin: 10px 0px 20px 0px;
+    height: var(--pull-up-container-tab-height);
+    margin: var(--pull-up-container-tab-margin-top) 0px var(--pull-up-container-tab-margin-bottom) 0px;
     border-radius: 100px;
 }
 
@@ -162,3 +195,67 @@
     flex-shrink: 0;
     width: 17px;
 }
+
+/* ======================================================================================
+   Map Rotate Button/Map Legend Button/Element Desciptions Toggle Info Button Overrides
+   ====================================================================================== */
+
+/* ========== overrides for all 3 map overlay elements ========== */
+
+.map__rotate-button--station-map-mobile,
+.map-legend--station-map-mobile,
+.element-descriptions__toggle-info-button--station-map-mobile {
+    --total-displacement: 0px; /* will be modified in .ts file */
+
+    transform: translateY(var(--total-displacement));
+}
+
+:is(
+    .map__rotate-button--station-map-mobile, 
+    .map-legend--station-map-mobile, 
+    .element-descriptions__toggle-info-button--station-map-mobile).lerping {
+        transform: translateY(var(--total-displacement));
+
+        transition: 
+            transform calc(var(--pull-up-container-transition-time) + 0.05s) var(--pull-up-container-transition-anim-curve);
+    }
+
+/* ========== overrides for map rotate button ========== */
+
+.map__rotate-button--station-map-mobile > .rotate-button__animated-parts-img--station-map-mobile {
+    width: 30px;
+}
+
+.map__rotate-button--station-map-mobile > .rotate-button__base-img--station-map-mobile {
+    width: 40px;
+}
+
+/* ========== overrides for map legend ========== */
+
+.map-legend--station-map-mobile {
+    height: 275px;
+    bottom: calc(
+            0.5% + 
+            var(--pull-up-container-tab-height) + 
+            var(--pull-up-container-tab-margin-top) + 
+            var(--pull-up-container-tab-margin-bottom)
+        )
+}
+
+.map-legend__toggle-button > .toggle-button__animated-parts-img--station-map-mobile {
+    width: 30px;
+}
+
+.map-legend__toggle-button > .toggle-button__base-img--station-map-mobile {
+    width: 40px;
+}
+
+/* ========== overrides for element descriptions toggle info button ========== */
+
+.element-descriptions__toggle-info-button--station-map-mobile {
+    top: auto;
+    bottom: 5%; 
+
+    z-index: calc(var(--map-legend-z-index) + 1);
+}
+
