@@ -7,6 +7,12 @@ interface PullUpContainerIncrements {
     routeFormFilterChecklistOverrideTogglesContainerIncrement: number
 }
 
+enum PullUpContainerIncrement {
+    PULL_UP_TAB,
+    LEVEL_STACK,
+    ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES
+}
+
 export class StationMapPageMobile extends StationMapPage {
     // only one element can be moved at the same time (prevents some weird desyncing problems)
     private currentMovingElement: HTMLElement | null = null;
@@ -257,7 +263,7 @@ export class StationMapPageMobile extends StationMapPage {
             // these scroll elements usually have buttons within them and so we want to prevent overriding the children's
             // event listeners with setPointerCapture() unless we deem that the person is actually dragging the container
             // versus tapping a button... this takes to account for this logic
-            const displacemenetJitter: number = 15;
+            const displacemenetJitter: number = 5;
             if (Math.abs(displacementX) > displacemenetJitter) 
                 scrollElement.setPointerCapture(ev.pointerId);
 
@@ -284,16 +290,17 @@ export class StationMapPageMobile extends StationMapPage {
                 if (currentPosX > maxClampPosX) {
                     currentPosX = maxClampPosX;
                     movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+                    movingElement.style.setProperty("--transition-time", "1s");
                     return;
                 }
                 else if (currentPosX < minClampPosX) {
                     currentPosX = minClampPosX;
                     movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+                    movingElement.style.setProperty("--transition-time", "1s");
                     return;
                 }
 
                 movingElement.classList.remove("lerping");
-                movingElement.style.setProperty("--transition-time", "1s");
             }
         });
     }
@@ -322,6 +329,7 @@ export class StationMapPageMobile extends StationMapPage {
         // init variables for our touch like movement (currentPosY will be stored in a global var)
         let startPosY: number = 0;
         let displacementY: number = 0;
+
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementYArray: number[] = [];
         const arraySizeLimit: number = 500;
@@ -415,7 +423,7 @@ export class StationMapPageMobile extends StationMapPage {
             // just random jitter
 
             // jitter here is in pixels
-            const displacementJitter: number = 20;
+            const displacementJitter: number = 5;
             if (displacementJitter < Math.abs(displacementY)) {
                 const totalDisplacement: number = this.pullUpContainerVars.currentPosY + displacementY;
                 pullUpContainer.style.setProperty("--total-displacement", `${totalDisplacement}px`);
@@ -431,8 +439,9 @@ export class StationMapPageMobile extends StationMapPage {
                 return;
             }
 
-            if (ev.propertyName === "transform")
+            if (ev.propertyName === "transform") {
                 pullUpContainer.classList.remove("lerping");
+            }
         });
 
         this.handleMapOverlayItemsTransitionLogic();
@@ -536,11 +545,8 @@ export class StationMapPageMobile extends StationMapPage {
         });
     }       
 
-    // overrides the begin step nav function, just toggles off the global var of preventing the pull up container from being pressed
-    // on top of the standard begin nav logic
-    public override beginStepNavigation(): void {
-        super.beginStepNavigation();
-
+    // updates the pull up container's positioning and press events
+    private updatePullUpContainer(incrementType: PullUpContainerIncrement, ignorePullUpContainerPressEvents: boolean) {
         if (this.pullUpContainerVars === null) {
             console.warn("No pull up container variables exist");
             return;
@@ -550,33 +556,35 @@ export class StationMapPageMobile extends StationMapPage {
         const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
 
         // update the styling of the pull up container
-        this.pullUpContainerVars.currentPosY = increments.levelStackIncrement;
+        switch (incrementType) {
+            case (PullUpContainerIncrement.PULL_UP_TAB):
+                this.pullUpContainerVars.currentPosY = increments.pullUpTabIncrement;
+                break;
+            case (PullUpContainerIncrement.LEVEL_STACK):
+                this.pullUpContainerVars.currentPosY = increments.levelStackIncrement;
+                break;
+            case (PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES):
+                this.pullUpContainerVars.currentPosY = increments.routeFormFilterChecklistOverrideTogglesContainerIncrement;
+                break;
+        }
         pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
         pullUpContainer.classList.add("lerping");
 
         // toggle off this boolean
-        this.ignorePullUpContainerPressEvents = false;
+        this.ignorePullUpContainerPressEvents = ignorePullUpContainerPressEvents;
     }
 
-    // overrides the end nav function, does some logic with the pull up container (press logic + moving the container back up)
+    // overrides the begin step nav function, does some logic with the pull up container (press logic + moving the container 
+    // to a certain increment)
+    public override beginStepNavigation(): void {
+        super.beginStepNavigation();
+        this.updatePullUpContainer(PullUpContainerIncrement.LEVEL_STACK, false);
+    }
+
+    // overrides the end nav function, does the same thing as begin step nav just for a different increment
     public override endNavigation(): void {
         super.endNavigation();
-
-        if (this.pullUpContainerVars === null) {
-            console.warn("Pull up container variables are not initialized");
-            return;
-        }
-
-        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
-        const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
-
-        // update the styling of the pull up container
-        this.pullUpContainerVars.currentPosY = increments.routeFormFilterChecklistOverrideTogglesContainerIncrement;
-        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
-        pullUpContainer.classList.add("lerping");
-
-        // toggle off our boolean, allow our pull up container to be pressed again
-        this.ignorePullUpContainerPressEvents = false;
+        this.updatePullUpContainer(PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES, false);
     }
 
     // get increments based on the vertical heights of the children in the pull up container
