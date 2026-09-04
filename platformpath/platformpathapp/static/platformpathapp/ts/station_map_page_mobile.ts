@@ -175,15 +175,14 @@ export class StationMapPageMobile extends StationMapPage {
 
         // set event listeners for pointerdown, pointerup, pointermove (basically a hybrid event listener for pc and touch devices)
         scrollElement.addEventListener("pointerdown", (ev: PointerEvent) => {
-            if (movingElement.classList.contains("lerping")) {
-                // provide a pause from lerping or any animations if screen is held down
-                const matrix: DOMMatrix = this.getCurrentTransformMatrix(movingElement);
-                // m41 returns the current x transform from the transform matrix (m42 returns y, m43 z)
-                currentPosX = matrix.m41;
-                movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
-                movingElement.style.setProperty("--transition-time", "1s");
-                movingElement.classList.remove("lerping");
-            }
+            // provide a pause from lerping or any animations if screen is held down
+            const matrix: DOMMatrix = this.getCurrentTransformMatrix(movingElement);
+            // m41 returns the current x transform from the transform matrix (m42 returns y, m43 z)
+            currentPosX = matrix.m41;
+            movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
+            movingElement.style.setProperty("--transition-time", "1s");
+            movingElement.classList.remove("lerping");
+
             // NOTE: this is important, this makes sure that focus is kept on the item
             // turns out you don't need it and it causes more issues... for one, children with pointerup/click event listeners 
             // will  literally get intercepted so those functions will never run and two, touch devices usually already
@@ -209,8 +208,8 @@ export class StationMapPageMobile extends StationMapPage {
                 maxClampPosX = movingElement.offsetWidth/2 - scrollElement.offsetWidth/2;
             }
             else {
-                minClampPosX = -movingElement.offsetWidth/4;
-                maxClampPosX = movingElement.offsetWidth/4;
+                minClampPosX = 0;
+                maxClampPosX = 0;
             }
                         
             // update our current pos
@@ -260,13 +259,6 @@ export class StationMapPageMobile extends StationMapPage {
             if (this.currentMovingElement !== scrollElement) 
                 return;
 
-            // these scroll elements usually have buttons within them and so we want to prevent overriding the children's
-            // event listeners with setPointerCapture() unless we deem that the person is actually dragging the container
-            // versus tapping a button... this takes to account for this logic
-            const displacemenetJitter: number = 5;
-            if (Math.abs(displacementX) > displacemenetJitter) 
-                scrollElement.setPointerCapture(ev.pointerId);
-
             // calculate the change in x-axis from the startPosX (which is set on touchdown)
             displacementX = ev.x - startPosX;
 
@@ -275,6 +267,14 @@ export class StationMapPageMobile extends StationMapPage {
             if (displacementXArray.length === arraySizeLimit) 
                 displacementXArray.shift();
             displacementXArray.push(displacementX);
+
+            // these scroll elements usually have buttons within them and so we want to prevent overriding the children's
+            // event listeners with setPointerCapture() unless we deem that the person is actually dragging the container
+            // versus tapping a button... this takes to account for this logic
+            const displacementJitter: number = 5;
+            if (displacementJitter < Math.abs(displacementX)) {
+                scrollElement.setPointerCapture(ev.pointerId);
+            }
             // find the total displacement
             const totalDisplacementX: number = currentPosX + displacementX;
             // translate by that value
@@ -284,7 +284,12 @@ export class StationMapPageMobile extends StationMapPage {
         // this removes the lerpingMax/Min/lerping class after the item reaches back the clamp value and 
         // resets the total displacement property back to the clamped value
         scrollElement.addEventListener("transitionend", (ev: TransitionEvent) => {
-            if (ev.propertyName === "transform") {
+            // there's some weird race condition (I'm not sure of) where, for certain moving elements (e.g. filter checklist);
+            // despite not having the "lerping" class; the transition end event would still trigger despite the user holding
+            // it down - which should pause the moving element in its track. This causes the element to snap back DESPITE
+            // not having lerping... hence we need to check if the element contains the class before we do anything
+
+            if (ev.propertyName === "transform" && movingElement.classList.contains("lerping")) {
                 // for the case of a swipe gesture that goes over the clamp values...
                 // shift the total displacement back to clamp value (sort of like a rebound effect: overshoot -> clamp back)
                 if (currentPosX > maxClampPosX) {
@@ -329,7 +334,6 @@ export class StationMapPageMobile extends StationMapPage {
         // init variables for our touch like movement (currentPosY will be stored in a global var)
         let startPosY: number = 0;
         let displacementY: number = 0;
-
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementYArray: number[] = [];
         const arraySizeLimit: number = 500;
@@ -341,12 +345,10 @@ export class StationMapPageMobile extends StationMapPage {
             if (this.pullUpContainerVars === null)
                 return;
 
-            if (pullUpContainer.classList.contains("lerping")) {
-                const matrix: DOMMatrix = this.getCurrentTransformMatrix(pullUpContainer);
-                this.pullUpContainerVars.currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
-                pullUpContainer.style.setProperty("--total--displacement", `${this.pullUpContainerVars.currentPosY}px`)
-                pullUpContainer.classList.remove("lerping");
-            }
+            const matrix: DOMMatrix = this.getCurrentTransformMatrix(pullUpContainer);
+            this.pullUpContainerVars.currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
+            pullUpContainer.style.setProperty("--total--displacement", `${this.pullUpContainerVars.currentPosY}px`)
+            pullUpContainer.classList.remove("lerping");
 
             // set the reference start pos
             startPosY = ev.y;
@@ -406,6 +408,7 @@ export class StationMapPageMobile extends StationMapPage {
             )
                 return;
 
+
             // clamp displacementY such that displacementY + this.pullUpContainerVars.pullUpContainerCurrentPosY is < -pullUpContainterHeight 
             // (it's negative since going vertically up means a decrease in the y value)
             displacementY = (
@@ -430,6 +433,7 @@ export class StationMapPageMobile extends StationMapPage {
 
                 // handle drag logic for the map overlay items
                 this.handleMapOverlayItemsDragLogic(increments, totalDisplacement);
+
             }
         });
 
