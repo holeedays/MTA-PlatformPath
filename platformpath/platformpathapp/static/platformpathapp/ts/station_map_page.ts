@@ -69,9 +69,8 @@ export class StationMapPage {
 
         // METHODS THAT DON'T REQUIRE STATION DATA
 
-        // init the site header toggle button (toggles the view of the site header, which could make diagram viewing more annoying in
-        // lower resolutions/dimensions)
-        this.initSiteHeaderToggleButton();
+        // inits the site header and all related elements to it
+        this.initSiteHeaderRelatedElements();
         // init the map legend
         this.initMapLegend();
         // init the base styling for step ui
@@ -1378,19 +1377,16 @@ export class StationMapPage {
     }
 
     ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA
-
-    // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
-    // (and map/station header/element descriptions toggle info button) ideally should retract the header so that the diagram can be 
-    // completely unobstructed
-    private initSiteHeaderToggleButton(): void {
-        const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header--station-map");
+    // inits handling for all site header related elements
+    private initSiteHeaderRelatedElements(): void {
+        const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header");
         const siteHeaderToggleButton: HTMLButtonElement | null | undefined = (
             siteHeaderContainer?.querySelector(".site-header__toggle-button"));
         const stationHeaderContainer: HTMLDivElement | null = document.querySelector(".map-header");
         const elementDescriptionsToggleInfoButton: HTMLButtonElement | null = (
             document.querySelector(".element-descriptions__toggle-info-button")
         );
-
+        
         if (
             siteHeaderContainer === null ||
             siteHeaderToggleButton === null ||
@@ -1408,6 +1404,67 @@ export class StationMapPage {
             return;
         }
 
+        // init global styling for the header
+        this.initSiteHeaderGlobalStyling(
+            siteHeaderContainer,
+            stationHeaderContainer,
+            elementDescriptionsToggleInfoButton
+        );
+        // init event logic for the site header toggle button
+        this.initSiteHeaderToggleButton(
+            siteHeaderToggleButton, 
+            siteHeaderContainer, 
+            stationHeaderContainer, 
+            elementDescriptionsToggleInfoButton
+        );
+    }
+
+    // init global styling (root variables, etc) for the site header and related elements
+    private initSiteHeaderGlobalStyling(
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement
+    ): void {
+        const root: HTMLElement = document.documentElement; 
+        // set these variables to account for responsive layout changes (not in real world usage, but for developer console users)
+        const phoneToTabletWidthThreshold: number = 768; 
+        const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${phoneToTabletWidthThreshold}px)`);
+        // set our header height variable initially
+        this.handleHeaderHeightChange(root, siteHeaderContainer, stationHeaderContainer, elementDescriptionsToggleInfoButton);
+        // allows us to change the site header height when we change dimensions (in an inspector panel)
+        mediaQuery.addEventListener("change", () => this.handleHeaderHeightChange(
+            root, 
+            siteHeaderContainer, 
+            stationHeaderContainer, 
+            elementDescriptionsToggleInfoButton)
+        );
+
+    }
+
+    // handler for dealing with changes with the header
+    public handleHeaderHeightChange(
+        root: HTMLElement,
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement | null
+    ): void {
+        // set our header height variable (which controls the map header/toggle button's vertical positioning)
+        root.style.setProperty("--site-header-height", `${siteHeaderContainer.offsetHeight}px`);
+        // add styling classes to our site header related elements
+        siteHeaderContainer.classList.add("no-transition");
+        stationHeaderContainer.classList.add("no-transition");
+        elementDescriptionsToggleInfoButton?.classList.add("no-transition");
+    }
+
+    // inits the event handling for the site header toggle button, toggles classes for a couple elements with the site header 
+    // (and map/station header/element descriptions toggle info button) ideally should retract the header so that the diagram can be 
+    // completely unobstructed
+    private initSiteHeaderToggleButton(
+        siteHeaderToggleButton: HTMLButtonElement,
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement
+    ): void {
         // boolean to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
         let siteHeaderButtonIsAnimating: boolean = false;
 
@@ -1418,12 +1475,14 @@ export class StationMapPage {
                 if (siteHeaderButtonIsAnimating) 
                     return;
 
-                // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
-                siteHeaderToggleButton.classList.add("animating");
-                siteHeaderToggleButton.classList.toggle("enabled", !isPressed);
-                siteHeaderContainer.classList.toggle("retracted", !isPressed);
-                stationHeaderContainer.classList.toggle("shifted-up", !isPressed);
-                elementDescriptionsToggleInfoButton.classList.toggle("shifted-up", !isPressed);
+                // toggle all the relevant styling for the site header related elements
+                this.handleSiteHeaderButtonToggling(
+                    siteHeaderToggleButton, 
+                    siteHeaderContainer, 
+                    stationHeaderContainer, 
+                    elementDescriptionsToggleInfoButton,
+                    isPressed
+                );
 
                 siteHeaderButtonIsAnimating = true;
                 isPressed = !isPressed;
@@ -1444,6 +1503,30 @@ export class StationMapPage {
                 siteHeaderButtonIsAnimating = false;
             }
         });
+    }
+
+    // this is the event logic (styling for site header related elements) for when the site header button is toggled
+    public handleSiteHeaderButtonToggling(
+        siteHeaderToggleButton: HTMLButtonElement, 
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement | null,
+        isToggled: boolean
+    ): void {
+        // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
+        siteHeaderToggleButton.classList.add("animating");
+        siteHeaderToggleButton.classList.toggle("enabled", !isToggled);
+        siteHeaderContainer.classList.toggle("retracted", !isToggled);
+        stationHeaderContainer.classList.toggle("shifted-up", !isToggled);
+        elementDescriptionsToggleInfoButton?.classList.toggle("shifted-up", !isToggled);
+
+        // (see initSiteHeaderGlobalStyling() for more info), this removes a class that disables transitions; the reason for this
+        // is the positioning of all header related items use a dynamically updated css variable, to avoid issues with weird
+        // positional translations (for ex: station header moves down on page load or when the site header is resized) we're gonna
+        // opt for this architectural implementation
+        siteHeaderContainer.classList.remove("no-transition");
+        stationHeaderContainer.classList.remove("no-transition");
+        elementDescriptionsToggleInfoButton?.classList.remove("no-transition");
     }
 
     // initialize the map legend
@@ -1569,7 +1652,7 @@ export class StationMapPage {
     }
 
     // inits some event logic for the element descriptions
-    private initElementDescriptions(): void {
+    public initElementDescriptions(): void {
         const elementDescriptions: NodeListOf<HTMLDivElement> = document.querySelectorAll<HTMLDivElement>(".element-description");
         // since some of these element descriptions are literally embedded in buttons, it's included as part of the event listners
         // of those buttons (which we don't want); this prevents bubbling from occuring 

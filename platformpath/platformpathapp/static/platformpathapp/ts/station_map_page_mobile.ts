@@ -164,6 +164,8 @@ export class StationMapPageMobile extends StationMapPage {
         // these values hold the min and max translation the movingElement can move
         let minClampPosX: number = -movingElement.offsetWidth/2 + scrollElement.offsetWidth/2;
         let maxClampPosX: number = movingElement.offsetWidth/2 - scrollElement.offsetWidth/2;
+        // this boolean prevents adding lerping if a touch movement isn't recognized
+        let touchMovementDetected: boolean = false;
 
         // set the moving element to its start position if the moving element is still wider than the scroll element
         // (which, assuming the scroll element is 100% width, means the browser viewport can't see the entire length of the
@@ -241,7 +243,9 @@ export class StationMapPageMobile extends StationMapPage {
 
             // update our moving element with the appropriate styling and translation position
             movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
-            movingElement.classList.add("lerping");
+            // if touch movement was detected and the overall displacement x wasn't just 0, add the lerping class
+            if (touchMovementDetected && displacementX !== 0)
+                movingElement.classList.add("lerping");
 
             // release focus on our elements here
             scrollElement.releasePointerCapture(ev.pointerId);
@@ -254,6 +258,8 @@ export class StationMapPageMobile extends StationMapPage {
             displacementX = 0;
             // remove the current moving element reference (so that other elements can be scrolled thru)
             this.currentMovingElement = null;
+            // reset our boolean for touch movement detection
+            touchMovementDetected = false;
         });
         scrollElement.addEventListener("pointermove", (ev: PointerEvent) => {
             if (this.currentMovingElement !== scrollElement) 
@@ -274,6 +280,8 @@ export class StationMapPageMobile extends StationMapPage {
             const displacementJitter: number = 5;
             if (displacementJitter < Math.abs(displacementX)) {
                 scrollElement.setPointerCapture(ev.pointerId);
+                // also set toggle our boolean for touch movement detection
+                touchMovementDetected = true;
             }
             // find the total displacement
             const totalDisplacementX: number = currentPosX + displacementX;
@@ -337,6 +345,8 @@ export class StationMapPageMobile extends StationMapPage {
         // this holds all the displacements from a single pointer down event (e.g. when user holds down on the screen)
         const displacementYArray: number[] = [];
         const arraySizeLimit: number = 500;
+        // this boolean prevents adding lerping if a touch movement isn't recognized
+        let touchMovementDetected: boolean = false;
 
         this.pullUpContainerVars.currentPosY = this.pullUpContainerVars.increments.pullUpTabIncrement;
         pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
@@ -375,16 +385,20 @@ export class StationMapPageMobile extends StationMapPage {
             // deal with swiping gestures here
             const framesInterval: number = 5;
             const velocityThreshold: number = 5;
-            if(this.swipeGestureDetected(displacementYArray, framesInterval, velocityThreshold)) {
+            if (this.swipeGestureDetected(displacementYArray, framesInterval, velocityThreshold)) {
                 const averageVelocityDuringFrameDuration: number = this.getAverageVelocity(displacementYArray, framesInterval);
                 const offset: number = 10;
                 const additionalDisplacementX: number = averageVelocityDuringFrameDuration*offset;
                 this.pullUpContainerVars.currentPosY += additionalDisplacementX;
             }
-            // get the closest increment to the current pos y
-            this.pullUpContainerVars.currentPosY = this.getClosestPos(this.pullUpContainerVars.currentPosY, Object.values(increments));
-            pullUpContainer.classList.add("lerping");
-            pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
+
+            // if touch movement was detected and the pull up container is not already on an increment, lerp the pull up container
+            const closestIncrementPos: number = this.getClosestPos(this.pullUpContainerVars.currentPosY, Object.values(increments));
+            if (touchMovementDetected && this.pullUpContainerVars.currentPosY !== closestIncrementPos) {
+                this.pullUpContainerVars.currentPosY = closestIncrementPos;
+                pullUpContainer.classList.add("lerping");
+                pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
+            }
 
             // handle our related map overlay logic here
             this.handleMapOverlayItemsReleaseLogic(increments, this.pullUpContainerVars.currentPosY);
@@ -393,6 +407,7 @@ export class StationMapPageMobile extends StationMapPage {
             displacementY = 0;
             displacementYArray.splice(0);
             this.currentMovingElement = null;
+            touchMovementDetected = false;
         });
 
         pullUpContainer.addEventListener("pointermove", (ev: PointerEvent) => {
@@ -433,7 +448,9 @@ export class StationMapPageMobile extends StationMapPage {
 
                 // handle drag logic for the map overlay items
                 this.handleMapOverlayItemsDragLogic(increments, totalDisplacement);
-
+            
+                // toggle our boolean indicating movement was detected
+                touchMovementDetected = true;
             }
         });
 
@@ -483,7 +500,6 @@ export class StationMapPageMobile extends StationMapPage {
             return;
         }
 
-
         if (currentPosY >= increments.levelStackIncrement) {
             this.mapOverlayItems.forEach((mapOverlayItem: HTMLElement) => {
                 const overlayDisplacement: number = currentPosY - increments.pullUpTabIncrement;
@@ -509,45 +525,34 @@ export class StationMapPageMobile extends StationMapPage {
         });
     }
 
-    // overrides the handle successful nav method logic from the base ts file (mostly just adds logic for the pull up container for
-    // this section)
-    public override handleSuccessfulNavigation(): void {
-        super.handleSuccessfulNavigation();
-
-        if (this.pullUpContainerVars === null || this.nodeDropdownButtons === null) {
+    // updates map overlay items based on the specified pull up container increment, similar in function to updatePullUpContainer() below
+    private updateMapOverlayItems(incrementType: PullUpContainerIncrement): void {
+        if (this.mapOverlayItems.length === 0 || this.pullUpContainerVars === null) {
             console.warn(
-                "Pull up container variables and/or node dropdown button instances aren't initialized,",
-                `Pull Up Container Variables Status: ${this.pullUpContainerVars}`,
-                `Node Dropdown Buttons Status: ${this.nodeDropdownButtons}`
+                "Map overlay items field or pull up container variables are not initialized",
+                `Map Overlay Items Status: ${this.mapOverlayItems}`,
+                `Pull Up Container variables Status: ${this.pullUpContainerVars}`
             );
             return;
         }
 
-        // pull up container logic here
-        const pullUpContainer: HTMLDivElement = this.pullUpContainerVars.pullUpContainer;
         const increments: PullUpContainerIncrements = this.pullUpContainerVars.increments;
-        
-        // shift the pull up container back down when the navigation is revealed
-        this.pullUpContainerVars.currentPosY = increments.pullUpTabIncrement;
-        pullUpContainer.style.setProperty("--total-displacement", `${this.pullUpContainerVars.currentPosY}px`);
-        pullUpContainer.classList.add("lerping");
-        // and set our global bool here to prevent the pull up container from being able to be pressed
-        this.ignorePullUpContainerPressEvents = true;
 
-        // node dropdown buttons logic here...
-        const nodeDropdownButtonsArray: NodeDropdownButton[] = Object.values(this.nodeDropdownButtons);
-        nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
-            // get the route form (parent container of the dropdown button)
-            const routeFormParent: HTMLDivElement | null = nodeDropdownButton.Self.parentElement as HTMLDivElement | null;
-            if (routeFormParent === null) {
-                console.warn(`Route form parent for ${nodeDropdownButton.Self} doesn't exist`)
-                return;
-            }
-            // essentially hide the dropdown here if it's open
-            nodeDropdownButton.IsToggled = false;
-            routeFormParent.append(nodeDropdownButton.LinkedDropdown);
-        });
-    }       
+        let targetPosY: number = 0;
+        // if level stack or route form increments are specified, we're still capping the level stack increment as the highest increment 
+        // the map overlay items can move to
+        if (
+            incrementType === PullUpContainerIncrement.LEVEL_STACK || 
+            incrementType === PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES
+        ) {
+            targetPosY = increments.levelStackIncrement - increments.pullUpTabIncrement;
+        }
+
+        this.mapOverlayItems.forEach((mapOverlayItem: HTMLElement) => {
+            mapOverlayItem.style.setProperty("--total-displacement", `${targetPosY}px`);
+            mapOverlayItem.classList.add("lerping");
+        });     
+    }
 
     // updates the pull up container's positioning and press events
     private updatePullUpContainer(incrementType: PullUpContainerIncrement, ignorePullUpContainerPressEvents: boolean) {
@@ -576,19 +581,6 @@ export class StationMapPageMobile extends StationMapPage {
 
         // toggle off this boolean
         this.ignorePullUpContainerPressEvents = ignorePullUpContainerPressEvents;
-    }
-
-    // overrides the begin step nav function, does some logic with the pull up container (press logic + moving the container 
-    // to a certain increment)
-    public override beginStepNavigation(): void {
-        super.beginStepNavigation();
-        this.updatePullUpContainer(PullUpContainerIncrement.LEVEL_STACK, false);
-    }
-
-    // overrides the end nav function, does the same thing as begin step nav just for a different increment
-    public override endNavigation(): void {
-        super.endNavigation();
-        this.updatePullUpContainer(PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES, false);
     }
 
     // get increments based on the vertical heights of the children in the pull up container
@@ -707,6 +699,66 @@ export class StationMapPageMobile extends StationMapPage {
         return totalVelocity/framesInterval;
     }
 
+    // get whether a position is within the bounds of a given element (plus some marginOfError if wanted)
+    private withinBoundaries(element: HTMLElement, xPos: number, yPos: number, marginOfError: number = 0): boolean {
+        const elementPos: DOMRect = element.getBoundingClientRect();
+
+        if (
+            xPos >= elementPos.left - marginOfError &&
+            xPos <= elementPos.right + marginOfError &&
+            yPos >= elementPos.top - marginOfError &&
+            yPos <= elementPos.bottom + marginOfError
+        )
+            return true;
+        
+        return false;
+    }
+
+    // overrides the begin step nav function, does some logic with the pull up container (press logic + moving the container 
+    // to a certain increment)
+    public override beginStepNavigation(): void {
+        super.beginStepNavigation();
+        this.updatePullUpContainer(PullUpContainerIncrement.LEVEL_STACK, false);
+        this.updateMapOverlayItems(PullUpContainerIncrement.LEVEL_STACK);
+    }
+
+    // overrides the end nav function, does the same thing as begin step nav just for a different increment
+    public override endNavigation(): void {
+        super.endNavigation();
+        this.updatePullUpContainer(PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES, false);
+        this.updateMapOverlayItems(PullUpContainerIncrement.ROUTE_FORM_FILTER_CHECKLIST_OVERRIDE_TOGGLES);
+    }
+
+    // overrides the handle successful nav method logic from the base ts file (mostly just adds logic for the pull up container for
+    // this section)
+    public override handleSuccessfulNavigation(): void {
+        super.handleSuccessfulNavigation();
+
+        if (this.nodeDropdownButtons === null) {
+            console.warn("Node dropdown buttons don't exist");
+            return;
+        }
+        
+        // shift the pull up container back down when the navigation is revealed and modify some booleans to ignore press events
+        this.updatePullUpContainer(PullUpContainerIncrement.PULL_UP_TAB, true);
+        // do the same for our map overlay items
+        this.updateMapOverlayItems(PullUpContainerIncrement.PULL_UP_TAB);
+
+        // node dropdown buttons logic here...
+        const nodeDropdownButtonsArray: NodeDropdownButton[] = Object.values(this.nodeDropdownButtons);
+        nodeDropdownButtonsArray.forEach((nodeDropdownButton: NodeDropdownButton) => {
+            // get the route form (parent container of the dropdown button)
+            const routeFormParent: HTMLDivElement | null = nodeDropdownButton.Self.parentElement as HTMLDivElement | null;
+            if (routeFormParent === null) {
+                console.warn(`Route form parent for ${nodeDropdownButton.Self} doesn't exist`)
+                return;
+            }
+            // essentially hide the dropdown here if it's open
+            nodeDropdownButton.IsToggled = false;
+            routeFormParent.append(nodeDropdownButton.LinkedDropdown);
+        });
+    }       
+
     // inits additional event handling logic for the node dropdowns specifically meant for the mobile port
     public override initNodeDropdownButtons(): void {
         const dropdownHost: HTMLDivElement | null = document.querySelector(".route-form__dropdown-host");
@@ -754,6 +806,50 @@ export class StationMapPageMobile extends StationMapPage {
         })
     }
 
+    // overrides the event logic for when the header height is changed
+    public handleHeaderHeightChange(
+        root: HTMLElement,
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement | null
+    ): void {
+        // it's the exact same methods as the original except we omit styling for the element descriptions toggle button for now
+        root.style.setProperty("--site-header-height", `${siteHeaderContainer.offsetHeight}px`);
+        siteHeaderContainer.classList.add("no-transition");
+        stationHeaderContainer.classList.add("no-transition");
+    }
+
+    // overrides to the event logic of when the site header button is toggled
+    public override handleSiteHeaderButtonToggling(
+        siteHeaderToggleButton: HTMLButtonElement, 
+        siteHeaderContainer: HTMLDivElement,
+        stationHeaderContainer: HTMLDivElement,
+        elementDescriptionsToggleInfoButton: HTMLButtonElement | null,
+        isToggled: boolean
+    ): void {
+        // we do the exact same methods as the original method except we omit styling for the element descriptions toggle info 
+        // button for now
+        siteHeaderToggleButton.classList.add("animating");
+        siteHeaderToggleButton.classList.toggle("enabled", !isToggled);
+        siteHeaderContainer.classList.toggle("retracted", !isToggled);
+        stationHeaderContainer.classList.toggle("shifted-up", !isToggled);
+
+        siteHeaderContainer.classList.remove("no-transition");
+        stationHeaderContainer.classList.remove("no-transition");
+    }
+
+    // overrides event overloading for our element description items
+    public override initElementDescriptions(): void {
+        // exactly the same as the original function except we're adding pointerup/move/down listeners instead of click and preventing
+        // bubbling propagation
+        const elementDescriptions: NodeListOf<HTMLDivElement> = document.querySelectorAll<HTMLDivElement>(".element-description");
+        elementDescriptions.forEach((elementDescription: HTMLDivElement) => {
+            elementDescription.addEventListener("pointerdown", (ev: MouseEvent) => ev.stopPropagation());
+            elementDescription.addEventListener("pointermove", (ev: MouseEvent) => ev.stopPropagation());
+            elementDescription.addEventListener("pointerup", (ev: MouseEvent) => ev.stopPropagation());
+        });
+    }
+
     // overrides the interaction handler function logic from the base ts file
     public override initInteractionHandlers(): void {
         this.stationMapInteractionHandlers.forEach((stationMapInteractionHandler: StationMapInteractionHandler) => {
@@ -768,20 +864,5 @@ export class StationMapPageMobile extends StationMapPage {
                     handler();
             });
         });
-    }
-
-    // get whether a position is within the bounds of a given element (plus some marginOfError if wanted)
-    private withinBoundaries(element: HTMLElement, xPos: number, yPos: number, marginOfError: number = 0): boolean {
-        const elementPos: DOMRect = element.getBoundingClientRect();
-
-        if (
-            xPos >= elementPos.left - marginOfError &&
-            xPos <= elementPos.right + marginOfError &&
-            yPos >= elementPos.top - marginOfError &&
-            yPos <= elementPos.bottom + marginOfError
-        )
-            return true;
-        
-        return false;
     }
 }

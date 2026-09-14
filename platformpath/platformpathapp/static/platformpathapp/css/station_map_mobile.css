@@ -6,12 +6,16 @@
                                                                         the step ui/preview block (which it overlaps when extended) */
 
     /* new vars */
+
+    /* for pull up container related variables*/
     --pull-up-container-z-index: 10;
     --pull-up-container-transition-time: 0.5s;
     --pull-up-container-transition-anim-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --pull-up-container-tab-height: 5px;
     --pull-up-container-tab-margin-top: 10px;
     --pull-up-container-tab-margin-bottom: 20px;
+
+    --route-preview-step-ui-bottom: 200px;
 }
 
 /* ===============================
@@ -19,9 +23,8 @@
    =============================== */
 
 .map-header--station-map-mobile {
+    left: 10px;
     right: auto;
-    top: 11%; /* change this for an absolute value later... */
-    left: 3%;
 }
 
 .map-header--station-map-mobile h1 {
@@ -145,6 +148,7 @@
     width: 100%;
     border: none;
     background: none;
+    padding: 5px;
 }
 
 /* route form */
@@ -164,6 +168,10 @@
 }
 .route-field__dropdown--station-map-mobile::-webkit-scrollbar {
     width: 5px;
+}
+
+.route-form__button--station-map-mobile {
+    padding: 20px 10px;
 }
 
 /* filter checklist */
@@ -196,6 +204,17 @@
     width: 17px;
 }
 
+/* override toggles */
+.override-toggles--station-map-mobile {
+    width: auto;
+    padding: 5px 15px;
+}
+
+.override-toggles__toggle-buttons-container--station-map-mobile {
+    justify-content: center;
+    padding: 0px 0px 0px 20px;
+}
+
 /* ======================================================================================
    Map Rotate Button/Map Legend Button/Element Desciptions Toggle Info Button Overrides
    ====================================================================================== */
@@ -211,8 +230,8 @@
 }
 
 :is(
-    .map__rotate-button--station-map-mobile, 
-    .map-legend--station-map-mobile, 
+    .map__rotate-button--station-map-mobile.lerping, 
+    .map-legend--station-map-mobile.lerping, 
     .element-descriptions__toggle-info-button--station-map-mobile).lerping {
         transform: translateY(var(--total-displacement));
 
@@ -242,11 +261,15 @@
         )
 }
 
-.map-legend__toggle-button > .toggle-button__animated-parts-img--station-map-mobile {
+.map-legend__info-container--station-map-mobile::-webkit-scrollbar {
+    width: 5px;
+}
+
+.map-legend__toggle-button--station-map-mobile > .toggle-button__animated-parts-img--station-map-mobile {
     width: 30px;
 }
 
-.map-legend__toggle-button > .toggle-button__base-img--station-map-mobile {
+.map-legend__toggle-button--station-map-mobile > .toggle-button__base-img--station-map-mobile {
     width: 40px;
 }
 
@@ -257,5 +280,97 @@
     bottom: 5%; 
 
     z-index: calc(var(--map-legend-z-index) + 1);
+
+    transition: none;
 }
 
+/* ===========================================================
+   Route Preview + Step UI Overrides
+   =========================================================== */
+
+.route-preview--station-map-mobile,
+.step-ui--station-map-mobile {
+    bottom: var(--route-preview-step-ui-bottom);
+}
+
+
+/* ===========================================================
+   Element Description Overrides + New Element Descriptions
+   =========================================================== */
+
+/* ======== (new) pull-up container ======== */
+.element-description__pull-up-container {
+    flex-direction: column;
+    bottom: 98%;
+    left: 8.5%;
+}
+
+.element-description__pull-up-container span {
+    height: 125px;
+    width: 135px;
+    text-align: start;
+    border-radius: 10px;
+    overflow: auto;
+}
+.element-description__pull-up-container ul {
+    padding: 10px 0px 0px 15px;
+}
+.element-description__pull-up-container ul li {
+    padding: 0px 0px 5px 0px;
+}
+
+.element-description__pull-up-container span::-webkit-scrollbar {
+    width: 5px;
+}
+.element-description__pull-up-container span::-webkit-scrollbar-track {
+    background: #1f1f1f;
+}
+.element-description__pull-up-container span::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 100px;                    
+}
+.element-description__pull-up-container span::-webkit-scrollbar-thumb:active {
+    background: #cacaca;
+}
+
+/* ======== global element description overrides (applied to all element descriptions) ======== */
+.element-description--station-map-mobile span {
+    box-shadow: 0 0 5px 1px #000000;
+}
+
+/* ======== map header overrides ======== */
+.element-description__map-header--station-map-mobile {
+    left: 93%;
+    bottom: 50%;
+    transform: translateY(50%);
+}
+
+/* ======== element description step ui route preview overrides ======== */
+.element-description__step-ui-route-preview--station-map-mobile {
+    flex-direction: column;
+    right: 50%;
+    left: auto;
+    bottom: calc(var(--route-preview-step-ui-bottom) + 110px);
+    transform: translateX(50%);
+}
+
+.element-description__step-ui-route-preview--station-map-mobile span {
+    position: relative;
+    bottom: auto;
+    left: auto;
+}
+
+/* ======== accessibility options overrides ======== */
+:is(
+    .element-description__accessibility-none-toggle-button--station-map-mobile,
+    .element-description__accessibility-only-toggle-button--station-map-mobile) span {
+    width: 200px;
+}
+
+
+@media(min-width: 768px) {
+    .route-form__wrapper, 
+    .route-form__dropdown-host {
+        max-width: 768px;
+    }
+}

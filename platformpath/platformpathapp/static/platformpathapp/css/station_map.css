@@ -4,9 +4,8 @@
 
 :root { /* define global vars here */
     --site-diagram-container-bg-color: #171717; /* bg color for the site and the diagram container */
-    --site-header-height: 60px; /* this var is global since there will be no header spacer on this page... the diagram container
-                                    will take the full lot of space */ 
-
+    --site-header-height: 0px; /* ***The value will be initialized via ts*** this var is global since there will be no header 
+                                    spacer on this page... the diagram container will take the full lot of space */ 
     /* these two fill variables are for the start/end node highlight (and for the legend) */
     --start-node-highlight-fill: #9900ff;
     --end-node-highlight-fill: #e5ff00;
@@ -80,13 +79,15 @@ body {
    ========================================================================== */
 
 .site-header--station-map {
-    height: var(--site-header-height);
     background: #000000;
 
     transition: transform 0.25s ease-in-out;
 }
 .site-header--station-map.retracted {
-    transform: translateY(-60px);
+    transform: translateY(calc(var(--site-header-height) * -1));
+}
+.site-header--station-map.no-transition {
+    transition: none;
 }
 
 /* toggle button */
@@ -102,7 +103,7 @@ body {
     position: absolute;
     align-items: center;
     justify-items: center;
-    top: 65px;
+    top: calc(var(--site-header-height));
     /* these 2 lines is a hack to center the absolute positioned button*/
     left: 50%; 
     transform: translateX(-50%);
@@ -213,17 +214,20 @@ to work properly; we use a custom keyframe animation */
 }
 
 .map-header {
-    top: calc(var(--site-header-height) + 20px); /* the map header should be ideally header height + a little margin */
+    top: calc(var(--site-header-height) + 35px); /* the map header should be ideally header height + a little margin */
     right: 48px;
     max-width: calc(100% - 240px);
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
 
-    transition: top 0.25s ease-in-out;
+    transition: transform 0.25s ease-in-out;
 }
 .map-header.shifted-up {
-    top: 30px;
+    transform: translateY(calc(var(--site-header-height) * -1));
+}
+.map-header.no-transition {
+    transition: none;
 }
 
 .map-header h1 {
@@ -1296,16 +1300,19 @@ if the arrow has the class (.route-direction__label) and target any paths within
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
-    top: calc(var(--site-header-height) + 20px);
+    top: calc(var(--site-header-height) + 35px);
     left: 1%;
     background: none;
     border: none;
     cursor: pointer;
 
-    transition: top 0.25s ease-in-out;
+    transition: transform 0.25s ease-in-out;
 }
 .element-descriptions__toggle-info-button.shifted-up {
-    top: 30px;
+    transform: translateY(calc(var(--site-header-height) * -1));
+}
+.element-descriptions__toggle-info-button.no-transition {
+    transform: none;
 }
 
 /* general styling for the button imgs */
