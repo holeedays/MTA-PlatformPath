@@ -4,7 +4,8 @@ from platformpathapp.models import Station, Line, StationLine, Node, Edge, Layer
 
 from typing import Any
 # Import individual stations
-from platformpathapp.management.stations import st_bay_50_st, st_25_av, st_bay_pkwy, _test_station_n_1, _test_station_n_2
+from platformpathapp.management.stations import st_bay_50_st, st_25_av, st_bay_pkwy, st_20_av, _test_station_n_1, _test_station_n_2
+from platformpathapp.management.commands.create_all_lines import Command as create_all_lines_command
 
 class Command(BaseCommand):
     help = 'Seed initial station data'
@@ -19,10 +20,15 @@ class Command(BaseCommand):
         st_bay_50_st.seed(self.stdout, self.style)
         st_25_av.seed(self.stdout, self.style)
         st_bay_pkwy.seed(self.stdout, self.style)
+        st_20_av.seed(self.stdout, self.style)
 
         # NOTE: FOR TESTING PURPOSES... REMOVE LATER!
         _test_station_n_1.seed(self.stdout, self.style)
         _test_station_n_2.seed(self.stdout, self.style)
+
+        # create all our line models as well
+        cmd: create_all_lines_command = create_all_lines_command()
+        cmd.handle()
 
         self.stdout.write(self.style.SUCCESS("\nAll station data seeded successfully!"))
 

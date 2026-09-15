@@ -28,7 +28,7 @@
 					<a href="/not-found">NAVIGATE</a>
 			</nav>
 		</div>
-		<button class="site-header__toggle-button">
+		<button class="site-header__toggle-button" aria-expanded="true" aria-label="Hide site navigation">
 			<img 
 				class="toggle-button__animated-parts-img"
 				src="{% static 'platformpathapp/decals/site_header_toggle_button_animated_parts.svg' %}" 
@@ -287,7 +287,7 @@
 			</div>
 
 			<!-- ================= MAP ROTATE BUTTON ================= -->
-			<button class="map-overlay map__rotate-button map__rotate-button--station-map-mobile">
+			<button class="map-overlay map__rotate-button map__rotate-button--station-map-mobile" aria-pressed="false">
 				<img 
 					class="rotate-button__animated-parts-img rotate-button__animated-parts-img--station-map-mobile" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
@@ -441,7 +441,10 @@
 						</div>
 					</div>
 				</div>
-				<button class="map-legend__toggle-button map-legend__toggle-button--station-map-mobile">
+				<button 
+					class="map-legend__toggle-button map-legend__toggle-button--station-map-mobile" 
+					aria-expanded="false" aria-label="Show map legend"
+				>
 					<img 
 						class="toggle-button__animated-parts-img toggle-button__animated-parts-img--station-map-mobile"
 						src="{% static 'platformpathapp/decals/map_legend_toggle_button_animated_parts.svg' %}" 
@@ -463,6 +466,7 @@
 			<!-- ================= ELEMENT DESCRIPTIONS TOGGLE INFO BUTTON ================= -->
 			<button class="
 				map-overlay element-descriptions__toggle-info-button element-descriptions__toggle-info-button--station-map-mobile"
+				aria-pressed="false"
 			>
 				<img 
 					class="toggle-info-button__enabled-button-img"

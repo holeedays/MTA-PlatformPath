@@ -27,7 +27,7 @@
 					<a href="/not-found">NAVIGATE</a>
 			</nav>
 		</div>
-		<button class="site-header__toggle-button">
+		<button class="site-header__toggle-button" aria-expanded="true" aria-label="Hide site navigation">
 			<img 
 				class="toggle-button__animated-parts-img"
 				src="{% static 'platformpathapp/decals/site_header_toggle_button_animated_parts.svg' %}" 
@@ -84,7 +84,7 @@
 					<div class="filter-checklist__checkboxes-container-wrapper hidden">
 						<div class="filter-checklist__checkboxes-container"></div>
 					</div>
-					<button class="filter-checklist__toggle-button">
+					<button class="filter-checklist__toggle-button" aria-expanded="false" aria-label="Show station feature filters">
 						<img src="{% static 'platformpathapp/decals/dropdown_arrow_reversed_logo.svg' %}" alt="Filter checklist toggle button icon">
 						SELECT FILTERS
 					</button>
@@ -213,7 +213,7 @@
 			</div>
 
 			<!-- ================= MAP ROTATE BUTTON ================= -->
-			<button class="map-overlay map__rotate-button">
+			<button class="map-overlay map__rotate-button" aria-pressed="false">
 				<img 
 					class="rotate-button__animated-parts-img" 
 					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
@@ -367,7 +367,7 @@
 						</div>
 					</div>
 				</div>
-				<button class="map-legend__toggle-button">
+				<button class="map-legend__toggle-button" aria-expanded="false" aria-label="Show map legend">
 					<img 
 						class="toggle-button__animated-parts-img"
 						src="{% static 'platformpathapp/decals/map_legend_toggle_button_animated_parts.svg' %}" 
@@ -387,7 +387,7 @@
 			</aside>
 
 			<!-- ================= ELEMENT DESCRIPTIONS TOGGLE INFO BUTTON ================= -->
-			<button class="map-overlay element-descriptions__toggle-info-button">
+			<button class="map-overlay element-descriptions__toggle-info-button" aria-pressed="false">
 				<img 
 					class="toggle-info-button__enabled-button-img"
 					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button_enabled.svg' %}"

@@ -831,6 +831,11 @@ export class StationMapPageMobile extends StationMapPage {
         // button for now
         siteHeaderToggleButton.classList.add("animating");
         siteHeaderToggleButton.classList.toggle("enabled", !isToggled);
+        siteHeaderToggleButton.setAttribute("aria-expanded", isToggled.toString());
+        siteHeaderToggleButton.setAttribute(
+            "aria-label",
+            !isToggled ? "Show site navigation": "Hide site navigation"
+        );
         siteHeaderContainer.classList.toggle("retracted", !isToggled);
         stationHeaderContainer.classList.toggle("shifted-up", !isToggled);
 

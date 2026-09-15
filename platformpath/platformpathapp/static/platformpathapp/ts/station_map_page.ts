@@ -466,6 +466,11 @@ export class StationMapPage {
 
                 filterChecklistToggleButton.classList.toggle("enabled", !isPressed);
                 filterChecklistCheckboxesContainerWrapper.classList.toggle("hidden", isPressed);
+                filterChecklistToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
+                filterChecklistToggleButton.setAttribute(
+                    "aria-label",
+                    isPressed ? "Show station feature filters" : "Hide station feature filters"
+                );
 
             filterChecklistToggleButtonIsTransitioning = true;
             isPressed = !isPressed;
@@ -578,6 +583,7 @@ export class StationMapPage {
 
                 // add a TEMPORARY class that functions as a brief animatic for the button (to provide a little more juice to interactivity)
                 mapRotateButton.classList.add("animating");
+                mapRotateButton.setAttribute("aria-pressed", (!isPressed).toString());
                 diagramContainer.classList.add("swapping");
 
                 // if the button hasn't been toggled before and the diagram rotated path exists 
@@ -1483,7 +1489,6 @@ export class StationMapPage {
                     elementDescriptionsToggleInfoButton,
                     isPressed
                 );
-
                 siteHeaderButtonIsAnimating = true;
                 isPressed = !isPressed;
             }
@@ -1516,6 +1521,11 @@ export class StationMapPage {
         // NOTE: animating is similar to the map rotate button's animating (which is temp and will be removed almost immediately)
         siteHeaderToggleButton.classList.add("animating");
         siteHeaderToggleButton.classList.toggle("enabled", !isToggled);
+        siteHeaderToggleButton.setAttribute("aria-expanded", isToggled.toString());
+        siteHeaderToggleButton.setAttribute(
+            "aria-label",
+            !isToggled ? "Show site navigation": "Hide site navigation"
+        );
         siteHeaderContainer.classList.toggle("retracted", !isToggled);
         stationHeaderContainer.classList.toggle("shifted-up", !isToggled);
         elementDescriptionsToggleInfoButton?.classList.toggle("shifted-up", !isToggled);
@@ -1568,7 +1578,12 @@ export class StationMapPage {
                 // same as the site header toggle button + map rotate button, add a temp animating class 
                 mapLegendToggleButton.classList.add("animating");
                 mapLegendToggleButton.classList.toggle("enabled", !isPressed);
-                
+                mapLegendToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
+                mapLegendToggleButton.setAttribute(
+                    "aria-label", 
+                    isPressed ? "Show map legend" : "Hide map legend"
+                );
+            
                 toggleButtonIsAnimating = true;
                 isPressed = !isPressed;
             }
@@ -1638,6 +1653,7 @@ export class StationMapPage {
             return () => {
                 elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
                 elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
+                elementDescriptionsToggleInfoButton.setAttribute("aria-pressed", (!isPressed).toString());
 
                 isPressed = !isPressed;
             }
