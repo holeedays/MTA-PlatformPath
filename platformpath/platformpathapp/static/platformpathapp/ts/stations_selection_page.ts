@@ -427,8 +427,8 @@ export class StationsSelectionPage {
         // (e.g. the .loading class stays permanently attached); this also requires some css correspondence however, which
         // is making sure the list item wrapper transition time is the same or shorter than the animation of the direction description 
         // and slider (whichever one is longest in duration)
-        listItemWrapper.addEventListener("transitionend", (ev: TransitionEvent) => {
-            if (ev.propertyName === "opacity")
+        listItemWrapper.addEventListener("animationend", (ev: AnimationEvent) => {
+            if (ev.animationName === "ListItemWrapperLoadAnimation")
                 listItemWrapper.classList.remove("loading");
         });
     }

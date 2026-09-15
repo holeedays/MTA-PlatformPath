@@ -27,7 +27,7 @@ a {
     text-decoration: none;
 }
 
-@keyframes page_load_in {
+@keyframes PageLoadInAnimation {
     from {
         opacity: 0;
     }
@@ -47,7 +47,7 @@ body {
 }
 
 body {
-    animation: page_load_in 0.5s ease-in-out both;
+    animation: PageLoadInAnimation 0.5s ease-in-out both;
     background: var(--site-diagram-container-bg-color);
 
     position: relative;
@@ -1611,11 +1611,13 @@ if the arrow has the class (.route-direction__label) and target any paths within
 
 .site-footer--station-map {
     position: absolute;
-    flex-direction: row !important;
+    flex-direction: row;
     bottom: 0.1%;
     z-index: 0;
-    gap: 20px !important;
-    padding: 5px 0px !important;
+    gap: 20px;
+    padding: 5px 0px;
+    background: none;
+    justify-content: center;
 }
 
 .brand__logo--station-map.brand__logo--sm {

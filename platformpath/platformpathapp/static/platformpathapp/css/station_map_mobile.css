@@ -32,9 +32,9 @@
 }
 
 
-/* ========================================================================================================================
-   Pull Up Container (master container that holds the level and the route form filter checklist override toggles container)
-   ======================================================================================================================== */
+/* ===============================================================================================================================
+   Pull Up Container (master container that holds the layers, route form filter checklist override toggles container, and footer)
+   =============================================================================================================================== */
 
 .pull-up-container {
     --total-displacement: 0px; /* will be modified in .ts file */
@@ -156,8 +156,18 @@
 .route-form__dropdown-host {
     width: 100%;
 }
+.route-form__wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 .route-form__dropdown-host {
     position: relative;
+}
+
+.route-form--station-map-mobile {
+    width: 95%;
+    align-items: center;
 }
 
 .route-field__dropdown--station-map-mobile {
@@ -215,12 +225,30 @@
     padding: 0px 0px 0px 20px;
 }
 
+/* ========== overrides for footer ========== */
+.site-footer--station-map-mobile {
+    position: relative;
+    flex-direction: column;
+    flex: 1;
+    justify-content: flex-start;
+    border-radius: 10px;
+    margin: 20px 0px 0px 0px;
+    padding: 20px 0px 0px 0px;
+    gap: 10px;
+    bottom: auto;
+    background: #222222;
+}
+
+.site-footer__legal--station-map-mobile {
+    flex-direction: column;
+    gap: 3px;
+}
+
 /* ======================================================================================
    Map Rotate Button/Map Legend Button/Element Desciptions Toggle Info Button Overrides
    ====================================================================================== */
 
 /* ========== overrides for all 3 map overlay elements ========== */
-
 .map__rotate-button--station-map-mobile,
 .map-legend--station-map-mobile,
 .element-descriptions__toggle-info-button--station-map-mobile {
@@ -240,7 +268,6 @@
     }
 
 /* ========== overrides for map rotate button ========== */
-
 .map__rotate-button--station-map-mobile > .rotate-button__animated-parts-img--station-map-mobile {
     width: 30px;
 }
@@ -250,7 +277,6 @@
 }
 
 /* ========== overrides for map legend ========== */
-
 .map-legend--station-map-mobile {
     height: 275px;
     bottom: calc(
@@ -274,7 +300,6 @@
 }
 
 /* ========== overrides for element descriptions toggle info button ========== */
-
 .element-descriptions__toggle-info-button--station-map-mobile {
     top: auto;
     bottom: 5%; 
@@ -292,7 +317,6 @@
 .step-ui--station-map-mobile {
     bottom: var(--route-preview-step-ui-bottom);
 }
-
 
 /* ===========================================================
    Element Description Overrides + New Element Descriptions
@@ -367,7 +391,9 @@
     width: 200px;
 }
 
-
+/* ===========================================================
+   Big tablet (>768px) overrides
+   =========================================================== */
 @media(min-width: 768px) {
     .route-form__wrapper, 
     .route-form__dropdown-host {

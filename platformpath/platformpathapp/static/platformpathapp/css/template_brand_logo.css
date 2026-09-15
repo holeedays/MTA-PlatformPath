@@ -20,9 +20,38 @@
     height: 1.6em;
 }
 
+.brand__logo--lg {
+    height: 5.2em;
+}
+
 .brand__name {
-    font-size: 16px;
     font-weight: 800;
     color: #1a4fd6;
     letter-spacing: 0.5px;
+}
+
+.brand__name--sm {
+    font-size: 16px;
+}
+
+.brand__name--lg {
+    font-size: 70px;
+}
+
+/* phone/tablet overrides */
+@media (max-width: 768px) {
+    .brand__logo--sm {
+        width: 15px;
+        height: auto;
+    }
+    .brand__logo--lg {
+        height: 2.4em;
+    }
+
+    .brand__name--sm {
+        font-size: 12px;
+    }
+    .brand__name--lg {
+        font-size: 25px;
+    }
 }

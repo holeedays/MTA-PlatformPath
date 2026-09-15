@@ -24,7 +24,7 @@ a {
     text-decoration: none;
 }
 
-@keyframes page_load_in {
+@keyframes PageLoadInAnimation {
     from {
         opacity: 0;
     }
@@ -40,7 +40,7 @@ html, body {
 }
 
 body {
-    animation: page_load_in 0.5s ease-in-out both;
+    animation: PageLoadInAnimation 0.5s ease-in-out both;
     background: #1b1b1b;
 
     display: flex;
@@ -61,6 +61,7 @@ body {
 .user-prompt {
     font-size: 40px;
     font-weight: bold;
+    text-align: center;
     color: #ffffff;
 }
 
@@ -203,12 +204,19 @@ it basically tells the animation what to do when display: none -> display: whate
     opacity: 0;
 }
 .stations__list li.loading {
-    opacity: 0;
+    animation-name: ListItemWrapperLoadAnimation;
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.465, 0.05, 0.94, 1);
 }
 .stations__list li.temp {
     font-size: 15px;
     font-style: italic;
     color: #868686;
+}
+
+@keyframes ListItemWrapperLoadAnimation {
+    0% { opacity: 0; }
+    100% { opacity: 1 }
 }
 
 /* =========================================================
@@ -232,10 +240,15 @@ it basically tells the animation what to do when display: none -> display: whate
     border-radius: 10px;
 }
 
+.stations__direction-slider-container > :is(.stations__direction-slider, .stations__direction-description) {
+    flex: 1;
+}
+
 .stations__direction-description {
     font-weight: bolder;
     font-size: 20px;
     color: #000000;
+    text-align: start;
 }
 .stations__direction-description.swapping {
     animation: DirectionDescriptionSwapAnimation;
@@ -246,6 +259,11 @@ it basically tells the animation what to do when display: none -> display: whate
 @keyframes DirectionDescriptionSwapAnimation {
     0% {opacity: 0;}
     100% {opacity: 1;}
+}
+
+.stations__direction-slider {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .slider-track {
@@ -434,6 +452,14 @@ it basically tells the animation what to do when display: none -> display: whate
 .LIME_GREEN { --line-color: #6CBE45; }
 .GRAY { --line-color: #A7A9AC; }
 .DARK_GRAY { --line-color: #808183; }
+
+/* ==================================================================
+   Footer overrides
+   ================================================================== */
+.site-footer--stations-selection {
+    align-self: flex-end;
+}
+
 
 /* =========================================================================================
    Mobile/Tablet (<768px) [Don't need a dedicated mobile resolution resizing this time]

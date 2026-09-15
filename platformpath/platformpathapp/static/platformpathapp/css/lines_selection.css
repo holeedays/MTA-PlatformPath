@@ -13,7 +13,7 @@ a {
     text-decoration: none;
 }
 
-@keyframes page_load_in {
+@keyframes PageLoadInAnimation {
     from {
         opacity: 0;
     }
@@ -29,7 +29,7 @@ html, body {
 }
 
 body {
-    animation: page_load_in 0.5s ease-in-out both;
+    animation: PageLoadInAnimation 0.5s ease-in-out both;
     background: #1b1b1b;
 
     display: flex;

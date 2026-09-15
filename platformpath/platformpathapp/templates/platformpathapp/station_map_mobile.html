@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+		
 		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
 		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
 		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
@@ -22,7 +23,7 @@
 					<span class="brand__name">PLATFORMPATH</span>
 			</a>
 			<nav class="site-header__nav">
-					<a href="/not-found">ABOUT US</a>
+					<a href="/not-found">ABOUT</a>
 					<a href="/">HOME</a>
 					<a href="/not-found">NAVIGATE</a>
 			</nav>
@@ -101,7 +102,7 @@
 
 						<section class="route-form__wrapper">
 							<div class="route-form__dropdown-host"></div>
-							<div id="route-form" class="route-form" aria-label="Nodes selection">
+							<div id="route-form" class="route-form route-form--station-map-mobile" aria-label="Nodes selection">
 								<div class="route-field">
 									<button 
 										class="
@@ -183,6 +184,18 @@
 						</section>
 					</section>
 				</div>
+
+				<!-- ================= FOOTER ================= -->
+				<footer class="site-footer site-footer--station-map site-footer--station-map-mobile">
+					<div class="brand brand--footer">
+						<img class="brand__logo brand__logo--sm brand__logo--station-map" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
+						<span class="brand__name brand__name--sm brand__logo--station-map">PLATFORMPATH</span>
+					</div>
+					<div class="site-footer__legal site-footer__legal--station-map site-footer__legal--station-map-mobile">
+						<span>2026 All rights reserved.</span>
+						<span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
+					</div>
+				</footer>
 
 				<div class="element-description element-description--station-map-mobile element-description__pull-up-container hidden">
 					<span>
@@ -465,18 +478,6 @@
 
 		</section>
 	</main>
-
-	<!-- ================= FOOTER ================= -->
-	<footer class="site-footer site-footer--station-map">
-		<div class="brand brand--footer">
-			<img class="brand__logo brand__logo--sm brand__logo--station-map" src="{% static 'platformpathapp/decals/mta_logo.png' %}" alt="MTA logo small">
-			<span class="brand__name brand__name--sm brand__logo--station-map">PLATFORMPATH</span>
-		</div>
-		<div class="site-footer__legal site-footer__legal--station-map">
-			<span>2026 All rights reserved.</span>
-			<span class="site-footer__disclaimer">DISCLAIMER: Maps are not 100% accurate and are subject to updates.</span>
-		</div>
-	</footer>
 
 	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
 	<script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
