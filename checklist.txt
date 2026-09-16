@@ -6,6 +6,8 @@ PLANS FOR THE FUTURE:
 
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport) <-- completed for now until the 2 features below are added
+
+> Remove rotated view and instead allow users to be able to fully rotate the map (should the text rotate along with it?) <-- currently still on the fence about, but would increase user agency and simplify street views to some degree
 > Add a street view to each station map (and the corresponding logic for it)
 > Add a 3D isometric view (fixed, but can be rotated... still need more deliberation on this)
 > Change the station map diagrams (maybe alter the arrows and names on them??) 
