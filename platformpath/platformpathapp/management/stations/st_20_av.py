@@ -11,7 +11,6 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         station = Station.objects.create(
             name="20 Av",
             diagram_path="/static/platformpathapp/diagrams/20Av.svg",
-            diagram_rotated_path="/static/platformpathapp/diagrams/20Av_rotated.svg",
             accessible_station=False
         )
 

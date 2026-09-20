@@ -79,23 +79,21 @@ export class StationMapPageMobile extends StationMapPage {
 
     // init our map over items field (only a select few map overlay items though that we need to modify)
     private initMapOverlayItemsField(): void {
-        const mapRotateButton: HTMLButtonElement | null = document.querySelector(".map__rotate-button");
         const mapLegend: HTMLDivElement | null = document.querySelector(".map-legend");
         const elementDescriptionsToggleButton: HTMLButtonElement | null = (
             document.querySelector(".element-descriptions__toggle-info-button")
         );
 
-        if (mapRotateButton === null || mapLegend === null || elementDescriptionsToggleButton === null) {
+        if (mapLegend === null || elementDescriptionsToggleButton === null) {
             console.warn(
-                "Map rotate button, map legend, and/or the element descriptions toggle button doesn't exist",
-                `Map Rotate Button Status: ${mapRotateButton}`,
+                "Map legend, and/or the element descriptions toggle button doesn't exist",
                 `Map Legend Status ${mapLegend}`,
                 `Element Descriptions Toggle Button Status: ${elementDescriptionsToggleButton}`
             );
             return;
         }
 
-        this.mapOverlayItems.push(mapRotateButton, mapLegend, elementDescriptionsToggleButton);
+        this.mapOverlayItems.push(mapLegend, elementDescriptionsToggleButton);
     }
 
     // inits the touch/interaction handling of the layer options panel (horizontal scrolling)

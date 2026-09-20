@@ -245,11 +245,10 @@
 }
 
 /* ======================================================================================
-   Map Rotate Button/Map Legend Button/Element Desciptions Toggle Info Button Overrides
+   Map Legend Button/Element Desciptions Toggle Info Button Overrides
    ====================================================================================== */
 
-/* ========== overrides for all 3 map overlay elements ========== */
-.map__rotate-button--station-map-mobile,
+/* ========== overrides for all 2 map overlay elements ========== */
 .map-legend--station-map-mobile,
 .element-descriptions__toggle-info-button--station-map-mobile {
     --total-displacement: 0px; /* will be modified in .ts file */
@@ -258,7 +257,6 @@
 }
 
 :is(
-    .map__rotate-button--station-map-mobile.lerping, 
     .map-legend--station-map-mobile.lerping, 
     .element-descriptions__toggle-info-button--station-map-mobile).lerping {
         transform: translateY(var(--total-displacement));
@@ -266,16 +264,7 @@
         transition: 
             transform calc(var(--pull-up-container-transition-time) + 0.05s) var(--pull-up-container-transition-anim-curve);
     }
-
-/* ========== overrides for map rotate button ========== */
-.map__rotate-button--station-map-mobile > .rotate-button__animated-parts-img--station-map-mobile {
-    width: 30px;
-}
-
-.map__rotate-button--station-map-mobile > .rotate-button__base-img--station-map-mobile {
-    width: 40px;
-}
-
+    
 /* ========== overrides for map legend ========== */
 .map-legend--station-map-mobile {
     height: 275px;

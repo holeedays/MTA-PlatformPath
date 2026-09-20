@@ -105,8 +105,6 @@ export class StationMapPage {
         this.initPathStepButtons();
         // init our route preview controls
         this.initRoutePreviewControls();
-        // init our map rotate button
-        this.initMapRotateButton();
         // init the event handling for the node dropdown buttons
         this.initNodeDropdownButtons();
 
@@ -548,92 +546,6 @@ export class StationMapPage {
             stationMapInteractionHandlerCancelButton
         );
     }
-
-    // adds event handling of the map rotate button as well as the map SVG (since the map rotate button works in tandem with
-    // switching the svg)
-    private initMapRotateButton(): void {
-        const mapRotateButton: HTMLButtonElement | null = document.querySelector(".map__rotate-button");
-        const diagramContainer: HTMLDivElement | null = document.querySelector("#diagram-container");
-
-        if (
-            mapRotateButton === null || 
-            diagramContainer === null
-        ) {
-            console.warn(
-                "The map rotate button or the diagram container doesn't exist",
-                `Map Rotate Button Status: ${mapRotateButton}`,
-                `Diagram Container Status: ${diagramContainer}`
-            );
-            return;
-        }
-
-        // booleans to prevent rapid succession of clicking (causing possibly weird race conditions, ruining our event handling system)
-        let diagramContainerIsAnimating: boolean = false;
-        let mapRotateButtonIsTransitioning: boolean = false;
-
-        const diagramPath: string | null | undefined = this.station?.station_model.diagram_path;
-        const diagramRotatedPath: string | null | undefined = this.station?.station_model.diagram_rotated_path;
-
-        // event handling logic here
-        const eventLogic: () => () => Promise<void> = () => {
-            let isPressed: boolean = false;
-            return async () => {
-                if (diagramContainerIsAnimating || mapRotateButtonIsTransitioning)
-                    return;
-
-                // add a TEMPORARY class that functions as a brief animatic for the button (to provide a little more juice to interactivity)
-                mapRotateButton.classList.add("animating");
-                mapRotateButton.setAttribute("aria-pressed", (!isPressed).toString());
-                diagramContainer.classList.add("swapping");
-
-                // if the button hasn't been toggled before and the diagram rotated path exists 
-                if (
-                    !isPressed && 
-                    diagramRotatedPath !== null &&
-                    diagramRotatedPath !== undefined
-                ) {
-                    await this.svgRenderer.loadDiagramWithControls(diagramRotatedPath);
-                }
-                else if (
-                    diagramPath !== null &&
-                    diagramPath !== undefined
-                ) {
-                    await this.svgRenderer.loadDiagramWithControls(diagramPath);
-                }
-
-                this.reinitMap();
-
-                diagramContainerIsAnimating = true;
-                mapRotateButtonIsTransitioning = true;
-                isPressed = !isPressed;
-            }
-        }
-        const handler: () => void = eventLogic();
-        // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
-            element: mapRotateButton, 
-            handler: handler 
-        };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
-        
-
-        // since the classes are temporary, we want to remove the class for both the button and container 
-        // transition end event listener for the map button
-        mapRotateButton.addEventListener("transitionend", (ev: TransitionEvent) => {
-            if (ev.propertyName === "transform") {
-                mapRotateButton.classList.remove("animating");
-                mapRotateButtonIsTransitioning = false;
-            }
-        });
-        // animation end event listener (e.g. keyframe animation end event listener) for diagram container 
-        // since using a standard transition animation doesn't work very well
-        diagramContainer.addEventListener("animationend", (ev: AnimationEvent) => {
-            if (ev.animationName === "SVGSwappingAnimation") {
-                diagramContainer.classList.remove("swapping");
-                diagramContainerIsAnimating = false;
-            }
-        }); 
-    } 
 
     // inits the event handling logic for the node dropdown buttons (toggling their respective dropdowns)
     public initNodeDropdownButtons(): void {
@@ -1264,63 +1176,6 @@ export class StationMapPage {
             };
             this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
         });
-    }
-
-    // (in the case that a new diagram is loaded in) reset the necessary items for the map and navigation to work properly
-    private reinitMap(): void {
-        if (this.station === null) {
-            console.warn("The station response object has nothing in it");
-            return;
-        }
-
-        // clear the array of current nodeSVGs (since the diagram container is being completely reloaded)
-        this.nodeSVGs = [];
-        // reinit our nodeSVGs
-        this.station.node_models.forEach((node: NodeData) => {
-            const nodeSVG: NodeSVG | null = this.initNodeSVG(node);
-            if (nodeSVG !== null)
-                this.nodeSVGs.push(nodeSVG);
-        });
-
-        // highlight the start and end nodes again (if selected)
-        if (this.selectedNodeOptions.startNode !== null)
-            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.startNode);
-        if (this.selectedNodeOptions.endNode !== null)
-            this.svgRenderer.highlightSelectedNode(this.selectedNodeOptions.endNode);
-        // reinit the route direction labels
-        this.svgRenderer.initRouteDirectionLabels();
-
-        // if preview is already in progress
-        if (this.isPreviewingRoute) {
-            this.startRoutePreview();
-            return;
-        }
-
-        // if navigation is already in progress
-        if (this.currentPath !== null) {
-            // and get back all the direction label ids to display the proper ones
-            const labelIDs: Set<string> = this.getRouteDirectionLabelIds(this.currentPath);
-            this.svgRenderer.showRouteDirectionLabels(labelIDs);
-            // render the path again (currentNodeIDs + currentPath should have all the needed information to continue the 
-            // navigation from where we left off)
-            this.renderPath();
-            // render the current step
-            const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
-            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev") as HTMLButtonElement;    
-            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next") as HTMLButtonElement;
-
-            if (instructionText === null || btnPrev === null || btnNext === null) {
-                console.warn(
-                    "Instructions text block, previous step button, and/or next step button doesn't exist",
-                    `Instructions Text Status: ${instructionText}`,
-                    `Previous Button Status: ${btnPrev}`,
-                    `Next Button Status: ${btnNext}`
-            );
-                return;
-            }
-
-            this.renderCurrentStep(instructionText, btnPrev, btnNext);
-        }
     }
 
     // creates a new nodeSVG item given a nodeData obj

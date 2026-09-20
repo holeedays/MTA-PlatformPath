@@ -43,6 +43,23 @@ export class SvgRenderer {
         this.stationSVG = this.SVGWrapper.querySelector("svg");
     }
 
+    // inits the styling for our svg
+    private initSVGStyling(): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+
+        // these are temporary stylings and mostly for testing
+        // this.stationSVG.style.width = "fit-content";
+        this.stationSVG.querySelectorAll("image").forEach((img: SVGImageElement) => {
+            img.style.imageRendering = "smooth";
+        });
+        const roadMap: SVGImageElement | null = this.stationSVG.querySelector("#" + CSS.escape("Road Map"));
+        if (roadMap !== null)
+            roadMap.style.display = "none";
+    }
+
     // adds a class to node svgs that essentially darkens them
     public muteNode(nodeSVG: NodeSVG): void {
         nodeSVG.Self.BaseElement.classList.add("muted");
@@ -146,9 +163,21 @@ export class SvgRenderer {
         const containerWidth: number = this.SVGWrapper.clientWidth;
         const containerHeight: number = this.SVGWrapper.clientHeight;
 
+        const stationSVGGroup: SVGSVGElement | null = this.SVGWrapper.querySelector("#STATION");
+        if (stationSVGGroup === null) {
+            console.warn("Station SVG group doesn't exist");
+            return;
+        }
+        const stationSVGGroupBoundingRect: DOMRect = stationSVGGroup.getBoundingClientRect();
+
         // clientWidth/clientHeight are unaffected by panzoom's CSS transform.
-        const svgWidth: number = this.stationSVG.clientWidth;
-        const svgHeight: number = this.stationSVG.clientHeight;
+        // const svgWidth: number = this.stationSVG.clientWidth;
+        // const svgHeight: number = this.stationSVG.clientHeight;
+
+        const svgWidth: number = stationSVGGroupBoundingRect.right;
+        const svgHeight: number = stationSVGGroupBoundingRect.bottom;
+
+        console.log(stationSVGGroupBoundingRect);
 
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
@@ -192,6 +221,7 @@ export class SvgRenderer {
     // Method to load the diagram and immediately attach controls
     public async loadDiagramWithControls(diagramPath: string): Promise<void> {
         await this.loadDiagram(diagramPath);
+        this.initSVGStyling();
         this.initRotationControls();
         this.centerMap()
     }

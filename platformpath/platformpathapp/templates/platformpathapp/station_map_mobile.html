@@ -45,7 +45,9 @@
 
 			<!-- ================= STATION DIAGRAM CONTAINER ================= -->
 			<div class="diagram-container" id="diagram-container">
+				<div class="svg-wrapper">
 					<!-- SVG loads here -->
+				</div>
 			</div>
 
 			<header class="map-overlay map-header map-header--station-map-mobile">
@@ -285,25 +287,6 @@
 				</span>
 				<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
 			</div>
-
-			<!-- ================= MAP ROTATE BUTTON ================= -->
-			<button class="map-overlay map__rotate-button map__rotate-button--station-map-mobile" aria-pressed="false">
-				<img 
-					class="rotate-button__animated-parts-img rotate-button__animated-parts-img--station-map-mobile" 
-					src="{% static 'platformpathapp/decals/map_rotate_button_animated_parts.svg' %}" 
-					alt="Rotate map button icon animated parts"
-				>
-				<img 
-					class="rotate-button__base-img rotate-button__base-img--station-map-mobile" 
-					src="{% static 'platformpathapp/decals/map_rotate_button_base.svg' %}" 
-					alt="Rotate map button icon base"
-				>
-
-				<div class="element-description element-description--station-map-mobile element-description__map-rotate-button hidden">
-					<span>Rotate the map view</span>
-					<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
-				</div>
-			</button>
 
 			<!-- ================= LEGEND ================= -->
 			<aside class="map-overlay map-legend map-legend--station-map-mobile">

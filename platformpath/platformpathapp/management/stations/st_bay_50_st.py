@@ -10,8 +10,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="Bay 50 St",
-            diagram_path="/static/platformpathapp/diagrams/Bay50.svg",
-            diagram_rotated_path="/static/platformpathapp/diagrams/Bay50_rotated.svg",
+            diagram_path="/static/platformpathapp/diagrams/Bay50_v4.svg",
             accessible_station=False
         )
 
