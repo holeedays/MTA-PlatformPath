@@ -86,7 +86,7 @@ export class StationMapPage {
 
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
-        // Load the station diagram
+        // load the station diagram
         await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
         // init the route direction labels
         this.svgRenderer.initRouteDirectionLabels();

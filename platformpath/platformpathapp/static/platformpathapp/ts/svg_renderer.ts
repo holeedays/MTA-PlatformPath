@@ -10,19 +10,37 @@ export type SelectionRole = "start" | "end";
 export class SvgRenderer {
     // @ts-ignore
     private currentPanZoom: PanZoom | null = null;
-    private svgSize: number = 0;
+    private SVGWrapper: HTMLDivElement | null = null;
+    private stationSVG: SVGSVGElement | null = null;
+    private sensitivity: number;
 
-    constructor() {}
+    constructor(sensitivityDampener: number = 0.5) {
+        this.sensitivity = sensitivityDampener;
+
+        // init our svg wrapper field
+        this.initSvgWrapperField();
+    }
+
+    // finds the container that will hold our svg contents and assigns it to our SVGWrapper field
+    private initSvgWrapperField(): void {
+        this.SVGWrapper = document.querySelector('.svg-wrapper');
+        if (this.SVGWrapper === null)
+            console.warn("There is no svg wrapper element on the current page");
+    }
 
     private async loadDiagram(svgPath: string): Promise<void> {
-        await fetch(svgPath)
-            .then(r => r.text())
-            .then(svgContent => {
-                const container = document.getElementById('diagram-container');
-                if (container) {
-                    container.innerHTML = svgContent;
-                }
-            });
+        if (this.SVGWrapper === null) {
+            console.warn("SVG wrapper element doesn't exist");
+            return;
+        }
+
+        // fetch our svg
+        const response: Response = await fetch(svgPath);
+        const svgContent: string = await response.text();
+        // assign the svg into our diagram container
+        this.SVGWrapper.innerHTML = svgContent;
+        // save the svg
+        this.stationSVG = this.SVGWrapper.querySelector("svg");
     }
 
     // adds a class to node svgs that essentially darkens them
@@ -71,7 +89,7 @@ export class SvgRenderer {
 
     // Removes all highlighted nodes, excluding the selected nodes (e.g. start and end nodes)
     public unhighlightNodes(): void {
-          document.querySelectorAll(".highlighted").forEach((element: Element) => {
+        document.querySelectorAll(".highlighted").forEach((element: Element) => {
             element.classList.remove("highlighted");   
         })
     }
@@ -115,25 +133,22 @@ export class SvgRenderer {
 
     // Helper method to center on the entire station map
     public centerMap(zoom: number = 0.9): void {
-        const container: HTMLDivElement | null = document.querySelector("#diagram-container");
-        const svg: SVGSVGElement | null | undefined = container?.querySelector("svg");
-
-        if (!container || !svg || !this.currentPanZoom) {
+        if (this.SVGWrapper === null || this.stationSVG === null || !this.currentPanZoom) {
             console.warn(
-                "Diagram container, station svg, and/or this current pan zoom doesn't exist",
-                `Diagram Container Status: ${container}`,
-                `Station SVG Status: ${svg}`,
+                "SVG wrapper, station svg, and/or this current pan zoom doesn't exist",
+                `SVG Wrapper Status: ${this.SVGWrapper}`,
+                `Station SVG Status: ${this.stationSVG}`,
                 `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
             );
             return;
         }
-        
-        const containerWidth: number = container.clientWidth;
-        const containerHeight: number = container.clientHeight;
+
+        const containerWidth: number = this.SVGWrapper.clientWidth;
+        const containerHeight: number = this.SVGWrapper.clientHeight;
 
         // clientWidth/clientHeight are unaffected by panzoom's CSS transform.
-        const svgWidth: number = svg.clientWidth;
-        const svgHeight: number = svg.clientHeight;
+        const svgWidth: number = this.stationSVG.clientWidth;
+        const svgHeight: number = this.stationSVG.clientHeight;
 
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
@@ -147,30 +162,37 @@ export class SvgRenderer {
         );
     }
 
-    // Pan, zoom, and scroll controls for the station diagram
-    public setupDiagramControls(): void {
-        const svg = document.querySelector('#diagram-container svg') as HTMLElement | null;
-        if (!svg) return;
+    // Setup our panzoom object with proper params (this includes mouse scroll, drag)
+    private setupPanzoomControls(
+        beforeMouseDownEventHandler: ((ev: MouseEvent) => any) | undefined = undefined,
+        beforeWheelEventHandler: ((ev: WheelEvent) => any) | undefined = undefined
+    ): void {
+        if (this.SVGWrapper === null) {
+            console.warn("SVG wrapper element does not exist");
+            return;
+        }
 
         // Cleanup the old even listener if we are loading a new station diagram
-        if (this.currentPanZoom) {
+        if (this.currentPanZoom !== null) {
             this.currentPanZoom.dispose();
         }
 
-        // Apply panzoom to the new SVG
+        // NOTE: apply panzoom to our SVG wrapper instead of our SVG itself because we're applying rotation transformations to
+        // our SVG and PanZoom refers to the movement axes based on the svg's X,Y axes not the document's
         // @ts-ignore
-        this.currentPanZoom = panzoom(svg, { 
+        this.currentPanZoom = panzoom(this.SVGWrapper, { 
             maxZoom: 8,
             minZoom: 0.3,
-            smoothScroll: false
+            smoothScroll: false,
+            beforeMouseDown: beforeMouseDownEventHandler,
+            beforeWheel: beforeWheelEventHandler
         });
-
     }
 
     // Method to load the diagram and immediately attach controls
     public async loadDiagramWithControls(diagramPath: string): Promise<void> {
         await this.loadDiagram(diagramPath);
-        this.setupDiagramControls();
+        this.initRotationControls();
         this.centerMap()
     }
 
@@ -292,5 +314,67 @@ export class SvgRenderer {
             node.style.removeProperty("--preview-index");
             node.style.removeProperty("--preview-duration");
         });
+    }
+
+    // set the event logic to allow us to rotate the svg
+    public initRotationControls(): void {
+
+        if (this.SVGWrapper === null || this.stationSVG === null) {
+            console.warn("SVG wrapper and/or station svg doesn't exist");
+            return;
+        }
+
+        // init our booleans and numbers to store and check the state of our rotation logic
+        let ctrlKeyPressed: boolean = false;
+        let mouseIsDown: boolean = false;
+        let currentRot: number = 0;
+        let rot: number = 0;
+        let startPosX: number = 0;
+
+        // first set the origin point for our rotations; by default, SVGs are set to 0,0
+        // we need the center of the diagram container/screen hence we set it by the svg wrapper (which occupies the full width/height of
+        // the screen)
+        const svgWrapperContainerRect: DOMRect = this.SVGWrapper.getBoundingClientRect();
+        this.stationSVG.style.setProperty("--center-x", `${svgWrapperContainerRect.width/2}`);
+        this.stationSVG.style.setProperty("--center-y", `${svgWrapperContainerRect.height/2}`);
+
+        // we're going to follow google's rotation method where you must hit control before allowing the user to rotate the map on pc
+        window.addEventListener("keydown", (ev: KeyboardEvent) => {
+            ctrlKeyPressed = ev.ctrlKey;
+        });
+        window.addEventListener("keyup", (ev: KeyboardEvent) => {
+            ctrlKeyPressed = false;
+        });
+
+        // add the drag logic for the svg rotation
+        this.SVGWrapper.addEventListener("mousedown", (ev: MouseEvent) => {
+            // set our reference point onclick and signify the mouse is down
+            startPosX = ev.x;
+            mouseIsDown = true;
+        });
+        this.SVGWrapper.addEventListener("mouseup", (ev: MouseEvent) => {
+            currentRot += rot;
+            rot = 0;
+            mouseIsDown = false;
+        });
+        this.SVGWrapper.addEventListener("mousemove", (ev: MouseEvent) => {
+            if (!ctrlKeyPressed || !mouseIsDown)
+                return;
+            
+            // get our displacement from our initial mouse point and the new point
+            const displacementX: number = startPosX - ev.x;
+            // our rotation will be equivalent to the displacement scaled by the sensitivity we want
+            rot = displacementX * this.sensitivity;
+            // set the property responsible for rotating our svg
+            this.stationSVG?.style.setProperty("--degree-of-rotation", `${currentRot + rot}deg`);
+        });
+
+        // also pass a closure function with passed reference of the ctrlKeyPressed boolto our panzoom setup so that panzoom 
+        // doesn't activate if the ctrl key is pressed
+        const beforeMouseDownHandler: (ev: MouseEvent) => boolean = (ev: MouseEvent) => {
+            let shouldIgnore: boolean = ctrlKeyPressed;
+            return shouldIgnore;
+        }; 
+        this.setupPanzoomControls(beforeMouseDownHandler);
     }
 }
