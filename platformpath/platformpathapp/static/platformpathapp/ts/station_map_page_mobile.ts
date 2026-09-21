@@ -1,5 +1,6 @@
 import { StationMapPage } from './station_map_page.ts';
 import { type StationMapInteractionHandler, NodeDropdownButton } from './station_custom_elements.ts';
+import { getCurrentTransformMatrix } from './ubiq_func.tions.ts';
 
 interface PullUpContainerIncrements {
     pullUpTabIncrement: number,
@@ -176,7 +177,7 @@ export class StationMapPageMobile extends StationMapPage {
         // set event listeners for pointerdown, pointerup, pointermove (basically a hybrid event listener for pc and touch devices)
         scrollElement.addEventListener("pointerdown", (ev: PointerEvent) => {
             // provide a pause from lerping or any animations if screen is held down
-            const matrix: DOMMatrix = this.getCurrentTransformMatrix(movingElement);
+            const matrix: DOMMatrix = getCurrentTransformMatrix(movingElement);
             // m41 returns the current x transform from the transform matrix (m42 returns y, m43 z)
             currentPosX = matrix.m41;
             movingElement.style.setProperty("--total-displacement", `${currentPosX}px`);
@@ -353,7 +354,7 @@ export class StationMapPageMobile extends StationMapPage {
             if (this.pullUpContainerVars === null)
                 return;
 
-            const matrix: DOMMatrix = this.getCurrentTransformMatrix(pullUpContainer);
+            const matrix: DOMMatrix = getCurrentTransformMatrix(pullUpContainer);
             this.pullUpContainerVars.currentPosY = matrix.m42 - pullUpContainer.offsetHeight;
             pullUpContainer.style.setProperty("--total--displacement", `${this.pullUpContainerVars.currentPosY}px`)
             pullUpContainer.classList.remove("lerping");
@@ -663,13 +664,6 @@ export class StationMapPageMobile extends StationMapPage {
         }
 
         return closestPos;
-    }
-
-    // gets the current transform of an element (returns a transform matrix)
-    private getCurrentTransformMatrix(element: HTMLElement): DOMMatrix {
-        const currentStyle: CSSStyleDeclaration = window.getComputedStyle(element);
-        const matrix: DOMMatrix = new DOMMatrix(currentStyle.transform);
-        return matrix;
     }
 
     // bool to determine if an item is a swipe gesture

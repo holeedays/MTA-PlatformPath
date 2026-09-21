@@ -3,6 +3,7 @@
 import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
+import { getCurrentTransformMatrix, getCentersOffset } from "./ubiq_func.tions.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -10,15 +11,26 @@ export type SelectionRole = "start" | "end";
 export class SvgRenderer {
     // @ts-ignore
     private currentPanZoom: PanZoom | null = null;
+    private diagramContainer: HTMLDivElement | null = null;
     private SVGWrapper: HTMLDivElement | null = null;
+    private SVG: SVGSVGElement | null = null;
     private stationSVG: SVGSVGElement | null = null;
     private sensitivity: number;
 
     constructor(sensitivityDampener: number = 0.5) {
         this.sensitivity = sensitivityDampener;
 
+        // init diagram contaier field
+        this.initDiagramContainerField();
         // init our svg wrapper field
         this.initSvgWrapperField();
+    }
+
+    // find the diagram container and assigns a reference to it for our diagramContainer field
+    private initDiagramContainerField(): void {
+        this.diagramContainer = document.querySelector('#diagram-container');
+        if (this.diagramContainer === null)
+            console.warn("There is no diagram container on the current page");
     }
 
     // finds the container that will hold our svg contents and assigns it to our SVGWrapper field
@@ -39,23 +51,24 @@ export class SvgRenderer {
         const svgContent: string = await response.text();
         // assign the svg into our diagram container
         this.SVGWrapper.innerHTML = svgContent;
-        // save the svg
-        this.stationSVG = this.SVGWrapper.querySelector("svg");
+        // save a ref to our full SVG and the actual station svg within it
+        this.SVG = this.SVGWrapper.querySelector("svg");
+        this.stationSVG = this.SVGWrapper.querySelector("#STATION");
     }
 
     // inits the styling for our svg
     private initSVGStyling(): void {
-        if (this.stationSVG === null) {
-            console.warn("Station SVG doesn't exist");
+        if (this.SVG === null) {
+            console.warn("SVG doesn't exist");
             return;
         }
 
         // these are temporary stylings and mostly for testing
         // this.stationSVG.style.width = "fit-content";
-        this.stationSVG.querySelectorAll("image").forEach((img: SVGImageElement) => {
+        this.SVG.querySelectorAll("image").forEach((img: SVGImageElement) => {
             img.style.imageRendering = "smooth";
         });
-        const roadMap: SVGImageElement | null = this.stationSVG.querySelector("#" + CSS.escape("Road Map"));
+        const roadMap: SVGImageElement | null = this.SVG.querySelector("#" + CSS.escape("Road Map"));
         if (roadMap !== null)
             roadMap.style.display = "none";
     }
@@ -149,11 +162,12 @@ export class SvgRenderer {
     }
 
     // Helper method to center on the entire station map
-    public centerMap(zoom: number = 0.9): void {
-        if (this.SVGWrapper === null || this.stationSVG === null || !this.currentPanZoom) {
+    public centerMap(zoom: number | null = null): void {
+        if (this.SVGWrapper === null || this.SVG === null || this.stationSVG === null || !this.currentPanZoom) {
             console.warn(
-                "SVG wrapper, station svg, and/or this current pan zoom doesn't exist",
+                "SVG wrapper, the full SVG, station SVG, and/or this current pan zoom doesn't exist",
                 `SVG Wrapper Status: ${this.SVGWrapper}`,
+                `SVG Status: ${this.SVG}`,
                 `Station SVG Status: ${this.stationSVG}`,
                 `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
             );
@@ -163,21 +177,19 @@ export class SvgRenderer {
         const containerWidth: number = this.SVGWrapper.clientWidth;
         const containerHeight: number = this.SVGWrapper.clientHeight;
 
-        const stationSVGGroup: SVGSVGElement | null = this.SVGWrapper.querySelector("#STATION");
-        if (stationSVGGroup === null) {
-            console.warn("Station SVG group doesn't exist");
-            return;
+        const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
+        // svg width/height represents the half point of the station svg group * 2; equivalent to if the station svg was centered at the 
+        // center of the station instead of the center it has right now
+        const svgWidth: number = (stationSVGBoundingRect.left + stationSVGBoundingRect.width/2) * 2;
+        const svgHeight: number = (stationSVGBoundingRect.top + stationSVGBoundingRect.height/2) * 2;
+
+        if (zoom === null) {
+            const zoomReductionMultiplier: number = 0.95;
+            if (stationSVGBoundingRect.height > stationSVGBoundingRect.width) 
+                zoom = containerHeight/stationSVGBoundingRect.height * zoomReductionMultiplier;
+            else
+                zoom = containerWidth/stationSVGBoundingRect.width * zoomReductionMultiplier;
         }
-        const stationSVGGroupBoundingRect: DOMRect = stationSVGGroup.getBoundingClientRect();
-
-        // clientWidth/clientHeight are unaffected by panzoom's CSS transform.
-        // const svgWidth: number = this.stationSVG.clientWidth;
-        // const svgHeight: number = this.stationSVG.clientHeight;
-
-        const svgWidth: number = stationSVGGroupBoundingRect.right;
-        const svgHeight: number = stationSVGGroupBoundingRect.bottom;
-
-        console.log(stationSVGGroupBoundingRect);
 
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
@@ -210,7 +222,7 @@ export class SvgRenderer {
         // our SVG and PanZoom refers to the movement axes based on the svg's X,Y axes not the document's
         // @ts-ignore
         this.currentPanZoom = panzoom(this.SVGWrapper, { 
-            maxZoom: 8,
+            maxZoom: 20,
             minZoom: 0.3,
             smoothScroll: false,
             beforeMouseDown: beforeMouseDownEventHandler,
@@ -223,7 +235,7 @@ export class SvgRenderer {
         await this.loadDiagram(diagramPath);
         this.initSVGStyling();
         this.initRotationControls();
-        this.centerMap()
+        this.centerMap();
     }
 
     // Helper function to zoom on on a node based on svgId
@@ -289,7 +301,7 @@ export class SvgRenderer {
         const labelElements: SVGGraphicsElement[] = this.getRouteDirectionLabels();
         // hide the label elements
         labelElements.forEach((labelElement: SVGGraphicsElement) => {
-                labelElement.style.display = "none";
+            labelElement.style.display = "none";
         });
     }
 
@@ -347,26 +359,27 @@ export class SvgRenderer {
     }
 
     // set the event logic to allow us to rotate the svg
-    public initRotationControls(): void {
+    private initRotationControls(): void {
 
-        if (this.SVGWrapper === null || this.stationSVG === null) {
-            console.warn("SVG wrapper and/or station svg doesn't exist");
+        if (this.diagramContainer === null || this.SVGWrapper == null || this.SVG === null || this.stationSVG === null) {
+            console.warn(
+                "Diagram container, SVG wrapper, the full SVG, and/or the station SVG within it doesn't exist",
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `SVG Wrapper Status: ${this.SVGWrapper}`,
+                `SVG Status: ${this.SVG}`,
+                `Station SVG Status: ${this.stationSVG}`,
+            );
             return;
         }
 
         // init our booleans and numbers to store and check the state of our rotation logic
         let ctrlKeyPressed: boolean = false;
         let mouseIsDown: boolean = false;
-        let currentRot: number = 0;
-        let rot: number = 0;
-        let startPosX: number = 0;
+        let prevPosX: number = 0;
 
-        // first set the origin point for our rotations; by default, SVGs are set to 0,0
-        // we need the center of the diagram container/screen hence we set it by the svg wrapper (which occupies the full width/height of
-        // the screen)
-        const svgWrapperContainerRect: DOMRect = this.SVGWrapper.getBoundingClientRect();
-        this.stationSVG.style.setProperty("--center-x", `${svgWrapperContainerRect.width/2}`);
-        this.stationSVG.style.setProperty("--center-y", `${svgWrapperContainerRect.height/2}`);
+        // variables representing the translations of our SVG (for our matrix rotation transformation)
+        let pivotX: number = 0;
+        let pivotY: number = 0;
 
         // we're going to follow google's rotation method where you must hit control before allowing the user to rotate the map on pc
         window.addEventListener("keydown", (ev: KeyboardEvent) => {
@@ -377,26 +390,60 @@ export class SvgRenderer {
         });
 
         // add the drag logic for the svg rotation
-        this.SVGWrapper.addEventListener("mousedown", (ev: MouseEvent) => {
-            // set our reference point onclick and signify the mouse is down
-            startPosX = ev.x;
+        this.diagramContainer.addEventListener("mousedown", (ev: MouseEvent) => {
+            if (this.SVGWrapper ===null || this.diagramContainer === null || this.currentPanZoom === null)
+                return;
+
+            // NOTE: this way only works because the SVG is centered horizontally and vertically in the SVGWrapper (see station map CSS)
+            // with the transform origin set to the SVG's center;
+            // to do it by transform origin of 0,0; the top left corner of the SVG has to align with the SVGWrapper in the (set in the CSS)
+            // then the offset has to be calculated between the top/left of the SVGWrapper and the center of the diagram container
+            // (e.g. we don't calculate the offsets based on the center in this case)
+            const offset: {deltaX: number, deltaY: number} = getCentersOffset(this.diagramContainer, this.SVGWrapper);
+            const panzoomTransforms: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
+
+            // the pivots/translations is equivalent to the offset de-scaled (e.g. the offset as if SVGWrapper wasn't scaled)
+            pivotX = offset.deltaX / panzoomTransforms.scale;
+            pivotY = offset.deltaY / panzoomTransforms.scale;
+
+            // init the previous position
+            prevPosX = ev.x;
+            // signify the mouse is down
             mouseIsDown = true;
         });
-        this.SVGWrapper.addEventListener("mouseup", (ev: MouseEvent) => {
-            currentRot += rot;
-            rot = 0;
+        // both mouse up and mouse leave will disable mouseIsDown to prevent some funky behavior depending on where the user drags
+        // (e.g. rotation spazzes out)
+        this.diagramContainer.addEventListener("mouseup", (ev: MouseEvent) => {
             mouseIsDown = false;
         });
-        this.SVGWrapper.addEventListener("mousemove", (ev: MouseEvent) => {
-            if (!ctrlKeyPressed || !mouseIsDown)
+        this.diagramContainer.addEventListener("mouseleave",  (ev: MouseEvent) => {
+            mouseIsDown = false;
+        });
+        // deals with the actual rotation logic of the map
+        this.diagramContainer.addEventListener("mousemove", (ev: MouseEvent) => {
+            if (!ctrlKeyPressed || !mouseIsDown || this.SVG === null)
                 return;
             
-            // get our displacement from our initial mouse point and the new point
-            const displacementX: number = startPosX - ev.x;
-            // our rotation will be equivalent to the displacement scaled by the sensitivity we want
-            rot = displacementX * this.sensitivity;
-            // set the property responsible for rotating our svg
-            this.stationSVG?.style.setProperty("--degree-of-rotation", `${currentRot + rot}deg`);
+            // get our rotation from our initial mouse point and the new point
+            const displacementX: number = prevPosX - ev.x;
+            const rotDeg = displacementX * this.sensitivity;
+            // update our previous position
+            prevPosX = ev.x;
+
+            // create an identity matrix
+            const rotMatrix: DOMMatrix = (
+                // instantiate a new identity matrix
+                new DOMMatrix()
+                // do the standard for rotating a point around a matrix
+                .translate(pivotX, pivotY)
+                .rotate(rotDeg)
+                .translate(-pivotX, -pivotY)
+            );
+
+            // we're applying our new transform matrix onto the existing one
+            const SVGMatrix: DOMMatrix = getCurrentTransformMatrix(this.SVG);
+            const productMatrix: DOMMatrix = rotMatrix.multiply(SVGMatrix);
+            this.SVG.style.setProperty("--transformation-matrix", productMatrix.toString());
         });
 
         // also pass a closure function with passed reference of the ctrlKeyPressed boolto our panzoom setup so that panzoom 

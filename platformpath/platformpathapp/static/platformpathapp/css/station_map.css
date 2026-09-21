@@ -179,24 +179,22 @@ body {
 }
 
 .svg-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 100%;
 }
 
 .svg-wrapper svg {
-    /* all three of these variables will be updated via ts */
-    --degree-of-rotation: 0deg; 
-    --center-x: 0px;
-    --center-y: 0px;
+    --transformation-matrix: matrix(1, 0, 0, 1, 0, 0); /* initialize with identity matrix for now, .ts file will manipulate */
 
-    width: 100%;
-    height: 100%;
     max-width: none;
     max-height: none;
     display: block;
     cursor: grab;
-    transform-origin: var(--center-x) var(--center-y) !important;
-    rotate: var(--degree-of-rotation);
+    transform-origin: center;
+    transform: var(--transformation-matrix);
 }
 .svg-wrapper svg:active {
     cursor: grabbing; /* updates cursor while dragging */
