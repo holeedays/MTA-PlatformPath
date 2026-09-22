@@ -21,6 +21,11 @@ class Station(models.Model):
     name = models.CharField(max_length=200)
     slug_name = models.CharField(max_length=200, null=True, blank=True)
     diagram_path = models.CharField(max_length=100)
+
+    # stores the paths for high res grid pictures of the road and satellite map for this specific station
+    road_map_high_res_grid_pic_paths = models.JSONField(default=dict)
+    satellite_map_high_res_grid_pic_paths = models.JSONField(default=dict)
+    
     lines = models.ManyToManyField(
         to=Line, 
         blank=True,

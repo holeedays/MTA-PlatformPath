@@ -189,6 +189,7 @@ body {
 .svg-wrapper svg {
     --transformation-matrix: matrix(1, 0, 0, 1, 0, 0); /* initialize with identity matrix for now, .ts file will manipulate */
 
+    content-visibility: auto;
     max-width: none;
     max-height: none;
     display: block;

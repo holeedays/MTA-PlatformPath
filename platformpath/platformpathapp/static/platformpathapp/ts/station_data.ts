@@ -30,7 +30,8 @@ export interface StationData {
     name: string,
     id: number,
     diagram_path: string,
-    diagram_rotated_path: string | null, // diagram rotated path can be null (since in the db it is nullable for now)
+    road_map_high_res_grid_pic_paths: Record<string,string>,
+    satellite_map_high_res_grid_pic_paths: Record<string,string>,
     lines: string[],
     accessible_station: boolean
 }

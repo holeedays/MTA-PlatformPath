@@ -175,7 +175,7 @@ export class NodeSVG {
     private self: SVGComponentElement;
     private coloredComponents: SVGComponentElement[];
 
-    constructor(baseElement: HTMLElement) {
+    constructor(baseElement: SVGGraphicsElement) {
         this.self = new SVGComponentElement(baseElement);
         this.coloredComponents = this.getColoredComponents(baseElement);
     }
@@ -191,13 +191,13 @@ export class NodeSVG {
     }
 
     // get the children of the parent container that have an explicit fill attribute
-    private getColoredComponents(baseElement: HTMLElement): SVGComponentElement[] {
+    private getColoredComponents(baseElement: SVGGraphicsElement): SVGComponentElement[] {
         // instantiate an array to hold our colored components (excluding the base element)
         const coloredComponents: SVGComponentElement[] = [];
         // find all components in our base element (parent container basically) that has an explicit fill
-        const allColoredComponents: NodeListOf<HTMLElement> = baseElement.querySelectorAll<HTMLElement>("[fill]");
+        const allColoredComponents: NodeListOf<SVGGraphicsElement> = baseElement.querySelectorAll<SVGGraphicsElement>("[fill]");
         // iterate through each component (exclude the base element since that is already assigned to self)
-        allColoredComponents.forEach((component: HTMLElement) => {
+        allColoredComponents.forEach((component: SVGGraphicsElement) => {
             if (component !== baseElement) {
                 // then push it to our colored components array
                 coloredComponents.push(
@@ -211,17 +211,17 @@ export class NodeSVG {
 
 // a class to include some metadata with an svg type element in our html
 export class SVGComponentElement {
-    private baseElement: HTMLElement;
+    private baseElement: SVGGraphicsElement;
     private originalFill: string;
 
-    constructor(baseElement: HTMLElement) {
+    constructor(baseElement: SVGGraphicsElement) {
         this.baseElement = baseElement;
         this.originalFill = baseElement.style.fill || baseElement.getAttribute("fill") || "";
 
         this.setStyling();
     }
 
-    get BaseElement(): HTMLElement {
+    get BaseElement(): SVGGraphicsElement {
         return this.baseElement;
     }
     get OriginalFill(): string {

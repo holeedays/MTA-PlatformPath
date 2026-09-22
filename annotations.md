@@ -2,6 +2,7 @@
 
 1. https://orthos.dhses.ny.gov/# <-- Open Source Satellite Imagery of NYC 
 2. https://www.openstreetmap.org/export#map=17/40.588472/-73.982910 <-- Open Street Maps
+3. https://repostgrid.com/ <-- Image Grid Slicer (just to check out, best bet though is just to use photoshop for highest quality output)
 
 
 ## ORTHO NYC ANNOATATIONS (LINK ONE)

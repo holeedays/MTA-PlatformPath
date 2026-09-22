@@ -3,10 +3,15 @@
 import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
-import { getCurrentTransformMatrix, getCentersOffset } from "./ubiq_func.tions.ts";
+import { getCurrentTransformMatrix, getCentersOffset, boundingRectAreIntersecting } from "./ubiq_func.tions.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
+export enum SVGView {
+    DEFAULT,
+    ROAD,
+    SATELLITE
+}
 
 export class SvgRenderer {
     // @ts-ignore
@@ -14,7 +19,8 @@ export class SvgRenderer {
     private diagramContainer: HTMLDivElement | null = null;
     private SVGWrapper: HTMLDivElement | null = null;
     private SVG: SVGSVGElement | null = null;
-    private stationSVG: SVGSVGElement | null = null;
+    private stationSVG: SVGElement | null = null;
+    private currentSVGView: SVGView = SVGView.SATELLITE;
     private sensitivity: number;
 
     constructor(sensitivityDampener: number = 0.5) {
@@ -68,7 +74,7 @@ export class SvgRenderer {
         this.SVG.querySelectorAll("image").forEach((img: SVGImageElement) => {
             img.style.imageRendering = "smooth";
         });
-        const roadMap: SVGImageElement | null = this.SVG.querySelector("#" + CSS.escape("Road Map"));
+        const roadMap: SVGImageElement | null = this.SVG.querySelector("#" + CSS.escape("Road Map Low Res"));
         if (roadMap !== null)
             roadMap.style.display = "none";
     }
@@ -231,11 +237,16 @@ export class SvgRenderer {
     }
 
     // Method to load the diagram and immediately attach controls
-    public async loadDiagramWithControls(diagramPath: string): Promise<void> {
+    public async loadDiagramWithControls(
+        diagramPath: string, 
+        roadMapHighResGridPicPaths: Record<string,string>,
+        satelliteMapHighResGridPicPaths: Record<string,string>
+    ): Promise<void> {
         await this.loadDiagram(diagramPath);
         this.initSVGStyling();
         this.initRotationControls();
         this.centerMap();
+        this.initDynamicBGImageLoad(roadMapHighResGridPicPaths, satelliteMapHighResGridPicPaths);
     }
 
     // Helper function to zoom on on a node based on svgId
@@ -453,5 +464,97 @@ export class SvgRenderer {
             return shouldIgnore;
         }; 
         this.setupPanzoomControls(beforeMouseDownHandler);
+    }
+
+    // NOTE: Do this after CenterMap() during the initial load
+    // init loading higher res images logic depending on the zoom
+    private initDynamicBGImageLoad(
+        roadMapHighResGridPicPaths: Record<string,string>,
+        satelliteMapHighResGridPicPaths: Record<string,string>
+    ) {
+        if (this.currentPanZoom === null || this.diagramContainer === null || this.SVG === null) {
+            console.warn(
+                "Panzoom instance, diagram container, and/or SVG doesn't exist",
+                `Panzoom Instance Status: ${this.currentPanZoom}`,
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `SVG Status: ${this.SVG}`
+            );
+            return;
+        }
+
+        // get the group elements responsible for holding elements related to the road map and satellite map
+        const roadMapGroup: SVGGraphicsElement | null = this.SVG.querySelector("[id='Road Map Group']");
+        const satelliteMapGroup: SVGGraphicsElement | null = this.SVG.querySelector("[id='Satellite Map Group']");
+        // template for placing our grid pics onto the svg
+        const mapGrid: SVGGraphicsElement | null = this.SVG.querySelector("[id='Map Grid']");
+        const svgURL: string = "http://www.w3.org/2000/svg";
+
+        // cache the grid paths to prevent adding more paths
+        const cachedGridPicPath: Set<string> = new Set();
+
+        if (satelliteMapGroup === null || roadMapGroup === null || mapGrid === null) {
+            console.warn(
+                "Satellite map group or map grid doesn't exist",
+                `Satellite Map Group Status: ${satelliteMapGroup}`,
+                `Map Grid Status: ${mapGrid}`
+            );
+            return;
+        }
+
+        // deals with loading high res images and caching them
+        this.currentPanZoom.on("pan", (ev: any) => {
+            if (this.diagramContainer === null || this.currentPanZoom === null)
+                return;
+
+            // we'll set an arbitrary threshold for now...
+            const zoomThreshold: number = 1.5;
+            const currentZoom: number = this.currentPanZoom.getTransform().scale;
+
+            // we only show the high res images if the zoom exceeds the threshold (or else what's the point of loading the images)
+            if (currentZoom < zoomThreshold)
+                return;
+
+            // iterate through our positioning items 
+            for (const gridItem of mapGrid.children) {
+                const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
+                const gridPicpath: string | undefined = satelliteMapHighResGridPicPaths[gridItem.id];
+
+                // check if the view is either in satellite/road view 
+                // and the gridPicPath exists and an image element hasn't been instantiated
+                // and the element is within view
+                if (
+                    this.currentSVGView === SVGView.DEFAULT ||
+
+                    gridPicpath === undefined ||
+                    cachedGridPicPath.has(gridPicpath) ||
+
+                    !boundingRectAreIntersecting(this.diagramContainer, gridItemAsSVGElement)
+                )
+                    continue;
+                                
+                // create a new svg image element
+                const imageGridItem: SVGImageElement = document.createElementNS(svgURL, "image") as SVGImageElement;
+                // set the corresponding attributes for the image
+                imageGridItem.setAttribute("href", gridPicpath);
+                const attributes: string[] = ["x", "y", "width", "height"];
+                attributes.forEach((attribute: string) => {
+                    const attributeValue: string | null = gridItemAsSVGElement.getAttribute(attribute);
+                    if (attributeValue !== null)
+                        imageGridItem.setAttribute(attribute, attributeValue);
+                });
+
+                // append the new image to their respective svg group
+                if (this.currentSVGView === SVGView.ROAD) 
+                    roadMapGroup.appendChild(imageGridItem);
+                if (this.currentSVGView === SVGView.SATELLITE) 
+                    satelliteMapGroup.appendChild(imageGridItem);
+
+                cachedGridPicPath.add(gridPicpath);
+            }            
+        });
+
+        this.currentPanZoom.on("zoom", (ev: any) => {
+
+        });
     }
 }

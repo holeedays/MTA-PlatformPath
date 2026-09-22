@@ -87,7 +87,11 @@ export class StationMapPage {
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
         // load the station diagram
-        await this.svgRenderer.loadDiagramWithControls(this.station.station_model.diagram_path);
+        await this.svgRenderer.loadDiagramWithControls(
+            this.station.station_model.diagram_path, 
+            this.station.station_model.road_map_high_res_grid_pic_paths,
+            this.station.station_model.satellite_map_high_res_grid_pic_paths
+        );
         // init the route direction labels
         this.svgRenderer.initRouteDirectionLabels();
         // init our layer controls (toggling the different layers of the svg)
@@ -1180,7 +1184,7 @@ export class StationMapPage {
 
     // creates a new nodeSVG item given a nodeData obj
     private initNodeSVG(node: NodeData): NodeSVG | null {
-        const nodeSVGElement: HTMLElement | null = document.querySelector(`[id='${node.svg_id}']`);
+        const nodeSVGElement: SVGGraphicsElement | null = document.querySelector(`[id='${node.svg_id}']`);
             if (nodeSVGElement === null) {
                 console.warn(`There is no nodeSVG group for the node with id ${node.svg_id}`);
                 return null;

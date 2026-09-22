@@ -38,7 +38,16 @@ class StationSerializer(serializers.ModelSerializer[Station]):
 
     class Meta:
         model = Station
-        fields: list[str] = ["name", "id", "diagram_path", "lines", "station_order", "accessible_station"]
+        fields: list[str] = [
+            "name", 
+            "id", 
+            "diagram_path", 
+            "road_map_high_res_grid_pic_paths",
+            "satellite_map_high_res_grid_pic_paths",
+            "lines", 
+            "station_order", 
+            "accessible_station"
+        ]
 
     # this deals with annotations that may or may not exist when queried, we're overriding it currently
     def to_representation(self, instance: Station) -> dict[str, Any]:
