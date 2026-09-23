@@ -1,6 +1,6 @@
 import { StationMapPage } from './station_map_page.ts';
 import { type StationMapInteractionHandler, NodeDropdownButton } from './station_custom_elements.ts';
-import { getCurrentTransformMatrix } from './ubiq_func.tions.ts';
+import { getCurrentTransformMatrix } from './transformations.ts';
 
 interface PullUpContainerIncrements {
     pullUpTabIncrement: number,

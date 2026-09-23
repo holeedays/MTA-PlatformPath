@@ -25,6 +25,15 @@ NICE-TO-HAVES (NON-PRIORITIES):
 > Fixing the station start to station end page
 > Having server caches (to allow for favorited stations and things of the like)
 
+USER FEEDBACK: 
+> General consensus on converting nodes into clickable buttons along with the dropdown
+> Make the exits STAND OUT, replace the text with big icons or something large
+> Limit viewport size (how much the user can pan)
+> Prioritize the road map over the satellite map (readability very important)
+> Rename layers (make them more generic (LEVEL 1, LEVEL 2, LEVEL 3 etc))
+> Clearer icons (... to think about, how do we do this for all the other objects???)
+> A 3D view (for grounding, not necessarily need to make it interactable)
+
 
 TO DO FOR EVERYONE:
 - Alter the svg files of the maps so that each section is compartmentalized into different nodes (for instance, mezzanine is broken into

@@ -3,7 +3,7 @@
 import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
-import { getCurrentTransformMatrix, getCentersOffset, boundingRectAreIntersecting } from "./ubiq_func.tions.ts";
+import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectAreIntersecting, Vector2 } from "./transformations.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -19,7 +19,7 @@ export class SvgRenderer {
     private diagramContainer: HTMLDivElement | null = null;
     private SVGWrapper: HTMLDivElement | null = null;
     private SVG: SVGSVGElement | null = null;
-    private stationSVG: SVGElement | null = null;
+    private stationSVG: SVGGraphicsElement | null = null;
     private currentSVGView: SVGView = SVGView.SATELLITE;
     private sensitivity: number;
 
@@ -169,7 +169,13 @@ export class SvgRenderer {
 
     // Helper method to center on the entire station map
     public centerMap(zoom: number | null = null): void {
-        if (this.SVGWrapper === null || this.SVG === null || this.stationSVG === null || !this.currentPanZoom) {
+        if (
+            this.diagramContainer === null ||
+            this.SVGWrapper === null || 
+            this.SVG === null || 
+            this.stationSVG === null || 
+            !this.currentPanZoom
+        ) {
             console.warn(
                 "SVG wrapper, the full SVG, station SVG, and/or this current pan zoom doesn't exist",
                 `SVG Wrapper Status: ${this.SVGWrapper}`,
@@ -180,32 +186,78 @@ export class SvgRenderer {
             return;
         }
 
-        const containerWidth: number = this.SVGWrapper.clientWidth;
-        const containerHeight: number = this.SVGWrapper.clientHeight;
-
+        // get our current scale (e.g. how zoomed in are we)
+        const scale: number = this.currentPanZoom.getTransform().scale;
+        // get the normalized version of our stationSVG width/height (e.g. as if we didn't apply any scaling to the svg at all)
         const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
-        // svg width/height represents the half point of the station svg group * 2; equivalent to if the station svg was centered at the 
-        // center of the station instead of the center it has right now
-        const svgWidth: number = (stationSVGBoundingRect.left + stationSVGBoundingRect.width/2) * 2;
-        const svgHeight: number = (stationSVGBoundingRect.top + stationSVGBoundingRect.height/2) * 2;
+        const stationSVGWidthNormalized: number = stationSVGBoundingRect.width/scale;
+        const stationSVGHeightNormalized: number = stationSVGBoundingRect.height/scale;
+        // get our viewport dimensions
+        const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
+        const containerWidth: number = diagramContainerBoundingRect.width;
+        const containerHeight: number = diagramContainerBoundingRect.height;
 
+        // get the zoom value that fits proportionally to our station SVG
         if (zoom === null) {
-            const zoomReductionMultiplier: number = 0.95;
+            // this just scales if we want to increase from viewing the entire station for it to be slightly zoomed out or zoomed in
+            // we'll keep this hard coded for now
+            const zoomMultiplier: number = 0.95;
             if (stationSVGBoundingRect.height > stationSVGBoundingRect.width) 
-                zoom = containerHeight/stationSVGBoundingRect.height * zoomReductionMultiplier;
+                zoom = containerHeight/stationSVGHeightNormalized * zoomMultiplier;
             else
-                zoom = containerWidth/stationSVGBoundingRect.width * zoomReductionMultiplier;
+                zoom = containerWidth/stationSVGWidthNormalized * zoomMultiplier;
         }
+
+        // get the top left of the svg wrapper and diagram container
+        const SVGWrapperBoundingRect: DOMRect = this.SVGWrapper.getBoundingClientRect();
+        const SVGWrapperTopLeft: Vector2 = new Vector2(SVGWrapperBoundingRect.left, SVGWrapperBoundingRect.top);
+        const diagramContainerTopLeft: Vector2 = new Vector2(diagramContainerBoundingRect.left, diagramContainerBoundingRect.top);
+
+        // get the centers of our viewport and station SVG
+        const diagramContainerCenter: Vector2 = new Vector2(
+            diagramContainerBoundingRect.left + diagramContainerBoundingRect.width/2,
+            diagramContainerBoundingRect.top + diagramContainerBoundingRect.height/2,
+        );
+        const stationSVGCenter: Vector2 = new Vector2(
+            stationSVGBoundingRect.left + stationSVGBoundingRect.width/2,
+            stationSVGBoundingRect.top + stationSVGBoundingRect.height/2,
+        );
+
+        // get the translation from origin (0, 0) (diagram container's top left or the SVG wrapper's top left before any translations) 
+        // to the center of our station SVG (this is normalized, so scaling [zoom] is accounted for)
+
+        // this logic isequivalent to applying zoomAbs(0, 0, 1) + moveTo(0, 0) then requesting an animation frame (for layout 
+        // recalculations; panzoom transformations do not happen instantly since it's a CSS sided transformation) in which you calculate 
+        // the translation between the center of the diagram container and the station SVG and moveTo() that position then apply the
+        // actual zoom value 
+        const SVGWrapperDiagramContainerOffsetNormalized: Vector2 = (
+            SVGWrapperTopLeft
+            .divide(scale)
+            .subtract(diagramContainerTopLeft)
+        )
+        const normalizedStationSVGCenter: Vector2 = (
+            stationSVGCenter
+            // divide by scale unitially to undo the dilation
+            .divide(scale)
+            // subtract our translation that aligns the top left corners of the svg wrapper and the diagram container (their 
+            // transform origins are both top-left so this is valid)
+            .subtract(SVGWrapperDiagramContainerOffsetNormalized)
+            // multiply by the zoom (equivalent to dilating at (0,0)), this is to apply what zoomabs would do to this point
+            .multiply(zoom)
+        )
+        // offset is equivalent to the translation between the normalized station SVG center point and the diagram container
+        // in other words, offset = diagram container center pt (viewport center) - zoomed/dilated (by (0,0)) station svg center point 
+        const offset: Vector2 = diagramContainerCenter.subtract(normalizedStationSVGCenter);
 
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
-        // the value to 1920x.9 1080*.9 with the top left still being at (0,0) since we passed the anchor at 0,0). It technically doesn't
-        // matter, the svg size still gets scaled the same way 
-        // MoveTo actually MOVES the svg back based on its top left corner 
+        // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
+        // of currentPanZoom] is at 0,0).
         this.currentPanZoom.zoomAbs(0, 0, zoom);
+        // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
         this.currentPanZoom.moveTo(
-            (containerWidth - svgWidth * zoom) / 2,
-            (containerHeight - svgHeight * zoom) / 2
+            offset.x,
+            offset.y
         );
     }
 
@@ -402,7 +454,7 @@ export class SvgRenderer {
 
         // add the drag logic for the svg rotation
         this.diagramContainer.addEventListener("mousedown", (ev: MouseEvent) => {
-            if (this.SVGWrapper ===null || this.diagramContainer === null || this.currentPanZoom === null)
+            if (this.SVGWrapper === null || this.diagramContainer === null || this.currentPanZoom === null)
                 return;
 
             // NOTE: this way only works because the SVG is centered horizontally and vertically in the SVGWrapper (see station map CSS)
@@ -410,12 +462,12 @@ export class SvgRenderer {
             // to do it by transform origin of 0,0; the top left corner of the SVG has to align with the SVGWrapper in the (set in the CSS)
             // then the offset has to be calculated between the top/left of the SVGWrapper and the center of the diagram container
             // (e.g. we don't calculate the offsets based on the center in this case)
-            const offset: {deltaX: number, deltaY: number} = getCentersOffset(this.diagramContainer, this.SVGWrapper);
+            const offset: Vector2 = getElementCentersOffset(this.diagramContainer, this.SVGWrapper);
             const panzoomTransforms: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
 
             // the pivots/translations is equivalent to the offset de-scaled (e.g. the offset as if SVGWrapper wasn't scaled)
-            pivotX = offset.deltaX / panzoomTransforms.scale;
-            pivotY = offset.deltaY / panzoomTransforms.scale;
+            pivotX = offset.x / panzoomTransforms.scale;
+            pivotY = offset.y / panzoomTransforms.scale;
 
             // init the previous position
             prevPosX = ev.x;
