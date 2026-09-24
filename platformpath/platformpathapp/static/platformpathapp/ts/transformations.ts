@@ -140,29 +140,17 @@ export function getCenterOfElement(element: HTMLElement | SVGGraphicsElement): V
 }
 
 // tells if two element's bounding client rect are intersecting
-export function boundingRectAreIntersecting(
+export function boundingRectsAreIntersecting(
     elementOne: HTMLElement | SVGGraphicsElement,
     elementTwo: HTMLElement | SVGGraphicsElement
 ): boolean {
     const elementOneBoundingRect: DOMRect = elementOne.getBoundingClientRect();
     const elementTwoBoundingRect: DOMRect = elementTwo.getBoundingClientRect();
 
-    const xMinIsWithin: boolean = (
-        elementOneBoundingRect.left >= elementTwoBoundingRect.left && 
-        elementOneBoundingRect.left <= elementTwoBoundingRect.right
+    return (
+        elementOneBoundingRect.left < elementTwoBoundingRect.right &&
+        elementOneBoundingRect.right > elementTwoBoundingRect.left &&
+        elementOneBoundingRect.top < elementTwoBoundingRect.bottom &&
+        elementOneBoundingRect.bottom > elementTwoBoundingRect.top
     );
-    const xMaxIsWithin: boolean = (
-        elementOneBoundingRect.right >= elementTwoBoundingRect.left && 
-        elementOneBoundingRect.right <= elementTwoBoundingRect.right
-    );
-    const yMinWithin: boolean = (
-        elementOneBoundingRect.top >= elementTwoBoundingRect.top && 
-        elementOneBoundingRect.top <= elementTwoBoundingRect.bottom
-    );
-    const yMaxWithin: boolean = (
-        elementOneBoundingRect.bottom >= elementTwoBoundingRect.top && 
-        elementOneBoundingRect.bottom <= elementTwoBoundingRect.bottom
-    );
-
-    return (yMinWithin || yMaxWithin) && (xMinIsWithin || xMaxIsWithin);
 }

@@ -3,7 +3,7 @@
 import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
-import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectAreIntersecting, Vector2 } from "./transformations.ts";
+import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -20,7 +20,7 @@ export class SvgRenderer {
     private SVGWrapper: HTMLDivElement | null = null;
     private SVG: SVGSVGElement | null = null;
     private stationSVG: SVGGraphicsElement | null = null;
-    private currentSVGView: SVGView = SVGView.SATELLITE;
+    private currentSVGView: SVGView = SVGView.ROAD;
     private sensitivity: number;
 
     constructor(sensitivityDampener: number = 0.5) {
@@ -168,44 +168,130 @@ export class SvgRenderer {
     }
 
     // Helper method to center on the entire station map
-    public centerMap(zoom: number | null = null): void {
-        if (
-            this.diagramContainer === null ||
-            this.SVGWrapper === null || 
-            this.SVG === null || 
-            this.stationSVG === null || 
-            !this.currentPanZoom
-        ) {
+    public centerMap(zoomMultiplier: number = 0.75, zoom: number | null = null): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+
+        // retreive the station SVG's bounding rect
+        const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
+        // then center it, passing our zoom multiplier or manual zoom value (if needed)
+        if (zoom === null)
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier);
+        else
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom);
+    }
+
+    // (FOR ROUTE PREVIEW) Helper function to zoom in on the node SVG elements representing the path
+    public centerOnPath(pathNodes: SVGGraphicsElement[], zoomMultiplier: number = 0.5, zoom: number | null = null): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+
+        // create two vectors to record the bounds of the largest bounding box that captures all the node SVG element's bounding boxes
+        let leftTopMostPoint: Vector2 = new Vector2(0, 0);
+        let rightBottomMostPoint: Vector2 = new Vector2(0, 0);
+        // we need this bool to initialize the first values of our vectors (or else the equality checks wouldn't work properly for
+        // (0,0) assuming the group is translated at the x and y extremes)
+        let isFirstComparison: boolean = true;
+        // iterate thru our path nodes
+        for (const node of pathNodes) {
+            // get the client rect
+            const nodeBoundingRect: DOMRect = node.getBoundingClientRect();
+            // initialize our vectors if this is our first comparison
+            if (isFirstComparison) {
+                leftTopMostPoint.x = nodeBoundingRect.left;
+                leftTopMostPoint.y = nodeBoundingRect.top;
+                rightBottomMostPoint.x = nodeBoundingRect.right;
+                rightBottomMostPoint.y = nodeBoundingRect.bottom;
+
+                isFirstComparison = false;
+            }
+            // if not, update our vectors accordingly
+            else {
+                leftTopMostPoint.x = leftTopMostPoint.x < nodeBoundingRect.left ? leftTopMostPoint.x : nodeBoundingRect.left;
+                leftTopMostPoint.y = leftTopMostPoint.y < nodeBoundingRect.top ? leftTopMostPoint.y : nodeBoundingRect.top;
+                rightBottomMostPoint.x = (
+                    rightBottomMostPoint.x > nodeBoundingRect.right ? rightBottomMostPoint.x : nodeBoundingRect.right
+                );
+                rightBottomMostPoint.y = (
+                    rightBottomMostPoint.y > nodeBoundingRect.bottom ? rightBottomMostPoint.y : nodeBoundingRect.bottom
+                );
+            }
+        }
+
+        // create a DOMRect from our updated vectors
+        const nodeGroupBoundingBox: DOMRect = new DOMRect(
+            leftTopMostPoint.x, 
+            leftTopMostPoint.y, 
+            rightBottomMostPoint.x - leftTopMostPoint.x,
+            rightBottomMostPoint.y - leftTopMostPoint.y
+        );
+        // and pass this bounding box to center it
+        this.centerBoundingBoxInViewport(nodeGroupBoundingBox, zoomMultiplier, zoom);
+    }
+
+    // Helper function to zoom on on a node based on svgId
+    public centerOnNode(SVGID: string, zoomMultiplier: number = 1, zoom: number = 8): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+        // retrieve our node SVG element
+        const node: SVGGraphicsElement | null = this.stationSVG.querySelector(`[id='${SVGID}']`);
+        if (node === null) {
+            console.warn(`Node with "${SVGID}" cannot be found on the SVG`);
+            return;
+        }
+        // get the bounding rect
+        const nodeBoundingRect: DOMRect = node.getBoundingClientRect();
+        // then center it
+        this.centerBoundingBoxInViewport(nodeBoundingRect, zoomMultiplier, zoom);
+    }
+    
+    // base function for centering any bounding box (e.g. the client rect of a target SVG element/HTML element or a custom DOMRect)
+    // zoomMultiplier scales the computed zoom for the bounding box (which is equivalent to the diagram container (viewport's) height
+    // or width divided by the normalized value of the bounding box (normalized value = bounding box / panzoom scale))
+    private centerBoundingBoxInViewport(
+        boundingBox: DOMRect,
+        zoomMultiplier: number = 1,
+        zoomOverrideValue: number | null = null
+    ): void {
+           if (this.currentPanZoom === null || this.diagramContainer === null || this.SVGWrapper === null) {
             console.warn(
-                "SVG wrapper, the full SVG, station SVG, and/or this current pan zoom doesn't exist",
-                `SVG Wrapper Status: ${this.SVGWrapper}`,
-                `SVG Status: ${this.SVG}`,
-                `Station SVG Status: ${this.stationSVG}`,
-                `Current Pan Zoom Instance Status: ${this.currentPanZoom}`
+                "Panzoom instance, the diagram container, and/or the SVG wrapper element doesn't exist",
+                `Panzoom Instance Status: ${this.currentPanZoom}`,
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `SVG Wrapper Status: ${this.SVGWrapper}`
             );
             return;
         }
 
         // get our current scale (e.g. how zoomed in are we)
         const scale: number = this.currentPanZoom.getTransform().scale;
-        // get the normalized version of our stationSVG width/height (e.g. as if we didn't apply any scaling to the svg at all)
-        const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
-        const stationSVGWidthNormalized: number = stationSVGBoundingRect.width/scale;
-        const stationSVGHeightNormalized: number = stationSVGBoundingRect.height/scale;
+        // get the normalized version of our svg width/height (e.g. as if we didn't apply any scaling to the svg at all; this doesn't
+        // exclude translations and rotations so the bounding rect values will be different everytime) this is our grounds for how far 
+        // we should zoom in
+        const boundingBoxWidthNormalized: number = boundingBox.width/scale;
+        const boundingBoxHeightNormalized: number = boundingBox.height/scale;
         // get our viewport dimensions
         const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
-        const containerWidth: number = diagramContainerBoundingRect.width;
-        const containerHeight: number = diagramContainerBoundingRect.height;
 
-        // get the zoom value that fits proportionally to our station SVG
-        if (zoom === null) {
-            // this just scales if we want to increase from viewing the entire station for it to be slightly zoomed out or zoomed in
-            // we'll keep this hard coded for now
-            const zoomMultiplier: number = 0.95;
-            if (stationSVGBoundingRect.height > stationSVGBoundingRect.width) 
-                zoom = containerHeight/stationSVGHeightNormalized * zoomMultiplier;
+        let zoom: number = 1;
+        // determine whether we want an explicit zoom value (the zoomOverride var) or not
+        if (zoomOverrideValue === null) {
+            // if not determine the adequate zoom based on the normalized bounds of the SVG element respective to the container's 
+            // dimensions multiplied by the zoom multiplier
+            if (boundingBox.height > boundingBox.width) 
+                zoom = diagramContainerBoundingRect.width/boundingBoxHeightNormalized * zoomMultiplier;
             else
-                zoom = containerWidth/stationSVGWidthNormalized * zoomMultiplier;
+                zoom = diagramContainerBoundingRect.height/boundingBoxWidthNormalized * zoomMultiplier;
+        }
+        else {
+            // if yes, then include the zoom value as is
+            zoom = zoomOverrideValue;
         }
 
         // get the top left of the svg wrapper and diagram container
@@ -216,11 +302,11 @@ export class SvgRenderer {
         // get the centers of our viewport and station SVG
         const diagramContainerCenter: Vector2 = new Vector2(
             diagramContainerBoundingRect.left + diagramContainerBoundingRect.width/2,
-            diagramContainerBoundingRect.top + diagramContainerBoundingRect.height/2,
+            diagramContainerBoundingRect.top + diagramContainerBoundingRect.height/2
         );
-        const stationSVGCenter: Vector2 = new Vector2(
-            stationSVGBoundingRect.left + stationSVGBoundingRect.width/2,
-            stationSVGBoundingRect.top + stationSVGBoundingRect.height/2,
+        const targetSVGElementCenter: Vector2 = new Vector2(
+            boundingBox.left + boundingBox.width/2,
+            boundingBox.top + boundingBox.height/2
         );
 
         // get the translation from origin (0, 0) (diagram container's top left or the SVG wrapper's top left before any translations) 
@@ -235,8 +321,8 @@ export class SvgRenderer {
             .divide(scale)
             .subtract(diagramContainerTopLeft)
         )
-        const normalizedStationSVGCenter: Vector2 = (
-            stationSVGCenter
+        const normalizedTargetSVGCenter: Vector2 = (
+            targetSVGElementCenter
             // divide by scale unitially to undo the dilation
             .divide(scale)
             // subtract our translation that aligns the top left corners of the svg wrapper and the diagram container (their 
@@ -244,10 +330,11 @@ export class SvgRenderer {
             .subtract(SVGWrapperDiagramContainerOffsetNormalized)
             // multiply by the zoom (equivalent to dilating at (0,0)), this is to apply what zoomabs would do to this point
             .multiply(zoom)
-        )
+        );
+
         // offset is equivalent to the translation between the normalized station SVG center point and the diagram container
         // in other words, offset = diagram container center pt (viewport center) - zoomed/dilated (by (0,0)) station svg center point 
-        const offset: Vector2 = diagramContainerCenter.subtract(normalizedStationSVGCenter);
+        const offset: Vector2 = diagramContainerCenter.subtract(normalizedTargetSVGCenter);
 
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
@@ -280,7 +367,8 @@ export class SvgRenderer {
         // our SVG and PanZoom refers to the movement axes based on the svg's X,Y axes not the document's
         // @ts-ignore
         this.currentPanZoom = panzoom(this.SVGWrapper, { 
-            maxZoom: 20,
+            // NOTE: you need to adjust this since it is a HARD CAP (you cannot go over the limit even with panzoom.zoomAbs())
+            maxZoom: 5000, 
             minZoom: 0.3,
             smoothScroll: false,
             beforeMouseDown: beforeMouseDownEventHandler,
@@ -299,44 +387,6 @@ export class SvgRenderer {
         this.initRotationControls();
         this.centerMap();
         this.initDynamicBGImageLoad(roadMapHighResGridPicPaths, satelliteMapHighResGridPicPaths);
-    }
-
-    // Helper function to zoom on on a node based on svgId
-    public centerOnNode(svgId: string, zoom: number = 4): void {
-        const container = document.getElementById("diagram-container");
-        const svg = container?.querySelector("svg") as SVGSVGElement | null;
-        const target = svg?.getElementById(svgId) as SVGGraphicsElement | null;
-
-        if (!container || !svg || !target || !this.currentPanZoom) return;
-
-        // Hide the svg during transformation to avoid seeing a flicker
-        svg.style.visibility = "hidden";
-
-        this.currentPanZoom.zoomAbs(0, 0, 1);
-        this.currentPanZoom.moveTo(0, 0);
-
-        requestAnimationFrame(() => {
-            const containerRect = container.getBoundingClientRect();
-            const targetRect = target.getBoundingClientRect();
-
-            // Calculate the coordinates for the target node
-            const targetCenterX = targetRect.left - containerRect.left + targetRect.width / 2;
-            const targetCenterY = targetRect.top - containerRect.top + targetRect.height / 2;
-
-            const containerCenterX = containerRect.width / 2;
-            const containerCenterY = containerRect.height / 2;
-
-            // Apply the pan and zoom with the calculations above to center the screen on the target node
-            this.currentPanZoom?.zoomAbs(0, 0, zoom);
-            this.currentPanZoom?.moveTo(
-                containerCenterX - targetCenterX * zoom,
-                containerCenterY - targetCenterY * zoom
-            );
-
-            requestAnimationFrame(() => {
-                svg.style.visibility = "";
-            });
-        });
     }
 
     // get all route direction labels
@@ -391,25 +441,39 @@ export class SvgRenderer {
     // all nodes that are part of the route by setting their styles
     // and relevant properties (preview-index, preview-duration)
     public startRoutePreview(pathNodeIds: string[]): void {
+        if (this.stationSVG === null) {
+            console.warn("The station SVG doesn't exist");
+            return;
+        }
+
         // reset map
         this.stopRoutePreview();
-        this.centerMap();
-
+        // calculate how long the prewview path animation should last (the glowing lines)
         const previewDurationSeconds = Math.max(pathNodeIds.length, 1);
 
-        // Sets the style for all nodes on the path
-        pathNodeIds.forEach((nodeId, index) => {
-            const node = document.getElementById(nodeId);
-
+        const pathNodes: SVGGraphicsElement[] = [];
+        // Sets the style for all nodes on the path and adds the node to our path nodes array
+        for (let index=0; index<pathNodeIds.length; index++) {
+            const nodeID: string | undefined = pathNodeIds[index];
+            if (nodeID === undefined)
+                return;
+            const node: SVGGraphicsElement | null = this.stationSVG.querySelector(`[id='${nodeID}']`);
             if (!node) {
-                console.warn("Preview node not found:", nodeId);
+                console.warn("Preview node not found:", nodeID);
                 return;
             }
 
+            // push the path nodes into the array 
+            pathNodes.push(node);
+
+            // add styling for the node
             node.classList.add("route-preview-node");
             node.style.setProperty("--preview-index", index.toString());
             node.style.setProperty("--preview-duration", (previewDurationSeconds.toString() + "s"));
-        })
+        }
+
+        // zoom onto the path items now that we have all the path nodes
+        this.centerOnPath(pathNodes);
     }
 
     // Function that removes all the styling applied on the path nodes for the preview
@@ -463,11 +527,11 @@ export class SvgRenderer {
             // then the offset has to be calculated between the top/left of the SVGWrapper and the center of the diagram container
             // (e.g. we don't calculate the offsets based on the center in this case)
             const offset: Vector2 = getElementCentersOffset(this.diagramContainer, this.SVGWrapper);
-            const panzoomTransforms: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
+            const scale = this.currentPanZoom.getTransform().scale;
 
             // the pivots/translations is equivalent to the offset de-scaled (e.g. the offset as if SVGWrapper wasn't scaled)
-            pivotX = offset.x / panzoomTransforms.scale;
-            pivotY = offset.y / panzoomTransforms.scale;
+            pivotX = offset.x/scale;
+            pivotY = offset.y/scale;
 
             // init the previous position
             prevPosX = ev.x;
@@ -518,11 +582,11 @@ export class SvgRenderer {
         this.setupPanzoomControls(beforeMouseDownHandler);
     }
 
-    // NOTE: Do this after CenterMap() during the initial load
-    // init loading higher res images logic depending on the zoom
+    // init loading higher res images logic depending on the zoom set here
     private initDynamicBGImageLoad(
         roadMapHighResGridPicPaths: Record<string,string>,
-        satelliteMapHighResGridPicPaths: Record<string,string>
+        satelliteMapHighResGridPicPaths: Record<string,string>,
+        zoomThreshold: number = 2
     ) {
         if (this.currentPanZoom === null || this.diagramContainer === null || this.SVG === null) {
             console.warn(
@@ -539,10 +603,10 @@ export class SvgRenderer {
         const satelliteMapGroup: SVGGraphicsElement | null = this.SVG.querySelector("[id='Satellite Map Group']");
         // template for placing our grid pics onto the svg
         const mapGrid: SVGGraphicsElement | null = this.SVG.querySelector("[id='Map Grid']");
-        const svgURL: string = "http://www.w3.org/2000/svg";
-
         // cache the grid paths to prevent adding more paths
-        const cachedGridPicPath: Set<string> = new Set();
+        const cachedGridPicPaths: Set<string> = new Set();
+        const gridItemIDRoadMapImageMap: Map<string,SVGImageElement> = new Map();
+        const gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement> = new Map();
 
         if (satelliteMapGroup === null || roadMapGroup === null || mapGrid === null) {
             console.warn(
@@ -558,55 +622,208 @@ export class SvgRenderer {
             if (this.diagramContainer === null || this.currentPanZoom === null)
                 return;
 
-            // we'll set an arbitrary threshold for now...
-            const zoomThreshold: number = 1.5;
+            // get the current zoom
             const currentZoom: number = this.currentPanZoom.getTransform().scale;
+            const zoomThresholdMet: boolean = currentZoom >= zoomThreshold;
 
-            // we only show the high res images if the zoom exceeds the threshold (or else what's the point of loading the images)
-            if (currentZoom < zoomThreshold)
-                return;
-
-            // iterate through our positioning items 
-            for (const gridItem of mapGrid.children) {
-                const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
-                const gridPicpath: string | undefined = satelliteMapHighResGridPicPaths[gridItem.id];
-
-                // check if the view is either in satellite/road view 
-                // and the gridPicPath exists and an image element hasn't been instantiated
-                // and the element is within view
-                if (
-                    this.currentSVGView === SVGView.DEFAULT ||
-
-                    gridPicpath === undefined ||
-                    cachedGridPicPath.has(gridPicpath) ||
-
-                    !boundingRectAreIntersecting(this.diagramContainer, gridItemAsSVGElement)
-                )
-                    continue;
-                                
-                // create a new svg image element
-                const imageGridItem: SVGImageElement = document.createElementNS(svgURL, "image") as SVGImageElement;
-                // set the corresponding attributes for the image
-                imageGridItem.setAttribute("href", gridPicpath);
-                const attributes: string[] = ["x", "y", "width", "height"];
-                attributes.forEach((attribute: string) => {
-                    const attributeValue: string | null = gridItemAsSVGElement.getAttribute(attribute);
-                    if (attributeValue !== null)
-                        imageGridItem.setAttribute(attribute, attributeValue);
-                });
-
-                // append the new image to their respective svg group
-                if (this.currentSVGView === SVGView.ROAD) 
-                    roadMapGroup.appendChild(imageGridItem);
-                if (this.currentSVGView === SVGView.SATELLITE) 
-                    satelliteMapGroup.appendChild(imageGridItem);
-
-                cachedGridPicPath.add(gridPicpath);
-            }            
+            // handle the loading of our high res map images
+            this.handleHighResMapGridImageLoad(
+                zoomThresholdMet,
+                mapGrid,
+                roadMapGroup,
+                satelliteMapGroup,
+                roadMapHighResGridPicPaths,
+                satelliteMapHighResGridPicPaths,
+                gridItemIDRoadMapImageMap,
+                gridItemIDSatelliteMapImageMap,
+                cachedGridPicPaths
+            );
+            // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
+            this.handleExistingHighResMapGridImageLoad(
+                zoomThresholdMet, 
+                mapGrid, 
+                gridItemIDRoadMapImageMap,
+                gridItemIDSatelliteMapImageMap
+            );
         });
 
         this.currentPanZoom.on("zoom", (ev: any) => {
+            // get the current zoom
+            const currentZoom: number = this.currentPanZoom.getTransform().scale;
+            const zoomThresholdMet: boolean = currentZoom >= zoomThreshold;
 
+            // handle the loading of our high res map images
+            this.handleHighResMapGridImageLoad(
+                zoomThresholdMet,
+                mapGrid,
+                roadMapGroup,
+                satelliteMapGroup,
+                roadMapHighResGridPicPaths,
+                satelliteMapHighResGridPicPaths,
+                gridItemIDRoadMapImageMap,
+                gridItemIDSatelliteMapImageMap,
+                cachedGridPicPaths
+            );
+            // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
+            this.handleExistingHighResMapGridImageLoad(
+                zoomThresholdMet, 
+                mapGrid, 
+                gridItemIDRoadMapImageMap,
+                gridItemIDSatelliteMapImageMap
+            );
         });
+    }
+
+    // handler for loading the high res map images
+    private handleHighResMapGridImageLoad(
+        zoomThresholdMet: boolean,
+        mapGrid: SVGGraphicsElement,
+        roadMapGroup: SVGGraphicsElement,
+        satelliteMapGroup: SVGGraphicsElement,
+        roadMapHighResGridPicPaths: Record<string,string>,
+        satelliteMapHighResGridPicPaths: Record<string,string>,
+        gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
+        gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>,
+        cachedGridPicPaths: Set<string>
+    ): void {
+        // only go through with image loading if the zoom threshold was met or the current SVG view isn't default
+        if (!zoomThresholdMet || this.currentSVGView === SVGView.DEFAULT)
+            return;
+
+        // iterate through our positioning items on our map grid SVG
+        for (const gridItem of mapGrid.children) {
+            const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
+
+            // determine which type of view we're at and get the path of our grid pic element and set these variables accordingly
+            let targetMapGroup: SVGGraphicsElement | null = null;
+            let targetHighResGridPicPaths: Record<string,string> | null = null;
+            let targetGridItemIDImageMap: Map<string,SVGImageElement> | null = null;
+
+            if (this.currentSVGView === SVGView.ROAD) {
+                targetMapGroup = roadMapGroup;
+                targetHighResGridPicPaths = roadMapHighResGridPicPaths;
+                targetGridItemIDImageMap = gridItemIDRoadMapImageMap;
+            }
+            else if (this.currentSVGView === SVGView.SATELLITE) {
+                targetMapGroup  = satelliteMapGroup;
+                targetHighResGridPicPaths = satelliteMapHighResGridPicPaths;
+                targetGridItemIDImageMap = gridItemIDSatelliteMapImageMap;
+            }
+
+            if (targetMapGroup === null || targetHighResGridPicPaths === null || targetGridItemIDImageMap === null) 
+                return;
+
+            // get our grid pic path from the target high rest grid pic path
+            const gridPicPath: string | undefined = targetHighResGridPicPaths[gridItemAsSVGElement.id];
+            // create an image grid item 
+            const imageGridItem: SVGImageElement | null = this.createImageGridItem(
+                    gridPicPath, cachedGridPicPaths, gridItemAsSVGElement
+            );
+            // if the path is valid and the item is not null (the grid pic path check is redundant since an image grid item cannot
+            // be created without a valid path anyways)
+            if (gridPicPath !== undefined && imageGridItem !== null) {
+                // add the element to our SVG in the DOM
+                targetMapGroup.appendChild(imageGridItem);
+                // map the gridItem id to the image grid item
+                targetGridItemIDImageMap.set(gridItemAsSVGElement.id, imageGridItem);
+                // add the path to our cache to avoid repeatedly creating the same image grid items
+                cachedGridPicPaths.add(gridPicPath);
+            }
+        }   
+                 
+    }
+
+    // creates an SVG image grid item (a supersampled version of one the high res map grid images) and returns it
+    private createImageGridItem(
+        gridPicPath: string | undefined, 
+        cachedGridPicPaths: Set<string>,
+        gridItem: SVGGraphicsElement 
+    ): SVGImageElement | null {
+        if (this.diagramContainer === null) {
+            console.warn("The diagram container element doesn't exist");
+            return null;
+        }
+
+        // check if the gridPicPath exists and an image element hasn't been instantiated for this specific path
+        // and the element is within view of the viewport
+        if (
+            gridPicPath === undefined ||
+            cachedGridPicPaths.has(gridPicPath) ||
+
+            !boundingRectsAreIntersecting(this.diagramContainer, gridItem)
+        )
+            return null;
+                        
+        // universal URL to add SVG elements onto a canvas or SVG
+        const SVGURI: string = "http://www.w3.org/2000/svg";
+        // create a new svg image element
+        const imageGridItem: SVGImageElement = document.createElementNS(SVGURI, "image") as unknown as SVGImageElement;
+        // set the corresponding attributes for the image
+        imageGridItem.setAttribute("href", gridPicPath);
+        const attributes: string[] = ["x", "y", "width", "height"];
+        attributes.forEach((attribute: string) => {
+            const attributeValue: string | null = gridItem.getAttribute(attribute);
+            if (attributeValue !== null)
+                imageGridItem.setAttribute(attribute, attributeValue);
+        });
+
+        return imageGridItem;
+    }
+
+    // handler for dynamically loading and deloading (showing and hiding) already existing image grid items
+    private handleExistingHighResMapGridImageLoad(
+        zoomThresholdMet: boolean,
+        mapGrid: SVGGraphicsElement, 
+        gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
+        gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
+    ): void {
+        if (this.diagramContainer === null) {
+            console.warn("Diagram container doesn't exist");
+            return;
+        }
+
+        if (this.currentSVGView === SVGView.DEFAULT) 
+            return;
+
+
+        let targetGridIDImageMap: Map<string,SVGImageElement> | null = null;
+        if (this.currentSVGView === SVGView.ROAD)
+            targetGridIDImageMap = gridItemIDRoadMapImageMap;
+        else if (this.currentSVGView === SVGView.SATELLITE)
+            targetGridIDImageMap = gridItemIDSatelliteMapImageMap;
+        else 
+            return;
+            
+        // cycle through the grid item placeholders for our map grid
+        for (const gridItem of mapGrid.children) {
+            const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
+            // if zoomed too far out
+            if (!zoomThresholdMet)
+            {
+                // set all image grid items for this particular grid item to be hidden
+                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
+                if (imageGridElement !== undefined) 
+                    imageGridElement.style.display = "none";
+
+                continue;
+            }
+            
+            // if zoomed adequately close and the the grid item is within the viewport
+            if (boundingRectsAreIntersecting(this.diagramContainer, gridItemAsSVGElement)) 
+            {
+                // unhide the image grid items
+                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
+                if (imageGridElement !== undefined)
+                    imageGridElement.style.display = "block";
+            }
+            // if not in viewport
+            else {
+                // hide the target grid image item
+                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
+                if (imageGridElement !== undefined)
+                    imageGridElement.style.display = "none";
+            }
+            
+        }
     }
 }

@@ -22,6 +22,17 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
                 "Grid_32": "/static/platformpathapp/diagrams/Bay50/Satellite_Map_High_Res/Grid_32.jpg",
                 "Grid_33": "/static/platformpathapp/diagrams/Bay50/Satellite_Map_High_Res/Grid_33.jpg"
             },
+            road_map_high_res_grid_pic_paths={
+                "Grid_11": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_11.jpg",
+                "Grid_12": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_12.jpg",
+                "Grid_13": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_13.jpg",
+                "Grid_21": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_21.jpg",
+                "Grid_22": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_22.jpg",
+                "Grid_23": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_23.jpg",
+                "Grid_31": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_31.jpg",
+                "Grid_32": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_32.jpg",
+                "Grid_33": "/static/platformpathapp/diagrams/Bay50/Road_Map_High_Res/Grid_33.jpg"
+            },
             accessible_station=False
         )
 
