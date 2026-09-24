@@ -233,6 +233,9 @@ export class SvgRenderer {
         this.centerBoundingBoxInViewport(nodeGroupBoundingBox, zoomMultiplier, zoom);
     }
 
+    // BIG NOTE: The zoom value right now is only adequate for the station maps with the road/satellite maps, the zoom is very 
+    // big for the default stations without any map so don't be alarmed too much about the uber zoom on the nodes for those stations
+    // currently
     // Helper function to zoom on on a node based on svgId
     public centerOnNode(SVGID: string, zoomMultiplier: number = 1, zoom: number = 8): void {
         if (this.stationSVG === null) {
@@ -285,9 +288,9 @@ export class SvgRenderer {
             // if not determine the adequate zoom based on the normalized bounds of the SVG element respective to the container's 
             // dimensions multiplied by the zoom multiplier
             if (boundingBox.height > boundingBox.width) 
-                zoom = diagramContainerBoundingRect.width/boundingBoxHeightNormalized * zoomMultiplier;
+                zoom = diagramContainerBoundingRect.height/boundingBoxHeightNormalized * zoomMultiplier;
             else
-                zoom = diagramContainerBoundingRect.height/boundingBoxWidthNormalized * zoomMultiplier;
+                zoom = diagramContainerBoundingRect.width/boundingBoxWidthNormalized * zoomMultiplier;
         }
         else {
             // if yes, then include the zoom value as is
