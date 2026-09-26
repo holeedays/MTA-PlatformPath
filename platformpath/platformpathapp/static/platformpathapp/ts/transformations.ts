@@ -60,48 +60,36 @@ export class Vector2 {
         return resultantVector;
     }
 
-    public add(vectorOrScalar: Vector2 | number): Vector2 {
+    public add(vector: Vector2): Vector2 {
         let x: number = this.x;
         let y: number = this.y;
 
-        if (vectorOrScalar instanceof Vector2) {
-            x += vectorOrScalar.x;
-            y += vectorOrScalar .y
-        }
-        else {
-            x + vectorOrScalar;
-            y + vectorOrScalar;
-        }
-
+        x += vector.x;
+        y += vector.y;
+        
         return new Vector2(x, y);
     }
 
-    public m_add(vectorOrScalar: Vector2 | number): Vector2 {
-        const resultantVector: Vector2 = this.add(vectorOrScalar);
+    public m_add(vector: Vector2): Vector2 {
+        const resultantVector: Vector2 = this.add(vector);
         this.x = resultantVector.x;
         this.y = resultantVector.y;
 
         return resultantVector;
     }
 
-    public subtract(vectorOrScalar: Vector2 | number): Vector2 {
+    public subtract(vector: Vector2): Vector2 {
         let x: number = this.x;
         let y: number = this.y;
 
-        if (vectorOrScalar instanceof Vector2) {
-            x -= vectorOrScalar.x;
-            y -= vectorOrScalar .y
-        }
-        else {
-            x - vectorOrScalar;
-            y - vectorOrScalar;
-        }
-
+        x -= vector.x;
+        y -= vector.y;
+        
         return new Vector2(x, y);
     }
 
-    public m_subtract(vectorOrScalar: Vector2 | number): Vector2 {
-        const resultantVector: Vector2 = this.subtract(vectorOrScalar);
+    public m_subtract(vector: Vector2): Vector2 {
+        const resultantVector: Vector2 = this.subtract(vector);
         this.x = resultantVector.x;
         this.y = resultantVector.y;
 
