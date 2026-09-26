@@ -18,7 +18,7 @@ export class Vector2 {
 
         if (vectorOrScalar instanceof Vector2) {
             x *= vectorOrScalar.x;
-            y *= vectorOrScalar .y
+            y *= vectorOrScalar.y;
         }
         else {
             x *= vectorOrScalar;
@@ -42,7 +42,7 @@ export class Vector2 {
 
         if (vectorOrScalar instanceof Vector2) {
             x /= vectorOrScalar.x;
-            y /= vectorOrScalar .y
+            y /= vectorOrScalar.y;
         }
         else {
             x /= vectorOrScalar;
