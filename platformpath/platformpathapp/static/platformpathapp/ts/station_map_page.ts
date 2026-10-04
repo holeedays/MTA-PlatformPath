@@ -67,7 +67,7 @@ export class StationMapPage {
             return;
         }
 
-        // METHODS THAT DON'T REQUIRE STATION DATA
+        /////////////// METHODS THAT DON'T REQUIRE STATION DATA
 
         // inits the site header and all related elements to it
         this.initSiteHeaderRelatedElements();
@@ -82,7 +82,7 @@ export class StationMapPage {
         // init the event handling for the element descriptions
         this.initElementDescriptions();
 
-        // METHODS THAT REQUIRE STATION DATA
+        /////////////// METHODS THAT REQUIRE STATION DATA
 
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
@@ -111,6 +111,8 @@ export class StationMapPage {
         this.initRoutePreviewControls();
         // init the event handling for the node dropdown buttons
         this.initNodeDropdownButtons();
+        // init the event handling for our map views block
+        this.initMapViews();
 
         // init all our "click" and "touch"-like event listeners
         this.initInteractionHandlers();
@@ -1239,6 +1241,67 @@ export class StationMapPage {
         }
 
         return labelIds;
+    }
+
+    // init the map views block and the event logic surrounding it (e.g. switching between map views)
+    private initMapViews(): void {
+        const mapViewsContainer: HTMLDivElement | null = document.querySelector(".map-views");
+        const opacityAdjustSlider: HTMLInputElement | null | undefined = mapViewsContainer?.querySelector(
+            ".opacity-adjust__slider"
+        );
+        const defaultMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+            ".views-toggle__default-button"
+        );
+        const roadMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+            ".views-toggle__road-button"
+        );
+        const satelliteMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+            ".views-toggle__satellite-button"
+        );
+
+        if (
+            mapViewsContainer === null ||
+
+            opacityAdjustSlider === null ||
+            opacityAdjustSlider === undefined ||
+
+            defaultMapViewToggleButton === null ||
+            defaultMapViewToggleButton === undefined ||
+
+            roadMapViewToggleButton === null ||
+            roadMapViewToggleButton === undefined ||
+
+            satelliteMapViewToggleButton === null ||
+            satelliteMapViewToggleButton === undefined
+        ) {
+            console.warn(
+                "Map views container, opacity adjust slider, and/or default/road/satellite view toggle buttons don't exist",
+                `Map Views Container Status: ${mapViewsContainer}`,
+                `Opacity Adjust Slider Status: ${opacityAdjustSlider}`,
+                `Default Map View Toggle Button Status: ${defaultMapViewToggleButton}`,
+                `Road Map View Toggle Button Status: ${roadMapViewToggleButton}`,
+                `Satellite Map View Toggle Button Status: ${satelliteMapViewToggleButton}`
+            );
+            return;
+        }
+
+        // init our opacity adjust slider
+
+        // set a handler for every shift in the slider's value
+        const handleSliderShift: (value: string) => void = (value: string) => {
+            // set the opacity of the map respective to the slider's value
+            this.svgRenderer.adjustMapOpacity(
+                parseFloat(value)
+            );
+            // this is just for view in the inspection panel
+            opacityAdjustSlider.setAttribute("value", value);
+        }
+        // though already set on the template, make sure the slider's starting value is a little less than 100% opacity
+        // make sure to call the handler so that all present changes are reflected
+        const viewCurrentOpacity: number = 70;
+        handleSliderShift(viewCurrentOpacity.toString());
+        // and attach the handler to an input event listener (which runs continuously when the value changes)
+        opacityAdjustSlider.addEventListener("input", (ev: InputEvent) => handleSliderShift(opacityAdjustSlider.value));
     }
 
     ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA

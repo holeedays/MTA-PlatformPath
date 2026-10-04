@@ -209,7 +209,7 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* ============================================================================================================================
-   Map overlays (headers, level stack, route form (includes filter checklist, step ui + preview, map legend)
+   Map overlays (headers, level stack, route form (includes filter checklist, step ui + preview + map views, map legend)
    ============================================================================================================================ */
 
 /* All controls sit above the SVG and never pan with it. */
@@ -714,11 +714,13 @@ to work properly; we use a custom keyframe animation */
 }
 
 
-/* ======== step ui + route preview ======== */
+/* ======== step ui + route preview + map views ======== */
 
 /* general styling */
 .step-ui,
-.route-preview {
+.route-preview,
+.map-views
+{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -736,7 +738,8 @@ to work properly; we use a custom keyframe animation */
         display 0.3s allow-discrete;
 }
 .step-ui.hidden,
-.route-preview.hidden {
+.route-preview.hidden,
+.map-views.hidden {
     opacity: 0;
     display: none;
 }
@@ -749,7 +752,7 @@ to work properly; we use a custom keyframe animation */
     }
 }
 
-/* text styling */
+/* text/main body styling */
 .step-ui__instruction-text {
     display: flex;
     align-items: center;
@@ -775,7 +778,6 @@ to work properly; we use a custom keyframe animation */
     gap: 10px;
 }
 
-
 .route-preview__summary strong,
 .route-preview__description {   
     --txt-color: #ffffff;
@@ -794,6 +796,26 @@ to work properly; we use a custom keyframe animation */
 .route-preview__description {
     --txt-color: #b6b6b6;
     --txt-size: 14px;
+}
+
+.map-views {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px;
+    background: rgba(60, 60, 60, 70%);
+    border-radius: 20px;
+}
+.map-views strong {
+    text-align: center;
+    color: #ffffff;
+}
+.map-views__view-toggles {
+    display: flex;
+    gap: 20px;
+}
+.map-views__view-toggle {
+    display: flex;
+    flex-direction: column;
 }
 
 .step-ui__step-controls,

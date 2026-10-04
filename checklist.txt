@@ -1,5 +1,13 @@
 This is where we add stuff we did and things to do...
 
+CURRENT BUGS:
+-----------------------
+> Weird issue where the boundingRectsAreIntersecting() detection doesn't work properly when a zoom event is triggered in rapid succession
+    - The problem is that although some parts of the map grid are in view when zoomed to a certain point, the function doesn't work
+    properly and returns that a grid cell is not in view although it is
+    - To replicate the error: press the zoom in symbol then zoom out immediately afterwards
+    - Not an imminent issue but it is suggested to look into it
+
 
 PLANS FOR THE FUTURE:
 ------------------------------

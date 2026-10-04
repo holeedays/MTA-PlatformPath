@@ -191,7 +191,7 @@
 			</aside>
 
 			<!-- ================= STEP UI BLOCK ================= -->
-			<aside id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
+			<aside id="step-ui" class="step-ui map-overlay hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
 					<button id="btn-prev" class="step-ui__btn-prev" type="button">
@@ -200,6 +200,34 @@
 					<button id="btn-next" class="step-ui__btn-next" type="button">
 						<img src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}" alt="Step ui next button icon">
 					</button>
+				</div>
+			</aside>
+
+			<!-- ================= MAP VIEWS BLOCK ================= -->
+			<aside class="map-views map-overlay">
+				<div class="map-views__opacity-adjust">
+					<strong>Adjust opacity</strong>
+					<input type="range" min="0" max="100" value="70" class="opacity-adjust__slider">
+				</div>
+				<div class="map-views__view-toggles">
+					<div class="map-views__view-toggle views-toggle__default">
+						<strong>DEFAULT</strong>
+						<button class="views-toggle__default-button">
+							HI
+						</button>
+					</div>
+					<div class="map-views__view-toggle views-toggle__road">
+						<strong>ROAD</strong>
+						<button class="views-toggle__road-button">
+							HI
+						</button>
+					</div>
+					<div class="map-views__view-toggle views-toggle__satellite">
+						<strong>SATELLITE</strong>
+						<button class="views-toggle__satellite-button">
+							HI
+						</button>
+					</div>
 				</div>
 			</aside>
 

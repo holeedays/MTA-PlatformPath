@@ -4,6 +4,7 @@ import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
+import { clamp } from "./utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -21,6 +22,12 @@ export class SvgRenderer {
     private SVG: SVGSVGElement | null = null;
     private stationSVG: SVGGraphicsElement | null = null;
     private currentSVGView: SVGView = SVGView.ROAD;
+    private SVGMapElements: {
+        parent: SVGGraphicsElement, 
+        grid: SVGGraphicsElement,
+        roadMap: SVGGraphicsElement, 
+        satelliteMap: SVGGraphicsElement
+    } | null = null;
     private sensitivity: number;
 
     constructor(sensitivityDampener: number = 0.5) {
@@ -29,7 +36,7 @@ export class SvgRenderer {
         // init diagram contaier field
         this.initDiagramContainerField();
         // init our svg wrapper field
-        this.initSvgWrapperField();
+        this.initSVGWrapperField();
     }
 
     // find the diagram container and assigns a reference to it for our diagramContainer field
@@ -40,10 +47,52 @@ export class SvgRenderer {
     }
 
     // finds the container that will hold our svg contents and assigns it to our SVGWrapper field
-    private initSvgWrapperField(): void {
+    private initSVGWrapperField(): void {
         this.SVGWrapper = document.querySelector('.svg-wrapper');
         if (this.SVGWrapper === null)
             console.warn("There is no svg wrapper element on the current page");
+    }
+
+    // init the svg map elements field (do this when we have loaded in the SVG element)
+    private initSVGMapElementsField(): void {
+        if (this.SVG === null) {
+            console.warn("The SVG element doesn't exist");
+            return;
+        }
+
+        // get all the elements relevant to the SVG Map elements
+
+        // parent group container of all the map related SVG elements
+        const mapSVGParent: SVGGraphicsElement | null = this.SVG.querySelector("[id='MAP']");
+        // template for placing our grid pics onto the svg
+        const mapGrid: SVGGraphicsElement | null = this.SVG.querySelector("[id='Map Grid']");
+        // the SVG groups that actually hold the map pictures (for the satellite and road map views)
+        const roadMapGroup: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Road Map Group']");
+        const satelliteMapGroup: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Satellite Map Group']");
+
+        if (
+            mapSVGParent === null ||
+
+            mapGrid === null ||
+            mapGrid === undefined || 
+
+            roadMapGroup === null ||
+            roadMapGroup === undefined ||
+
+            satelliteMapGroup === null ||
+            satelliteMapGroup === undefined
+        ) {
+            console.warn(
+                "Map SVG parent, map grid, and/or road/satellite map groups don't exist",
+                `Map Grid Status: ${mapGrid}`,
+                `Map SVG Parent Status: ${mapSVGParent}`,
+                `Road Map Group Status: ${roadMapGroup}`,
+                `Satellite Map Group Status: ${satelliteMapGroup}`
+            );
+            return;
+        }
+
+        this.SVGMapElements = {parent: mapSVGParent, grid: mapGrid, roadMap: roadMapGroup, satelliteMap: satelliteMapGroup};
     }
 
     private async loadDiagram(svgPath: string): Promise<void> {
@@ -386,6 +435,7 @@ export class SvgRenderer {
         satelliteMapHighResGridPicPaths: Record<string,string>
     ): Promise<void> {
         await this.loadDiagram(diagramPath);
+        this.initSVGMapElementsField();
         this.initSVGStyling();
         this.initRotationControls();
         this.centerMap();
@@ -601,24 +651,10 @@ export class SvgRenderer {
             return;
         }
 
-        // get the group elements responsible for holding elements related to the road map and satellite map
-        const roadMapGroup: SVGGraphicsElement | null = this.SVG.querySelector("[id='Road Map Group']");
-        const satelliteMapGroup: SVGGraphicsElement | null = this.SVG.querySelector("[id='Satellite Map Group']");
-        // template for placing our grid pics onto the svg
-        const mapGrid: SVGGraphicsElement | null = this.SVG.querySelector("[id='Map Grid']");
         // cache the grid paths to prevent adding more paths
         const cachedGridPicPaths: Set<string> = new Set();
         const gridItemIDRoadMapImageMap: Map<string,SVGImageElement> = new Map();
         const gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement> = new Map();
-
-        if (satelliteMapGroup === null || roadMapGroup === null || mapGrid === null) {
-            console.warn(
-                "Satellite map group or map grid doesn't exist",
-                `Satellite Map Group Status: ${satelliteMapGroup}`,
-                `Map Grid Status: ${mapGrid}`
-            );
-            return;
-        }
 
         // deals with loading high res images and caching them
         this.currentPanZoom.on("pan", (ev: any) => {
@@ -632,9 +668,6 @@ export class SvgRenderer {
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad(
                 zoomThresholdMet,
-                mapGrid,
-                roadMapGroup,
-                satelliteMapGroup,
                 roadMapHighResGridPicPaths,
                 satelliteMapHighResGridPicPaths,
                 gridItemIDRoadMapImageMap,
@@ -644,7 +677,6 @@ export class SvgRenderer {
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
             this.handleExistingHighResMapGridImageLoad(
                 zoomThresholdMet, 
-                mapGrid, 
                 gridItemIDRoadMapImageMap,
                 gridItemIDSatelliteMapImageMap
             );
@@ -658,9 +690,6 @@ export class SvgRenderer {
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad(
                 zoomThresholdMet,
-                mapGrid,
-                roadMapGroup,
-                satelliteMapGroup,
                 roadMapHighResGridPicPaths,
                 satelliteMapHighResGridPicPaths,
                 gridItemIDRoadMapImageMap,
@@ -670,7 +699,6 @@ export class SvgRenderer {
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
             this.handleExistingHighResMapGridImageLoad(
                 zoomThresholdMet, 
-                mapGrid, 
                 gridItemIDRoadMapImageMap,
                 gridItemIDSatelliteMapImageMap
             );
@@ -680,21 +708,23 @@ export class SvgRenderer {
     // handler for loading the high res map images
     private handleHighResMapGridImageLoad(
         zoomThresholdMet: boolean,
-        mapGrid: SVGGraphicsElement,
-        roadMapGroup: SVGGraphicsElement,
-        satelliteMapGroup: SVGGraphicsElement,
         roadMapHighResGridPicPaths: Record<string,string>,
         satelliteMapHighResGridPicPaths: Record<string,string>,
         gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
         gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>,
         cachedGridPicPaths: Set<string>
     ): void {
+        if (this.SVGMapElements === null) {
+            console.warn("SVG map elements field is not initialized");
+            return;
+        }
+
         // only go through with image loading if the zoom threshold was met or the current SVG view isn't default
         if (!zoomThresholdMet || this.currentSVGView === SVGView.DEFAULT)
             return;
 
         // iterate through our positioning items on our map grid SVG
-        for (const gridItem of mapGrid.children) {
+        for (const gridItem of this.SVGMapElements.grid.children) {
             const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
 
             // determine which type of view we're at and get the path of our grid pic element and set these variables accordingly
@@ -703,12 +733,12 @@ export class SvgRenderer {
             let targetGridItemIDImageMap: Map<string,SVGImageElement> | null = null;
 
             if (this.currentSVGView === SVGView.ROAD) {
-                targetMapGroup = roadMapGroup;
+                targetMapGroup = this.SVGMapElements.roadMap;
                 targetHighResGridPicPaths = roadMapHighResGridPicPaths;
                 targetGridItemIDImageMap = gridItemIDRoadMapImageMap;
             }
             else if (this.currentSVGView === SVGView.SATELLITE) {
-                targetMapGroup  = satelliteMapGroup;
+                targetMapGroup  = this.SVGMapElements.satelliteMap;
                 targetHighResGridPicPaths = satelliteMapHighResGridPicPaths;
                 targetGridItemIDImageMap = gridItemIDSatelliteMapImageMap;
             }
@@ -776,18 +806,16 @@ export class SvgRenderer {
     // handler for dynamically loading and deloading (showing and hiding) already existing image grid items
     private handleExistingHighResMapGridImageLoad(
         zoomThresholdMet: boolean,
-        mapGrid: SVGGraphicsElement, 
         gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
         gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
-    ): void {
-        if (this.diagramContainer === null) {
-            console.warn("Diagram container doesn't exist");
+    ): void {    
+        if (this.diagramContainer === null || this.SVGMapElements === null) {
+            console.warn("Diagram container is not initialized and/or SVG map elements field doesn't exist");
             return;
         }
 
         if (this.currentSVGView === SVGView.DEFAULT) 
             return;
-
 
         let targetGridIDImageMap: Map<string,SVGImageElement> | null = null;
         if (this.currentSVGView === SVGView.ROAD)
@@ -798,7 +826,7 @@ export class SvgRenderer {
             return;
             
         // cycle through the grid item placeholders for our map grid
-        for (const gridItem of mapGrid.children) {
+        for (const gridItem of this.SVGMapElements.grid.children) {
             const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
             // if zoomed too far out
             if (!zoomThresholdMet)
@@ -810,7 +838,7 @@ export class SvgRenderer {
 
                 continue;
             }
-            
+    
             // if zoomed adequately close and the the grid item is within the viewport
             if (boundingRectsAreIntersecting(this.diagramContainer, gridItemAsSVGElement)) 
             {
@@ -828,5 +856,22 @@ export class SvgRenderer {
             }
             
         }
+    }
+
+    // adjusts the opacity of the map by given the percentage
+    public adjustMapOpacity(targetPercentage: number): void {
+        if (this.SVGMapElements === null) {
+            console.warn("The SVG map elements field is initialized");
+            return;
+        }
+        
+        // the limits of the target percentage are gonna be explicitly set here
+        const minOpacity: number = 0;
+        const maxOpacity: number = 1;
+        // using those values, we clamp the target percentage (notice how we scale it down to a decimal value because opacity
+        // requires either a decimal value or the target percentage + % sign for it to work)
+        targetPercentage = clamp(targetPercentage*0.01, minOpacity, maxOpacity);
+        // we set the opacity of the entire map group by this opacity
+        this.SVGMapElements.parent.style.opacity = targetPercentage.toString();
     }
 }
