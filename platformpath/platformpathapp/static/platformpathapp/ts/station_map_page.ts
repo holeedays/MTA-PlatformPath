@@ -1,4 +1,4 @@
-import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
+import { SvgRenderer, MapView, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep, type AccessibilityOption } from "./path_finder.ts";
 import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
 import { NodeOption, FilterCheckBox, NodeSVG, type StationMapInteractionHandler, NodeDropdownButton } from "./station_custom_elements.ts";
@@ -219,14 +219,10 @@ export class StationMapPage {
         if (!layerOptions || !allLayersButton) return;
 
         // Setup button to display all layers of the station map and hook control to 
-        const eventLogic: () => () => void = () => {
-            // technically, we don't need the outer scope but I included it just for consistency's sake
-            return () => {
-                this.svgRenderer.showAllLayers(this.station?.layer_models || []);
-                this.setActiveLayerButton(allLayersButton);
-            }
-        }
-        const handler: () => void = eventLogic();
+        const handler: () => void = () => {
+            this.svgRenderer.showAllLayers(this.station?.layer_models || []);
+            this.setActiveLayerButton(allLayersButton);
+        };
         const stationMapInteractionHandler: StationMapInteractionHandler = {
             element: allLayersButton,
             handler: handler
@@ -238,14 +234,10 @@ export class StationMapPage {
             const layerButton: HTMLButtonElement = this.createLayerButton(layer.name, layer.color);
 
             // add the event logic here
-            const eventLogic: () => () => void = () => {
-                // technically, we don't need the outer scope but I included it just for consistency's sake
-                return () => {
-                    this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
-                    this.setActiveLayerButton(layerButton);
-                }
-            }
-            const handler: () => void = eventLogic();
+            const handler: () => void = () => {
+                this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
+                this.setActiveLayerButton(layerButton);
+            };
             const stationMapInteractionHandler: StationMapInteractionHandler = {
                 element: layerButton,
                 handler: handler
@@ -362,52 +354,43 @@ export class StationMapPage {
             accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
 
             // handle accessible only toggle button logic here 
-            const eventLogicAccessibilityOnly: () => () => void = () => {
-                // technically, we don't need the outer scope but I included it just for consistency's sake
-                return () => {
-                    // if the accessibileNone button is toggled then we want to turn it off
-                    if (isAccessibleNone) {
-                        isAccessibleNone = false;
-                        accessibilityNoneToggleButton.classList.remove("enabled");
-                        accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
-                    }
-                    // set our isAccessibleOnly boolean (this boolean will determine whether the pathfinding algorithm will
-                    // choose to select accessible nodes)
-                    this.accessibleOption = isAccessibleOnly ? "none" : "accessible-only";
-                    isAccessibleOnly = !isAccessibleOnly;
-
-                    // this is for visual styling to confirm whether this override is selected
-                    accessibilityOnlyToggleButton.classList.toggle("enabled", isAccessibleOnly);
-                    // toggle our readable label
-                    const ariaSelectedVal: string = isAccessibleOnly.toString();
-                    accessibilityOnlyToggleButton.setAttribute("aria-selected", ariaSelectedVal);
+            const handlerAccessibilityOnly: () => void = () => {
+                // if the accessibileNone button is toggled then we want to turn it off
+                if (isAccessibleNone) {
+                    isAccessibleNone = false;
+                    accessibilityNoneToggleButton.classList.remove("enabled");
+                    accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
                 }
-            }
+                // set our isAccessibleOnly boolean (this boolean will determine whether the pathfinding algorithm will
+                // choose to select accessible nodes)
+                this.accessibleOption = isAccessibleOnly ? "none" : "accessible-only";
+                isAccessibleOnly = !isAccessibleOnly;
+
+                // this is for visual styling to confirm whether this override is selected
+                accessibilityOnlyToggleButton.classList.toggle("enabled", isAccessibleOnly);
+                // toggle our readable label
+                const ariaSelectedVal: string = isAccessibleOnly.toString();
+                accessibilityOnlyToggleButton.setAttribute("aria-selected", ariaSelectedVal);
+            };
             // handle accessible none toggle button logic here
-            const eventLogicAccessibilityNone: () => () => void = () => {
-                // technically, we don't need the outer scope but I included it just for consistency's sake
-                return () => {
-                    // if the accessibileOnly button is toggled then we want to turn it off
-                    if (isAccessibleOnly) {
-                        isAccessibleOnly = false;
-                        accessibilityOnlyToggleButton.classList.remove("enabled");
-                        accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
-                    }
-                    // set our isAccessibleNone boolean (this boolean will determine whether the pathfinding algorithm will
-                    // choose to select non-accessible nodes)
-                    this.accessibleOption = isAccessibleNone ? "none" : "avoid-accessible";
-                    isAccessibleNone = !isAccessibleNone;
-
-                    // this is for visual styling to confirm whether this override is selected
-                    accessibilityNoneToggleButton.classList.toggle("enabled", isAccessibleNone);
-                    // toggle our readable label
-                    const ariaSelectedVal: string = isAccessibleNone.toString();
-                    accessibilityNoneToggleButton.setAttribute("aria-selected", ariaSelectedVal);
+            const handlerAccessibilityNone: () => void = () => {
+                // if the accessibileOnly button is toggled then we want to turn it off
+                if (isAccessibleOnly) {
+                    isAccessibleOnly = false;
+                    accessibilityOnlyToggleButton.classList.remove("enabled");
+                    accessibilityOnlyToggleButton.setAttribute("aria-selected", "false");
                 }
-            }
+                // set our isAccessibleNone boolean (this boolean will determine whether the pathfinding algorithm will
+                // choose to select non-accessible nodes)
+                this.accessibleOption = isAccessibleNone ? "none" : "avoid-accessible";
+                isAccessibleNone = !isAccessibleNone;
 
-            const handlerAccessibilityOnly: () => void = eventLogicAccessibilityOnly();
-            const handlerAccessibilityNone: () => void = eventLogicAccessibilityNone();
+                // this is for visual styling to confirm whether this override is selected
+                accessibilityNoneToggleButton.classList.toggle("enabled", isAccessibleNone);
+                // toggle our readable label
+                const ariaSelectedVal: string = isAccessibleNone.toString();
+                accessibilityNoneToggleButton.setAttribute("aria-selected", ariaSelectedVal);
+            };
 
             const stationMapInteractionHandlerAcessibilityOnly: StationMapInteractionHandler = { 
                 element: accessibilityOnlyToggleButton, 
@@ -935,50 +918,46 @@ export class StationMapPage {
         dropdownButton.NodeOptions.push(nodeOption);
 
         // init our event handling logic here...
-        const eventLogic: () => () => void = () => {
-            // technically we don't need the additional outer scope arrow operator but we'll keep it for consistency
-            return () => {
-                // this block deals with the selection of the item (mainly its own styling and some state changes)
-                {
-                    // check if there is an option already selected (depending on whether this node option is a start or end node option)
-                    // and if it matches our current nodeOption
-                    const role: SelectionRole = nodeOption.selectionRole();
-                    if (role === "start") {
-                        // if the start node doesn't match this node option, remove the .selected class from it
-                        if (this.selectedNodeOptions.startNode !== null && this.selectedNodeOptions.startNode !== nodeOption)
-                            this.selectedNodeOptions.startNode.Self.classList.remove("selected");
-                        // and then set the start node option as this one
-                        this.selectedNodeOptions.startNode = nodeOption;
-                    }
-                    // do the same for the end node
-                    else if (role === "end") {
-                        if (this.selectedNodeOptions.endNode !== null && this.selectedNodeOptions.endNode !== nodeOption)
-                            this.selectedNodeOptions.endNode.Self.classList.remove("selected");
-
-                        this.selectedNodeOptions.endNode = nodeOption;
-                    }
-                    // add the .selected class to our node option
-                    nodeOption.Self.classList.add("selected");
-                    // mark the dropdown button as not toggled (this will hide the dropdown parent from view))
-                    dropdownButton.IsToggled = false;
-                    // and add the selected class to the dropdown's toggle button as well (for styling purposes)...
-                    dropdownButton.Self.classList.add("option-selected");
+        const handler: () => void = () => {
+            // this block deals with the selection of the item (mainly its own styling and some state changes)
+            {
+                // check if there is an option already selected (depending on whether this node option is a start or end node option)
+                // and if it matches our current nodeOption
+                const role: SelectionRole = nodeOption.selectionRole();
+                if (role === "start") {
+                    // if the start node doesn't match this node option, remove the .selected class from it
+                    if (this.selectedNodeOptions.startNode !== null && this.selectedNodeOptions.startNode !== nodeOption)
+                        this.selectedNodeOptions.startNode.Self.classList.remove("selected");
+                    // and then set the start node option as this one
+                    this.selectedNodeOptions.startNode = nodeOption;
                 }
+                // do the same for the end node
+                else if (role === "end") {
+                    if (this.selectedNodeOptions.endNode !== null && this.selectedNodeOptions.endNode !== nodeOption)
+                        this.selectedNodeOptions.endNode.Self.classList.remove("selected");
 
-                // this code block deals with the extraneous effects of the selection (highlighting, current path interruption, etc)
-                {
-                    // highlight the selected node (it'll be either a start or end node, svg renderer will handle all the logic from here)
-                    this.svgRenderer.highlightSelectedNode(nodeOption);
+                    this.selectedNodeOptions.endNode = nodeOption;
+                }
+                // add the .selected class to our node option
+                nodeOption.Self.classList.add("selected");
+                // mark the dropdown button as not toggled (this will hide the dropdown parent from view))
+                dropdownButton.IsToggled = false;
+                // and add the selected class to the dropdown's toggle button as well (for styling purposes)...
+                dropdownButton.Self.classList.add("option-selected");
+            }
 
-                    // toggle off any navigation if it exists
-                    if (this.currentPath !== null) {
-                        this.endNavigation();
-                        this.currentPath = null;
-                    }
+            // this code block deals with the extraneous effects of the selection (highlighting, current path interruption, etc)
+            {
+                // highlight the selected node (it'll be either a start or end node, svg renderer will handle all the logic from here)
+                this.svgRenderer.highlightSelectedNode(nodeOption);
+
+                // toggle off any navigation if it exists
+                if (this.currentPath !== null) {
+                    this.endNavigation();
+                    this.currentPath = null;
                 }
             }
-        }
-        const handler: () => void = eventLogic();
+        };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const stationMapInteractionHandler: StationMapInteractionHandler = { 
             element: nodeOption.Self, 
@@ -1041,26 +1020,22 @@ export class StationMapPage {
         const filterCheckbox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL", filterChecklist);
 
         // init the logic for our all filter checkbox
-        const eventLogic: () => () => void = () => {
-            // technically we don't need the additional outer scope arrow operator but we'll keep it for consistency
-            return () => {
-                // clear our active filters list
-                activeFilters.clear();
-                // clear all the styling for the other enabled checkboxes
-                document.querySelectorAll(".filter-checklist__checkbox.enabled").forEach((filterCheckbox: Element) => {
-                    filterCheckbox.classList.remove("enabled");
-                });
+        const handler: () => void = () => {
+            // clear our active filters list
+            activeFilters.clear();
+            // clear all the styling for the other enabled checkboxes
+            document.querySelectorAll(".filter-checklist__checkbox.enabled").forEach((filterCheckbox: Element) => {
+                filterCheckbox.classList.remove("enabled");
+            });
 
-                // iterate thru the node options and remove the hidden class if it exists
-                nodeOptions.forEach((nodeOption: NodeOption) => {
-                    nodeOption.Self.classList.remove("hidden");
-                });
-                    
-                // also indicate this filter check box has been clicked
-                filterCheckbox.Self.classList.add("enabled");
-            }
-        }
-        const handler: () => void = eventLogic();
+            // iterate thru the node options and remove the hidden class if it exists
+            nodeOptions.forEach((nodeOption: NodeOption) => {
+                nodeOption.Self.classList.remove("hidden");
+            });
+                
+            // also indicate this filter check box has been clicked
+            filterCheckbox.Self.classList.add("enabled");
+        };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const stationMapInteractionHandler: StationMapInteractionHandler = { 
             element: filterCheckbox.ButtonElement, 
@@ -1091,90 +1066,86 @@ export class StationMapPage {
             // create a filter checkbox 
             const filterCheckbox: FilterCheckBox = new FilterCheckBox(type.readableLabel, type.value, filterCheckboxesContainer);
             // initiate the logic for it
-            const eventLogic: () => () => void = () => {
-                // technically we don't need the additional outer scope arrow operator but we'll keep it for consistency
-                return () => {
-                    // if filter is not previously enabled
-                    if (!activeFilters.has(filterCheckbox.Value)) {
-                        // add this to our set of enabled filters
-                        activeFilters.add(filterCheckbox.Value);
+            const handler: () => void = () => {
+                // if filter is not previously enabled
+                if (!activeFilters.has(filterCheckbox.Value)) {
+                    // add this to our set of enabled filters
+                    activeFilters.add(filterCheckbox.Value);
 
-                        // add the enabled styling to this checkbox
-                        filterCheckbox.Self.classList.add("enabled");
-                        // and remove the styling on all option filter since it should be disabled if any other filter is enabled
-                        allOptionFilterCheckbox.Self.classList.remove("enabled");
-                    }
-                    // in the case this filter is disabled
-                    else {
-                        // delete this filter value from enabled filters
-                        activeFilters.delete(filterCheckbox.Value);
-
-                        // remove its class attribute
-                        filterCheckbox.Self.classList.remove("enabled");
-                    }
-
-                    // now check if any other active filters are enabled
-                    if (activeFilters.size === 0) {
-                        // if not, activate our all option filter checkbox handler (e.g. enable all node options again)
-                        allOptionFilterCheckboxHandler();
-                        return;
-                    }
-
-                    // now loop through our node options with the activeFilters readjusted
-                    nodeOptions.forEach((nodeOption: NodeOption) => {
-                        // create a boolean to determine if any filters match 
-                        let matchesAFilter: boolean = false;
-                        for (const filterValue of activeFilters) {
-                            if (nodeOption.Filters.has(filterValue)) {
-                                matchesAFilter = true;
-                                break;
-                            }
-                        }
-                        // if not just hide it and update all styling relating to that deselection
-                        if (!matchesAFilter) {
-                            nodeOption.Self.classList.add("hidden");
-                            // also remove the option__selected class if it is to be hidden
-                            nodeOption.Self.classList.remove("selected");
-
-                            // if navigating is already happening, just ignore the following statements below
-                            // (e.g. won't break the current navigation despite the option not existing no more)
-                            if (this.currentPath !== null)
-                                return;
-
-                            // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
-                            // and remove highlighting and other styling attributes from it
-                            const role: SelectionRole = nodeOption.selectionRole();
-                            if (
-                                role === "start" && 
-                                this.selectedNodeOptions.startNode !== null && 
-                                this.selectedNodeOptions.startNode === nodeOption 
-                            ) {
-                                // set our selected node option for this start node as null
-                                this.selectedNodeOptions.startNode = null;
-                            }
-                            // same logic as for the start node goes for the end node
-                            else if (
-                                role === "end" && 
-                                this.selectedNodeOptions.endNode !== null &&
-                                this.selectedNodeOptions.endNode === nodeOption
-                            ) {
-                                this.selectedNodeOptions.endNode = null;
-                            }
-
-                            // unhighlight the node
-                            this.svgRenderer.unhighlightSelectedNode(role);
-                            // remove this class on the dropdown parent's toggle button (mainly just for styling 
-                            // (removing this class removes an image indicator that signals an option has been selected on the button))
-                            nodeOption.ParentToggleButton.classList.remove("option-selected");
-                        }
-                        // else remove the hidden class if it exists (since it an option that may be visible)
-                        else {
-                            nodeOption.Self.classList.remove("hidden");
-                        }
-                    });
+                    // add the enabled styling to this checkbox
+                    filterCheckbox.Self.classList.add("enabled");
+                    // and remove the styling on all option filter since it should be disabled if any other filter is enabled
+                    allOptionFilterCheckbox.Self.classList.remove("enabled");
                 }
-            }
-            const handler: () => void = eventLogic();
+                // in the case this filter is disabled
+                else {
+                    // delete this filter value from enabled filters
+                    activeFilters.delete(filterCheckbox.Value);
+
+                    // remove its class attribute
+                    filterCheckbox.Self.classList.remove("enabled");
+                }
+
+                // now check if any other active filters are enabled
+                if (activeFilters.size === 0) {
+                    // if not, activate our all option filter checkbox handler (e.g. enable all node options again)
+                    allOptionFilterCheckboxHandler();
+                    return;
+                }
+
+                // now loop through our node options with the activeFilters readjusted
+                nodeOptions.forEach((nodeOption: NodeOption) => {
+                    // create a boolean to determine if any filters match 
+                    let matchesAFilter: boolean = false;
+                    for (const filterValue of activeFilters) {
+                        if (nodeOption.Filters.has(filterValue)) {
+                            matchesAFilter = true;
+                            break;
+                        }
+                    }
+                    // if not just hide it and update all styling relating to that deselection
+                    if (!matchesAFilter) {
+                        nodeOption.Self.classList.add("hidden");
+                        // also remove the option__selected class if it is to be hidden
+                        nodeOption.Self.classList.remove("selected");
+
+                        // if navigating is already happening, just ignore the following statements below
+                        // (e.g. won't break the current navigation despite the option not existing no more)
+                        if (this.currentPath !== null)
+                            return;
+
+                        // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
+                        // and remove highlighting and other styling attributes from it
+                        const role: SelectionRole = nodeOption.selectionRole();
+                        if (
+                            role === "start" && 
+                            this.selectedNodeOptions.startNode !== null && 
+                            this.selectedNodeOptions.startNode === nodeOption 
+                        ) {
+                            // set our selected node option for this start node as null
+                            this.selectedNodeOptions.startNode = null;
+                        }
+                        // same logic as for the start node goes for the end node
+                        else if (
+                            role === "end" && 
+                            this.selectedNodeOptions.endNode !== null &&
+                            this.selectedNodeOptions.endNode === nodeOption
+                        ) {
+                            this.selectedNodeOptions.endNode = null;
+                        }
+
+                        // unhighlight the node
+                        this.svgRenderer.unhighlightSelectedNode(role);
+                        // remove this class on the dropdown parent's toggle button (mainly just for styling 
+                        // (removing this class removes an image indicator that signals an option has been selected on the button))
+                        nodeOption.ParentToggleButton.classList.remove("option-selected");
+                    }
+                    // else remove the hidden class if it exists (since it an option that may be visible)
+                    else {
+                        nodeOption.Self.classList.remove("hidden");
+                    }
+                });
+            };
             // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
             const stationMapInteractionHandler: StationMapInteractionHandler = { 
                 element: filterCheckbox.ButtonElement, 
@@ -1243,40 +1214,88 @@ export class StationMapPage {
         return labelIds;
     }
 
-    // init the map views block and the event logic surrounding it (e.g. switching between map views)
+    // inits all elements related to the map views (including the block panel and the toggle button)
     private initMapViews(): void {
+        // retrieve the map views block parent container here (used to init all related map view elements)
         const mapViewsContainer: HTMLDivElement | null = document.querySelector(".map-views");
-        const opacityAdjustSlider: HTMLInputElement | null | undefined = mapViewsContainer?.querySelector(
+        if (mapViewsContainer === null) {
+            console.warn("Parent container of the map views block doesn't exist");
+            return;
+        }
+
+        // init the map views block
+        this.initMapViewsBlock(mapViewsContainer);
+        // init all buttons that toggle the map views block
+        this.initMapViewsBlockToggleButtons(mapViewsContainer);
+    }
+
+    private initMapViewsBlockToggleButtons(mapViewsContainer: HTMLDivElement): void {
+        const mapViewsToggleButton: HTMLButtonElement | null = document.querySelector(".map-views__toggle-button");
+        const mapViewsToggleOffButton: HTMLButtonElement | null  = mapViewsContainer.querySelector(
+            ".map-views__toggle-off-button"
+        );
+
+        if (mapViewsToggleButton === null || mapViewsToggleOffButton === null) {
+            console.warn(
+                "The map views block toggle button and/or the map views toggle off button doesn't exist",
+                `Map Views Toggle Button Status: ${mapViewsToggleButton}`,
+                `Map Views Toggle Off Button Status: ${mapViewsToggleOffButton}`
+            );
+            return;
+        }
+
+        // event logic for the map views toggle button (only styling for the map views container)
+        let isPressed: boolean = false;
+        const mapViewsToggleButtonHandler: () => void = () => {
+            if (!isPressed) 
+                mapViewsContainer.classList.remove("hidden");
+            else
+                mapViewsContainer.classList.add("hidden");
+
+            isPressed = !isPressed;
+        }
+        // event logic for the map views toggle off button 
+        const mapViewsToggleOffButtonHandler: () => void = () => {
+            isPressed = false;
+            mapViewsContainer.classList.add("hidden");
+        }
+
+        // create station map interaction handlers for each element and its respective handle
+        const mapViewsToggleButtonInteractionHandler: StationMapInteractionHandler = {
+            element: mapViewsToggleButton,
+            handler: mapViewsToggleButtonHandler
+        };
+        const mapViewsToggleOffButtonInteractionHandler: StationMapInteractionHandler = {
+            element: mapViewsToggleOffButton,
+            handler: mapViewsToggleOffButtonHandler
+        };
+        // push it into the array of station map interaction handlers
+        this.stationMapInteractionHandlers.push(mapViewsToggleButtonInteractionHandler, mapViewsToggleOffButtonInteractionHandler);
+    }
+
+    // init the map views block and the event logic surrounding it (e.g. switching between map views)
+    private initMapViewsBlock(mapViewsContainer: HTMLDivElement): void {
+        const opacityAdjustSlider: HTMLInputElement | null = mapViewsContainer.querySelector(
             ".opacity-adjust__slider"
         );
-        const defaultMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+        const defaultMapViewToggleButton: HTMLButtonElement | null = mapViewsContainer.querySelector(
             ".views-toggle__default-button"
         );
-        const roadMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+        const roadMapViewToggleButton: HTMLButtonElement | null = mapViewsContainer.querySelector(
             ".views-toggle__road-button"
         );
-        const satelliteMapViewToggleButton: HTMLButtonElement | null | undefined = mapViewsContainer?.querySelector(
+        const satelliteMapViewToggleButton: HTMLButtonElement | null = mapViewsContainer.querySelector(
             ".views-toggle__satellite-button"
         );
 
         if (
-            mapViewsContainer === null ||
-
             opacityAdjustSlider === null ||
-            opacityAdjustSlider === undefined ||
-
             defaultMapViewToggleButton === null ||
-            defaultMapViewToggleButton === undefined ||
-
             roadMapViewToggleButton === null ||
-            roadMapViewToggleButton === undefined ||
-
-            satelliteMapViewToggleButton === null ||
-            satelliteMapViewToggleButton === undefined
+            satelliteMapViewToggleButton === null 
         ) {
             console.warn(
-                "Map views container, opacity adjust slider, and/or default/road/satellite view toggle buttons don't exist",
-                `Map Views Container Status: ${mapViewsContainer}`,
+                "opacity adjust slider, and/or default/road/satellite view toggle buttons don't exist",
                 `Opacity Adjust Slider Status: ${opacityAdjustSlider}`,
                 `Default Map View Toggle Button Status: ${defaultMapViewToggleButton}`,
                 `Road Map View Toggle Button Status: ${roadMapViewToggleButton}`,
@@ -1302,6 +1321,29 @@ export class StationMapPage {
         handleSliderShift(viewCurrentOpacity.toString());
         // and attach the handler to an input event listener (which runs continuously when the value changes)
         opacityAdjustSlider.addEventListener("input", (ev: InputEvent) => handleSliderShift(opacityAdjustSlider.value));
+
+        // init the map view toggle buttons
+
+        // create station map interaction handlers for each views toggle button
+        const defaultViewInteractionHandler: StationMapInteractionHandler = {
+            element: defaultMapViewToggleButton,
+            handler: () => this.svgRenderer.setCurrentMapView(MapView.DEFAULT)
+        };
+        const roadViewInteractionHandler: StationMapInteractionHandler = {
+            element: roadMapViewToggleButton,
+            handler: () => this.svgRenderer.setCurrentMapView(MapView.ROAD)
+        };
+        const satelliteViewInteractionHandler: StationMapInteractionHandler = {
+            element: satelliteMapViewToggleButton,
+            handler: () => this.svgRenderer.setCurrentMapView(MapView.SATELLITE)
+        };
+
+        // push them into the station map interaction handlers array to be initialized later
+        this.stationMapInteractionHandlers.push(
+            defaultViewInteractionHandler, 
+            roadViewInteractionHandler, 
+            satelliteViewInteractionHandler
+        );
     }
 
     ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA
@@ -1397,25 +1439,22 @@ export class StationMapPage {
         let siteHeaderButtonIsAnimating: boolean = false;
 
         // toggle event handling here (just style changes currently)
-        const eventLogic: () => () => void = () => {
-            let isPressed = false;
-            return () => {
-                if (siteHeaderButtonIsAnimating) 
-                    return;
+        let isPressed = false;
+        const handler: () => void = () => {
+            if (siteHeaderButtonIsAnimating) 
+                return;
 
-                // toggle all the relevant styling for the site header related elements
-                this.handleSiteHeaderButtonToggling(
-                    siteHeaderToggleButton, 
-                    siteHeaderContainer, 
-                    stationHeaderContainer, 
-                    elementDescriptionsToggleInfoButton,
-                    isPressed
-                );
-                siteHeaderButtonIsAnimating = true;
-                isPressed = !isPressed;
-            }
+            // toggle all the relevant styling for the site header related elements
+            this.handleSiteHeaderButtonToggling(
+                siteHeaderToggleButton, 
+                siteHeaderContainer, 
+                stationHeaderContainer, 
+                elementDescriptionsToggleInfoButton,
+                isPressed
+            );
+            siteHeaderButtonIsAnimating = true;
+            isPressed = !isPressed;
         }
-        const handler: () => void = eventLogic();
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const stationMapInteractionHandler: StationMapInteractionHandler = { 
             element: siteHeaderToggleButton, 
@@ -1490,27 +1529,24 @@ export class StationMapPage {
         mapLegendInfoContainerWrapper.classList.add("hidden");
 
         // add event handler for the toggle button (mainly for styling)
-        const eventLogic: () => () => void = () => {
-            let isPressed: boolean = false;
-            return () => {
-                if (toggleButtonIsAnimating)
-                    return;
+        let isPressed: boolean = false;
+        const handler: () => void = () => {
+            if (toggleButtonIsAnimating)
+                return;
 
-                mapLegendInfoContainerWrapper.classList.toggle("hidden", isPressed);
-                // same as the site header toggle button + map rotate button, add a temp animating class 
-                mapLegendToggleButton.classList.add("animating");
-                mapLegendToggleButton.classList.toggle("enabled", !isPressed);
-                mapLegendToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
-                mapLegendToggleButton.setAttribute(
-                    "aria-label", 
-                    isPressed ? "Show map legend" : "Hide map legend"
-                );
-            
-                toggleButtonIsAnimating = true;
-                isPressed = !isPressed;
-            }
-        }
-        const handler: () => void = eventLogic();
+            mapLegendInfoContainerWrapper.classList.toggle("hidden", isPressed);
+            // same as the site header toggle button + map rotate button, add a temp animating class 
+            mapLegendToggleButton.classList.add("animating");
+            mapLegendToggleButton.classList.toggle("enabled", !isPressed);
+            mapLegendToggleButton.setAttribute("aria-expanded", (!isPressed).toString());
+            mapLegendToggleButton.setAttribute(
+                "aria-label", 
+                isPressed ? "Show map legend" : "Hide map legend"
+            );
+        
+            toggleButtonIsAnimating = true;
+            isPressed = !isPressed;
+        };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const stationMapInteractionHandler: StationMapInteractionHandler = { 
             element: mapLegendToggleButton, 
@@ -1570,17 +1606,14 @@ export class StationMapPage {
         elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.add("hidden"));
 
         // init our event handling here 
-        const eventLogic: () => () => void = () => {
-            let isPressed: boolean = false;
-            return () => {
-                elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
-                elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
-                elementDescriptionsToggleInfoButton.setAttribute("aria-pressed", (!isPressed).toString());
+        let isPressed: boolean = false;
+        const handler: () => void = () => {
+            elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
+            elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
+            elementDescriptionsToggleInfoButton.setAttribute("aria-pressed", (!isPressed).toString());
 
-                isPressed = !isPressed;
-            }
-        }
-        const handler: () => void = eventLogic();
+            isPressed = !isPressed;
+        };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const stationMapInteractionHandler: StationMapInteractionHandler = { 
             element: elementDescriptionsToggleInfoButton, 

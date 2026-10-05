@@ -191,7 +191,7 @@
 			</aside>
 
 			<!-- ================= STEP UI BLOCK ================= -->
-			<aside id="step-ui" class="step-ui map-overlay hidden" aria-label="Steps Instructions/Buttons">
+			<aside id="step-ui" class="map-overlay step-ui hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
 					<button id="btn-prev" class="step-ui__btn-prev" type="button">
@@ -204,7 +204,10 @@
 			</aside>
 
 			<!-- ================= MAP VIEWS BLOCK ================= -->
-			<aside class="map-views map-overlay">
+			<aside class="map-views map-overlay hidden">
+				<button class="map-views__toggle-off-button">
+					TOGGLE OFF MAP VIEWS BLOCK
+				</button>
 				<div class="map-views__opacity-adjust">
 					<strong>Adjust opacity</strong>
 					<input type="range" min="0" max="100" value="70" class="opacity-adjust__slider">
@@ -230,6 +233,11 @@
 					</div>
 				</div>
 			</aside>
+
+			<!-- ================= MAP VIEWS TOGGLE BUTTON ================= -->
+			<button class="map-overlay map-views__toggle-button">
+				TOGGLE MAP VIEW
+			</button>
 
 			<!-- ================= STEP UI + ROUTE PREVIEW ELEMENT DESCRIPTION ================= -->
 			<div class="element-description element-description__step-ui-route-preview hidden">
