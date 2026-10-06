@@ -143,9 +143,6 @@ export class SvgRenderer {
                 continue;
             }
 
-            // normalize the starting rotation so it is in the range [0, 360]
-            const normalizedStartingRotation = normalizeAngle(startingRotation);
-
             // get the keys for our map
 
             // there are a total of 2 keys, based on how far the object's starting rotation is from a vertical rotation
@@ -154,8 +151,8 @@ export class SvgRenderer {
             // the idea is that the element changes its orientation when it's in a vertical position, which is either 270 or 180 deg
             // since the objects are already displaced by a certain amount, we just have to find the difference between that
             // displaced rotation (e.g. starting rotation) and the 2 vertical rotations
-            const displacementFrom90DegreeRot: number = 90 - normalizedStartingRotation;
-            const displacementFrom270DegreeRot: number = 270 - normalizedStartingRotation;
+            const displacementFrom90DegreeRot: number = 90 - startingRotation;
+            const displacementFrom270DegreeRot: number = 270 - startingRotation;
             // the key will be represented as the floored value (by the given increment factor) of that displacement as a 
             // normalized angle in range [0,360]
             // for instance, a needed rotation of -135 degrees will be floored to -130 degrees then normalized to 230 degrees
@@ -184,7 +181,8 @@ export class SvgRenderer {
 
                 // create our new element 
                 const newElement: {element: SVGGraphicsElement, startingRotation: number} = {
-                    element: rotElement, startingRotation: normalizedStartingRotation
+                    // for consistency, normalize the starting rotation angle so it's in the range [0,360]
+                    element: rotElement, startingRotation: normalizeAngle(startingRotation)
                 };
                 // and append it to our array; since the array is a reference to the array stored in the map, modifying it like this will
                 // work perfectly fine
