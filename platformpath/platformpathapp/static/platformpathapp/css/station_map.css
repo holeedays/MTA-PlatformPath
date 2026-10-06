@@ -201,6 +201,13 @@ body {
     cursor: grabbing; /* updates cursor while dragging */
 }
 
+/* will be revised for a more specific class */
+.svg-wrapper svg :is(g, path) {
+    /* need these 2 for the related svg elements to rotate by their own origin */
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
 /* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
 to work properly; we use a custom keyframe animation */
 @keyframes SVGSwappingAnimation { 

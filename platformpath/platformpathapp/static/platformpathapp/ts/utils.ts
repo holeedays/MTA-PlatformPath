@@ -8,3 +8,13 @@ export function clamp(value: number, min: number, max: number): number {
 
     return value;
 }
+
+// normalizes an angle so that it is at the range [0, 360]
+export function normalizeAngle(angle: number): number {
+    return (
+        angle < 0 ? 
+        // this normalization method is possible because js modulo actually returns the negative value
+        angle % 360 + 360 : 
+        angle % 360
+    );
+}
