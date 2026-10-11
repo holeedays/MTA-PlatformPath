@@ -25,6 +25,8 @@ export class SvgRenderer {
     private dynamicElements: {
         omnidirectionalRotationElements: SVGGraphicsElement[],
         bidirectionalRotationElementsMap: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>,
+        scalarLogoElements: SVGGraphicsElement[],
+        otherScalarElements: SVGGraphicsElement[],
         gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
         gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
     } | null = null;
@@ -98,14 +100,51 @@ export class SvgRenderer {
     // changes in the SVG)
     // also load this when the SVG element is loaded
     private initDynamicElementsField(): void {
+    
+        // get our directional rotational elements
+        const rotElements: {
+            omnidirectionalRotationalElements: SVGGraphicsElement[],
+            bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>
+        } | null = this.getDirectionalRotationalElements();
+        // get our scalar elements
+        const scalarElements: {
+            scalarLogoElements: SVGGraphicsElement[], 
+            otherScalarElements: SVGGraphicsElement[]
+        } | null = this.getScalarElements();
+
+        if (rotElements === null || scalarElements === null) {
+            console.warn(
+                "Failed to retrieve the omnidirectional/bidirectional rotational elements and all scalar elements as well"
+            );
+            return;
+        }
+
+        // assign all our initialized values
+        this.dynamicElements = {
+            omnidirectionalRotationElements: rotElements.omnidirectionalRotationalElements,
+            bidirectionalRotationElementsMap: rotElements.bidirectionalRotationalElements,
+            scalarLogoElements: scalarElements.scalarLogoElements,
+            otherScalarElements: scalarElements.otherScalarElements,
+            // initialize empty maps to the gridItemIDMap fields... they will be dynamically updated in initDynamicImageBGLoad()
+            gridItemIDRoadMapImageMap: new Map(),
+            gridItemIDSatelliteMapImageMap: new Map()
+        }
+    }
+
+    // gets the directional rotational elements from the SVG
+    private getDirectionalRotationalElements(): {
+        omnidirectionalRotationalElements: SVGGraphicsElement[],
+        bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>
+    } | null {
+
         if (this.SVG === null) {
             console.warn("The entire SVG doesn't exist");
-            return;
+            return null;
         }
 
         // get our omnidirectional rotational elements here
         const omnidirectionalRotationalElements: NodeListOf<SVGGraphicsElement> = (
-            this.SVG.querySelectorAll<SVGGraphicsElement>("[id^='__FOLLOW_ROT']")
+            this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']")
         );
 
         // create a bidirectional rotational elements hash map (used for later sorting)
@@ -116,16 +155,16 @@ export class SvgRenderer {
             bidirectionalRotationalElementsMap.set(i, []);
         // actually fetch the elements from the DOM
         const bidirectionalRotationalElements: NodeListOf<SVGGraphicsElement> = (
-            this.SVG.querySelectorAll<SVGGraphicsElement>("[id^='__ROT_']")
+            this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[ROT_']")
         );
         // iterate thru each element in the DOM
         for (const rotElement of bidirectionalRotationalElements) {
             // extract the starting rotation of the bidirectional rotational element and then sort it in into the map
 
             // first extract the starting rotation
-            // regex pattern to match anything between __ROT_ and the next _ (if there is, otherwise it just matches the entire
-            // chunk after __ROT_)
-            const regexFilter: RegExp = new RegExp(/__ROT_([^_]+)/);
+            // regex pattern to match anything between "[ROT_" and the next "], this should be the starting rotation of
+            // the element found
+            const regexFilter: RegExp = new RegExp(/\[ROT_([^\]]+)/);
             // this should match and return us the string containing the rotation value
             const filteredID: RegExpMatchArray | null = rotElement.id.match(regexFilter);
 
@@ -190,14 +229,34 @@ export class SvgRenderer {
             }
         }
 
-        // assign all our initialized values
-        this.dynamicElements = {
-            omnidirectionalRotationElements: Array.from(omnidirectionalRotationalElements),
-            bidirectionalRotationElementsMap: bidirectionalRotationalElementsMap,
-            // initialize empty maps to the gridItemIDMap fields... they will be dynamically updated in initDynamicImageBGLoad()
-            gridItemIDRoadMapImageMap: new Map(),
-            gridItemIDSatelliteMapImageMap: new Map()
+        return {
+            omnidirectionalRotationalElements: Array.from(omnidirectionalRotationalElements), 
+            bidirectionalRotationalElements: bidirectionalRotationalElementsMap
+        };
+    }
+
+    // gets elements that will be responsively scaled from the SVG
+    private getScalarElements(): {scalarLogoElements: SVGGraphicsElement[], otherScalarElements: SVGGraphicsElement[]} | null {
+        if (this.SVG === null) {
+            console.warn("The svg doesn't exist");
+            return null;
         }
+
+        let scalarLogoElements: SVGGraphicsElement[] = [];
+        let otherScalarElements: SVGGraphicsElement[] =[];
+
+        // get all scalar elements from the SVG (they should have a matching string of [SCALE] within them)
+        this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='SCALE']").forEach((scalarElement: SVGGraphicsElement) => {
+            // check which elements are logos (in their id they have the word 'LOGO') and sort them accordingly
+            const regexFilter: RegExp = new RegExp(/LOGO/);   
+            if (regexFilter.test(scalarElement.id))
+                scalarLogoElements.push(scalarElement);
+            else
+                otherScalarElements.push(scalarElement);
+        });
+
+
+        return {scalarLogoElements: scalarLogoElements, otherScalarElements: otherScalarElements};
     }
 
     // init the svg map elements field (do this when we have loaded in the SVG element)
@@ -624,8 +683,8 @@ export class SvgRenderer {
         // init the dynamic elements field (also must be initalized before initDynamicBGImageLoad() cause it requires the field as
         // well)
         this.initDynamicElementsField();
-        // set the dynamic loading event handling for the back ground map images
-        this.initDynamicBGImageLoad();
+        // set the event logic related to panzoom events (e.g. event listeners for zooming and panning)
+        this.initPanZoomControls();
         // though already set by default upon construction; run the setCurrentMapView() method to update any relevant visual changes
         // on the map view
         this.setCurrentMapView(MapView.DEFAULT);
@@ -727,7 +786,8 @@ export class SvgRenderer {
         });
     }
 
-    // set the event logic to allow us to rotate the svg
+    // set the event logic to allow us to rotate the svg and any logic tied to rotating the svg (e.g. logic for the rotational dynamic
+    // elements)
     private initRotationControls(): void {
 
         if (this.diagramContainer === null || this.SVGWrapper == null || this.SVG === null || this.stationSVG === null) {
@@ -832,29 +892,15 @@ export class SvgRenderer {
         this.setupPanzoomControls(beforeMouseDownHandler);
     }
 
-    // init loading higher res images logic depending on the zoom set here
-    private initDynamicBGImageLoad(
-        zoomThreshold: number = 2
-    ) {
-        if (this.currentPanZoom === null || this.diagramContainer === null || this.SVG === null) {
-            console.warn(
-                "Panzoom instance, diagram container, and/or SVG doesn't exist",
-                `Panzoom Instance Status: ${this.currentPanZoom}`,
-                `Diagram Container Status: ${this.diagramContainer}`,
-                `SVG Status: ${this.SVG}`
-            );
+    // inits all handlers and event logic related to panzoom's panning and zooming
+    private initPanZoomControls(): void {
+        if (this.currentPanZoom === null) {
+            console.warn("Panzoom instance doesn't exist");
             return;
         }
 
         // deals with loading high res images and caching them
         this.currentPanZoom.on("pan", (ev: any) => {
-            if (this.diagramContainer === null || this.currentPanZoom === null)
-                return;
-
-            // get the current zoom
-            const currentZoom: number = this.currentPanZoom.getTransform().scale;
-            const zoomThresholdMet: boolean = currentZoom >= zoomThreshold;
-
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad();
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
@@ -862,14 +908,12 @@ export class SvgRenderer {
         });
 
         this.currentPanZoom.on("zoom", (ev: any) => {
-            // get the current zoom
-            const currentZoom: number = this.currentPanZoom.getTransform().scale;
-            const zoomThresholdMet: boolean = currentZoom >= zoomThreshold;
-
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad();
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
             this.handleExistingHighResMapGridImageLoad();
+            // handle scaling of dynamic scalar elements here as well
+            this.handleDynamicElementScaling();
         });
     }
 
@@ -970,8 +1014,7 @@ export class SvgRenderer {
     }
 
     // handler for dynamically loading and deloading (showing and hiding) already existing image grid items
-    private handleExistingHighResMapGridImageLoad(
-    ): void {    
+    private handleExistingHighResMapGridImageLoad(): void {    
         if (
             this.diagramContainer === null || 
             this.mapElements === null || 
@@ -1034,13 +1077,18 @@ export class SvgRenderer {
 
     // a boolean that checks if the current zoom is equal to or surpasses the highResImgLoadZoomThreshold var
     private zoomThresholdMet(): boolean {
+        const currentZoom: number | null = this.getCurrentZoom();
+        return currentZoom !== null? currentZoom >= this.highResImgLoadZoomThreshold : false;
+    }
+
+    // gets the current zoom from our panzoom instance (if it exists, else it returns null)
+    private getCurrentZoom(): number | null {
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
-            return false;
+            return null;
         }
 
-        const currentZoom: number = this.currentPanZoom.getTransform().scale;
-        return currentZoom >= this.highResImgLoadZoomThreshold;
+        return this.currentPanZoom.getTransform().scale;
     }
 
     // handles the rotation of the dynamic elements that rotate
@@ -1099,6 +1147,53 @@ export class SvgRenderer {
         // deal with the omnidirectional rotational elements here
         this.dynamicElements.omnidirectionalRotationElements.forEach((rotElement: SVGGraphicsElement) => {
             rotElement.style.transform = `rotate(${normalizedRotationAngle}deg)`;
+        });
+    }
+
+    // handles the scaling of scalar dynamic elements based on the current zoom
+    private handleDynamicElementScaling(
+        minLogoZoom: number = 1, 
+        maxLogoZoom: number = 2.2,
+        minOtherZoom: number = 0.4,
+        maxOtherZoom: number = 1.4
+    ): void {
+        const currentZoom: number | null = this.getCurrentZoom();
+        if (currentZoom === null) 
+            return;
+
+        if (this.dynamicElements === null) {
+            console.warn("The dynamic elements field is not initialized");
+            return;
+        }
+
+        // this is to normalize our current zoom so that it goes from 0-1
+        // this function here is a *sine ease-out function* that is flipped along the x axis
+        // the function is represented by this:
+        // y = (a - 1)((cos(pi* x)) - 1)/2 + 1 + (a - 1)/c
+        // where x = zoomNormalized; y = scaleRatio; a = maxLogoZoom; c = minLogoZoom
+        const zoomLimit: number = 8;
+        const zoomNormalized: number = clamp(currentZoom, 1, zoomLimit)/zoomLimit;
+        const logoScaleRatio: number = (
+            (maxLogoZoom - 1) * (Math.cos(Math.PI * zoomNormalized) - 1) / 2 + 1 + (maxLogoZoom - 1)/minLogoZoom
+        );
+
+        // function for the other scalar elements will be a *cubic ease-in-out* function flipped along the y axis
+        // the function can represented by this:
+        // PIECEWISE FUNCTION
+        // x < 0.5 {y = -4(a -c)(x^3) + a}
+        // x >= 0.5 {y = -4(a - c)(x-1)^3 + c}
+        // where x = zoomNormalized; y = scaleRatio; a = maxOtherZoom; c = minOtherZoom
+        const otherScaleRatio: number = (
+            zoomNormalized < 0.5 ?
+            -4 * (maxOtherZoom - minOtherZoom) * Math.pow(zoomNormalized, 3) + maxOtherZoom:
+            -4 * (maxOtherZoom - minOtherZoom) * Math.pow((zoomNormalized - 1), 3) + minOtherZoom
+        );
+
+        this.dynamicElements.scalarLogoElements.forEach((scalarElement: SVGGraphicsElement) => {
+            scalarElement.style.scale = logoScaleRatio.toString();
+        });
+        this.dynamicElements.otherScalarElements.forEach((scalarElement: SVGGraphicsElement) => {
+            scalarElement.style.scale = otherScaleRatio.toString();
         });
     }
 

@@ -10,7 +10,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="Bay 50 St",
-            diagram_path="/static/platformpathapp/diagrams/Bay50/Station_SVGs/Bay50_v4.svg",
+            diagram_path="/static/platformpathapp/diagrams/Bay50/Station_SVGs/Bay50_v5.svg",
             satellite_map_high_res_grid_pic_paths={ 
                 "Grid_11": "/static/platformpathapp/diagrams/Bay50/Satellite_Map_High_Res/Grid_11.jpg",
                 "Grid_12": "/static/platformpathapp/diagrams/Bay50/Satellite_Map_High_Res/Grid_12.jpg",
