@@ -1435,9 +1435,11 @@ export class SvgRenderer {
 
     // when zooming out, the bounding box can overshoot the panning limits
     // as such, we need to push it back, we can do that instantly or pan it somewhat smoothly
-    // both ways are a bit jank but I think smooth (not really smooth, actually more janky than just moving back in place)... handleZoomOvershoot() 
-    // will move the container back into the bounds by somewhat smoothly shifting it back to the boundaries
-    private async handleZoomOvershoot(cameraPanLerpRatio: number = 0.05): Promise<void> {
+    // the panning smoothly did not bode well when the user can zoom freely during this time (this is because the item lerped to a 
+    // certain point at a relatively slow rate... if you zoom in and the position suddenly overshoots and was clamped, the area where you
+    // zoom in and out from is the area that the cursor landed on when you scrolled again, this can cause large offsets from the where your
+    // mouse is actually at and where it is zooming in and out)... sigh, back to the drawing board for more creative ideas :[
+    private handleZoomOvershoot(): void {
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
             return;
@@ -1467,54 +1469,12 @@ export class SvgRenderer {
             !isBetween(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x) || 
             !isBetween(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
         ) {
-
-            // declare the variables that we need
-            let distFromTopLeft: number = 0;
-            let distFromBottomRight: number = 0;
-            let targetPos: Vector2 = new Vector2(0,0);
-
-            // we are going to put everything in a handler because the logic is repeated in the while loop below
-            const handler: (
-                offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2
-            ) => void = (offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2) => {
-                // get the distance between the current pos and the other offsets, we want the one that's closer because it inidcates
-                // we went crossed that specific point rather than the other
-                distFromTopLeft = currentPos.getDist(offsetLimitTopLeft);
-                distFromBottomRight = currentPos.getDist(offsetLimitBottomRight);
-                // get the targetPos
-                targetPos = distFromTopLeft < distFromBottomRight ? offsetLimitTopLeft : offsetLimitBottomRight;
-            }
-
-            // run our handler here
-            handler(offsetLimitTopLeft, offsetLimitBottomRight);
-
-            // Panzoom has a .smoothMoveTo() method but it doesn't feel smooth so I made my own smooth zoom with lerping
-            while (currentPos.getDist(targetPos) > 1) {
-                await new Promise((resolve: (value?: any) => void) => {
-                    // do this transformation every frame
-                    requestAnimationFrame(() => {
-                        // get our panning limits
-                        const newPanningLimits: {
-                            offsetLimitTopLeft: Vector2, 
-                            offsetLimitBottomRight: Vector2
-                        } | null = this.getPanningLimits();
-                        if (newPanningLimits === null)
-                            return;
-
-                        // deconstruct the panning limits again for readability
-                        const {offsetLimitTopLeft, offsetLimitBottomRight} = newPanningLimits;
-                        // run our handler again
-                        handler(offsetLimitTopLeft, offsetLimitBottomRight);
-                        // lerp our current position to this new portion
-                        // the lerp will be hard coded for now...
-                        currentPos.m_lerp(newPanningLimits.offsetLimitTopLeft, cameraPanLerpRatio);
-                        // and move it
-                        this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
-                        // resolve this promise to set our while loop again
-                        resolve();
-                    });                            
-                });
-            }
+            // get the distance between the current pos and the other offsets, we want the one that's closer because it inidcates
+            // we went crossed that specific point rather than the other
+            const distFromTopLeft: number = currentPos.getDist(offsetLimitTopLeft);
+            const distFromBottomRight: number = currentPos.getDist(offsetLimitBottomRight);
+            // get the targetPos
+            const targetPos: Vector2 = distFromTopLeft < distFromBottomRight ? offsetLimitTopLeft : offsetLimitBottomRight;
 
             this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
         }
