@@ -117,7 +117,7 @@ export class SvgRenderer {
         // get our directional rotational elements
         const rotElements: {
             omnidirectionalRotationalElements: SVGGraphicsElement[],
-            bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>
+            bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement, startingRotation: number}[]>
         } | null = this.getDirectionalRotationalElements();
         // get our scalar elements
         const scalarElements: {
@@ -132,6 +132,29 @@ export class SvgRenderer {
             );
             return;
         }
+
+        // add styling to the dynamic elements
+        // this will only be needed for the rotational elements and the scalar elements as we need to apply certain styling to their
+        // transform behavior... the grid items don't need those styling and actually inherit their own from the map grid that they
+        // are referencing
+        [
+            rotElements.omnidirectionalRotationalElements, 
+            scalarElements.scalarLogoElements, 
+            scalarElements.scalarLabelElements,
+            scalarElements.otherScalarElements
+        ].forEach((elements: SVGGraphicsElement[]) => {
+            elements.forEach((element: SVGGraphicsElement) => {
+                element.classList.add("dynamic-svg-element");
+            });
+        })
+        // since bidirectional rot elements is a map, we have to do this in a separate manner
+        rotElements.bidirectionalRotationalElements.forEach(
+            (rotIncrement: {element: SVGGraphicsElement, startingRotation: number}[]) => {
+            rotIncrement.forEach(
+                (rotItem: {element: SVGGraphicsElement, startingRotation: number}) => {
+                rotItem.element.classList.add("dynamic-svg-element");
+            });
+        });
 
         // assign all our initialized values
         this.dynamicElements = {
@@ -651,6 +674,24 @@ export class SvgRenderer {
         // this value functions as a flag that prevents multiple async handlers (if smooth center is on) from fighting one
         // another causing weird visual behavior (i.e. delayed smooth centering or teleporting to one point and another)
         this.activeCenteringCalls++;
+
+        // create a handler to avoid redundant calls when updating the panzoom zoom and position
+        const updatePanzoom: (pos: Vector2, zoom: number) => void = (pos: Vector2, zoom: number) => {
+            // update the current panzoom with the position and scale
+
+            // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
+            // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
+            // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
+            // of currentPanZoom] is at 0,0).
+            this.currentPanZoom.zoomAbs(0, 0, zoom);
+            // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
+            this.currentPanZoom.moveTo(pos.x, pos.y);
+
+            // handle dynamic element scaling and image grid loading/deloading here
+            this.handleDynamicElementScaling();
+            this.handleHighResMapGridImageLoad();
+            this.handleExistingHighResMapGridImageLoad();
+        }
         // if we want to center smoothly
         if (smoothCenter) {
             // prevent any panzoom events from the user, this is important as we don't want any zooming or panning during
@@ -694,12 +735,8 @@ export class SvgRenderer {
                         currentScale = lerp(currentScale, zoom, lerpRatio);
                         currentPos.m_lerp(clampedOffset, lerpRatio);
 
-                        // and update the current panzoom
-                        this.currentPanZoom.zoomAbs(0, 0, currentScale);
-                        this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
-
-                        // handle dynamic element scaling here
-                        this.handleDynamicElementScaling();
+                        //update our panzoom
+                        updatePanzoom(currentPos, currentScale);
 
                         // resolve our promise
                         resolve();
@@ -712,21 +749,12 @@ export class SvgRenderer {
             // decrement the active centering calls
             this.activeCenteringCalls--;
         }
-        // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
-        // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
-        // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
-        // of currentPanZoom] is at 0,0).
-        this.currentPanZoom.zoomAbs(0, 0, zoom);
-        // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
-        this.currentPanZoom.moveTo(
-            clampedOffset.x,
-            clampedOffset.y
-        );
+        
+        // run our update panzoom handler one more time to put the map in the right position and zoom
+        updatePanzoom(clampedOffset, zoom);
 
         // now turn it off
         this.ignorePanzoomEvents = false;
-        // now enable the element scaling
-        this.handleDynamicElementScaling();
     }
 
     // Setup our panzoom object with proper params (this includes mouse scroll, drag)
@@ -751,6 +779,7 @@ export class SvgRenderer {
             // NOTE: you need to adjust this since it is a HARD CAP (you cannot go over the limit even with panzoom.zoomAbs())
             maxZoom: 5000, 
             minZoom: this.minZoom,
+            // disable smooth scroll since it messes with the centering logic (cause panning causes it to slide which is a big nono)
             smoothScroll: false,
             beforeMouseDown: beforeMouseDownEventHandler,
             beforeWheel: beforeWheelEventHandler

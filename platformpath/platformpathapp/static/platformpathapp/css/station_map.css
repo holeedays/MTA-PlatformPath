@@ -161,9 +161,9 @@ body {
     100% {opacity: 0.7;} /* should match the starting opacity of the button imgs (e.g. 0.7) */
 }
 
-/* =========================================================
-   Diagram Container
-   ========================================================= */
+/* =================================================================================================
+   Diagram Container + SVG Wrapper/SVG styling (node highlighting/muting is in a different section)
+   ================================================================================================= */
 
 /* This is the only area that pans and zooms. */
 .diagram-container {
@@ -196,16 +196,22 @@ body {
     cursor: grab;
     transform-origin: center;
     transform: var(--transformation-matrix);
+
+    /* add a mask that fades the map out smoothly to the background */
+    mask-image: url("../decals/map_mask.svg");
+    mask-size: contain;
 }
 .svg-wrapper svg:active {
     cursor: grabbing; /* updates cursor while dragging */
 }
 
-/* will be revised for a more specific class */
-.svg-wrapper svg :is(g, path) {
+/* styling for dynamic svg elements that scale/rotate like logos or exit labels */
+.dynamic-svg-element {
     /* need these 2 for the related svg elements to rotate by their own origin */
     transform-origin: center;
     transform-box: fill-box;
+    /* prevent any mouse/touch action on these items */
+    pointer-events: none;
 }
 
 /* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
@@ -1032,14 +1038,14 @@ to work properly; we use a custom keyframe animation */
 
 /* creating a custom bullet for the map legend items */
 .map-legend__color-codes-info .map-legend__item {
-    background-image: url("../decals/legend_item_color_code_bullet.svg"); 
+    background-image: url("../decals/map_legend/legend_item_color_code_bullet.svg"); 
     background-repeat: no-repeat;
     background-size: 16px 16px; 
     background-position: left 5px center; 
 }
 /* creating a custom bullet for the map legend items */
 .map-legend__icons-info .map-legend__item {
-    background-image: url("../decals/legend_item_icon_bullet.svg"); 
+    background-image: url("../decals/map_legend/legend_item_icon_bullet.svg"); 
     background-repeat: no-repeat;
     background-size: 16px 16px; 
     background-position: left 5px center; 
@@ -1184,7 +1190,7 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* ==========================================================================
-   HIGHLIGHTING STYLES FOR THE DIAGRAM CONTAINER
+   HIGHLIGHTING STYLES FOR THE SVG 
    ========================================================================== */
 
 .muted,

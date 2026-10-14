@@ -31,11 +31,11 @@
 		<button class="site-header__toggle-button" aria-expanded="true" aria-label="Hide site navigation">
 			<img 
 				class="toggle-button__animated-parts-img"
-				src="{% static 'platformpathapp/decals/site_header_toggle_button_animated_parts.svg' %}" 
+				src="{% static 'platformpathapp/decals/site_header_toggle_button/site_header_toggle_button_animated_parts.svg' %}" 
 				alt="Site header toggle button icon animated parts">
 			<img 
 				class="toggle-button__base-img"
-				src="{% static 'platformpathapp/decals/site_header_toggle_button_base.svg' %}" 
+				src="{% static 'platformpathapp/decals/site_header_toggle_button/site_header_toggle_button_base.svg' %}" 
 				alt="Site header toggle button icon base">
 		</button>
 	</header>
@@ -59,7 +59,10 @@
 					element-description__map-header 
 					element-description__map-header--station-map-mobile hidden"
 				>
-					<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+					<img 
+						src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
+						alt="Element description indicator icon"
+					>
 					<span>Go back to stations selection</span>
 				</div>
 			</header>
@@ -113,7 +116,10 @@
 										route-field__dropdown-button" 
 									data-target="start-node-dropdown">
 										START
-										<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+										<img 
+											src="{% static 'platformpathapp/decals/filter_checklist/node_option_selected_indicator.svg' %}" 
+											alt="Node option selected indicator"
+										>
 									</button>
 									<div id="start-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile hidden"></div>
 								</div>
@@ -125,7 +131,10 @@
 										route-field__dropdown-button" 
 									data-target="end-node-dropdown">
 										END
-										<img src="{% static 'platformpathapp/decals/node_option_selected_indicator.svg' %}" alt="Node option selected indicator">
+										<img 
+											src="{% static 'platformpathapp/decals/filter_checklist/node_option_selected_indicator.svg' %}" 
+											alt="Node option selected indicator"
+										>
 									</button>
 									<div id="end-node-dropdown" class="route-field__dropdown route-field__dropdown--station-map-mobile hidden"></div>
 								</div>
@@ -148,7 +157,7 @@
 							>
 								<button class="override-toggles__accessibility-none-toggle-button" aria-selected="false">
 									<img 
-										src="{% static 'platformpathapp/decals/override_toggles_accessibility_none_toggle_button.svg' %}" 
+										src="{% static 'platformpathapp/decals/override_toggles/override_toggles_accessibility_none_toggle_button.svg' %}" 
 										alt="Accessibility none toggle button icon"
 									>
 									<div class="
@@ -159,12 +168,15 @@
 										hidden"
 									>
 										<span>Avoid nodes that are ADA accessible</span>
-										<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+										<img 
+											src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
+											alt="Element description indicator icon"
+										>
 									</div>
 								</button>
 								<button class="override-toggles__accessibility-only-toggle-button" aria-selected="false">
 									<img 
-										src="{% static 'platformpathapp/decals/override_toggles_accessibility_only_toggle_button.svg' %}" 
+										src="{% static 'platformpathapp/decals/override_toggles/override_toggles_accessibility_only_toggle_button.svg' %}" 
 										alt="Accessibility only toggle button icon"
 									>
 									<div class="
@@ -174,7 +186,10 @@
 										element-description__accessibility-only-toggle-button--station-map-mobile 
 										hidden"
 									>
-										<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+										<img 
+											src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
+											alt="Element description indicator icon"
+										>
 										<span>Prioritize routes that are ADA accessible</span>
 									</div>
 								</button>
@@ -226,7 +241,7 @@
 						</ul>
 					</span>
 					<img 
-						src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" 
+						src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
 						alt="Element description toggle button icon"
 					>
 				</div>
@@ -242,7 +257,7 @@
 				<div class="route-preview__controls">
 					<button class="route-preview__btn-start-navigation" id="start-navigation" type="button">
 						<img 
-							src="{% static 'platformpathapp/decals/preview_start_navigation_button.svg' %}" 
+							src="{% static 'platformpathapp/decals/step_ui_preview_route/preview_start_navigation_button.svg' %}" 
 							alt="Preview start navigation button icon"
 						>
 						Start Navigation
@@ -251,7 +266,7 @@
 					<button class="route-preview__btn-cancel-route" id="cancel-route-preview" type="button">
 						Change Route
 						<img 
-							src="{% static 'platformpathapp/decals/preview_cancel_route_button.svg' %}" 
+							src="{% static 'platformpathapp/decals/step_ui_preview_route/preview_cancel_route_button.svg' %}" 
 							alt="Preview cancel current route button icon"
 						>
 					</button>
@@ -263,10 +278,16 @@
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
 					<button id="btn-prev" class="step-ui__btn-prev" type="button">
-						<img src="{% static 'platformpathapp/decals/step_ui_prev_button.svg' %}" alt="Step ui previous button icon">
+						<img 
+							src="{% static 'platformpathapp/decals/step_ui_preview_route/step_ui_prev_button.svg' %}" 
+							alt="Step ui previous button icon"
+						>
 					</button>
 					<button id="btn-next" class="step-ui__btn-next" type="button">
-						<img src="{% static 'platformpathapp/decals/step_ui_next_button.svg' %}" alt="Step ui next button icon">
+						<img 
+							src="{% static 'platformpathapp/decals/step_ui_preview_route/step_ui_next_button.svg' %}" 
+							alt="Step ui next button icon"
+						>
 					</button>
 				</div>
 			</aside>
@@ -285,7 +306,10 @@
 					<br>
 					<i>*Whenever a start and end destination is set and the find route button is pressed, these interfaces will appear.*</i>
 				</span>
-				<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+				<img 
+					src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
+					alt="Element description indicator icon"
+				>
 			</div>
 
 			<!-- ================= LEGEND ================= -->
@@ -312,7 +336,7 @@
 									<span>STAIRS</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_stairs.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_stairs.svg' %}"
 										alt="Stairs legend icon"
 									>
 								</li>
@@ -320,7 +344,7 @@
 									<span>RAMP</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_ramp.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_ramp.svg' %}"
 										alt="Ramp legend icon"
 									>
 								</li>
@@ -328,7 +352,7 @@
 									<span>ELEVATOR</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_elevator.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_elevator.svg' %}"
 										alt="Elevator legend icon"
 									>
 								</li>
@@ -336,7 +360,7 @@
 									<span>MINI KIOSK</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_mini_kiosk.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_mini_kiosk.svg' %}"
 										alt="Mini kiosk legend icon"
 									>
 								</li>
@@ -344,7 +368,7 @@
 									<span>KIOSK</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_kiosk.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_kiosk.svg' %}"
 										alt="Kiosk legend icon"
 									>
 								</li>
@@ -352,7 +376,7 @@
 									<span>DOOR</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_door.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_door.svg' %}"
 										alt="Door legend icon"
 									>
 								</li>
@@ -360,7 +384,7 @@
 									<span>EMERGENCY EXIT</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_exit.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_exit.svg' %}"
 										alt="Exit legend icon"
 									>
 								</li>
@@ -368,7 +392,7 @@
 									<span>TRASH BIN</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_trash_bin.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_trash_bin.svg' %}"
 										alt="Trash bin legend icon"
 									>
 								</li>
@@ -376,7 +400,7 @@
 									<span>BENCH</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_bench.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_bench.svg' %}"
 										alt="Bench legend icon"
 									>
 								</li>
@@ -384,7 +408,7 @@
 									<span>OMNY MACHINE</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_omny_machine.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_omny_machine.svg' %}"
 										alt="Omny machine legend icon"
 									>
 								</li>
@@ -392,7 +416,7 @@
 									<span>TURNSTILE</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_turnstile.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_turnstile.svg' %}"
 										alt="Turnstile legend icon"
 									>
 								</li>
@@ -400,7 +424,7 @@
 									<span>IRON MAIDEN TURNSTILE</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_iron_maiden_turnstile.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_iron_maiden_turnstile.svg' %}"
 										alt="Iron maiden turnstile legend icon"
 									>
 								</li>
@@ -408,7 +432,7 @@
 									<span>BOOTH</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_booth.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_booth.svg' %}"
 										alt="Booth legend icon"
 									>
 								</li>
@@ -416,7 +440,7 @@
 									<span>MISCELLANEOUS STRUCTURES</span>
 									<img 
 										class="legend-icon" 
-										src="{% static 'platformpathapp/decals/legend_misc.svg' %}"
+										src="{% static 'platformpathapp/decals/map_legend/legend_misc.svg' %}"
 										alt="Misc legend icon"
 									>
 								</li>
@@ -430,18 +454,21 @@
 				>
 					<img 
 						class="toggle-button__animated-parts-img toggle-button__animated-parts-img--station-map-mobile"
-						src="{% static 'platformpathapp/decals/map_legend_toggle_button_animated_parts.svg' %}" 
+						src="{% static 'platformpathapp/decals/map_legend/map_legend_toggle_button_animated_parts.svg' %}" 
 						alt="Toggle map legend button icon animated parts"
 					>
 					<img 
 						class="toggle-button__base-img toggle-button__base-img--station-map-mobile"
-						src="{% static 'platformpathapp/decals/map_legend_toggle_button_base.svg' %}" 
+						src="{% static 'platformpathapp/decals/map_legend/map_legend_toggle_button_base.svg' %}" 
 						alt="Toggle map button icon base"
 					>
 
 					<div class="element-description element-description--station-map-mobile element-description__map-legend-toggle-button hidden">
 						<span>Show the map legend</span>
-						<img src="{% static 'platformpathapp/decals/element_description_indicator.svg' %}" alt="Element description indicator icon">
+						<img 
+							src="{% static 'platformpathapp/decals/element_descriptions/element_description_indicator.svg' %}" 
+							alt="Element description indicator icon"
+						>
 					</div>
 				</button>
 			</aside>
@@ -453,12 +480,12 @@
 			>
 				<img 
 					class="toggle-info-button__enabled-button-img"
-					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button_enabled.svg' %}"
+					src="{% static 'platformpathapp/decals/element_descriptions/element_descriptions_toggle_info_button_enabled.svg' %}"
 					alt="Element descriptions toggle info button enabled icon"
 				>
 				<img
 					class="toggle-info-button__button-img"
-					src="{% static 'platformpathapp/decals/element_descriptions_toggle_info_button.svg' %}"
+					src="{% static 'platformpathapp/decals/element_descriptions/element_descriptions_toggle_info_button.svg' %}"
 					alt="Element descriptions toggle info button enabled icon"
 				>
 			</button>
@@ -466,6 +493,7 @@
 		</section>
 	</main>
 
+	<!-- ================= CDNs/Scripts ================= -->
 	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
 	<script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
 
