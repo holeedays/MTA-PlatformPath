@@ -1,4 +1,4 @@
-import {clamp} from "./utils.ts";
+import { lerp } from "./utils.ts";
 
 // just make a class to hold 2D information (would've been struct if I could define function bodies inside interfaces)
 // this is actually pretty memory efficient so no performance overhead issues here
@@ -99,20 +99,14 @@ export class Vector2 {
     }
 
     // (NON MUTATING) linearly interpolates this vector to a given point or vector by a given ratio
-    // the ratio is normalized between epsilon and 1
+    // the ratio is already normalized between epsilon and 1 with the lerp function it uses
     public lerp(vectorOrPoint: Vector2, lerpRatio: number): Vector2 {
-        const ratioNormalized: number = clamp(lerpRatio, Number.EPSILON, 1);
-
         const x: number = this.x;
         const y: number = this.y;
 
-        const currentVector: Vector2 = new Vector2(x, y);
-
-        return (
-            vectorOrPoint
-            .subtract(currentVector)
-            .multiply(ratioNormalized)
-            .add(currentVector)
+        return new Vector2(
+            lerp(x, vectorOrPoint.x, lerpRatio), 
+            lerp(y, vectorOrPoint.y, lerpRatio)
         );
     }
 

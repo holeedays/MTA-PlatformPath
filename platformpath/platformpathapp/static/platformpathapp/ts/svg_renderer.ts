@@ -4,7 +4,7 @@ import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
-import { clamp, normalizeAngle, isBetween } from "./utils.ts";
+import { clamp, normalizeAngle, isBetween, lerp } from "./utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -52,8 +52,8 @@ export class SvgRenderer {
     } | null = null;
 
     private isPanning: boolean = false;
-
-    private handlingPanningLimit: boolean = false;
+    private activeCenteringCalls: number = 0;
+    private ignorePanzoomEvents: boolean = false;
 
     private mapRotationSensitivity: number = 0;
     private highResImgLoadZoomThreshold: number = 0;
@@ -513,9 +513,9 @@ export class SvgRenderer {
         const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
         // then center it, passing our zoom multiplier or manual zoom value (if needed)
         if (zoom === null)
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier);
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier, null, true);
         else
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom);
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom, true);
     }
 
     // (FOR ROUTE PREVIEW) Helper function to zoom in on the node SVG elements representing the path
@@ -565,7 +565,7 @@ export class SvgRenderer {
             rightBottomMostPoint.y - leftTopMostPoint.y
         );
         // and pass this bounding box to center it
-        this.centerBoundingBoxInViewport(nodeGroupBoundingBox, zoomMultiplier, zoom);
+        this.centerBoundingBoxInViewport(nodeGroupBoundingBox, zoomMultiplier, zoom, true);
     }
 
     // BIG NOTE: The zoom value right now is only adequate for the station maps with the road/satellite maps, the zoom is very 
@@ -586,17 +586,22 @@ export class SvgRenderer {
         // get the bounding rect
         const nodeBoundingRect: DOMRect = node.getBoundingClientRect();
         // then center it
-        this.centerBoundingBoxInViewport(nodeBoundingRect, zoomMultiplier, zoom);
+        this.centerBoundingBoxInViewport(nodeBoundingRect, zoomMultiplier, zoom, true);
     }
     
     // base function for centering any bounding box (e.g. the client rect of a target SVG element/HTML element or a custom DOMRect)
     // zoomMultiplier scales the computed zoom for the bounding box (which is equivalent to the diagram container (viewport's) height
     // or width divided by the normalized value of the target bounding box (normalized value = bounding box / panzoom scale))
-    private centerBoundingBoxInViewport(
+    // DO NOTE that the zoom is limited to min zoom only
+
+    // by the way, centering is a misnomer because the center is bounded by the panning limit (which is based relative to dimensions 
+    // observed in min zoom); either way, it'll work for now
+    private async centerBoundingBoxInViewport(
         boundingBox: DOMRect,
         zoomMultiplier: number = 1,
-        zoomOverrideValue: number | null = null
-    ): void {
+        zoomOverrideValue: number | null = null,
+        smoothCenter: boolean = false
+    ): Promise<void> {
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
             return;
@@ -628,8 +633,85 @@ export class SvgRenderer {
             return;
         }
 
-        // prevent any panzoom.on("pan") or panzoom.on("zoom") from activating, which can mess with the centering with this boolean guard
-        this.handlingPanningLimit = true;
+        // prevent any listeners like panzoom.on("pan") or panzoom.on("zoom") from activating, which can mess with the 
+        // centering with this boolean guard
+        this.ignorePanzoomEvents = true;
+        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits(zoom);
+        if (panningLimits === null) {
+            console.warn("Could not get panning limits");
+            return;
+        }
+        const {offsetLimitTopLeft, offsetLimitBottomRight} = panningLimits;
+        const clampedOffset: Vector2 = new Vector2(
+            clamp(offset.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
+            clamp(offset.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
+        );
+
+        // increment active centering calls, this indicates to us how many centerBoundingBoxInViewport is called
+        // this value functions as a flag that prevents multiple async handlers (if smooth center is on) from fighting one
+        // another causing weird visual behavior (i.e. delayed smooth centering or teleporting to one point and another)
+        this.activeCenteringCalls++;
+        // if we want to center smoothly
+        if (smoothCenter) {
+            // prevent any panzoom events from the user, this is important as we don't want any zooming or panning during
+            // this animation or things will break or get really janky
+            this.currentPanZoom.pause();
+
+            // get the current pos and scale
+            const currentPanzoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
+            const currentPos: Vector2 = new Vector2(currentPanzoomTransform.x, currentPanzoomTransform.y);
+            // get the scale as it exists in the DOM (this prevents panzoom's unpainted zoom from causing a funky transition)
+            let currentScale: number | null = this.getCurrentZoomInDOM();
+            if (currentScale === null) {
+                console.warn("Cannot get current zoom");
+                return;
+            }
+
+            // just gonna hard code the lerp ratio for now
+            const lerpRatio: number = 0.05;
+            // this is our smoothing centering loop
+            while (
+                currentPos.getDist(clampedOffset) > 1 || 
+                Math.abs(currentScale - zoom) > 0.001
+            ) {
+                // essentially set a promise that sets a request animation frame (so that the updates are synced with the DOM refresh rate)
+                // should be approximately 1/60 seconds but could scale
+                await new Promise((resolve: (value?: any) => void) => {
+                    requestAnimationFrame(() => {
+                        if (this.currentPanZoom === null || currentScale === null)
+                            return;
+
+                        // if the number of active centering calls is more than 1 (meaning this instance is not the last one to
+                        // to be called), decrement the call and return 
+                        // this flag logic works because we're essentially offloading every promise call to a predictable frame
+                        // of time (e.g. the browser animation frame, which is the same for all instances)
+                        if (this.activeCenteringCalls > 1) {
+                            this.activeCenteringCalls--;
+                            return;
+                        }
+
+                        // lerp the current scale and position
+                        currentScale = lerp(currentScale, zoom, lerpRatio);
+                        currentPos.m_lerp(clampedOffset, lerpRatio);
+
+                        // and update the current panzoom
+                        this.currentPanZoom.zoomAbs(0, 0, currentScale);
+                        this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
+
+                        // handle dynamic element scaling here
+                        this.handleDynamicElementScaling();
+
+                        // resolve our promise
+                        resolve();
+                    });
+                });
+            }
+
+            // now resume it
+            this.currentPanZoom.resume();
+            // decrement the active centering calls
+            this.activeCenteringCalls--;
+        }
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
         // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
@@ -637,12 +719,12 @@ export class SvgRenderer {
         this.currentPanZoom.zoomAbs(0, 0, zoom);
         // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
         this.currentPanZoom.moveTo(
-            offset.x,
-            offset.y
+            clampedOffset.x,
+            clampedOffset.y
         );
 
         // now turn it off
-        this.handlingPanningLimit = false;
+        this.ignorePanzoomEvents = false;
         // now enable the element scaling
         this.handleDynamicElementScaling();
     }
@@ -858,6 +940,7 @@ export class SvgRenderer {
             // then the offset has to be calculated between the top/left of the SVGWrapper and the center of the diagram container
             // (e.g. we don't calculate the offsets based on the center in this case)
             const offset: Vector2 = getElementCentersOffset(this.diagramContainer, this.SVGWrapper);
+            // get the current zoom as it is in the DOM
             const scale: number | null = this.getCurrentZoomInDOM();
             if (scale === null) {
                 console.warn("Could not retrieve scale");
@@ -936,7 +1019,7 @@ export class SvgRenderer {
         // deals with loading high res images and caching them
         this.currentPanZoom.on("pan", (ev: any) => {
             // pan and zoom event listeners will not run when this boolean guard is triggered
-            if (this.handlingPanningLimit)
+            if (this.ignorePanzoomEvents)
                 return;
 
             // handle the loading of our high res map images
@@ -956,7 +1039,7 @@ export class SvgRenderer {
         });
 
         this.currentPanZoom.on("zoom", (ev: any) => {
-            if (this.handlingPanningLimit)
+            if (this.ignorePanzoomEvents)
                 return;
 
             // handle the loading of our high res map images
@@ -965,9 +1048,9 @@ export class SvgRenderer {
             this.handleExistingHighResMapGridImageLoad();
             // handle scaling of dynamic scalar elements here as well
             this.handleDynamicElementScaling();
-
-            // handle any zoom over shooting
-            this.handleZoomOvershoot();
+            // also handle panning limit here... this prevents zooming in/out from overshooting the panning limits
+            // (which does translate the SVG wrapper so it centers at the point of zoom (e.g. where the cursor is))
+            this.handlePanningLimit();
         });
     }
 
@@ -1131,7 +1214,7 @@ export class SvgRenderer {
 
     // a boolean that checks if the current zoom is equal to or surpasses the highResImgLoadZoomThreshold var
     private zoomThresholdMet(): boolean {
-        const currentZoom: number | null = this.getCurrentZoomInDOM();
+        const currentZoom: number | null = this.getMostCurrentZoom();
         return currentZoom !== null? currentZoom >= this.highResImgLoadZoomThreshold : false;
     }
 
@@ -1154,7 +1237,7 @@ export class SvgRenderer {
 
     // we may need the most current zoom (i.e. the zoom that the panzoom instance has, which may not be represented in browser/DOM yet)
     // NOTE: this zoom requires the current pan zoom or else it'll return null... I'm doing this instead of returning 1 (which should be the
-    // actual scale of the element when panzoom is unmounted) to avoid inconsistencies with getCurrentZoomInDOM
+    // actual scale of the element when panzoom is unmounted) to avoid inconsistencies with getCurrentZoomInDOM()
     private getMostCurrentZoom(): number | null {
         if (this.currentPanZoom === null) {
             console.warn("There is no panzoom instance");
@@ -1171,7 +1254,7 @@ export class SvgRenderer {
             return null;
         }
 
-        // get the current scale of our panzoom element 
+        // get the current scale of our panzoom element in the DOM
         const scale: number | null = this.getCurrentZoomInDOM();
         if (scale === null) {
             console.warn("Cannot retreive the current scale of the SVG");
@@ -1180,7 +1263,7 @@ export class SvgRenderer {
 
         // get the bounding rect 
         const elementBoundingRect: DOMRect = elementOrRect instanceof DOMRect ? elementOrRect: elementOrRect.getBoundingClientRect();
-        // get with normalized width and height of the element (e.g. the descaled version of the width and height)
+        // get the normalized width and height of the element (e.g. the descaled version of the width and height)
         const elementWidthNormalized: number = elementBoundingRect.width/scale;
         const elementHeightNormalized: number = elementBoundingRect.height/scale;
         // get the viewport dimensions
@@ -1392,7 +1475,7 @@ export class SvgRenderer {
         });
     }
 
-    // limits users from panning beyond a given certain limit
+    // limits users from panning beyond a given certain limit when they either zoom or pan
     private handlePanningLimit(): void {
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
@@ -1409,81 +1492,55 @@ export class SvgRenderer {
         // get our current transform (btw, the x and y represent the next position the panzoom will move, not the current
         // translation)
         const currentPanZoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
-        // get the target pos, just set it the current transform for its initial value and modify accordingly
-        // if need be
-        const targetPos: Vector2 = new Vector2(currentPanZoomTransform.x, currentPanZoomTransform.y);
+        // get the current pos (not really the current current pos but it's the future pos that panzoom has set for the DOM to paint), \
+        // just set it the current transform for its initial value and modify accordingly if need be
+        const currentPos: Vector2 = new Vector2(currentPanZoomTransform.x, currentPanZoomTransform.y);
 
         // enable a boolean guard to prevent panzoom.moveTo() from causing a overflow stack ; this is because everytime
         // panzoom is moved programmatically (e.g. with panzoom.moveTo()) or in the app, the event listener panzoom.on("pan") 
         // fires interrupting the thread temporarily and going back to event logic of the event listener
         // since handlePanningLimit() will be in this event listener, you can understand why this causes endless recursion without
         // the guard
-        this.handlingPanningLimit = true;
+        this.ignorePanzoomEvents = true;
 
         // just destructuring here to make things more legible
         const {offsetLimitBottomRight, offsetLimitTopLeft} = panningLimits;
 
         // clamp the x and y to the offset limits
-        targetPos.x = clamp(targetPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x);
-        targetPos.y = clamp(targetPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y);
+        const targetPos: Vector2 = new Vector2(
+                clamp(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
+                clamp(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
+        );
+        // if (smoothPan){
+        //     // in the case of smooth panning, turn of all panzoom capabilities aside from within the code
+        //     // the user should not able to zoom or pan here or else this entire sequence is broken
+        //     this.currentPanZoom.pause();
+
+        //     const lerpRatio: number = 0.05;
+        //     while (currentPos.getDist(targetPos) > 1) {
+        //         await new Promise((resolve: (value?: any) => void) => {
+        //             requestAnimationFrame(() => {
+        //                 currentPos.m_lerp(targetPos, lerpRatio);
+        //                 this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
+
+        //                 resolve();
+        //             });
+        //         });
+        //     }
+
+        //     this.currentPanZoom.resume();
+        // }
         // now move the panzoom to the current location
         this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
 
         // now turn off the boolean guard
-        this.handlingPanningLimit = false;
-    }
-
-    // when zooming out, the bounding box can overshoot the panning limits
-    // as such, we need to push it back, we can do that instantly or pan it somewhat smoothly
-    // the panning smoothly did not bode well when the user can zoom freely during this time (this is because the item lerped to a 
-    // certain point at a relatively slow rate... if you zoom in and the position suddenly overshoots and was clamped, the area where you
-    // zoom in and out from is the area that the cursor landed on when you scrolled again, this can cause large offsets from the where your
-    // mouse is actually at and where it is zooming in and out)... sigh, back to the drawing board for more creative ideas :[
-    private handleZoomOvershoot(): void {
-        if (this.currentPanZoom === null) {
-            console.warn("Panzoom instance doesn't exist");
-            return;
-        }
-
-        // get the panning limits currently
-        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits();
-        if (panningLimits === null) {
-            console.warn("Could not get panning limits");
-            return;
-        }
-
-        // activate the boolean guard
-        this.handlingPanningLimit = true;
-        
-        // get our current transform (btw, the x and y represent the next position the panzoom will move, not the current
-        // translation)
-        const currentPanZoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
-        // get the current pos, just set it the current transform for its initial value and modify accordingly
-        // if need be
-        const currentPos: Vector2 = new Vector2(currentPanZoomTransform.x, currentPanZoomTransform.y);
-
-        this.handlingPanningLimit = true;
-        // just destructuring here too for legibility
-        const {offsetLimitBottomRight, offsetLimitTopLeft} = panningLimits;
-        if (
-            !isBetween(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x) || 
-            !isBetween(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
-        ) {
-            // get the distance between the current pos and the other offsets, we want the one that's closer because it inidcates
-            // we went crossed that specific point rather than the other
-            const distFromTopLeft: number = currentPos.getDist(offsetLimitTopLeft);
-            const distFromBottomRight: number = currentPos.getDist(offsetLimitBottomRight);
-            // get the targetPos
-            const targetPos: Vector2 = distFromTopLeft < distFromBottomRight ? offsetLimitTopLeft : offsetLimitBottomRight;
-
-            this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
-        }
-
-        this.handlingPanningLimit = false;
+        this.ignorePanzoomEvents = false;
     }
 
     // gets the top left and bottom right limits for how much the user can pan (these limits are influenced by the min zoom scale)
-    private getPanningLimits(): {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null {
+    private getPanningLimits(scaleOverride: number | null = null): {
+        offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2
+    } | null {
         if (
             this.diagramContainer === null || 
             this.stationSVG === null ||
@@ -1504,12 +1561,20 @@ export class SvgRenderer {
         // the bounds of that viewport at that scale represents the limits of how much the user can pan vertically and horizontally
         // the bounds can scale based on the zoom... think of it as more of a section of the SVG wrapper than just the viewport
 
-        // get the most up to date zoom (not the DOM, the scale of the current panzoom instance)
-        const scale: number | null = this.getMostCurrentZoom();
-        if (scale === null) {
-            console.warn("Could not get the current zoom");
-            return null;
+        let scale: number | null = null;
+
+        if (scaleOverride !== null) {
+            scale = scaleOverride;
         }
+        else {
+            // get the most up to date zoom (not the DOM, the scale of the current panzoom instance) so the panning limits can be used
+            // for handling pan AND zoom events
+            scale = this.getMostCurrentZoom();
+            if (scale === null) {
+                console.warn("Could not get the current zoom");
+                return null;
+            }
+        } 
         // get the offset/translation the SVG wrapper has to move in order to center the station SVG center at the
         // viewport (at the scale of min zoom)
         // essentially, the offset represents how much must the SVG wrapper translate to center the station SVG on the diagram container 

@@ -30,3 +30,9 @@ export function isBetween(value: number, comparisonValueOne: number, comparisonV
         (value < comparisonValueOne && comparisonValueTwo < value)
     );
 }
+
+// a standard lerp function that clamps the lerp ratio
+export function lerp(value: number, target: number, lerpRatio: number) {
+    const lerpRatioClamped: number = clamp(lerpRatio, Number.EPSILON, 1);
+    return value + (target - value) * lerpRatioClamped;
+}
