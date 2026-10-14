@@ -1,3 +1,5 @@
+import {clamp} from "./utils.ts";
+
 // just make a class to hold 2D information (would've been struct if I could define function bodies inside interfaces)
 // this is actually pretty memory efficient so no performance overhead issues here
 export class Vector2 {
@@ -94,6 +96,41 @@ export class Vector2 {
         this.y = resultantVector.y;
 
         return resultantVector;
+    }
+
+    // (NON MUTATING) linearly interpolates this vector to a given point or vector by a given ratio
+    // the ratio is normalized between epsilon and 1
+    public lerp(vectorOrPoint: Vector2, lerpRatio: number): Vector2 {
+        const ratioNormalized: number = clamp(lerpRatio, Number.EPSILON, 1);
+
+        const x: number = this.x;
+        const y: number = this.y;
+
+        const currentVector: Vector2 = new Vector2(x, y);
+
+        return (
+            vectorOrPoint
+            .subtract(currentVector)
+            .multiply(ratioNormalized)
+            .add(currentVector)
+        );
+    }
+
+    // the mutating version of the lerping
+    public m_lerp(vectorOrPoint: Vector2, lerpRatio: number): Vector2 {
+        const resultantVector: Vector2 = this.lerp(vectorOrPoint, lerpRatio);
+        this.x = resultantVector.x;
+        this.y = resultantVector.y;
+
+        return resultantVector;
+    }
+
+    // get the distance of this vector from another vector/point (both represent the same thing)
+    public getDist(vectorOrPoint: Vector2): number {
+        return Math.sqrt(
+            (this.y - vectorOrPoint.y) ** 2 + 
+            (this.x - vectorOrPoint.x) ** 2
+        );
     }
 }
 

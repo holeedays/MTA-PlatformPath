@@ -1,12 +1,16 @@
 // this is just a standard clamp function
 
-export function clamp(value: number, min: number, max: number): number {
-    if (value > max)
-        value = max;
-    else if (value < min)
-        value = min;
+export function clamp(value: number, min: number | null = null, max: number | null = null): number {
+if (min === null && max === null) 
+    throw new Error("Cannot clamp value without providing at least a min or max parameter.");
 
-    return value;
+    let res: number = value;
+    if (min !== null) 
+        res = Math.max(res, min);
+    if (max !== null) 
+        res = Math.min(res, max);
+
+    return res;
 }
 
 // normalizes an angle so that it is at the range [0, 360]
@@ -16,5 +20,13 @@ export function normalizeAngle(angle: number): number {
         // this normalization method is possible because js modulo actually returns the negative value
         angle % 360 + 360 : 
         angle % 360
+    );
+}
+
+// a boolean that determines if a given value is between 2 different values
+export function isBetween(value: number, comparisonValueOne: number, comparisonValueTwo: number): boolean {
+    return (
+        (value > comparisonValueOne && comparisonValueTwo > value) || 
+        (value < comparisonValueOne && comparisonValueTwo < value)
     );
 }

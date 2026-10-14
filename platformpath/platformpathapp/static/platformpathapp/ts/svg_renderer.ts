@@ -4,7 +4,7 @@ import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
-import { clamp, normalizeAngle } from "./utils.ts";
+import { clamp, normalizeAngle, isBetween } from "./utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -17,15 +17,19 @@ export enum MapView {
 export class SvgRenderer {
     // @ts-ignore
     private currentPanZoom: PanZoom | null = null;
+
     private diagramContainer: HTMLDivElement | null = null;
     private SVGWrapper: HTMLDivElement | null = null;
     private SVG: SVGSVGElement | null = null;
     private stationSVG: SVGGraphicsElement | null = null;
+
     private currentMapView: MapView = MapView.DEFAULT;
+
     private dynamicElements: {
         omnidirectionalRotationElements: SVGGraphicsElement[],
         bidirectionalRotationElementsMap: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>,
         scalarLogoElements: SVGGraphicsElement[],
+        scalarLabelElements: SVGGraphicsElement[],
         otherScalarElements: SVGGraphicsElement[],
         gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
         gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
@@ -36,6 +40,7 @@ export class SvgRenderer {
         roadMap: SVGGraphicsElement, 
         satelliteMap: SVGGraphicsElement
     } | null = null;
+
     private mapData: {
         retrieved: {
             roadMapHighResGridPicPaths: Record<string,string>,
@@ -45,9 +50,17 @@ export class SvgRenderer {
             cachedGridPicPaths: Set<string>  
         }  
     } | null = null;
+
+    private isPanning: boolean = false;
+
+    private handlingPanningLimit: boolean = false;
+
     private mapRotationSensitivity: number = 0;
     private highResImgLoadZoomThreshold: number = 0;
     private dynamicElementsRotationMapIncrement: number = 0;
+    // unlike the above numerical values, min zoom is not initialized in the constructor so made this possibly null to make
+    // sure the value is initialized when called for use
+    private minZoom: number | null = null;
 
     constructor(
         mapRotationalSensitivity: number = 0.5, 
@@ -109,6 +122,7 @@ export class SvgRenderer {
         // get our scalar elements
         const scalarElements: {
             scalarLogoElements: SVGGraphicsElement[], 
+            scalarLabelElements: SVGGraphicsElement[],
             otherScalarElements: SVGGraphicsElement[]
         } | null = this.getScalarElements();
 
@@ -121,9 +135,12 @@ export class SvgRenderer {
 
         // assign all our initialized values
         this.dynamicElements = {
+            // rotational elements
             omnidirectionalRotationElements: rotElements.omnidirectionalRotationalElements,
             bidirectionalRotationElementsMap: rotElements.bidirectionalRotationalElements,
+            // scalar elements
             scalarLogoElements: scalarElements.scalarLogoElements,
+            scalarLabelElements: scalarElements.scalarLabelElements,
             otherScalarElements: scalarElements.otherScalarElements,
             // initialize empty maps to the gridItemIDMap fields... they will be dynamically updated in initDynamicImageBGLoad()
             gridItemIDRoadMapImageMap: new Map(),
@@ -153,7 +170,9 @@ export class SvgRenderer {
         // (e.g. a positive rotation value))
         for (let i=0; i<=360; i+=this.dynamicElementsRotationMapIncrement) 
             bidirectionalRotationalElementsMap.set(i, []);
-        // actually fetch the elements from the DOM
+        // actually fetch the bidirectional elements from the DOM... distinction here between omnidirectional and bidirectional rot elements
+        // is omnidirectional elements have '[FOLLOW_ROT]' in their id while bidirectional have '[ROT_-39.1]' where the number represents
+        // the starting rotation of the element in degrees, this can be anything technically
         const bidirectionalRotationalElements: NodeListOf<SVGGraphicsElement> = (
             this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[ROT_']")
         );
@@ -169,7 +188,7 @@ export class SvgRenderer {
             const filteredID: RegExpMatchArray | null = rotElement.id.match(regexFilter);
 
             if (filteredID === null) {
-                console.log(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
+                console.warn(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
                 continue;
             }
 
@@ -178,7 +197,7 @@ export class SvgRenderer {
             // index
             let startingRotation: number = parseFloat(filteredID[1] ?? "");
             if (isNaN(startingRotation)) {
-                console.log(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
+                console.warn(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
                 continue;
             }
 
@@ -236,27 +255,43 @@ export class SvgRenderer {
     }
 
     // gets elements that will be responsively scaled from the SVG
-    private getScalarElements(): {scalarLogoElements: SVGGraphicsElement[], otherScalarElements: SVGGraphicsElement[]} | null {
+    private getScalarElements(): {
+        scalarLogoElements: SVGGraphicsElement[], 
+        scalarLabelElements: SVGGraphicsElement[],
+        otherScalarElements: SVGGraphicsElement[]
+    } | null {
         if (this.SVG === null) {
             console.warn("The svg doesn't exist");
             return null;
         }
 
         let scalarLogoElements: SVGGraphicsElement[] = [];
+        let scalarLabelElements: SVGGraphicsElement[] = [];
         let otherScalarElements: SVGGraphicsElement[] =[];
 
-        // get all scalar elements from the SVG (they should have a matching string of [SCALE] within them)
-        this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='SCALE']").forEach((scalarElement: SVGGraphicsElement) => {
-            // check which elements are logos (in their id they have the word 'LOGO') and sort them accordingly
-            const regexFilter: RegExp = new RegExp(/LOGO/);   
-            if (regexFilter.test(scalarElement.id))
+        // get all scalar elements from the SVG (they should have a matching string of '[SCALE' within them)
+        this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[SCALE']").forEach((scalarElement: SVGGraphicsElement) => {
+            // check which elements are logos and labels and sort them accordingly
+            const logoRegexFilter: RegExp = new RegExp(/\[SCALE_LOGO\]/);   
+            const labelRegexFilter: RegExp = new RegExp(/\[SCALE_LABEL\]/);
+
+            // scalar logo elements (logo icons) have '[SCALE_LOGO]' in their id
+            // scalar label elements (platform direction labels + exit labels) have '[SCALE_LABEL]' in their id
+            // other label elements (mostly street names) have '[SCALE]' in their id
+
+            if (logoRegexFilter.test(scalarElement.id))
                 scalarLogoElements.push(scalarElement);
+            else if (labelRegexFilter.test(scalarElement.id))
+                scalarLabelElements.push(scalarElement);
             else
                 otherScalarElements.push(scalarElement);
         });
 
-
-        return {scalarLogoElements: scalarLogoElements, otherScalarElements: otherScalarElements};
+        return {
+            scalarLogoElements: scalarLogoElements, 
+            scalarLabelElements: scalarLabelElements, 
+            otherScalarElements: otherScalarElements
+        };
     }
 
     // init the svg map elements field (do this when we have loaded in the SVG element)
@@ -311,8 +346,6 @@ export class SvgRenderer {
         // the following variables are essentially caches that record what pic paths we have loaded in
         // using these variables would prevent redundant image loading when thing are already loaded in
         const cachedGridPicPaths: Set<string> = new Set();
-        const gridItemIDRoadMapImageMap: Map<string,SVGImageElement> = new Map();
-        const gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement> = new Map();
 
         // map data is broken into 2 chunks
         this.mapData = {
@@ -328,6 +361,26 @@ export class SvgRenderer {
                 cachedGridPicPaths
             }
         }
+    }
+
+    // NOTE: the min zoom is based on the starting position of the station so it might not fit too well based on the starting
+    // orientation of the station; to aid this, a zoom multiplier is configured to adjust the min zoom slightly 
+    // inits the min zoom field (to limit zooming on the panzoom element)
+    private initMinZoomField(zoomMultiplier: number = 0.6): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+
+        // get the zooom factor that would scale the station SVG to fit the size of the viewport
+        const zoomFactorToFit: number | null = this.getZoomFactorToFit(this.stationSVG);
+        if (zoomFactorToFit === null) {
+            console.warn("Cannot retrieve the zoom factor that would scale the station SVG to fit the viewport");
+            return;
+        }
+
+        // set the minimum zoom value here, which is a slightly descaled value of the zoom factor to fit
+        this.minZoom = zoomFactorToFit * zoomMultiplier;
     }
 
     // loads the diagram into the page's diagram container
@@ -538,89 +591,45 @@ export class SvgRenderer {
     
     // base function for centering any bounding box (e.g. the client rect of a target SVG element/HTML element or a custom DOMRect)
     // zoomMultiplier scales the computed zoom for the bounding box (which is equivalent to the diagram container (viewport's) height
-    // or width divided by the normalized value of the bounding box (normalized value = bounding box / panzoom scale))
+    // or width divided by the normalized value of the target bounding box (normalized value = bounding box / panzoom scale))
     private centerBoundingBoxInViewport(
         boundingBox: DOMRect,
         zoomMultiplier: number = 1,
         zoomOverrideValue: number | null = null
     ): void {
-           if (this.currentPanZoom === null || this.diagramContainer === null || this.SVGWrapper === null) {
-            console.warn(
-                "Panzoom instance, the diagram container, and/or the SVG wrapper element doesn't exist",
-                `Panzoom Instance Status: ${this.currentPanZoom}`,
-                `Diagram Container Status: ${this.diagramContainer}`,
-                `SVG Wrapper Status: ${this.SVGWrapper}`
-            );
+        if (this.currentPanZoom === null) {
+            console.warn("Panzoom instance doesn't exist");
             return;
         }
 
-        // get our current scale (e.g. how zoomed in are we)
-        const scale: number = this.currentPanZoom.getTransform().scale;
-        // get the normalized version of our svg width/height (e.g. as if we didn't apply any scaling to the svg at all; this doesn't
-        // exclude translations and rotations so the bounding rect values will be different everytime) this is our grounds for how far 
-        // we should zoom in
-        const boundingBoxWidthNormalized: number = boundingBox.width/scale;
-        const boundingBoxHeightNormalized: number = boundingBox.height/scale;
-        // get our viewport dimensions
-        const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
-
+        // initialize a field to hold the value of the target zoom
         let zoom: number = 1;
         // determine whether we want an explicit zoom value (the zoomOverride var) or not
         if (zoomOverrideValue === null) {
-            // if not determine the adequate zoom based on the normalized bounds of the SVG element respective to the container's 
-            // dimensions multiplied by the zoom multiplier
-            if (boundingBox.height > boundingBox.width) 
-                zoom = diagramContainerBoundingRect.height/boundingBoxHeightNormalized * zoomMultiplier;
-            else
-                zoom = diagramContainerBoundingRect.width/boundingBoxWidthNormalized * zoomMultiplier;
+            // if not determine the adequate zoom for which the element's bounding rect would just fit into the browser viewport
+            const zoomFactorToFit: number | null = this.getZoomFactorToFit(boundingBox);
+            if (zoomFactorToFit === null) {
+                console.warn(`Could not compute adequate zoom factor for fit the element with this bounding box: ${boundingBox}`);
+                return;
+            }
+            // and multiply it by the zoom multiplier to zoom out slightly
+            zoom = zoomFactorToFit * zoomMultiplier;
         }
         else {
             // if yes, then include the zoom value as is
             zoom = zoomOverrideValue;
         }
+        // since we specifically provided a minimum zoom for our panzoom instance, we have to clamp our target zoom to be no smaller than minZoom
+        zoom = clamp(zoom, this.minZoom);
+        // now get the offset of this bounding box from our viewport center
+        const offset: Vector2 | null = this.getBoundingBoxOffsetFromViewportCenter(boundingBox, zoom);
+        if (offset === null) {
+            console.warn("Failed to retrieve offset");
+            return;
+        }
 
-        // get the top left of the svg wrapper and diagram container
-        const SVGWrapperBoundingRect: DOMRect = this.SVGWrapper.getBoundingClientRect();
-        const SVGWrapperTopLeft: Vector2 = new Vector2(SVGWrapperBoundingRect.left, SVGWrapperBoundingRect.top);
-        const diagramContainerTopLeft: Vector2 = new Vector2(diagramContainerBoundingRect.left, diagramContainerBoundingRect.top);
-
-        // get the centers of our viewport and station SVG
-        const diagramContainerCenter: Vector2 = new Vector2(
-            diagramContainerBoundingRect.left + diagramContainerBoundingRect.width/2,
-            diagramContainerBoundingRect.top + diagramContainerBoundingRect.height/2
-        );
-        const targetSVGElementCenter: Vector2 = new Vector2(
-            boundingBox.left + boundingBox.width/2,
-            boundingBox.top + boundingBox.height/2
-        );
-
-        // get the translation from origin (0, 0) (diagram container's top left or the SVG wrapper's top left before any translations) 
-        // to the center of our station SVG (this is normalized, so scaling [zoom] is accounted for)
-
-        // this logic isequivalent to applying zoomAbs(0, 0, 1) + moveTo(0, 0) then requesting an animation frame (for layout 
-        // recalculations; panzoom transformations do not happen instantly since it's a CSS sided transformation) in which you calculate 
-        // the translation between the center of the diagram container and the station SVG and moveTo() that position then apply the
-        // actual zoom value 
-        const SVGWrapperDiagramContainerOffsetNormalized: Vector2 = (
-            SVGWrapperTopLeft
-            .divide(scale)
-            .subtract(diagramContainerTopLeft)
-        )
-        const normalizedTargetSVGCenter: Vector2 = (
-            targetSVGElementCenter
-            // divide by scale unitially to undo the dilation
-            .divide(scale)
-            // subtract our translation that aligns the top left corners of the svg wrapper and the diagram container (their 
-            // transform origins are both top-left so this is valid)
-            .subtract(SVGWrapperDiagramContainerOffsetNormalized)
-            // multiply by the zoom (equivalent to dilating at (0,0)), this is to apply what zoomabs would do to this point
-            .multiply(zoom)
-        );
-
-        // offset is equivalent to the translation between the normalized station SVG center point and the diagram container
-        // in other words, offset = diagram container center pt (viewport center) - zoomed/dilated (by (0,0)) station svg center point 
-        const offset: Vector2 = diagramContainerCenter.subtract(normalizedTargetSVGCenter);
-
+        // prevent any panzoom.on("pan") or panzoom.on("zoom") from activating, which can mess with the centering with this boolean guard
+        this.handlingPanningLimit = true;
         // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
         // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
         // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
@@ -631,15 +640,20 @@ export class SvgRenderer {
             offset.x,
             offset.y
         );
+
+        // now turn it off
+        this.handlingPanningLimit = false;
+        // now enable the element scaling
+        this.handleDynamicElementScaling();
     }
 
     // Setup our panzoom object with proper params (this includes mouse scroll, drag)
-    private setupPanzoomControls(
+    private setupPanzoomInstance(
         beforeMouseDownEventHandler: ((ev: MouseEvent) => any) | undefined = undefined,
         beforeWheelEventHandler: ((ev: WheelEvent) => any) | undefined = undefined
     ): void {
-        if (this.SVGWrapper === null) {
-            console.warn("SVG wrapper element does not exist");
+        if (this.minZoom === null) {
+            console.warn("Min zoom field has not been initialized");
             return;
         }
 
@@ -654,7 +668,7 @@ export class SvgRenderer {
         this.currentPanZoom = panzoom(this.SVGWrapper, { 
             // NOTE: you need to adjust this since it is a HARD CAP (you cannot go over the limit even with panzoom.zoomAbs())
             maxZoom: 5000, 
-            minZoom: 0.3,
+            minZoom: this.minZoom,
             smoothScroll: false,
             beforeMouseDown: beforeMouseDownEventHandler,
             beforeWheel: beforeWheelEventHandler
@@ -671,8 +685,16 @@ export class SvgRenderer {
         await this.loadDiagram(diagramPath);
         // init some macro styling for the SVG
         this.initSVGStyling();
-        // init the rotation controls of the map
-        this.initRotationControls();
+        // init the rotation controls of the map and get the handler that we need to pass to our panzoom instance
+        const beforeMouseDownHandler: ((ev: MouseEvent) => boolean) | null = this.initRotationControls();
+        if (beforeMouseDownHandler === null) {
+            console.warn("There was a problem initiating rotation controls");
+            return;
+        }
+        // init the min zoom field to initialize the constraints for our panzoom instance
+        this.initMinZoomField();
+        // setup the panzoom instance and its controls
+        this.setupPanzoomInstance(beforeMouseDownHandler);
         // center the map to where the station is at
         this.centerMap();
         // init the SVG Map Elements field (this field needs to be initialized before the last 2 methods in this function body since 
@@ -787,8 +809,8 @@ export class SvgRenderer {
     }
 
     // set the event logic to allow us to rotate the svg and any logic tied to rotating the svg (e.g. logic for the rotational dynamic
-    // elements)
-    private initRotationControls(): void {
+    // elements) and returns any event logic we need to pass to our panzoom instance
+    private initRotationControls(): ((ev: MouseEvent) => boolean) | null {
 
         if (this.diagramContainer === null || this.SVGWrapper == null || this.SVG === null || this.stationSVG === null) {
             console.warn(
@@ -798,7 +820,7 @@ export class SvgRenderer {
                 `SVG Status: ${this.SVG}`,
                 `Station SVG Status: ${this.stationSVG}`,
             );
-            return;
+            return null;
         }
 
         // init our booleans and numbers to store and check the state of our rotation logic
@@ -815,7 +837,11 @@ export class SvgRenderer {
 
         // we're going to follow google's rotation method where you must hit control before allowing the user to rotate the map on pc
         window.addEventListener("keydown", (ev: KeyboardEvent) => {
-            ctrlKeyPressed = ev.ctrlKey;
+            // only set ctrlkeypressed if panning hasn't started (by the way, since initRotationControls() passes a before mousedown handler that
+            // prevents panning when we rotate (e.g. when ctrl key is pressed before panning), the panzoom.on("pan") event only fires when panning happens
+            // before the ctrl key is pressed
+            if (!this.isPanning)
+                ctrlKeyPressed = ev.ctrlKey;
         });
         window.addEventListener("keyup", (ev: KeyboardEvent) => {
             ctrlKeyPressed = false;
@@ -823,7 +849,7 @@ export class SvgRenderer {
 
         // add the drag logic for the svg rotation
         this.diagramContainer.addEventListener("mousedown", (ev: MouseEvent) => {
-            if (this.SVGWrapper === null || this.diagramContainer === null || this.currentPanZoom === null)
+            if (this.SVGWrapper === null || this.diagramContainer === null)
                 return;
 
             // NOTE: this way only works because the SVG is centered horizontally and vertically in the SVGWrapper (see station map CSS)
@@ -832,7 +858,11 @@ export class SvgRenderer {
             // then the offset has to be calculated between the top/left of the SVGWrapper and the center of the diagram container
             // (e.g. we don't calculate the offsets based on the center in this case)
             const offset: Vector2 = getElementCentersOffset(this.diagramContainer, this.SVGWrapper);
-            const scale = this.currentPanZoom.getTransform().scale;
+            const scale: number | null = this.getCurrentZoomInDOM();
+            if (scale === null) {
+                console.warn("Could not retrieve scale");
+                return;
+            }
 
             // the pivots/translations is equivalent to the offset de-scaled (e.g. the offset as if SVGWrapper wasn't scaled)
             pivotX = offset.x/scale;
@@ -883,13 +913,14 @@ export class SvgRenderer {
             this.handleDynamicElementRotations(totalRotationDeg);
         });
 
-        // also pass a closure function with passed reference of the ctrlKeyPressed boolto our panzoom setup so that panzoom 
+        // also pass a closure function with passed reference of the ctrlKeyPressed bool to our panzoom setup so that panzoom 
         // doesn't activate if the ctrl key is pressed
         const beforeMouseDownHandler: (ev: MouseEvent) => boolean = (ev: MouseEvent) => {
             let shouldIgnore: boolean = ctrlKeyPressed;
             return shouldIgnore;
         }; 
-        this.setupPanzoomControls(beforeMouseDownHandler);
+
+        return beforeMouseDownHandler;
     }
 
     // inits all handlers and event logic related to panzoom's panning and zooming
@@ -899,21 +930,44 @@ export class SvgRenderer {
             return;
         }
 
+        // dynamically scale elements on initialization
+        this.handleDynamicElementScaling();
+
         // deals with loading high res images and caching them
         this.currentPanZoom.on("pan", (ev: any) => {
+            // pan and zoom event listeners will not run when this boolean guard is triggered
+            if (this.handlingPanningLimit)
+                return;
+
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad();
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
             this.handleExistingHighResMapGridImageLoad();
+            // prevent users from panning beyond a certain limit
+            this.handlePanningLimit();
+
+            // toggle boolean to indicate that user is currently panning 
+            this.isPanning = true;
+        });
+
+        this.currentPanZoom.on("panend", (ev: any) => {
+            // toggle boolean to indicate the user is not panning anymore
+            this.isPanning = false;
         });
 
         this.currentPanZoom.on("zoom", (ev: any) => {
+            if (this.handlingPanningLimit)
+                return;
+
             // handle the loading of our high res map images
             this.handleHighResMapGridImageLoad();
             // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
             this.handleExistingHighResMapGridImageLoad();
             // handle scaling of dynamic scalar elements here as well
             this.handleDynamicElementScaling();
+
+            // handle any zoom over shooting
+            this.handleZoomOvershoot();
         });
     }
 
@@ -1077,18 +1131,137 @@ export class SvgRenderer {
 
     // a boolean that checks if the current zoom is equal to or surpasses the highResImgLoadZoomThreshold var
     private zoomThresholdMet(): boolean {
-        const currentZoom: number | null = this.getCurrentZoom();
+        const currentZoom: number | null = this.getCurrentZoomInDOM();
         return currentZoom !== null? currentZoom >= this.highResImgLoadZoomThreshold : false;
     }
 
-    // gets the current zoom from our panzoom instance (if it exists, else it returns null)
-    private getCurrentZoom(): number | null {
+    // gets the current zoom from the target panzoom element (which is our SVG wrapper) as it appears in the DOM
+    // this is more reliable than calling this.currentPanzoom.transform().scale because that scale might not be reflected in the browser/DOM yet
+    // * *BUT this should be only in operations that require the current DOM's scale **; use getMostCurrentZoom() for cases that need the target
+    // zoom
+    private getCurrentZoomInDOM(): number | null {
+        if (this.SVGWrapper === null) {
+            console.warn("SVG wrapper doesn't exist");
+            return null;
+        }
+
+        const panzoomElementStyle: CSSStyleDeclaration = window.getComputedStyle(this.SVGWrapper);
+        const panzoomElementTransform: DOMMatrix = new DOMMatrix(panzoomElementStyle.transform);
+
+        // since panzoom scales the element uniformally, the average should be equivalent to other a (scaleX) or d (scaleY)
+        return (panzoomElementTransform.scale().a + panzoomElementTransform.scale().d)/2;
+    }
+
+    // we may need the most current zoom (i.e. the zoom that the panzoom instance has, which may not be represented in browser/DOM yet)
+    // NOTE: this zoom requires the current pan zoom or else it'll return null... I'm doing this instead of returning 1 (which should be the
+    // actual scale of the element when panzoom is unmounted) to avoid inconsistencies with getCurrentZoomInDOM
+    private getMostCurrentZoom(): number | null {
         if (this.currentPanZoom === null) {
-            console.warn("Panzoom instance doesn't exist");
+            console.warn("There is no panzoom instance");
             return null;
         }
 
         return this.currentPanZoom.getTransform().scale;
+    }
+
+    // gets the zoom factor that fits the given element or bounding box to the viewport's size
+    private getZoomFactorToFit(elementOrRect: SVGGraphicsElement | DOMRect): number | null {
+        if (this.diagramContainer === null) {
+            console.warn("The diagram container doesn't exist");
+            return null;
+        }
+
+        // get the current scale of our panzoom element 
+        const scale: number | null = this.getCurrentZoomInDOM();
+        if (scale === null) {
+            console.warn("Cannot retreive the current scale of the SVG");
+            return null;
+        }
+
+        // get the bounding rect 
+        const elementBoundingRect: DOMRect = elementOrRect instanceof DOMRect ? elementOrRect: elementOrRect.getBoundingClientRect();
+        // get with normalized width and height of the element (e.g. the descaled version of the width and height)
+        const elementWidthNormalized: number = elementBoundingRect.width/scale;
+        const elementHeightNormalized: number = elementBoundingRect.height/scale;
+        // get the viewport dimensions
+        const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
+
+        // now see which dimension of the bounding rect is larger, and return the scale of the viewport divided by that dimension normalized
+        // equivalent to the minimum scale between the two values here
+        if (elementBoundingRect.width > elementBoundingRect.height) 
+            return diagramContainerBoundingRect.width/elementWidthNormalized;
+        else 
+            return diagramContainerBoundingRect.height/elementHeightNormalized;
+    }
+
+    // gets the offset of a given bounding box (scaled by zoom) from the viewport center
+    private getBoundingBoxOffsetFromViewportCenter(boundingBox: DOMRect, zoom: number): Vector2 | null {
+         if (
+            this.diagramContainer === null || 
+            this.SVGWrapper === null 
+        ) {
+            console.warn(
+                "The diagram container and/or SVG wrapper doesn't exist",
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `SVG Wrapper Status: ${this.SVGWrapper}`
+            );
+            return null;
+        }
+
+        // get the current scale of the panzoom element 
+        const scale: number | null = this.getCurrentZoomInDOM();
+        if (scale === null) {
+            console.warn("Cannot get the current zoom");
+            return null;
+        }
+
+        // get the top left of the svg wrapper and diagram container
+        const SVGWrapperBoundingRect: DOMRect = this.SVGWrapper.getBoundingClientRect();
+        const SVGWrapperTopLeft: Vector2 = new Vector2(SVGWrapperBoundingRect.left, SVGWrapperBoundingRect.top);
+        // also get the top left of our viewport
+        const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
+        const diagramContainerTopLeft: Vector2 = new Vector2(diagramContainerBoundingRect.left, diagramContainerBoundingRect.top);
+
+        // get the centers of our viewport and the bounding box
+        const diagramContainerCenter: Vector2 = new Vector2(
+            diagramContainerBoundingRect.left + diagramContainerBoundingRect.width/2,
+            diagramContainerBoundingRect.top + diagramContainerBoundingRect.height/2
+        );
+        const targetCenter: Vector2 = new Vector2(
+            boundingBox.left + boundingBox.width/2,
+            boundingBox.top + boundingBox.height/2
+        );
+
+        // get the translation from origin (0, 0) (diagram container's top left or the SVG wrapper's top left before any translations) 
+        // to the center of our station SVG (this is normalized, so scaling [zoom] is accounted for)
+
+        // this logic is equivalent to applying zoomAbs(0, 0, 1) + moveTo(0, 0) then requesting an animation frame (for layout 
+        // recalculations; panzoom transformations do not happen instantly since it's a CSS sided transformation) 
+
+        // get local center — essentially target's center relative to the SVG wrapper it is inside of unscaled; 
+        // this gives the position as if we aligned the top lefts of the SVG wrapper and the viewport/diagram container 
+        // (assuming the wrapper’s untransformed top-left aligns with the diagram container’s top-left)
+
+        // NOTE: remember getBoundingClientRect() is always screen point based... if the viewport's transform origin was shifted x 
+        // and y units from the browser's origin (which is (0,0)), it could skew algorithms that assume the viewport is always at 
+        // (0,0) in this case, we're okay since we're removing calculations that involve browser space calculations and only
+        // local space (within the view port)
+        const localCenter: Vector2 = (
+            targetCenter
+            .subtract(SVGWrapperTopLeft)
+            .divide(scale)
+        );
+        // now scale that local center by the target zoom 
+        const scaledTargetCenter: Vector2 = localCenter.multiply(zoom);
+        const offset: Vector2 = (
+            // get the offset of the center from the top left
+            diagramContainerCenter
+            .subtract(diagramContainerTopLeft)
+            // subtract that from the scaled target center
+            .subtract(scaledTargetCenter)
+        )
+
+        return offset;
     }
 
     // handles the rotation of the dynamic elements that rotate
@@ -1152,17 +1325,24 @@ export class SvgRenderer {
 
     // handles the scaling of scalar dynamic elements based on the current zoom
     private handleDynamicElementScaling(
-        minLogoZoom: number = 1, 
-        maxLogoZoom: number = 2.2,
-        minOtherZoom: number = 0.4,
-        maxOtherZoom: number = 1.4
+        zooms: {
+            logoMin: number, logoMax: number,
+            labelMin: number, labelMax: number,
+            otherMin: number, otherMax: number 
+        } = {
+            logoMin: 1, logoMax: 2.2,
+            labelMin: 1, labelMax: 2,
+            otherMin: 0.4, otherMax: 0.8
+        }
     ): void {
-        const currentZoom: number | null = this.getCurrentZoom();
-        if (currentZoom === null) 
-            return;
-
-        if (this.dynamicElements === null) {
-            console.warn("The dynamic elements field is not initialized");
+        // get the most current zoom, not the DOM's zoom
+        const currentZoom: number | null = this.getMostCurrentZoom();
+        if (currentZoom === null || this.dynamicElements === null) {
+            console.warn(
+                "Current zoom cannot be retrieved and/or the dynamic elements field is not initialized",
+                `Current Zoom Status: ${currentZoom}`,
+                `Dynamic Elements Field Status: ${this.dynamicElements}`
+            );
             return;
         }
 
@@ -1171,10 +1351,22 @@ export class SvgRenderer {
         // the function is represented by this:
         // y = (a - 1)((cos(pi* x)) - 1)/2 + 1 + (a - 1)/c
         // where x = zoomNormalized; y = scaleRatio; a = maxLogoZoom; c = minLogoZoom
-        const zoomLimit: number = 8;
-        const zoomNormalized: number = clamp(currentZoom, 1, zoomLimit)/zoomLimit;
+        const zoomLimit: number = 8.5;
+        const zoomNormalized: number = clamp(currentZoom, Number.EPSILON, zoomLimit)/zoomLimit;
         const logoScaleRatio: number = (
-            (maxLogoZoom - 1) * (Math.cos(Math.PI * zoomNormalized) - 1) / 2 + 1 + (maxLogoZoom - 1)/minLogoZoom
+            (zooms.logoMax - 1) * (Math.cos(Math.PI * zoomNormalized) - 1) / 2 + 1 + (zooms.logoMax - 1)/zooms.logoMin
+        );
+
+        // function for scalar label elements will be an *exponenetial ease-out* function flipped along the y axis
+        // the function is represented by this:
+        // PIECEWISE FUNCTION
+        // x == 0 {y = a}
+        // x > 0 {y = -(a - c)*2^(10 * (x - 1)) + a}
+        // where x = zoomNormalized; y = scaleRatio; a = maxLabelZoom; c = minLabelZoom
+        const labelScaleRatio: number = (
+            zoomNormalized === 0?
+            zooms.labelMax:
+            -(zooms.labelMax - zooms.labelMin) * Math.pow(2, 10 * (zoomNormalized-1)) + zooms.labelMax
         );
 
         // function for the other scalar elements will be a *cubic ease-in-out* function flipped along the y axis
@@ -1185,16 +1377,231 @@ export class SvgRenderer {
         // where x = zoomNormalized; y = scaleRatio; a = maxOtherZoom; c = minOtherZoom
         const otherScaleRatio: number = (
             zoomNormalized < 0.5 ?
-            -4 * (maxOtherZoom - minOtherZoom) * Math.pow(zoomNormalized, 3) + maxOtherZoom:
-            -4 * (maxOtherZoom - minOtherZoom) * Math.pow((zoomNormalized - 1), 3) + minOtherZoom
+            -4 * (zooms.otherMax - zooms.otherMin) * Math.pow(zoomNormalized, 3) + zooms.otherMax:
+            -4 * (zooms.otherMax - zooms.otherMin) * Math.pow((zoomNormalized - 1), 3) + zooms.otherMin
         );
 
         this.dynamicElements.scalarLogoElements.forEach((scalarElement: SVGGraphicsElement) => {
             scalarElement.style.scale = logoScaleRatio.toString();
         });
+        this.dynamicElements.scalarLabelElements.forEach((scalarElement: SVGGraphicsElement) => {
+            scalarElement.style.scale = labelScaleRatio.toString();
+        });
         this.dynamicElements.otherScalarElements.forEach((scalarElement: SVGGraphicsElement) => {
             scalarElement.style.scale = otherScaleRatio.toString();
         });
+    }
+
+    // limits users from panning beyond a given certain limit
+    private handlePanningLimit(): void {
+        if (this.currentPanZoom === null) {
+            console.warn("Panzoom instance doesn't exist");
+            return;
+        }
+
+        // get the panning limits
+        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits();
+        if (panningLimits === null) {
+            console.warn("Could not get panning limits");
+            return;
+        }
+
+        // get our current transform (btw, the x and y represent the next position the panzoom will move, not the current
+        // translation)
+        const currentPanZoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
+        // get the target pos, just set it the current transform for its initial value and modify accordingly
+        // if need be
+        const targetPos: Vector2 = new Vector2(currentPanZoomTransform.x, currentPanZoomTransform.y);
+
+        // enable a boolean guard to prevent panzoom.moveTo() from causing a overflow stack ; this is because everytime
+        // panzoom is moved programmatically (e.g. with panzoom.moveTo()) or in the app, the event listener panzoom.on("pan") 
+        // fires interrupting the thread temporarily and going back to event logic of the event listener
+        // since handlePanningLimit() will be in this event listener, you can understand why this causes endless recursion without
+        // the guard
+        this.handlingPanningLimit = true;
+
+        // just destructuring here to make things more legible
+        const {offsetLimitBottomRight, offsetLimitTopLeft} = panningLimits;
+
+        // clamp the x and y to the offset limits
+        targetPos.x = clamp(targetPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x);
+        targetPos.y = clamp(targetPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y);
+        // now move the panzoom to the current location
+        this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
+
+        // now turn off the boolean guard
+        this.handlingPanningLimit = false;
+    }
+
+    // when zooming out, the bounding box can overshoot the panning limits
+    // as such, we need to push it back, we can do that instantly or pan it somewhat smoothly
+    // both ways are a bit jank but I think smooth (not really smooth, actually more janky than just moving back in place)... handleZoomOvershoot() 
+    // will move the container back into the bounds by somewhat smoothly shifting it back to the boundaries
+    private async handleZoomOvershoot(cameraPanLerpRatio: number = 0.05): Promise<void> {
+        if (this.currentPanZoom === null) {
+            console.warn("Panzoom instance doesn't exist");
+            return;
+        }
+
+        // get the panning limits currently
+        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits();
+        if (panningLimits === null) {
+            console.warn("Could not get panning limits");
+            return;
+        }
+
+        // activate the boolean guard
+        this.handlingPanningLimit = true;
+        
+        // get our current transform (btw, the x and y represent the next position the panzoom will move, not the current
+        // translation)
+        const currentPanZoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
+        // get the current pos, just set it the current transform for its initial value and modify accordingly
+        // if need be
+        const currentPos: Vector2 = new Vector2(currentPanZoomTransform.x, currentPanZoomTransform.y);
+
+        this.handlingPanningLimit = true;
+        // just destructuring here too for legibility
+        const {offsetLimitBottomRight, offsetLimitTopLeft} = panningLimits;
+        if (
+            !isBetween(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x) || 
+            !isBetween(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
+        ) {
+
+            // declare the variables that we need
+            let distFromTopLeft: number = 0;
+            let distFromBottomRight: number = 0;
+            let targetPos: Vector2 = new Vector2(0,0);
+
+            // we are going to put everything in a handler because the logic is repeated in the while loop below
+            const handler: (
+                offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2
+            ) => void = (offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2) => {
+                // get the distance between the current pos and the other offsets, we want the one that's closer because it inidcates
+                // we went crossed that specific point rather than the other
+                distFromTopLeft = currentPos.getDist(offsetLimitTopLeft);
+                distFromBottomRight = currentPos.getDist(offsetLimitBottomRight);
+                // get the targetPos
+                targetPos = distFromTopLeft < distFromBottomRight ? offsetLimitTopLeft : offsetLimitBottomRight;
+            }
+
+            // run our handler here
+            handler(offsetLimitTopLeft, offsetLimitBottomRight);
+
+            // Panzoom has a .smoothMoveTo() method but it doesn't feel smooth so I made my own smooth zoom with lerping
+            while (currentPos.getDist(targetPos) > 1) {
+                await new Promise((resolve: (value?: any) => void) => {
+                    // do this transformation every frame
+                    requestAnimationFrame(() => {
+                        // get our panning limits
+                        const newPanningLimits: {
+                            offsetLimitTopLeft: Vector2, 
+                            offsetLimitBottomRight: Vector2
+                        } | null = this.getPanningLimits();
+                        if (newPanningLimits === null)
+                            return;
+
+                        // deconstruct the panning limits again for readability
+                        const {offsetLimitTopLeft, offsetLimitBottomRight} = newPanningLimits;
+                        // run our handler again
+                        handler(offsetLimitTopLeft, offsetLimitBottomRight);
+                        // lerp our current position to this new portion
+                        // the lerp will be hard coded for now...
+                        currentPos.m_lerp(newPanningLimits.offsetLimitTopLeft, cameraPanLerpRatio);
+                        // and move it
+                        this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
+                        // resolve this promise to set our while loop again
+                        resolve();
+                    });                            
+                });
+            }
+
+            this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
+        }
+
+        this.handlingPanningLimit = false;
+    }
+
+    // gets the top left and bottom right limits for how much the user can pan (these limits are influenced by the min zoom scale)
+    private getPanningLimits(): {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null {
+        if (
+            this.diagramContainer === null || 
+            this.stationSVG === null ||
+            this.minZoom === null
+        ) {
+            console.warn(
+                "Diagram container and/or station SVG doesn't exist and/or min zoom field hasn't been initialized",
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `Station SVG Status: ${this.stationSVG}`,
+                `Min Zoom Field Status: ${this.minZoom}`
+            );
+            return null;
+        }
+
+        // what to do here?
+        // get the section of the SVG wrapper that the viewport (diagram container) shows when it is scaled by the min zoom and centered based on
+        // the station SVG 
+        // the bounds of that viewport at that scale represents the limits of how much the user can pan vertically and horizontally
+        // the bounds can scale based on the zoom... think of it as more of a section of the SVG wrapper than just the viewport
+
+        // get the most up to date zoom (not the DOM, the scale of the current panzoom instance)
+        const scale: number | null = this.getMostCurrentZoom();
+        if (scale === null) {
+            console.warn("Could not get the current zoom");
+            return null;
+        }
+        // get the offset/translation the SVG wrapper has to move in order to center the station SVG center at the
+        // viewport (at the scale of min zoom)
+        // essentially, the offset represents how much must the SVG wrapper translate to center the station SVG on the diagram container 
+        // at the min zoom scale; however, you could also think of the offset as the point on the SVG wrapper that is located at the transform 
+        // origin of the viewport (e.g. top-left which is at (0,0)) when it is centered with the station SVG at the min zoom scale
+        const offsetByMinZoom: Vector2 | null = this.getBoundingBoxOffsetFromViewportCenter(
+            this.stationSVG.getBoundingClientRect(), 
+            this.minZoom
+        );
+        if (offsetByMinZoom === null) {
+            console.warn("Cannot retrieve offset for station SVG");
+            return null;
+        }
+
+        // now scale this offset to our current scale
+        // this returns us how much the SVG wrapper must translate before the top left of the current viewport goes out of bounds
+        // of our scaled viewport section
+        const offsetLimitTopLeft: Vector2 = (
+            offsetByMinZoom
+            // we scale by scale/this.minZoom since the offset is already scaled to match minZoom
+            // so now the minZoom scale is our reference point
+            .multiply(scale/this.minZoom)
+        );
+
+        const diagramContainerBoundingRect: DOMRect = this.diagramContainer.getBoundingClientRect();
+        const diagramContainerDimensions: Vector2 = new Vector2(diagramContainerBoundingRect.width, diagramContainerBoundingRect.height);
+        // what about bottom right?
+        // this is equal to: top left scaled + length of the viewport scaled - length of current view port
+        // this returns us how much the SVG wrapper must translate before the bottom right of the current viewport goes out of bounds
+        // of our scaled viewport section
+        const offsetLimitBottomRight: Vector2 = (
+            // get our new top left point 
+            offsetLimitTopLeft
+            // subtract it from the viewports's dimensions scaled to match the current zoom
+            // think of it as the viewport dimensions (in min zoom scale) is now scaled to match the current scale
+            .subtract(
+                diagramContainerDimensions
+                .multiply(scale/this.minZoom)
+            )
+            // now add the viewport's dimensions (unscaled)
+            .add(diagramContainerDimensions)
+        );
+
+        // this is equivalent to offsetLimitBottomRight; it's the exact same values, just a different order of transformations
+        // const a: Vector2 = (
+        //     offsetByMinZoom
+        //     .subtract(diagramContainerDimensions)
+        //     .multiply(scale/this.minZoom)
+        //     .add(diagramContainerDimensions)
+        // );
+
+        return {offsetLimitTopLeft: offsetLimitTopLeft, offsetLimitBottomRight: offsetLimitBottomRight};
     }
 
     // adjusts the opacity of the map by given the percentage

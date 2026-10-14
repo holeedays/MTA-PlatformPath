@@ -2,6 +2,8 @@ This is where we add stuff we did and things to do...
 
 CURRENT BUGS:
 -----------------------
+> Need to figure out centering and panning limit working in tandem... occassional buggy behavior where the centering goes out of view which
+is definitely caused by conflicting things happening in the logic (which are overriding one another)
 > Weird issue where the boundingRectsAreIntersecting() detection doesn't work properly when a zoom event is triggered in rapid succession
     - The problem is that although some parts of the map grid are in view when zoomed to a certain point, the function doesn't work
     properly and returns that a grid cell is not in view although it is
