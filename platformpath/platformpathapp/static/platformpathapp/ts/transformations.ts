@@ -1,4 +1,4 @@
-import { lerp } from "./utils.ts";
+import { lerp } from "./numeric_utils.ts";
 
 // just make a class to hold 2D information (would've been struct if I could define function bodies inside interfaces)
 // this is actually pretty memory efficient so no performance overhead issues here

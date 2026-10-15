@@ -1,15 +1,26 @@
 import { SvgRenderer, MapView, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep, type AccessibilityOption } from "./path_finder.ts";
 import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
-import { NodeOption, FilterCheckBox, NodeSVG, type StationMapInteractionHandler, NodeDropdownButton } from "./station_custom_elements.ts";
+import { 
+    NodeOption, FilterCheckBox, NodeSVG, SVGComponentElement, type StationMapInteractionHandler, NodeDropdownButton 
+} from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
+import { Vector2, getCenterOfElement } from "./transformations.ts";
+import { clamp } from "./numeric_utils.ts";
 
 export class StationMapPage {
     protected pathFinder: PathFinder;
     protected currentPath: PathStep[] | null = null;
     protected currentPathNodeIDs: Set<string> = new Set();
+
     protected nodeSVGs: NodeSVG[] = [];
+    protected filterCheckboxes: {
+        all: FilterCheckBox, 
+        other: FilterCheckBox[]
+    } | null = null;
+    protected activeFilters: Set<string> = new Set();
+
     protected nodeDropdownButtons: {
         startNode: NodeDropdownButton,
         endNode: NodeDropdownButton
@@ -852,19 +863,30 @@ export class StationMapPage {
             // add these types into our type dict
             Object.entries(node.types_dict).forEach((dictPair: [string, string]) => {
                 // just doing this for readability sake
+                // the key is the actual value of the type/filter
                 const value: string = dictPair[0];
+                // the value is the readable label that will be presented to the user
                 const readableLabel: string = dictPair[1];
 
                 filters.set(value, readableLabel);
                 nodeTypesHashMap.set(value, readableLabel);
             });
 
+            // now create the nodeSVGs
+            const nodeSVG: NodeSVG | null = this.initNodeSVG(node);
+            if (nodeSVG === null) {
+                console.warn(`Could not create a nodeSVG object for this node: ${node}`);
+                return;
+            }
+            // and push it into our array of node SVGs
+            this.nodeSVGs.push(nodeSVG);
+
             // create our node options and add it to our dropdown
             const startNodeOption: NodeOption | null = this.createNewNodeOption(
-                startNodeDropdownButton, node, filters
+                startNodeDropdownButton, node, nodeSVG, filters
             );
             const endNodeOption: NodeOption | null = this.createNewNodeOption(
-                endNodeDropdownButton, node, filters
+                endNodeDropdownButton, node, nodeSVG, filters
             );
 
             if (startNodeOption === null || endNodeOption === null) {
@@ -877,21 +899,19 @@ export class StationMapPage {
 
             // add them to our node options array
             nodeOptions.push(startNodeOption, endNodeOption);
-
-            // also collect all our node svg ids and store them in our nodeSVG array
-            const nodeSVG: NodeSVG | null = this.initNodeSVG(node);
-            if (nodeSVG !== null)
-                this.nodeSVGs.push(nodeSVG);
         });
 
         // also init our checkboxes
         this.initFilterCheckboxes(filterCheckboxesContainer, nodeTypesHashMap, nodeOptions);
+        // init node SVG logic here
+        this.initNodeSVGLogic(nodeOptions);
     }
 
     // adds new node option based on the given node data to the given dropdown and returns it
     private createNewNodeOption(
         dropdownButton: NodeDropdownButton,
         node: NodeData,
+        nodeSVG: NodeSVG,
         filters: Map<string,string>
     ): NodeOption | null {
 
@@ -911,6 +931,7 @@ export class StationMapPage {
             node.label, 
             node.id,
             node.svg_id,
+            nodeSVG,
             layer,
             filters
         );
@@ -968,6 +989,260 @@ export class StationMapPage {
         return nodeOption;
     } 
 
+    // inits event logic related to the Node SVG
+    private initNodeSVGLogic(nodeOptions: NodeOption[]): void {
+        if (this.svgRenderer.stationSVG === null || this.filterCheckboxes === null) {
+            console.warn(
+                "Station SVG and/or the filter checkboxes field has not been initialized",
+                `Station SVG Status: ${this.svgRenderer.SVG}`,
+                `Filter Checkboxes Field Status: ${this.filterCheckboxes}`
+            );
+            return;
+        }
+        // using pointer logic here because it is the same for both platforms 
+
+        // create a hashmap mapping each child of the nodeSVG (as well as itself) to itself 
+        // by the way the reason this works is because each nodeSVG and its children are **unique to each other**
+        // no nodeSVGs share ANY children
+        const nodeSVGMap: Map<SVGGraphicsElement,NodeSVG> = new Map();
+        this.nodeSVGs.forEach((nodeSVG: NodeSVG) => {
+            // initialize the components map
+            // set the components mapping here
+            nodeSVG.AllComponents.forEach((component: SVGComponentElement) => {
+                nodeSVGMap.set(component.BaseElement, nodeSVG);
+            });
+            // set the nodeSVG to itself here
+            nodeSVGMap.set(nodeSVG.Self.BaseElement, nodeSVG);
+        });
+
+        // create a map mapping each nodeSVG to its respective start/end nodeOption
+        const nodeOptionsMap: Map<NodeSVG,{startOption: NodeOption | null, endOption: NodeOption | null}> = new Map();
+        nodeOptions.forEach((nodeOption: NodeOption) => {
+            let nodeOptionsObj: {
+                startOption: NodeOption | null, endOption: NodeOption | null
+            } | undefined = nodeOptionsMap.get(nodeOption.NODESVG);
+
+            // if the obj doesn't exist, initialize it
+            if (nodeOptionsObj === undefined)
+                nodeOptionsObj = {startOption: null, endOption: null};
+
+            // configure the node option to their respective role
+            if (nodeOption.selectionRole() === "start")
+                nodeOptionsObj.startOption = nodeOption;
+            else
+                nodeOptionsObj.endOption = nodeOption;
+
+            // now update the map   
+            // technically it isn't needed if the object has already been initialized before (because we have a reference to
+            // it but this is for consistency and readability)
+            nodeOptionsMap.set(nodeOption.NODESVG, nodeOptionsObj);
+        });
+
+        // create boolean to indicate whether a gesture was a press/touch vs a drag motion
+        let isDragging: boolean = false;
+        // and a boolean to indicate mouse was pressed or finger touched down
+        let isPressed: boolean = false;
+        // set a vector to hold the starting position of a pointerdown event
+        let startPos: Vector2 = new Vector2(0,0);
+        // 10 px should be more than enough to determine whether a pointer event is a press versus a panning/dragging gesture
+        const dragDeltaThrehold: number = 10; 
+        // create an object that holds the current nodeSVG that's selected
+        // the reason it's an object is because I need to pass a reference to initMobileRouteForm() and setting it to type NodeSVG | null
+        // will cause the original refernce to be lost when targetNodeSVG is set back to null
+        const targetNodeSVG: {current: NodeSVG | null} = {current: null};
+
+        // also get the mobile route form cause we need to configure some styling logic for it when pressing down
+        // on a NodeSVG
+        const mobileRouteForm: HTMLDivElement | null = document.querySelector(".mobile-route-form");
+        if (mobileRouteForm === null) {
+            console.warn("Mobile route form doesn't exist");
+            return;
+        }
+
+        // get the start position on pointer down
+        this.svgRenderer.stationSVG.addEventListener("pointerdown", (ev: PointerEvent) => {
+            startPos.x = ev.x;
+            startPos.y = ev.y;
+
+            // also set the targetNodeSVG to null 
+            targetNodeSVG.current = null;
+            // and set isPressed to true
+            isPressed = true;
+        });
+
+        // now determine if this gesture is a click or a dragging/panning gesture
+        this.svgRenderer.stationSVG.addEventListener("pointermove", (ev: PointerEvent) => {
+            // pointermove runs even if no press action happens so we added a guard to prevent this from executing
+            if (!isPressed)
+                return;
+
+            const currentPos: Vector2 = new Vector2(ev.x, ev.y);
+            isDragging = startPos.getDist(currentPos) > dragDeltaThrehold;
+        });
+
+        // on release, now run the actual event logic
+        this.svgRenderer.stationSVG.addEventListener("pointerup", (ev: PointerEvent) => {
+            // get the target element that bubbled up
+            const targetElement: SVGGraphicsElement | null = ev.target as SVGGraphicsElement | null;
+
+            // target element shouldn't be null given the way panning works but this is here to satisfy the compiler
+            if (targetElement === null) {
+                console.warn("No target element was recorded");
+                isDragging = true;
+                isPressed = false;
+                return;
+            }
+
+            if (!isDragging) {
+                // get the parent node SVG here
+                const parentNodeSVG: NodeSVG | undefined = nodeSVGMap.get(targetElement);
+                if (parentNodeSVG === undefined) {
+                    console.warn(`Parent node SVG doesn't exist for this element: ${targetElement}`);
+                }
+                else {
+                    // if the nodeSVG does exist in the map (which it should)
+                    // set the targetNodeSVG to the retrieved node SVG
+                    targetNodeSVG.current = parentNodeSVG;
+
+                    // might change this later if it's annoying...
+                    // this just to shift the mobile route form to where the node SVG element is roughly at
+                    const nodeSVGCenter: Vector2 = getCenterOfElement(parentNodeSVG.Self.BaseElement);
+                    const margin: Vector2 = new Vector2(0, 0);
+
+                    // the 150 px prevents the mobile route form from appearing on the boundaries
+                    if (nodeSVGCenter.x > window.innerWidth - 150)
+                        margin.x = window.innerWidth * 0.3;
+                    else if (nodeSVGCenter.x < 150)
+                        margin.x = -window.innerWidth * 0.3;
+
+                    if (nodeSVGCenter.y > window.innerHeight - 150)
+                        margin.y = window.innerHeight * 0.3;
+                    else if (nodeSVGCenter.y < 150)
+                        margin.y = -window.innerHeight * 0.3;
+
+                    // clamp the center to the bounds of the viewport and add the margin
+                    const centerClamped: Vector2 = new Vector2(
+                        clamp(nodeSVGCenter.x, 0, window.innerWidth) + margin.x,
+                        clamp(nodeSVGCenter.y, 0, window.innerHeight) - margin.y,
+                    );
+
+                    // update the style of the mobile route form
+                    mobileRouteForm.style.setProperty("--translate-x", `${centerClamped.x}px`);
+                    mobileRouteForm.style.setProperty("--translate-y", `${centerClamped.y}px`);
+                    mobileRouteForm.classList.remove("hidden");
+                }
+            }
+
+            // reset the booleans here
+            isDragging = false;
+            isPressed = false;
+        });
+
+        // also initialize the mobile route form
+        this.initMobileRouteForm(targetNodeSVG, nodeOptionsMap);
+    }
+
+
+    // initializes the event and styling logic for the mobile route form
+    private initMobileRouteForm(
+        targetNodeSVG: {current: NodeSVG | null}, 
+        nodeOptionsMap: Map<NodeSVG,{startOption: NodeOption | null, endOption: NodeOption | null}>
+    ): void {
+
+        // get the mobile route form and its children
+        const mobileRouteForm: HTMLDivElement | null = document.querySelector(".mobile-route-form");
+        const mobileRouteFormStartNodeButton: HTMLButtonElement | null | undefined = (
+            mobileRouteForm?.querySelector(".mobile-route-form__start-node-button")
+        );
+        const mobileRouteFormEndNodeButton: HTMLButtonElement | null | undefined = (
+            mobileRouteForm?.querySelector(".mobile-route-form__end-node-button")
+        );
+        const mobileRouteFormToggleOffButton: HTMLButtonElement | null | undefined = (
+            mobileRouteForm?.querySelector(".mobile-route-form__toggle-off-button")
+        );
+
+        if (
+            mobileRouteForm === null ||
+
+            mobileRouteFormStartNodeButton === null ||
+            mobileRouteFormStartNodeButton === undefined ||
+
+            mobileRouteFormEndNodeButton === null ||
+            mobileRouteFormEndNodeButton === undefined ||
+
+            mobileRouteFormToggleOffButton === null ||
+            mobileRouteFormToggleOffButton === undefined
+        ) {
+            console.warn(
+                "Mobile route form and/or its children don't exist",
+                `Mobile Route Form Status: ${mobileRouteForm}`,
+                `Mobile Route Form Start Node Button Status: ${mobileRouteFormStartNodeButton}`,
+                `Mobile Route Form End Node Button Status: ${mobileRouteFormEndNodeButton}`,
+                `Mobile Route Toggle Off Button Status: ${mobileRouteFormToggleOffButton}`
+            );
+            return;
+        }
+
+        // since both the start node button and end node button function the same, I just set the logic to a handler
+        const startEndNodeButtonHandler: (selectionRole: SelectionRole) => void = (selectionRole: SelectionRole) => {
+            if (targetNodeSVG.current === null || this.filterCheckboxes === null)
+                return;
+
+            // get the selected node option from our node options map
+            const selectedNodeOption: {
+                startOption: NodeOption | null, endOption: NodeOption | null
+            } | undefined = nodeOptionsMap.get(targetNodeSVG.current);
+
+            if (
+                selectedNodeOption === undefined || 
+                selectedNodeOption.startOption === null || 
+                selectedNodeOption.endOption === null
+            ) {
+                console.warn(`Node options for this nodeSVG — ${targetNodeSVG.current} — doesn't exist in this map`);
+                return;
+            }
+
+            // set the target node option depending on which selectio role is passed
+            const targetNodeOption: NodeOption = (
+                selectionRole === "start" ? selectedNodeOption.startOption: selectedNodeOption.endOption
+            );
+
+            // create a boolean that determines if a filter was matched
+            let filterMatched: boolean = false;
+            // node options filter field is a map structured like this: 'filter: readable_filter'
+            for (const filter of this.activeFilters) {
+                if (targetNodeOption.Filters.has(filter)) {
+                    filterMatched = true;
+                    break;
+                }
+            }
+
+            // if no filters are matched
+            if (!filterMatched) {
+                // just run the all filter checkbox handle
+                this.filterCheckboxes.all.ButtonElement.click();
+            }              
+
+            // activate the handler the the selected node option
+            targetNodeOption.Self.click();
+            // now the hide the mobile route form
+            mobileRouteForm.classList.add("hidden");
+        }
+
+        // create the interaction handlers to be pushed into the stationMapInteractionHandlers array
+        const startNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
+            element: mobileRouteFormStartNodeButton,
+            handler: () => startEndNodeButtonHandler("start")
+        };
+        const endNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
+            element: mobileRouteFormEndNodeButton,
+            handler: () => startEndNodeButtonHandler("end")
+        };
+
+        this.stationMapInteractionHandlers.push(startNodeOptionButtonInteractionHandler, endNodeOptionButtonInteractionHandler);
+    }
+
+
     // create all various filter checkboxes (for the filtering of our options)
     private initFilterCheckboxes (
         filterCheckboxesContainer: HTMLDivElement, 
@@ -985,36 +1260,73 @@ export class StationMapPage {
             pairB: {value: string, readableLabel: string}
         ) => pairA.value.localeCompare(pairB.value));
 
-        // create a set to hold all active filters we have
-        const activeFilters: Set<string> = new Set();
         // create a filter checkbox that reveals all options
         const allOptionFilterCheckboxAndHandler: { 
-            allOptionFilterCheckbox: FilterCheckBox, 
+            checkbox: FilterCheckBox, 
             handler: () => void 
         } = (
             this.createAllOptionFilterCheckbox(
                 filterCheckboxesContainer, 
-                nodeOptions, 
-                activeFilters
+                nodeOptions
             )
         );
 
         // create individual filter checkboxes for the various other node types
-        this.createOtherFilterCheckboxes(
+        const otherOptionFilterCheckboxesAndHandlers: {
+            checkbox: FilterCheckBox, 
+            handler: () => void 
+        }[] = this.createOtherFilterCheckboxes(
             filterCheckboxesContainer,
             allOptionFilterCheckboxAndHandler,
             nodeTypesAlphabetized,
-            nodeOptions,
-            activeFilters
+            nodeOptions
         );
+
+        // create a handler to create a station map interaction handler and push it to the array of station map interaction handlers
+        const initAndPushNewStationMapInteractionHandler: (
+            element: HTMLElement, handler: () => void
+        ) => void = (element: HTMLElement, handler: () => void) => {
+            const stationMapInteractionHandler: StationMapInteractionHandler = {
+                element: element,
+                handler: handler
+            };
+
+            this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        }
+
+        // run this handler for the all option filter checkbox
+        initAndPushNewStationMapInteractionHandler(
+            allOptionFilterCheckboxAndHandler.checkbox.ButtonElement, 
+            allOptionFilterCheckboxAndHandler.handler
+        );
+        // create an array to hold all the other option filter checkboxes
+        const otherOptionFilterCheckboxes: FilterCheckBox[] = [];
+        // iterate thru each other filter checkbox and their respective handler
+        otherOptionFilterCheckboxesAndHandlers.forEach((checkboxAndHandler: {
+            checkbox: FilterCheckBox, 
+            handler: () => void 
+        }) => {
+            // run the create station map interaciton handler for each of these checkboxes and their handlers
+            initAndPushNewStationMapInteractionHandler(
+                checkboxAndHandler.checkbox.ButtonElement, 
+                checkboxAndHandler.handler
+            );
+            // as well as append the checkbox handlers to the other option filter checkboxes
+            otherOptionFilterCheckboxes.push(checkboxAndHandler.checkbox);
+        });
+
+        // now initialize the filter checkboxes field
+        this.filterCheckboxes = {
+            all: allOptionFilterCheckboxAndHandler.checkbox, 
+            other: otherOptionFilterCheckboxes
+        }
     }
 
     // create the all option filter checkbox (reveals the options in the dropdown for all node types)
     private createAllOptionFilterCheckbox(
         filterChecklist: HTMLDivElement, 
-        nodeOptions: NodeOption[],
-        activeFilters: Set<string>
-    ): { allOptionFilterCheckbox: FilterCheckBox, handler: () => void }
+        nodeOptions: NodeOption[]
+    ): {checkbox: FilterCheckBox, handler: () => void}
     {
         // create our filter checkbox
         const filterCheckbox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL", filterChecklist);
@@ -1022,7 +1334,7 @@ export class StationMapPage {
         // init the logic for our all filter checkbox
         const handler: () => void = () => {
             // clear our active filters list
-            activeFilters.clear();
+            this.activeFilters.clear();
             // clear all the styling for the other enabled checkboxes
             document.querySelectorAll(".filter-checklist__checkbox.enabled").forEach((filterCheckbox: Element) => {
                 filterCheckbox.classList.remove("enabled");
@@ -1036,30 +1348,32 @@ export class StationMapPage {
             // also indicate this filter check box has been clicked
             filterCheckbox.Self.classList.add("enabled");
         };
-        // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
-            element: filterCheckbox.ButtonElement, 
-            handler: handler 
-        };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
 
         // activate the handler at the start (since it is the default option)
         handler();
 
-        return { allOptionFilterCheckbox: filterCheckbox, handler: handler};
+        return { checkbox: filterCheckbox, handler: handler};
     }   
 
     // create all the other checkboxes (for the different node types)
     private createOtherFilterCheckboxes(
         filterCheckboxesContainer: HTMLDivElement,
-        allOptionFilterCheckboxAndHandler: { allOptionFilterCheckbox: FilterCheckBox, handler: () => void },
+        allOptionFilterCheckboxAndHandler: {checkbox: FilterCheckBox, handler: () => void},
         nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [],
-        nodeOptions: NodeOption[],
-        activeFilters: Set<string>
-    ): void {
+        nodeOptions: NodeOption[]
+    ): {
+        checkbox: FilterCheckBox,
+        handler: () => void
+    }[] {
         // extract our checkbox and associated handler (to make the items more legible)
-        const allOptionFilterCheckbox: FilterCheckBox = allOptionFilterCheckboxAndHandler.allOptionFilterCheckbox;
+        const allOptionFilterCheckbox: FilterCheckBox = allOptionFilterCheckboxAndHandler.checkbox;
         const allOptionFilterCheckboxHandler: () => void = allOptionFilterCheckboxAndHandler.handler;
+
+        // initialize an empty array that will hold all the other filter checkboxes and their respective handlers
+        const otherFilterCheckboxesAndHandlers: {
+            checkbox: FilterCheckBox,
+            handler: () => void
+        }[] = [];
 
         // iterate through our alphabetized node types
         nodeTypesAlphabetized.forEach((type: {value: string, readableLabel: string}) => {
@@ -1068,9 +1382,9 @@ export class StationMapPage {
             // initiate the logic for it
             const handler: () => void = () => {
                 // if filter is not previously enabled
-                if (!activeFilters.has(filterCheckbox.Value)) {
+                if (!this.activeFilters.has(filterCheckbox.Value)) {
                     // add this to our set of enabled filters
-                    activeFilters.add(filterCheckbox.Value);
+                    this.activeFilters.add(filterCheckbox.Value);
 
                     // add the enabled styling to this checkbox
                     filterCheckbox.Self.classList.add("enabled");
@@ -1080,14 +1394,14 @@ export class StationMapPage {
                 // in the case this filter is disabled
                 else {
                     // delete this filter value from enabled filters
-                    activeFilters.delete(filterCheckbox.Value);
+                    this.activeFilters.delete(filterCheckbox.Value);
 
                     // remove its class attribute
                     filterCheckbox.Self.classList.remove("enabled");
                 }
 
                 // now check if any other active filters are enabled
-                if (activeFilters.size === 0) {
+                if (this.activeFilters.size === 0) {
                     // if not, activate our all option filter checkbox handler (e.g. enable all node options again)
                     allOptionFilterCheckboxHandler();
                     return;
@@ -1097,8 +1411,8 @@ export class StationMapPage {
                 nodeOptions.forEach((nodeOption: NodeOption) => {
                     // create a boolean to determine if any filters match 
                     let matchesAFilter: boolean = false;
-                    for (const filterValue of activeFilters) {
-                        if (nodeOption.Filters.has(filterValue)) {
+                    for (const filter of this.activeFilters) {
+                        if (nodeOption.Filters.has(filter)) {
                             matchesAFilter = true;
                             break;
                         }
@@ -1146,13 +1460,15 @@ export class StationMapPage {
                     }
                 });
             };
-            // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-            const stationMapInteractionHandler: StationMapInteractionHandler = { 
-                element: filterCheckbox.ButtonElement, 
-                handler: handler 
-            };
-            this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+
+            // store our newly created filter checkbox and handler here
+            otherFilterCheckboxesAndHandlers.push({
+                checkbox: filterCheckbox,
+                handler: handler
+            });
         });
+
+        return otherFilterCheckboxesAndHandlers;
     }
 
     // creates a new nodeSVG item given a nodeData obj

@@ -7,6 +7,7 @@ export class NodeOption {
     private label: string;
     private id: number;
     private svgID: string;
+    private nodeSVG: NodeSVG;
     private layer: LayerData; 
     // NOTE: filters is in the structure {value: readableLabel}
     private filters: Map<string,string>;
@@ -21,6 +22,7 @@ export class NodeOption {
         label: string,
         id: number,
         svgID: string,
+        nodeSVG: NodeSVG,
         layer: LayerData,
         filters: Map<string,string>
     ) {
@@ -28,6 +30,7 @@ export class NodeOption {
         this.label = label;
         this.id = id;
         this.svgID = svgID;
+        this.nodeSVG = nodeSVG;
         this.layer = layer;
 
         this.filters = filters;
@@ -43,11 +46,14 @@ export class NodeOption {
     get Label(): string {
         return this.label;
     }
+    get ID(): number {
+        return this.id;
+    }
     get SVGID(): string {
         return this.svgID;
     }
-    get ID(): number {
-        return this.id;
+    get NODESVG(): NodeSVG {
+        return this.nodeSVG;
     }
     get Layer(): LayerData {
         return this.layer;
@@ -174,10 +180,12 @@ export class FilterCheckBox {
 export class NodeSVG {
     private self: SVGComponentElement;
     private coloredComponents: SVGComponentElement[];
+    private allComponents: SVGComponentElement[];
 
     constructor(baseElement: SVGGraphicsElement) {
         this.self = new SVGComponentElement(baseElement);
         this.coloredComponents = this.getColoredComponents(baseElement);
+        this.allComponents = this.getAllComponents(baseElement);
     }
 
     get Self(): SVGComponentElement {
@@ -187,7 +195,7 @@ export class NodeSVG {
         return this.coloredComponents;
     }
     get AllComponents(): SVGComponentElement[] {
-        return [this.self, ... this.coloredComponents];
+        return this.allComponents;
     }
 
     // get the children of the parent container that have an explicit fill attribute
@@ -206,6 +214,20 @@ export class NodeSVG {
             }
         });
         return coloredComponents;
+    }
+
+    // gets all children of the parent container
+    private getAllComponents(baseElement: SVGGraphicsElement): SVGComponentElement[] {
+        const components: SVGComponentElement[] = [];
+        // the asterisk symbol selects all children
+        const children: NodeListOf<SVGGraphicsElement> = baseElement.querySelectorAll<SVGGraphicsElement>("*");
+        children.forEach((child: SVGGraphicsElement) => {
+            components.push(
+                new SVGComponentElement(child)
+            );
+        })
+
+        return components;
     }
 }
 

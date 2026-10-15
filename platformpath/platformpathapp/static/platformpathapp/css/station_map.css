@@ -222,7 +222,8 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* ============================================================================================================================
-   Map overlays (headers, level stack, route form (includes filter checklist, step ui + preview + map views, map legend)
+   Map overlays (headers, level stack, route form (includes filter checklist, mobile route form, step ui + preview + map views, 
+   map legend)
    ============================================================================================================================ */
 
 /* All controls sit above the SVG and never pan with it. */
@@ -726,6 +727,34 @@ to work properly; we use a custom keyframe animation */
         filter: brightness(1.0);
 }
 
+/* ======== mobile route form (an extension of the routing form) ======== */
+.mobile-route-form {
+    --translate-x: 50vw;
+    --translate-y: 50vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background: none;
+
+    top: var(--translate-y);
+    left: var(--translate-x);
+    transform: translateX(-50%);
+
+    transition: display 0.25s allow-discrete;
+}
+
+.mobile-route-form.hidden {
+    display: none;
+    opacity: 0;
+}
+
+@starting-style {
+    .mobile-route-form.hidden {
+        opacity: 0;
+    }
+}
 
 /* ======== step ui + route preview + map views ======== */
 

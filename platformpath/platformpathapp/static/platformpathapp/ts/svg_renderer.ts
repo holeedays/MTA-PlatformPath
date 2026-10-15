@@ -4,7 +4,7 @@ import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
-import { clamp, normalizeAngle, isBetween, lerp } from "./utils.ts";
+import { clamp, normalizeAngle, isBetween, lerp } from "./numeric_utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -16,16 +16,16 @@ export enum MapView {
 
 export class SvgRenderer {
     // @ts-ignore
-    private currentPanZoom: PanZoom | null = null;
+    public currentPanZoom: PanZoom | null = null;
 
-    private diagramContainer: HTMLDivElement | null = null;
-    private SVGWrapper: HTMLDivElement | null = null;
-    private SVG: SVGSVGElement | null = null;
-    private stationSVG: SVGGraphicsElement | null = null;
+    public diagramContainer: HTMLDivElement | null = null;
+    public SVGWrapper: HTMLDivElement | null = null;
+    public SVG: SVGSVGElement | null = null;
+    public stationSVG: SVGGraphicsElement | null = null;
 
-    private currentMapView: MapView = MapView.DEFAULT;
+    public currentMapView: MapView = MapView.DEFAULT;
 
-    private dynamicElements: {
+    public dynamicElements: {
         omnidirectionalRotationElements: SVGGraphicsElement[],
         bidirectionalRotationElementsMap: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>,
         scalarLogoElements: SVGGraphicsElement[],
@@ -34,14 +34,14 @@ export class SvgRenderer {
         gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
         gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
     } | null = null;
-    private mapElements: {
+    public mapElements: {
         parent: SVGGraphicsElement, 
         grid: SVGGraphicsElement,
         roadMap: SVGGraphicsElement, 
         satelliteMap: SVGGraphicsElement
     } | null = null;
 
-    private mapData: {
+    public mapData: {
         retrieved: {
             roadMapHighResGridPicPaths: Record<string,string>,
             satelliteMapHighResGridPicPaths: Record<string,string>
@@ -51,16 +51,16 @@ export class SvgRenderer {
         }  
     } | null = null;
 
-    private isPanning: boolean = false;
-    private activeCenteringCalls: number = 0;
-    private ignorePanzoomEvents: boolean = false;
+    public isPanning: boolean = false;
+    public activeCenteringCalls: number = 0;
+    public ignorePanzoomEvents: boolean = false;
 
-    private mapRotationSensitivity: number = 0;
-    private highResImgLoadZoomThreshold: number = 0;
-    private dynamicElementsRotationMapIncrement: number = 0;
+    public mapRotationSensitivity: number = 0;
+    public highResImgLoadZoomThreshold: number = 0;
+    public dynamicElementsRotationMapIncrement: number = 0;
     // unlike the above numerical values, min zoom is not initialized in the constructor so made this possibly null to make
     // sure the value is initialized when called for use
-    private minZoom: number | null = null;
+    public minZoom: number | null = null;
 
     constructor(
         mapRotationalSensitivity: number = 0.5, 
@@ -470,13 +470,8 @@ export class SvgRenderer {
         this.unhighlightSelectedNode(role);
         // get the highlight class 
         const highlightClass: string = this.getHighlightClass(role);
-        // find our new svg that we will highlight
-        // unescaped spaces don't work with query selector (and our svg ids usually have spaces) so we do this instead
-        const node: SVGGraphicsElement | null = document.querySelector("#" + CSS.escape(nodeOption.SVGID));
-        if (node === null) {
-            console.warn(`Node with SVG ID: '${nodeOption.SVGID}' cannot be found`);
-            return;
-        }
+        // get the svg that we will highlight
+        const node: SVGGraphicsElement = nodeOption.NODESVG.Self.BaseElement;
         // add the highlight class to the nodeOption
         node.classList.add(highlightClass);
     }
@@ -725,7 +720,8 @@ export class SvgRenderer {
                         // if the number of active centering calls is more than 1 (meaning this instance is not the last one to
                         // to be called), decrement the call and return 
                         // this flag logic works because we're essentially offloading every promise call to a predictable frame
-                        // of time (e.g. the browser animation frame, which is the same for all instances)
+                        // of time (e.g. the browser animation frame, which happens after macro tasks like onclick handling and things
+                        // of that manner... essentially animation frames happen at very end of the queue in terms of code execution)
                         if (this.activeCenteringCalls > 1) {
                             this.activeCenteringCalls--;
                             return;
