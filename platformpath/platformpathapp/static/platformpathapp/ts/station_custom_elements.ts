@@ -252,7 +252,9 @@ export class SVGComponentElement {
 
     // set necessary styling (css/html) for the svg element
     private setStyling(): void {
+        // these properties and classes are for highlighting related styling
         this.baseElement.style.setProperty("--original-fill", this.originalFill);
+        this.baseElement.classList.add("node-SVG__component");
     }
 }
 

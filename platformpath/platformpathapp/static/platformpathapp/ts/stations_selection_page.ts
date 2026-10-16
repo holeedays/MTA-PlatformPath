@@ -72,7 +72,8 @@ export class StationsSelectionPage {
                 customButton: CustomHTMLButton
             }[]
         } | null = (
-            this.initStationsSelectionContainer(stationsSelectionContainer, stations.stations));
+            this.initStationsSelectionContainer(stationsSelectionContainer, stations.stations)
+        );
 
         if (stationsListElements !== null)
             this.initStationsInputContainer(stationsInputContainer, stationsListElements, stations.line_reference.name);

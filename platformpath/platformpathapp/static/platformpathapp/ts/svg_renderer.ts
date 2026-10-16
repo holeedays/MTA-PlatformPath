@@ -996,7 +996,9 @@ export class SvgRenderer {
             
             // get our rotation from our initial mouse point and the new point
             const displacementX: number = prevPosX - ev.x;
-            const rotDeg = displacementX * this.mapRotationSensitivity;
+            // the rounding here is just to optimize memory allocation when applying transform rotations
+            // whole numbers good, floating point numbers not so much
+            const rotDeg = Math.round(displacementX * this.mapRotationSensitivity);
             // update our previous position
             prevPosX = ev.x;
 

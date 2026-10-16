@@ -6,8 +6,7 @@ import {
 } from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
-import { Vector2, getCenterOfElement } from "./transformations.ts";
-import { clamp } from "./numeric_utils.ts";
+import { Vector2 } from "./transformations.ts";
 
 export class StationMapPage {
     protected pathFinder: PathFinder;
@@ -1046,33 +1045,70 @@ export class StationMapPage {
         let startPos: Vector2 = new Vector2(0,0);
         // 10 px should be more than enough to determine whether a pointer event is a press versus a panning/dragging gesture
         const dragDeltaThrehold: number = 10; 
-        // create an object that holds the current nodeSVG that's selected
-        // the reason it's an object is because I need to pass a reference to initMobileRouteForm() and setting it to type NodeSVG | null
-        // will cause the original refernce to be lost when targetNodeSVG is set back to null
-        const targetNodeSVG: {current: NodeSVG | null} = {current: null};
+        // create an object that holds the selected nodeSVG (the one we click) and the one we're currently hovering over
+        // selected and hovering can be the same or different... this is to help us apply different highlighted styling classes
+        // during hover events and click/touch events
+        const targetNodeSVG: {selected: NodeSVG | null, hovering: NodeSVG | null} = {selected: null, hovering: null};
 
-        // also get the mobile route form cause we need to configure some styling logic for it when pressing down
+        // also get the mobile route form and some of its children cause we need to configure some styling logic for it when pressing down
         // on a NodeSVG
-        const mobileRouteForm: HTMLDivElement | null = document.querySelector(".mobile-route-form");
-        if (mobileRouteForm === null) {
-            console.warn("Mobile route form doesn't exist");
+        // this is done in tandem with initializing the mobile route forms element's base event/styling logic
+        const mobileRouteFormElements: {
+            mobileRouteForm: HTMLDivElement, nodeDisplayDescription: HTMLDivElement
+        } | null = this.initMobileRouteForm(targetNodeSVG, nodeOptionsMap);
+        if (mobileRouteFormElements === null) {
+            console.warn("Mobile route form elements were not initialized properly");
             return;
         }
+        // for readability, will destructure the indiivudal components from the mobileRouteFormElements obj
+        const {mobileRouteForm, nodeDisplayDescription} = mobileRouteFormElements;
 
         // get the start position on pointer down
         this.svgRenderer.stationSVG.addEventListener("pointerdown", (ev: PointerEvent) => {
+            // if a path is being viewed, do not run logic here
+            if (this.currentPath !== null)
+                return;
+
             startPos.x = ev.x;
             startPos.y = ev.y;
 
-            // also set the targetNodeSVG to null 
-            targetNodeSVG.current = null;
+            // also remove certain classes from the targetNodeSVG and set its properties back to null
+            targetNodeSVG.selected?.Self.BaseElement.classList.remove("highlighted__static");
+            targetNodeSVG.hovering?.Self.BaseElement.classList.remove("highlighted__hovering");
+            targetNodeSVG.selected = null;
+            targetNodeSVG.hovering = null;
+
             // and set isPressed to true
             isPressed = true;
         });
 
         // now determine if this gesture is a click or a dragging/panning gesture
+        // as well as add some cosmetic styling for the current nodeSVG we're hovering over
         this.svgRenderer.stationSVG.addEventListener("pointermove", (ev: PointerEvent) => {
-            // pointermove runs even if no press action happens so we added a guard to prevent this from executing
+            // if a path is being viewed, do not run logic here
+            if (this.currentPath !== null)
+                return;
+
+            // remove the highlighted__hover class from the previously hovered nodeSVG (if it existed)
+            targetNodeSVG.hovering?.Self.BaseElement.classList.remove("highlighted__hover");
+            const targetElement: SVGGraphicsElement | null = ev.target as SVGGraphicsElement | null;
+            // target element shouldn't be null given the way panning works but this is here to satisfy the compiler
+            if (targetElement === null) {
+                console.log("No target element was recorded");
+                return;
+            }
+            // get the parentNodeSVG, if there is, for this element
+            const parentNodeSVG: NodeSVG | undefined = nodeSVGMap.get(targetElement);
+            if (parentNodeSVG === undefined)
+                return;
+
+            // set the targetNodeSVG's hovering property to this nodeSVG
+            targetNodeSVG.hovering = parentNodeSVG;
+            // add the highlighted__hover class
+            parentNodeSVG.Self.BaseElement.classList.add("highlighted__hover");
+
+            // pointermove runs even if no press action happens so we added a guard to prevent the press-based based logic 
+            // from happening
             if (!isPressed)
                 return;
 
@@ -1080,14 +1116,29 @@ export class StationMapPage {
             isDragging = startPos.getDist(currentPos) > dragDeltaThrehold;
         });
 
+        // this is a follow up for the hovering styling logic in pointer move (except for leaving the bounds of the given nodeSVG)
+        this.svgRenderer.stationSVG.addEventListener("pointerout", (ev: PointerEvent) => {
+            // if a path is being viewed, do not run logic here
+            if (this.currentPath !== null)
+                return;
+
+            // remove the currently hovered nodeSVG and then set the hovering property on targetNodeSVG to null
+            targetNodeSVG.hovering?.Self.BaseElement.classList.remove("highlighted__hover");
+            targetNodeSVG.hovering = null;
+        });
+
         // on release, now run the actual event logic
         this.svgRenderer.stationSVG.addEventListener("pointerup", (ev: PointerEvent) => {
+            // if a path is being viewed, do not run logic here
+            if (this.currentPath !== null)
+                return;
+
             // get the target element that bubbled up
             const targetElement: SVGGraphicsElement | null = ev.target as SVGGraphicsElement | null;
 
             // target element shouldn't be null given the way panning works but this is here to satisfy the compiler
             if (targetElement === null) {
-                console.warn("No target element was recorded");
+                console.log("No target element was recorded");
                 isDragging = true;
                 isPressed = false;
                 return;
@@ -1096,109 +1147,111 @@ export class StationMapPage {
             if (!isDragging) {
                 // get the parent node SVG here
                 const parentNodeSVG: NodeSVG | undefined = nodeSVGMap.get(targetElement);
-                if (parentNodeSVG === undefined) {
-                    console.warn(`Parent node SVG doesn't exist for this element: ${targetElement}`);
+                if (parentNodeSVG === undefined) 
+                    return;
+
+                // get the node options from our node options map, this is the only check that should have a console warning
+                // since if there is a nodeSVG from the map, there should definitely be a corresponding nodeOptions obj (with non
+                // null start and end nodeOptions) in this map for that specific nodeSVG
+                const nodeOptions: {
+                    startOption: NodeOption | null, endOption: NodeOption | null
+                } | undefined = nodeOptionsMap.get(parentNodeSVG);
+                if (nodeOptions === undefined || nodeOptions.startOption === null || nodeOptions.endOption === null) {
+                    console.warn(`Node options for nodeSVG — ${parentNodeSVG} — in nodeOptionsMap doesn't exist`);
+                    return;
                 }
-                else {
-                    // if the nodeSVG does exist in the map (which it should)
-                    // set the targetNodeSVG to the retrieved node SVG
-                    targetNodeSVG.current = parentNodeSVG;
 
-                    // might change this later if it's annoying...
-                    // this just to shift the mobile route form to where the node SVG element is roughly at
-                    const nodeSVGCenter: Vector2 = getCenterOfElement(parentNodeSVG.Self.BaseElement);
-                    const margin: Vector2 = new Vector2(0, 0);
+                // if the nodeSVG does exist in the map (which it should)
+                // set the targetNodeSVG to the retrieved node SVG
+                targetNodeSVG.selected = parentNodeSVG;
 
-                    // the 150 px prevents the mobile route form from appearing on the boundaries
-                    if (nodeSVGCenter.x > window.innerWidth - 150)
-                        margin.x = window.innerWidth * 0.3;
-                    else if (nodeSVGCenter.x < 150)
-                        margin.x = -window.innerWidth * 0.3;
+                // do some styling logic here...
 
-                    if (nodeSVGCenter.y > window.innerHeight - 150)
-                        margin.y = window.innerHeight * 0.3;
-                    else if (nodeSVGCenter.y < 150)
-                        margin.y = -window.innerHeight * 0.3;
-
-                    // clamp the center to the bounds of the viewport and add the margin
-                    const centerClamped: Vector2 = new Vector2(
-                        clamp(nodeSVGCenter.x, 0, window.innerWidth) + margin.x,
-                        clamp(nodeSVGCenter.y, 0, window.innerHeight) - margin.y,
-                    );
-
-                    // update the style of the mobile route form
-                    mobileRouteForm.style.setProperty("--translate-x", `${centerClamped.x}px`);
-                    mobileRouteForm.style.setProperty("--translate-y", `${centerClamped.y}px`);
-                    mobileRouteForm.classList.remove("hidden");
-                }
+                // reveal the mobile route form
+                mobileRouteForm.classList.remove("hidden");
+                // set the nodeOption label to the mobile route form's node display description
+                // the label should exist for both nodeOptions but we'll just set it to either or label for the sake of it
+                nodeDisplayDescription.innerHTML = nodeOptions.startOption.Label || nodeOptions.endOption.Label;
+                // add highlighted__static class to the target element of the node SVG and remove the highlighted__hover class
+                parentNodeSVG.Self.BaseElement.classList.add("highlighted__static");
             }
 
             // reset the booleans here
             isDragging = false;
             isPressed = false;
         });
-
-        // also initialize the mobile route form
-        this.initMobileRouteForm(targetNodeSVG, nodeOptionsMap);
     }
 
-
     // initializes the event and styling logic for the mobile route form
+    // returns elements that we need to affect logic for outside of the scope of this function
     private initMobileRouteForm(
-        targetNodeSVG: {current: NodeSVG | null}, 
+        targetNodeSVG: {selected: NodeSVG | null, hovering: NodeSVG | null}, 
         nodeOptionsMap: Map<NodeSVG,{startOption: NodeOption | null, endOption: NodeOption | null}>
-    ): void {
+    ): {
+        mobileRouteForm: HTMLDivElement,
+        nodeDisplayDescription: HTMLDivElement
+    } | null {
 
         // get the mobile route form and its children
         const mobileRouteForm: HTMLDivElement | null = document.querySelector(".mobile-route-form");
-        const mobileRouteFormStartNodeButton: HTMLButtonElement | null | undefined = (
-            mobileRouteForm?.querySelector(".mobile-route-form__start-node-button")
+        // the start and end node buttons (determine whether the node you selected is the start or end destination)
+        const startNodeButton: HTMLButtonElement | null | undefined = (
+            mobileRouteForm?.querySelector(".node-buttons__start-node")
         );
-        const mobileRouteFormEndNodeButton: HTMLButtonElement | null | undefined = (
-            mobileRouteForm?.querySelector(".mobile-route-form__end-node-button")
+        const endNodeButton: HTMLButtonElement | null | undefined = (
+            mobileRouteForm?.querySelector(".node-buttons__end-node")
         );
-        const mobileRouteFormToggleOffButton: HTMLButtonElement | null | undefined = (
+        // toggle off mobile route form button
+        const toggleOffButton: HTMLButtonElement | null | undefined = (
             mobileRouteForm?.querySelector(".mobile-route-form__toggle-off-button")
+        );
+        // currently selected node description displau
+        const nodeDisplayDescription: HTMLDivElement | null | undefined = (
+            mobileRouteForm?.querySelector(".node-display__description")
         );
 
         if (
             mobileRouteForm === null ||
 
-            mobileRouteFormStartNodeButton === null ||
-            mobileRouteFormStartNodeButton === undefined ||
+            startNodeButton === null ||
+            startNodeButton === undefined ||
 
-            mobileRouteFormEndNodeButton === null ||
-            mobileRouteFormEndNodeButton === undefined ||
+            endNodeButton === null ||
+            endNodeButton === undefined ||
 
-            mobileRouteFormToggleOffButton === null ||
-            mobileRouteFormToggleOffButton === undefined
+            toggleOffButton === null ||
+            toggleOffButton === undefined ||
+
+            nodeDisplayDescription === null ||
+            nodeDisplayDescription === undefined
         ) {
             console.warn(
                 "Mobile route form and/or its children don't exist",
                 `Mobile Route Form Status: ${mobileRouteForm}`,
-                `Mobile Route Form Start Node Button Status: ${mobileRouteFormStartNodeButton}`,
-                `Mobile Route Form End Node Button Status: ${mobileRouteFormEndNodeButton}`,
-                `Mobile Route Toggle Off Button Status: ${mobileRouteFormToggleOffButton}`
+                `Start Node Button Status: ${startNodeButton}`,
+                `End Node Button Status: ${endNodeButton}`,
+                `Toggle Off Button Status: ${toggleOffButton}`,
+                `Node Display Status: ${nodeDisplayDescription}`
             );
-            return;
+            return null;
         }
 
         // since both the start node button and end node button function the same, I just set the logic to a handler
         const startEndNodeButtonHandler: (selectionRole: SelectionRole) => void = (selectionRole: SelectionRole) => {
-            if (targetNodeSVG.current === null || this.filterCheckboxes === null)
+            if (targetNodeSVG.selected === null || this.filterCheckboxes === null)
                 return;
 
             // get the selected node option from our node options map
             const selectedNodeOption: {
                 startOption: NodeOption | null, endOption: NodeOption | null
-            } | undefined = nodeOptionsMap.get(targetNodeSVG.current);
+            } | undefined = nodeOptionsMap.get(targetNodeSVG.selected);
 
             if (
                 selectedNodeOption === undefined || 
                 selectedNodeOption.startOption === null || 
                 selectedNodeOption.endOption === null
             ) {
-                console.warn(`Node options for this nodeSVG — ${targetNodeSVG.current} — doesn't exist in this map`);
+                console.warn(`Node options for this nodeSVG — ${targetNodeSVG.selected} — doesn't exist in this map`);
                 return;
             }
 
@@ -1229,19 +1282,36 @@ export class StationMapPage {
             mobileRouteForm.classList.add("hidden");
         }
 
-        // create the interaction handlers to be pushed into the stationMapInteractionHandlers array
+        // now create handler for the toggle off button
+        const toggleOffButtonHandler: () => void = () => {
+            mobileRouteForm.classList.add("hidden");
+            targetNodeSVG.selected?.Self.BaseElement.classList.remove("highlighted__static");
+        }
+
+        // create the station map interaction handlers for the start/end node option and toggle off button elements
         const startNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
-            element: mobileRouteFormStartNodeButton,
+            element: startNodeButton,
             handler: () => startEndNodeButtonHandler("start")
         };
         const endNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
-            element: mobileRouteFormEndNodeButton,
+            element: endNodeButton,
             handler: () => startEndNodeButtonHandler("end")
         };
+        const toggleOffButtonInteractionHandler: StationMapInteractionHandler = {
+            element: toggleOffButton,
+            handler: toggleOffButtonHandler
+        }
 
-        this.stationMapInteractionHandlers.push(startNodeOptionButtonInteractionHandler, endNodeOptionButtonInteractionHandler);
+        // now push into the stationMapInteractionHandlers array
+        this.stationMapInteractionHandlers.push(
+            startNodeOptionButtonInteractionHandler, 
+            endNodeOptionButtonInteractionHandler,
+            toggleOffButtonInteractionHandler
+        );
+
+        // and finally return the elements that we need from the mobile route form
+        return {mobileRouteForm: mobileRouteForm, nodeDisplayDescription: nodeDisplayDescription};
     }
-
 
     // create all various filter checkboxes (for the filtering of our options)
     private initFilterCheckboxes (

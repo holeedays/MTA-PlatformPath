@@ -188,8 +188,14 @@
 
 			<!-- ================= MOBILE ROUTE FORM  ================= -->
 			<aside class="map-overlay mobile-route-form hidden" aria-label="Mobile nodes selection container">
-				<button class="mobile-route-form__start-node-button">SET AS START POINT</button>
-				<button class="mobile-route-form__end-node-button">SET AS END POINT</button>
+				<div class="mobile-route-form__node-display">
+					<strong>Node Selected:</strong>
+					<span class="node-display__description"></span>
+				</div>
+				<div class="mobile-route-form__node-buttons">				
+					<button class="node-buttons__start-node">SET AS START POINT</button>
+					<button class="node-buttons__end-node">SET AS END POINT</button>
+				</div>
 				<button class="mobile-route-form__toggle-off-button">CLOSE</button>
 			</aside>
 

@@ -197,8 +197,7 @@ body {
     transform-origin: center;
     transform: var(--transformation-matrix);
 
-    /* add a mask that fades the map out smoothly to the background */
-    mask-image: url("../decals/map_mask.svg");
+    mask-image: url("../decals/map_mask.svg"); /* add a mask that fades the map out smoothly to the background */
     mask-size: contain;
 }
 .svg-wrapper svg:active {
@@ -207,11 +206,17 @@ body {
 
 /* styling for dynamic svg elements that scale/rotate like logos or exit labels */
 .dynamic-svg-element {
-    /* need these 2 for the related svg elements to rotate by their own origin */
-    transform-origin: center;
+    transform-origin: center; /* need these 2 for the related svg elements to rotate by their own origin */
     transform-box: fill-box;
-    /* prevent any mouse/touch action on these items */
-    pointer-events: none;
+
+    pointer-events: none; /* prevent any mouse/touch action on these items */
+
+    /* will-change: transform ; /* apply raster lock to prevent excessive reallocation of memory to calculate transformations
+                               essentially, rotations cause a lot of lag because of layer recalculations so we need to minimize it
+                               or else we just end up with a crappy, laggy application 
+
+                               don't do it for now cause it is messing with the rotations (feels heavy and very hard to rotate map now)
+                               */
 }
 
 /* since using a transition property and animating opacity didn't work so well (the svg swap happened too quick for the opacity)
@@ -729,20 +734,21 @@ to work properly; we use a custom keyframe animation */
 
 /* ======== mobile route form (an extension of the routing form) ======== */
 .mobile-route-form {
-    --translate-x: 50vw;
-    --translate-y: 50vh;
-
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 10px;
     background: none;
 
-    top: var(--translate-y);
-    left: var(--translate-x);
+    /* the mobile route form is in the same position as step-ui and preview-route */
+    bottom: calc(var(--route-form-filter-checklist-override-toggles-bottom) + 190px);
+    left: 50%;
     transform: translateX(-50%);
 
-    transition: display 0.25s allow-discrete;
+    transition: 
+        display 0.25s allow-discrete,
+        opacity 0.25s ease-in-out;
 }
 
 .mobile-route-form.hidden {
@@ -751,10 +757,22 @@ to work properly; we use a custom keyframe animation */
 }
 
 @starting-style {
-    .mobile-route-form.hidden {
+    .mobile-route-form {
         opacity: 0;
     }
 }
+
+.mobile-route-form__node-display {
+    display: flex;
+    padding: 10px;
+    gap: 5px;
+    border-radius: 100px;
+    color: #ffffff;
+    background: #11111180; /* this is hex with alpha, the alpha value is represented by the last 2 digits
+                                80 = 50% opacity */
+}
+
+
 
 /* ======== step ui + route preview + map views ======== */
 
@@ -800,7 +818,8 @@ to work properly; we use a custom keyframe animation */
     max-width: 300px;
     border-radius: 100px;
     color: #ffffff;
-    background: rgba(60, 60, 60, 50%); /* no background-opacity property... this will be the best bet here */
+    background: #11111180; /* this is hex with alpha, the alpha value is represented by the last 2 digits
+                                80 = 50% opacity */
     overflow-y: auto;
     line-height: 1.2;
     text-align: center;
@@ -812,7 +831,8 @@ to work properly; we use a custom keyframe animation */
     justify-content: center;
     text-align: center;
     border-radius: 100px;
-    background: rgba(60, 60, 60, 50%);
+    background: #11111180; /* this is hex with alpha, the alpha value is represented by the last 2 digits
+                                80 = 50% opacity */
     padding: 10px 15px;
     gap: 10px;
 }
@@ -841,7 +861,8 @@ to work properly; we use a custom keyframe animation */
     display: flex;
     flex-direction: column;
     padding: 20px 20px;
-    background: rgba(60, 60, 60, 70%);
+    background: #111111B3/* this is hex with alpha, the alpha value is represented by the last 2 digits 
+                              B3 = 70% opacity */;
     border-radius: 20px;
 }
 .map-views strong {
@@ -1219,7 +1240,7 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* ==========================================================================
-   HIGHLIGHTING STYLES FOR THE SVG 
+   HIGHLIGHTING AND HIGHLIGHTING-RELATED STYLING FOR THE SVG 
    ========================================================================== */
 
 .muted,
@@ -1227,6 +1248,8 @@ to work properly; we use a custom keyframe animation */
     fill: color-mix(in srgb, var(--original-fill), #000000 80%)
 }
 
+/* for clarity: --target-fill is just equivalent to --original-fill (which is the fill the svg element has had from the start)
+--original-fill in set in the ts file*/
 @keyframes NodeHighlightAnimation {
     0% {fill: color-mix(in srgb, var(--original-fill), #000000 50%)}
     100% {fill: var(--original-fill)}
@@ -1236,9 +1259,6 @@ to work properly; we use a custom keyframe animation */
     100% {fill: var(--target-fill)}
 }
 
-/* NOTE: The arrow graphics on stairs are paths, but for now we will be excluding them from :is for the start/end node classes
-the reason is cause the arrow inherits the fill color which we don't want, we want it to have its original fill hence we
-have to change the target fill var to the original fill for the arrows at least in the case of the start and end nodes */
 .highlighted,
 .highlighted :is(path, rect, circle, ellipse, polygon, polyline) {
     animation-name: NodeHighlightAnimation;
@@ -1269,6 +1289,23 @@ have to change the target fill var to the original fill for the arrows at least 
 if the arrow has the class (.route-direction__label) and target any paths within in it (since the arrow itself is a <g> element*/
 :is(.start-node-highlight, .end-node-highlight) .route-direction__label :is(path) {
     --target-fill: var(--original-fill);
+}
+
+/* these highlighted classes here are for the mobile route form and nodeSVG hovering/selection logic, the other highlighted classes above
+are for the step-ui/preview-route 
+
+also NOTE, this highlighted__static and highlighted__hover classes should not interfere with 
+start-node-highlight/end-node-highlight/.highlighted/.muted sequences so I added the :not pseudo class to avoid weird visuals
+*/
+:is(.highlighted__static, .highlighted__hover):not(.highlighted, .start-node-highlight, .end-node-highlight, .muted),
+:is(.highlighted__static, .highlighted__hover):not(.highlighted, .start-node-highlight, .end-node-highlight, .muted) 
+:is(path, rect, circle, ellipse, polygon, polyline)
+{
+    fill: color-mix(in srgb, var(--original-fill), #000000 50%);
+}
+
+.node-SVG__component {
+    transition: fill 0.25s ease-in-out;
 }
 
 /* ========= preview highlighting styles  ========= */
