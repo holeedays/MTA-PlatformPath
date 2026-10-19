@@ -134,9 +134,8 @@ export class SvgRenderer {
         }
 
         // add styling to the dynamic elements
-        // this will only be needed for the rotational elements and the scalar elements as we need to apply certain styling to their
-        // transform behavior... the grid items don't need those styling and actually inherit their own from the map grid that they
-        // are referencing
+        // as for the grid items, the "dynamic-svg-element" class will be added when they are initialized and rendered
+        // see createImageGridItem() for that bit 
         [
             rotElements.omnidirectionalRotationalElements, 
             scalarElements.scalarLogoElements, 
@@ -1173,6 +1172,8 @@ export class SvgRenderer {
             if (attributeValue !== null)
                 imageGridItem.setAttribute(attribute, attributeValue);
         });
+        // also add the dyanmic svg element class to the image grid item
+        imageGridItem.classList.add("dynamic-svg-element");
 
         return imageGridItem;
     }
@@ -1382,7 +1383,6 @@ export class SvgRenderer {
         }
 
         // deal with the bidirectional rotational elements here
-
         // make sure the rotation angle is in the range [0, 360]
         const normalizedRotationAngle: number = normalizeAngle(mapRotationAngle);
         // now get three keys, this is to avoid most if not all edge cases where the user rotates the map back and forth a large 

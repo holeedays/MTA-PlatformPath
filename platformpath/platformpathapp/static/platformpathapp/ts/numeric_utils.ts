@@ -16,7 +16,8 @@ if (min === null && max === null)
 // normalizes an angle so that it is at the range [0, 360]
 export function normalizeAngle(angle: number): number {
     return (
-        angle < 0 ? 
+        // we need both conditions because we want any angle to be capped at 359 degrees (a full 360 degrees rot defaults to 0 degrees)
+        angle < 0 && angle % 360 !== 0? 
         // this normalization method is possible because js modulo actually returns the negative value
         angle % 360 + 360 : 
         angle % 360

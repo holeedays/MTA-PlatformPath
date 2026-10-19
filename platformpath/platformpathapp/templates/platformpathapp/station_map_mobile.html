@@ -263,7 +263,7 @@
 						Start Navigation
 					</button>
 
-					<button class="route-preview__btn-cancel-route" id="cancel-route-preview" type="button">
+					<button class="route-preview__btn-end-navigation" id="end-navigation" type="button">
 						Change Route
 						<img 
 							src="{% static 'platformpathapp/decals/step_ui_preview_route/preview_cancel_route_button.svg' %}" 
@@ -277,19 +277,20 @@
 			<aside id="step-ui" class="map-overlay step-ui step-ui--station-map-mobile hidden" aria-label="Steps Instructions/Buttons">
 				<strong class="step-ui__instruction-text" id="instruction-text">Instructions will appear here</strong>
 				<div class="step-ui__step-controls">
-					<button id="btn-prev" class="step-ui__btn-prev" type="button">
+					<button id="btn-prev" class="step-controls__btn-prev" type="button">
 						<img 
 							src="{% static 'platformpathapp/decals/step_ui_preview_route/step_ui_prev_button.svg' %}" 
 							alt="Step ui previous button icon"
 						>
 					</button>
-					<button id="btn-next" class="step-ui__btn-next" type="button">
+					<button id="btn-next" class="step-controls__btn-next" type="button">
 						<img 
 							src="{% static 'platformpathapp/decals/step_ui_preview_route/step_ui_next_button.svg' %}" 
 							alt="Step ui next button icon"
 						>
 					</button>
 				</div>
+				<button class="step-ui__toggle-off-button">CLOSE</button>
 			</aside>
 
 			<!-- ================= STEP UI + ROUTE PREVIEW ELEMENT DESCRIPTION ================= -->

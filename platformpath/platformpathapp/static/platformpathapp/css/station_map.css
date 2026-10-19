@@ -176,6 +176,8 @@ body {
     touch-action: none;
     isolation: isolate;
     background: var(--site-diagram-container-bg-color);
+
+    contain: content; /* tells browser that changes within diagram container should not reflect in full layout recalculations */
 }
 
 .svg-wrapper {
@@ -206,11 +208,14 @@ body {
 
 /* styling for dynamic svg elements that scale/rotate like logos or exit labels */
 .dynamic-svg-element {
-    transform-origin: center; /* need these 2 for the related svg elements to rotate by their own origin */
+    transform-origin: center; /* need these 2 for the related svg elements to rotate by their own origin
+                                 NOTE: this does not affect x, y positioning on SVG elements; only visual transformations that needs
+                                 a change in pivot like css transforms like scale, skew, rotate; not translate though */
     transform-box: fill-box;
 
     pointer-events: none; /* prevent any mouse/touch action on these items */
 
+    content-visibility: auto; /* performance optimization, prevents items outside of viewport from being rendered */
     /* will-change: transform ; /* apply raster lock to prevent excessive reallocation of memory to calculate transformations
                                essentially, rotations cause a lot of lag because of layer recalculations so we need to minimize it
                                or else we just end up with a crappy, laggy application 
@@ -886,8 +891,8 @@ to work properly; we use a custom keyframe animation */
 }
 
 /* button styling */
-.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next),
-.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) {
+.step-ui__step-controls :is(.step-controls__btn-prev, .step-controls__btn-next),
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation) {
     --bg-color: #3b3b3b;
 
     padding: 0px;
@@ -901,7 +906,7 @@ to work properly; we use a custom keyframe animation */
 
     transition: background 0.25s ease-in-out;
 }
-.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) {
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation) {
     display: flex;
     color: #ffffff;
     font-weight: bold;
@@ -910,47 +915,47 @@ to work properly; we use a custom keyframe animation */
     align-items: center;
 }
 
-.step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled), /* disabled step ui buttons will have
-                                                                                                different styling applied to them*/
-.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):active {
+.step-ui__step-controls :is(.step-controls__btn-prev, .step-controls__btn-next):active:not(:disabled), /* disabled step ui buttons will have
+                                                                                                          different styling applied to them*/
+.route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation):active {
     background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
 }
 @media (hover:hover) {
-    .step-ui__step-controls :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled),
-    .route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):hover {
+    .step-ui__step-controls :is(.step-controls__btn-prev, .step-controls__btn-next):hover:not(:disabled),
+    .route-preview__controls :is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation):hover {
         background: color-mix(in srgb, var(--bg-color), #ffffff 20%);
     }
 }
 
-:is(.step-ui__btn-prev, .step-ui__btn-next) > img {
+:is(.step-controls__btn-prev, .step-controls__btn-next) > img {
     width: 30px;
     height: auto;
     transition: 
         transform 0.25s ease-in-out,
         filter 0.25s ease-in-out;
 }
-:is(.step-ui__btn-prev, .step-ui__btn-next):disabled {
+:is(.step-controls__btn-prev, .step-controls__btn-next):disabled {
     background: color-mix(in srgb, var(--bg-color), #000000 20%);
     cursor: default;
 }
-:is(.step-ui__btn-prev, .step-ui__btn-next):disabled > img {
+:is(.step-controls__btn-prev, .step-controls__btn-next):disabled > img {
     filter: brightness(0.5);
 }
 
-:is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route) > img {
+:is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation) > img {
     width: 30px;
     height: auto;
 
     transition: transform 0.25s ease-in-out;
 }
 
-:is(.step-ui__btn-prev, .step-ui__btn-next):active:not(:disabled) > img,
-:is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):active > img {
+:is(.step-controls__btn-prev, .step-controls__btn-next):active:not(:disabled) > img,
+:is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation):active > img {
     transform: scale(0.9);
 }
 @media (hover:hover) {
-    :is(.step-ui__btn-prev, .step-ui__btn-next):hover:not(:disabled) > img,
-    :is(.route-preview__btn-start-navigation, .route-preview__btn-cancel-route):hover > img {
+    :is(.step-controls__btn-prev, .step-controls__btn-next):hover:not(:disabled) > img,
+    :is(.route-preview__btn-start-navigation, .route-preview__btn-end-navigation):hover > img {
         transform: scale(0.9);
     }
 }

@@ -13,6 +13,26 @@ export class StationMapPage {
     protected currentPath: PathStep[] | null = null;
     protected currentPathNodeIDs: Set<string> = new Set();
 
+    protected navigationElements: {
+        routePreview: {
+            self: HTMLDivElement,
+            startNavBtn: HTMLButtonElement,
+            endNavBtn: HTMLButtonElement,
+            previewDescription: HTMLDivElement
+        },
+        stepUI: {
+            self: HTMLDivElement,
+            btnPrev: HTMLButtonElement,
+            btnNext: HTMLButtonElement,
+            toggleOffBtn: HTMLButtonElement,
+            instructionText: HTMLDivElement
+        }
+    } | null = null;
+    protected layerElements: {
+        layerOptions: HTMLDivElement,
+        allLayersButton: HTMLButtonElement
+    } | null = null;
+
     protected nodeSVGs: NodeSVG[] = [];
     protected filterCheckboxes: {
         all: FilterCheckBox, 
@@ -79,6 +99,15 @@ export class StationMapPage {
 
         /////////////// METHODS THAT DON'T REQUIRE STATION DATA
 
+        ///// field initializers 
+
+        // init the navigation elements field
+        this.initNavigationElementsField();
+        // init the layer elements field
+        this.initLayerElementsField();
+
+        ///// element Initializers
+
         // inits the site header and all related elements to it
         this.initSiteHeaderRelatedElements();
         // init the map legend
@@ -115,8 +144,8 @@ export class StationMapPage {
         this.initOverrideToggles();
         // init all dropdowns with node options and the filter checkbox (e.g. anything involving node data)
         this.initNodes();
-        // init our path step buttons
-        this.initPathStepButtons();
+        // init our step UI controls
+        this.initStepUIControls();
         // init our route preview controls
         this.initRoutePreviewControls();
         // init the event handling for the node dropdown buttons
@@ -221,13 +250,18 @@ export class StationMapPage {
 
     // init the layer("levels") buttons 
     private initLayerControls(): void {
-        if (!this.station) return;
+        if (this.station === null || this.layerElements === null) {
+            console.warn(
+                "Station data and/or layer elements field is not initialized",
+                `Station Data Status: ${this.station}`,
+                `Layer Elements Field Status: ${this.layerElements}`
+            );
+            return;
+        }
 
-        const layerOptions = document.getElementById("layer-options");
-        const allLayersButton = document.getElementById("show-all-layers") as HTMLButtonElement | null;
+        // destructure layerElements to make the properties calls slightly more legible 
+        const {layerOptions, allLayersButton} = this.layerElements;
         
-        if (!layerOptions || !allLayersButton) return;
-
         // Setup button to display all layers of the station map and hook control to 
         const handler: () => void = () => {
             this.svgRenderer.showAllLayers(this.station?.layer_models || []);
@@ -480,64 +514,68 @@ export class StationMapPage {
         })
     }
 
-    // init the logic for the path step buttons
-    private initPathStepButtons(): void {
-        const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
-        const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev");    
-        const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next");
-
-        if (
-            instructionText === null ||
-            btnPrev === null ||
-            btnNext === null
-        ) {
-            console.warn(
-                "Instruction text, previous node button, and/or next node button does not exist",
-                `Instruction Text Status: ${instructionText}`,
-                `Previous Node Button Status: ${btnPrev}`,
-                `Next Node Button Status: ${btnNext}`
-            );
+    // init the logic for the stepUI
+    private initStepUIControls(): void {
+        if (this.navigationElements === null) {
+            console.warn("Navigation elements field is not initialized");
             return;
-        } 
+        }
 
-        // add event listening logic for the buttons (e.g. click and moving either back or forth in the path steps)
-        const stationMapInteractionHandlerBtnPrev: StationMapInteractionHandler = { 
-            element: btnPrev, 
-            handler: () => this.prevStep(instructionText, btnPrev, btnNext)
+        // destructure the stepUI from the navigation elements field (destructuring here is just for legibility purposes, dont have to
+        // access the nested property with multiple dot operators)
+        const {stepUI} = this.navigationElements;
+
+        // add event listening logic for the buttons
+
+        // event logic for the path step buttons (e.g. moving back and forth between steps)
+        const btnPrevInteractionHandler: StationMapInteractionHandler = { 
+            element: stepUI.btnPrev, 
+            handler: () => this.prevStep(stepUI.instructionText, stepUI.btnPrev, stepUI.btnNext)
         };
-        const stationMapInteractionHandlerBtnNext: StationMapInteractionHandler = { 
-            element: btnNext, 
-            handler: () => this.nextStep(instructionText, btnPrev, btnNext)
+        const btnNextInteractionHandler: StationMapInteractionHandler = { 
+            element: stepUI.btnNext, 
+            handler: () => this.nextStep(stepUI.instructionText, stepUI.btnPrev, stepUI.btnNext)
+        };
+
+        // event logic for the toggle off button 
+        const toggleOffButtonHandler: () => void = () => {
+            // end navigation
+            this.endNavigation();
+            // and hide the stepUI
+            stepUI.self.classList.add("hidden");
+        }
+
+        const toggleOffBtnInteractionHandler: StationMapInteractionHandler = {
+            element: stepUI.toggleOffBtn,
+            handler: toggleOffButtonHandler
         };
 
         this.stationMapInteractionHandlers.push(
-            stationMapInteractionHandlerBtnPrev, 
-            stationMapInteractionHandlerBtnNext
+            btnPrevInteractionHandler, 
+            btnNextInteractionHandler,
+            toggleOffBtnInteractionHandler
         );
     }
 
     // init the buttons on the route preview 
     private initRoutePreviewControls(): void {
-        const startButton: HTMLButtonElement | null = document.querySelector("#start-navigation");
-        const cancelButton: HTMLButtonElement | null = document.querySelector("#cancel-route-preview");
-
-        if (startButton === null || cancelButton === null) {
-            console.warn(
-                "Route preview buttons don't exist",
-                `Start Navigation Button Status: ${startButton}; Cancel Route Button Status: ${cancelButton}`
-            );
+        if (this.navigationElements === null) {
+            console.warn("Navigation elements field is not initialized");
             return;
         }
 
+        // destructure to get a more legible names of the start/end nav button 
+        const {startNavBtn, endNavBtn} = this.navigationElements.routePreview;
+
         // Handle start navigation logic
         const stationMapInteractionHandlerStartButton: StationMapInteractionHandler = { 
-            element: startButton, 
-            handler: () => this.beginStepNavigation()
+            element: startNavBtn, 
+            handler: this.beginStepNavigation
         };
         // Handle cancel route preview logic
         const stationMapInteractionHandlerCancelButton: StationMapInteractionHandler = { 
-            element: cancelButton, 
-            handler: () => this.endNavigation()
+            element: endNavBtn, 
+            handler: this.endNavigation
         };
 
         this.stationMapInteractionHandlers.push(
@@ -565,7 +603,7 @@ export class StationMapPage {
         });
     }
 
-    // Uses the PathFinder to get a path and initializes the UI for navigation
+    // uses the PathFinder to get a path and initializes the UI for navigation
     public async startNavigation(
         fromNodeId: number,
         toNodeId: number
@@ -620,28 +658,25 @@ export class StationMapPage {
     }
 
 
-    // Function that sets up the UI elements for the preview and
-    // makes them visible
+    // Function that sets up the UI elements for the preview and makes them visible
     private startRoutePreview(): void {
         if (!this.currentPath || this.currentPath.length === 0) {
             console.warn('No path available for preview');
             return;
         }
 
-        // Retrieving all the UI elements for the preview
-        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
-        const previewDescription: HTMLSpanElement | null = document.querySelector("#route-preview-description");
-        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
-
-        if (preview === null || previewDescription === null || allLayersButton === null) {
+        if (this.navigationElements === null || this.layerElements === null) {
             console.warn(
-                "Route preview container, preview description, or the all layers button does not exist",
-                `Preview Container Status: ${preview}`,
-                `Preview Description Status: ${previewDescription}`,
-                `All Layers Button Status: ${allLayersButton}`
+                "Navigation elements and/or layer elements field are not initialized",
+                `Navigation Elements Field Status: ${this.navigationElements}`,
+                `Layer Elements Field Status: ${this.layerElements}`
             );
             return;
         }
+
+        // destructure the corresponding properties from layer elements/navigation elements
+        const {allLayersButton} = this.layerElements;
+        const {routePreview} = this.navigationElements;
 
         // toggle global boolean that we are previewing the route
         this.isPreviewingRoute = true;
@@ -649,8 +684,8 @@ export class StationMapPage {
         allLayersButton.click();
         // style the preview elements
         const movementCount: number = Math.max(this.currentPath.length, 0);
-        previewDescription.innerHTML = `There are <b>${movementCount} step${movementCount === 1 ? "" : "s"}</b> in this route`;
-        preview.classList.remove("hidden");
+        routePreview.previewDescription.innerHTML = `There are <b>${movementCount} step${movementCount === 1 ? "" : "s"}</b> in this route`;
+        routePreview.self.classList.remove("hidden");
         // start our route preview for the svg
         this.svgRenderer.startRoutePreview(
             this.currentPath.map((step: PathStep) => step.svgId)
@@ -663,64 +698,41 @@ export class StationMapPage {
             console.warn('No valid step to navigate to');
             return;
         }
-            // get the relevant ui elements
-            const preview: HTMLDivElement | null = document.querySelector("#route-preview");
-            const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
-            const instructionText: HTMLElement | null = document.querySelector("#instruction-text");
-            const btnPrev: HTMLButtonElement | null = document.querySelector("#btn-prev");    
-            const btnNext: HTMLButtonElement | null = document.querySelector("#btn-next");
 
-            if (
-                preview === null ||
-                stepUI === null ||
-                instructionText === null ||
-                btnPrev === null ||
-                btnNext === null
-            ) {
-                console.warn(
-                    "Preview UI, stepUI parent object, instruction text, previous node button, and/or next node button does not exist",
-                    `Preview UI Status: ${preview}`,
-                    `StepUI Status: ${stepUI}`,
-                    `Instruction Text Status: ${instructionText}`,
-                    `Previous Node Button Status: ${btnPrev}`,
-                    `Next Node Button Status: ${btnNext}`
-                );
-                return;
-            }
+        if (this.navigationElements === null) {
+            console.warn("Navigation elements field is not initialized");
+            return;
+        }
 
-            // remove previewing syling (node highligting + hiding preview)
-            this.isPreviewingRoute = false;
-            this.svgRenderer.stopRoutePreview();
-            preview.classList.add("hidden");
+        const {routePreview, stepUI} = this.navigationElements;
 
-            // make the stepui insvisible
-            stepUI.classList.remove("hidden");
-            // render the current style
-            this.renderCurrentStep(instructionText, btnPrev, btnNext);
+        // remove previewing syling (node highligting + hiding preview)
+        this.isPreviewingRoute = false;
+        this.svgRenderer.stopRoutePreview();
+        routePreview.self.classList.add("hidden");
+
+        // make the stepui insvisible
+        stepUI.self.classList.remove("hidden");
+        // render the current style
+        this.renderCurrentStep(stepUI.instructionText, stepUI.btnPrev, stepUI.btnNext);
     }
 
     // end the navigation process (the opposite of StartNavigation)
     public endNavigation(): void {
-        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
-        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
-        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
-
-        if (
-            stepUI === null ||
-            allLayersButton === null ||
-            preview === null
-        ) {
+        if (this.navigationElements === null || this.layerElements === null) {
             console.warn(
-                "There is no step ui element, all layers button, and or preview ui",
-                `Step UI Status: ${stepUI};`,
-                `All Layers Button Status: ${allLayersButton}`,
-                `Preview UI Status: ${preview}`
+                "Navigation elements and/or layer elements field is not initialized",
+                `Navigation Elements Field Status: ${this.navigationElements}`,
+                `Layer Elements Field Status: ${this.layerElements}`
             );
             return;
         }
 
-
         // NOTE: we will not clear the selectedNodeOptions because we want the state of those to be saved (for now at least)
+
+        // destructure the required fields 
+        const {stepUI, routePreview} = this.navigationElements;
+        const {allLayersButton} = this.layerElements;
 
         // clear the current path
         this.currentPath = null;
@@ -736,8 +748,8 @@ export class StationMapPage {
         // hide route direction labels
         this.svgRenderer.hideRouteDirectionLabels();
         // remove the step ui + preview ui from view
-        stepUI.classList.add("hidden");
-        preview.classList.add("hidden");
+        stepUI.self.classList.add("hidden");
+        routePreview.self.classList.add("hidden");
         // click the all layers button to reveal all layers again
         allLayersButton.click();
     }
@@ -1309,7 +1321,9 @@ export class StationMapPage {
             toggleOffButtonInteractionHandler
         );
 
-        // and finally return the elements that we need from the mobile route form
+        // although it should be set in the html, make sure the mobile route form is hidden at the start
+        mobileRouteForm.classList.add("hidden");
+        // finally return the elements that we need from the mobile route form
         return {mobileRouteForm: mobileRouteForm, nodeDisplayDescription: nodeDisplayDescription};
     }
 
@@ -1615,6 +1629,7 @@ export class StationMapPage {
         this.initMapViewsBlockToggleButtons(mapViewsContainer);
     }
 
+    // initialize the map views toggle button event logic
     private initMapViewsBlockToggleButtons(mapViewsContainer: HTMLDivElement): void {
         const mapViewsToggleButton: HTMLButtonElement | null = document.querySelector(".map-views__toggle-button");
         const mapViewsToggleOffButton: HTMLButtonElement | null  = mapViewsContainer.querySelector(
@@ -1732,7 +1747,107 @@ export class StationMapPage {
         );
     }
 
-    ////////////////////////////////////// PAGE STYLING THAT DOESN'T REQUIRE API DATA
+    ////////////////////////////////////// FIELDS INITIALIZING/ELEMENT STYLING THAT DOESN'T REQUIRE API DATA
+    
+    //////////// FIELD INITIALIZERS
+
+    // initializes the navigation elements field
+    private initNavigationElementsField(): void {
+        // get the route preview and its children elements
+        const routePreview: HTMLDivElement | null = document.querySelector("#route-preview");
+        const startNavButton: HTMLButtonElement | null | undefined = routePreview?.querySelector("#start-navigation");
+        const endNavButton: HTMLButtonElement | null | undefined = routePreview?.querySelector("#end-navigation");
+        const previewDescription: HTMLDivElement | null | undefined = routePreview?.querySelector("#route-preview-description");
+
+        // get the stepUI and its children elements
+        const stepUI: HTMLDivElement | null = document.querySelector('#step-ui');
+        const previousStepButton: HTMLButtonElement | null | undefined = stepUI?.querySelector("#btn-prev");    
+        const nextStepButton: HTMLButtonElement | null | undefined = stepUI?.querySelector("#btn-next");
+        const toggleOffButton: HTMLButtonElement | null | undefined = stepUI?.querySelector(".step-ui__toggle-off-button");
+        const instructionText: HTMLDivElement | null | undefined = stepUI?.querySelector("#instruction-text");
+
+        if (
+            routePreview === null ||
+
+            startNavButton === null || 
+            startNavButton === undefined ||
+
+            endNavButton === null ||
+            endNavButton === undefined ||
+
+            previewDescription === null || 
+            previewDescription === undefined ||
+
+            stepUI === null ||
+
+            previousStepButton === null || 
+            previousStepButton === undefined ||
+
+            nextStepButton === null ||
+            nextStepButton === undefined ||
+
+            toggleOffButton === null ||
+            toggleOffButton === undefined ||
+
+            instructionText === null ||
+            instructionText === undefined
+        ) {
+            console.warn(
+                "Route preview and/or stepUI and their children don't exist",
+                `Route Preview Status: ${routePreview}`,
+                `Start Nav Button Status: ${startNavButton}`,
+                `End Nav Button Status: ${startNavButton}`,
+                `Preview Description Status: ${previewDescription}`,
+                `Step UI Status: ${stepUI}`,
+                `Previous Step Button Status: ${previousStepButton}`,
+                `Next Step Button Status: ${nextStepButton}`,
+                `Toggle Off Button Status: ${toggleOffButton}`,
+                `Step Instruction Text Status: ${instructionText}`
+            );
+            return;
+        }
+
+        // initialize the navigation elements field here
+        this.navigationElements = {
+            routePreview: {
+                self: routePreview,
+                startNavBtn: startNavButton,
+                endNavBtn: endNavButton,
+                previewDescription: previewDescription
+            },
+            stepUI: {
+                self: stepUI,
+                btnPrev: previousStepButton,
+                btnNext: nextStepButton,
+                toggleOffBtn: toggleOffButton,
+                instructionText: instructionText
+            }
+        }
+    }
+
+    // initializes the layerElements field
+    // it's a bit of a misnomer because the layer elements field only includes the layer options (the container that holds all the 
+    // layer buttons that isn't the all layers button) and the all layers button but it'll suffice for now
+    private initLayerElementsField(): void {
+        // get the layer options and the all layers button
+        const layerOptions: HTMLDivElement | null = document.querySelector("#layer-options");
+        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
+
+        if (layerOptions === null || allLayersButton === null) {
+            console.warn(
+                "Layer options container and/or the all layers button doesn't exist",
+                `Layer Options Status: ${layerOptions}`,
+                `All Layers Button Status: ${allLayersButton}`
+            );
+            return;
+        }
+
+        // initialize the layer elements field
+        this.layerElements = {layerOptions: layerOptions, allLayersButton: allLayersButton};
+    }
+
+    //////////// STYLING INITIALIZERS8
+
     // inits handling for all site header related elements
     private initSiteHeaderRelatedElements(): void {
         const siteHeaderContainer: HTMLDivElement | null = document.querySelector(".site-header");
@@ -1951,25 +2066,31 @@ export class StationMapPage {
 
     // init certain styling for the stepUI (the container to see all the steps from the path found) during page load
     private initStepUI(): void {
-        const stepUI: HTMLDivElement | null = document.querySelector("#step-ui");
-        if (stepUI === null) {
-            console.warn("Step UI doesn't exist");
+        if (this.navigationElements === null) {
+            console.warn("Navigation elements field is not initialized");
             return;
         }
+
+        // destructure the stepUI field from navigation elements
+        const {stepUI} = this.navigationElements;
+
         // make sure the stepui has the hidden element (though it should already be set in the template)
-        stepUI.classList.add("hidden");
+        stepUI.self.classList.add("hidden");
     }
 
     // init certain styling for the preview (the container that contains buttons to either find a new route or start navigation) 
     // during page load
     private initPreview(): void {
-        const preview: HTMLDivElement | null = document.querySelector("#route-preview");
-        if (preview === null) {
-            console.warn("Preview UI does not exist");
+        if (this.navigationElements === null) {
+            console.warn("Navigation elements field is not initialized");
             return;
         }
+
+        // destructure the routePreview field from navigation elements
+        const {routePreview} = this.navigationElements;
+
         // make sure the preview has the hidden element (though it should already be set in the template)
-        preview.classList.add("hidden");
+        routePreview.self.classList.add("hidden");
     }
 
     // toggles the event handling for the element descriptions toggle info button (mainly for styling purposes)
