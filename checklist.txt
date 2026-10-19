@@ -17,8 +17,12 @@ PLANS FOR THE FUTURE:
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport) <-- completed for now until the 2 features below are added
 
-> Remove rotated view and instead allow users to be able to fully rotate the map (should the text rotate along with it?) <-- currently still on the fence about, but would increase user agency and simplify street views to some degree
-> Add a street view to each station map (and the corresponding logic for it)
+> Add decals and image assets for map views, mobile route form, and step ui toggle off button elements
+> Add a directional widget (e.g. a compass)
+> Find ways to optimize CSS rendering for the station map (map uses a lot of RAM when it is being rotated in rapid succession)
+> Do a full redesign and refactor of existing elements
+    - make the map legend assets interactable
+
 > Add a 3D isometric view (fixed, but can be rotated... still need more deliberation on this)
 > Change the station map diagrams (maybe alter the arrows and names on them??) 
     - we are currently doing this...
@@ -40,10 +44,9 @@ USER FEEDBACK:
 > Make the exits STAND OUT, replace the text with big icons or something large
 > Limit viewport size (how much the user can pan)
 > Prioritize the road map over the satellite map (readability very important)
-> Rename layers (make them more generic (LEVEL 1, LEVEL 2, LEVEL 3 etc))
+> Rename layers (make them more generic (LEVEL 1, LEVEL 2, LEVEL 3 etc)) -- general layer redesign
 > Clearer icons (... to think about, how do we do this for all the other objects???)
 > A 3D view (for grounding, not necessarily need to make it interactable)
-
 
 TO DO FOR EVERYONE:
 - Alter the svg files of the maps so that each section is compartmentalized into different nodes (for instance, mezzanine is broken into
@@ -51,12 +54,6 @@ different nodes based on exits and wall separations, platforms are broken to dif
 - Simplify nodes selection to include only exit stairs (remove other stairs) and the mezzanine/platform nodes
 
 Edmond ----
-TO DO:
-(PRIORITY)
-Start doing styling for the css and html of each page (making thematic continuity and user experience fluidity) --> currently on station map
-(The items below are stalled for now)
-Find a way to properly cache requested database data to avoid excessive queries 
-
 DONE:
 Color code the dropdown options based on layer
 Fix zoom for different aspect ratios
@@ -77,7 +74,12 @@ Do a visual rework and logical refactor of the home page, line selection page, a
 Finished lines selection/station selections styling and logic
 Add filters to limit the node selections (for user simplicity)
 Added a map rotation button
+Remove rotated view and instead allow users to be able to fully rotate the map (along with dynamic text response to the map rotation)
+Add a street view to each station map (and the corresponding logic for it)
 Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
+Added a map views container and initialized the event logic for it
+Converted nodes into interactable buttons (added mobile route form as well in conjunction)
+
 FIXED THE BUGS BELOW:
     > Bay Parkway Svg Label Directions not working properly (they do not show arrows sometimes for stairs and arrows do not ever show for
     elevators or ramps for some reason)
