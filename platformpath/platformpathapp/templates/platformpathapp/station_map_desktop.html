@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 		
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
-		<link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_header.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_footer.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/template_brand_logo.css' %}">
+	<link rel="stylesheet" href="{% static 'platformpathapp/css/station_map.css' %}">
 </head>
 
 <body data-is-mobile="false">
@@ -257,20 +257,20 @@
 				<div class="map-views__view-toggles">
 					<div class="map-views__view-toggle views-toggle__default">
 						<strong>DEFAULT</strong>
-						<button class="views-toggle__default-button">
-							HI
+						<button class="views-toggle__default-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/default_map_view_icon.svg' %}">
 						</button>
 					</div>
 					<div class="map-views__view-toggle views-toggle__road">
 						<strong>ROAD</strong>
-						<button class="views-toggle__road-button">
-							HI
+						<button class="views-toggle__road-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/road_map_view_icon.svg' %}">
 						</button>
 					</div>
 					<div class="map-views__view-toggle views-toggle__satellite">
 						<strong>SATELLITE</strong>
-						<button class="views-toggle__satellite-button">
-							HI
+						<button class="views-toggle__satellite-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/satellite_map_view_icon.svg' %}">
 						</button>
 					</div>
 				</div>
@@ -482,11 +482,10 @@
 		</div>
 	</footer>
 
+	<div id="django_config" data-static-path="{% static '' %}"></div>
 	<!-- ================= CDNs/Scripts ================= -->
 	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
 	<script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
-
-	<div id="django_config" data-static-path="{% static '' %}"></div>
 </body>
 
 </html>
