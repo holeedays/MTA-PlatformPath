@@ -1,4 +1,4 @@
-import { lerp } from "./numeric_utils.ts";
+import { AngleType, lerp } from "./numeric_utils.ts";
 
 // just make a class to hold 2D information (would've been struct if I could define function bodies inside interfaces)
 // this is actually pretty memory efficient so no performance overhead issues here
@@ -18,6 +18,8 @@ export class Vector2 {
         let x: number = this.x;
         let y: number = this.y;
 
+        // NOTE: multiplying here by another vector is based on the Hadamard Product, so it's not like a geometric vector operation
+        // (e.g. this isn't dot product, cross product) where the value reflects a sequence of linear transformations
         if (vectorOrScalar instanceof Vector2) {
             x *= vectorOrScalar.x;
             y *= vectorOrScalar.y;
@@ -113,6 +115,29 @@ export class Vector2 {
     // the mutating version of the lerping
     public m_lerp(vectorOrPoint: Vector2, lerpRatio: number): Vector2 {
         const resultantVector: Vector2 = this.lerp(vectorOrPoint, lerpRatio);
+        this.x = resultantVector.x;
+        this.y = resultantVector.y;
+
+        return resultantVector;
+    }
+
+    // (NON MUTATING) applies a rotation to this vector around the origin and returns it
+    public rotate(angle: number, angleType: AngleType): Vector2 {
+        let x: number = this.x;
+        let y: number = this.y;
+
+        // since sin/cos run in radians, we have to convert the angle to radians by default
+        const angleInRad: number = angleType === AngleType.DEGREES ? angle * (Math.PI / 180): angle ; 
+        // this is the formula for applying a rotation of an angle to a 2x1 vector around the origin  
+        x = x * Math.cos(angleInRad) - y * Math.sin(angleInRad);
+        y = x * Math.sin(angleInRad) + y * Math.cos(angleInRad);
+
+        return new Vector2(x, y);
+    }
+
+    // the mutating version of rotate 
+    public m_rotate(angle: number, angleType: AngleType): Vector2 {
+        const resultantVector: Vector2 = this.rotate(angle, angleType);
         this.x = resultantVector.x;
         this.y = resultantVector.y;
 

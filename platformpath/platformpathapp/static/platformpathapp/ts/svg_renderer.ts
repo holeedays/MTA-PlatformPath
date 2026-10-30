@@ -4,7 +4,7 @@ import { type LayerData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
-import { clamp, normalizeAngle, isBetween, lerp } from "./numeric_utils.ts";
+import { clamp, normalizeAngle, lerp, AngleType } from "./numeric_utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -57,7 +57,7 @@ export class SvgRenderer {
 
     public mapRotationSensitivity: number = 0;
     public highResImgLoadZoomThreshold: number = 0;
-    public dynamicElementsRotationMapIncrement: number = 0;
+    public dynamicElementsRotationDegMapIncrement: number = 0;
     // unlike the above numerical values, min zoom is not initialized in the constructor so made this possibly null to make
     // sure the value is initialized when called for use
     public minZoom: number | null = null;
@@ -65,12 +65,12 @@ export class SvgRenderer {
     constructor(
         mapRotationalSensitivity: number = 0.5, 
         highResImgLoadZoomThreshold: number = 2, 
-        dynamicElementsRotationMapIncrement: number = 10
+        dynamicElementsRotationDegMapIncrement: number = 10
     ) {
         // init some variables that we can modify during constructor creation
         this.mapRotationSensitivity = mapRotationalSensitivity;
         this.highResImgLoadZoomThreshold = highResImgLoadZoomThreshold;
-        this.DynamicElementsRotationMapIncrement = dynamicElementsRotationMapIncrement;
+        this.DynamicElementsRotationDegMapIncrement = dynamicElementsRotationDegMapIncrement;
 
         // init diagram contaier field
         this.initDiagramContainerField();
@@ -80,19 +80,19 @@ export class SvgRenderer {
 
     // have a setter for dynamicElementsRotationMapIncrement to prevent putting in a random increment for the value
     // (which can break the rotation logic)
-    set DynamicElementsRotationMapIncrement(value: number) {
-        const minRotIncrement: number = 10;
-        const maxRotIncrement: number = 360;
+    set DynamicElementsRotationDegMapIncrement(value: number) {
+        const minRotDegIncrement: number = 10;
+        const maxRotDegIncrement: number = 360;
 
-        if (maxRotIncrement % value !== 0 || value < minRotIncrement || value > maxRotIncrement) {
+        if (maxRotDegIncrement % value !== 0 || value < minRotDegIncrement || value > maxRotDegIncrement) {
             console.warn(
-                `Cannot set given value: ${value} to DynamicElementsRotationMapIncrement`,
-                `The value must be in range [${minRotIncrement},${maxRotIncrement}] and has to be a factor of ${maxRotIncrement}`
+                `Cannot set given value: ${value} to DynamicElementsRotationDegMapIncrement`,
+                `The value must be in range [${minRotDegIncrement},${maxRotDegIncrement}] and has to be a factor of ${maxRotDegIncrement}`
             );
             return;
         }
 
-        this.dynamicElementsRotationMapIncrement = value;
+        this.dynamicElementsRotationDegMapIncrement = value;
     }
 
     // find the diagram container and assigns a reference to it for our diagramContainer field
@@ -190,7 +190,7 @@ export class SvgRenderer {
         const bidirectionalRotationalElementsMap: Map<number,{element: SVGGraphicsElement, startingRotation: number}[]> = new Map();
         // crate a key for every 10 degrees of rotation (all the way up to a full circle and only in a counter clockwise direction
         // (e.g. a positive rotation value))
-        for (let i=0; i<=360; i+=this.dynamicElementsRotationMapIncrement) 
+        for (let i=0; i<=360; i+=this.dynamicElementsRotationDegMapIncrement) 
             bidirectionalRotationalElementsMap.set(i, []);
         // actually fetch the bidirectional elements from the DOM... distinction here between omnidirectional and bidirectional rot elements
         // is omnidirectional elements have '[FOLLOW_ROT]' in their id while bidirectional have '[ROT_-39.1]' where the number represents
@@ -238,13 +238,15 @@ export class SvgRenderer {
             // for instance, a needed rotation of -135 degrees will be floored to -130 degrees then normalized to 230 degrees
             const keyOne: number = normalizeAngle(
                 Math.floor(
-                    displacementFrom90DegreeRot/this.dynamicElementsRotationMapIncrement
-                )*this.dynamicElementsRotationMapIncrement
+                    displacementFrom90DegreeRot/this.dynamicElementsRotationDegMapIncrement
+                )*this.dynamicElementsRotationDegMapIncrement,
+                AngleType.DEGREES
             );
             const keyTwo: number = normalizeAngle(
                 Math.floor(
-                    displacementFrom270DegreeRot/this.dynamicElementsRotationMapIncrement
-                )*this.dynamicElementsRotationMapIncrement
+                    displacementFrom270DegreeRot/this.dynamicElementsRotationDegMapIncrement
+                )*this.dynamicElementsRotationDegMapIncrement,
+                AngleType.DEGREES
             );
             // retrieve the initialized array from this given keys
             const elementsArrays: ({element: SVGGraphicsElement, startingRotation: number}[] | undefined)[] = [
@@ -262,7 +264,7 @@ export class SvgRenderer {
                 // create our new element 
                 const newElement: {element: SVGGraphicsElement, startingRotation: number} = {
                     // for consistency, normalize the starting rotation angle so it's in the range [0,360]
-                    element: rotElement, startingRotation: normalizeAngle(startingRotation)
+                    element: rotElement, startingRotation: normalizeAngle(startingRotation, AngleType.DEGREES)
                 };
                 // and append it to our array; since the array is a reference to the array stored in the map, modifying it like this will
                 // work perfectly fine
@@ -1376,7 +1378,7 @@ export class SvgRenderer {
     }
 
     // handles the rotation of the dynamic elements that rotate
-    private handleDynamicElementRotations(mapRotationAngle: number): void {
+    private handleDynamicElementRotations(mapRotationAngleDeg: number): void {
         if (this.dynamicElements === null) {
             console.warn("The dynamic elements field aren't initialized");
             return;
@@ -1384,7 +1386,7 @@ export class SvgRenderer {
 
         // deal with the bidirectional rotational elements here
         // make sure the rotation angle is in the range [0, 360]
-        const normalizedRotationAngle: number = normalizeAngle(mapRotationAngle);
+        const normalizedRotationAngleDeg: number = normalizeAngle(mapRotationAngleDeg, AngleType.DEGREES);
         // now get three keys, this is to avoid most if not all edge cases where the user rotates the map back and forth a large 
         // degree (reliability scales with the size of the dynamicElementsRotationMapIncrement), which could cause our logic using 
         // the increments of the map to gloss over elements that might need to rotate this keys here are the floored value (by 
@@ -1394,15 +1396,15 @@ export class SvgRenderer {
         // I used this floor method here because the angle is normalized already so we won't be dealing with negative values
         // in the case we do deal with negative rotations, do not use modulo (as it returns negative values in js which is no good in
         // our case of normalized positive rotation angles) and use Math.floor(rot/increment)*increment instead
-        const rotationAngleFlr: number = normalizedRotationAngle - normalizedRotationAngle % this.dynamicElementsRotationMapIncrement;
-        const rotationAngleNextFlr: number = normalizeAngle(rotationAngleFlr - this.dynamicElementsRotationMapIncrement);
-        const rotationAngleCeil: number = rotationAngleFlr + this.dynamicElementsRotationMapIncrement;
+        const rotationAngleDegFlr: number = normalizedRotationAngleDeg - normalizedRotationAngleDeg % this.dynamicElementsRotationDegMapIncrement;
+        const rotationAngleNextDegFlr: number = normalizeAngle(rotationAngleDegFlr - this.dynamicElementsRotationDegMapIncrement, AngleType.DEGREES);
+        const rotationAngleDegCeil: number = rotationAngleDegFlr + this.dynamicElementsRotationDegMapIncrement;
 
         // get the values from the given keys
         const elementsArrays: ({element: SVGGraphicsElement, startingRotation: number}[] | undefined)[] = [
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleFlr),
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleNextFlr),
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleCeil)
+            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleDegFlr),
+            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleNextDegFlr),
+            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleDegCeil)
         ];
 
         // iterate thru the elements array and modify the elements accordingly
@@ -1410,15 +1412,15 @@ export class SvgRenderer {
             // make sure all that there are keys for each increment
             if (elementsArray === undefined) {
                 console.warn(
-                    `Elements array doesn't exist for floor/next floor/ceiling of rotation angle: ${normalizedRotationAngle}`
+                    `Elements array doesn't exist for floor/next floor/ceiling of rotation angle: ${normalizedRotationAngleDeg}`
                 );
                 continue;
             }
         
             for (const rotElement of elementsArray) {
                 // negative or positive starting rotation, this logic will work for all rotated elements
-                const vertFromStartRot: number = normalizeAngle(90 - rotElement.startingRotation);
-                if (normalizedRotationAngle < vertFromStartRot || normalizedRotationAngle > vertFromStartRot + 180) {
+                const vertFromStartRotDeg: number = normalizeAngle(90 - rotElement.startingRotation, AngleType.DEGREES);
+                if (normalizedRotationAngleDeg < vertFromStartRotDeg || normalizedRotationAngleDeg > vertFromStartRotDeg + 180) {
                     rotElement.element.style.transform = "";
                 }
                 else {
@@ -1429,7 +1431,7 @@ export class SvgRenderer {
 
         // deal with the omnidirectional rotational elements here
         this.dynamicElements.omnidirectionalRotationElements.forEach((rotElement: SVGGraphicsElement) => {
-            rotElement.style.transform = `rotate(${normalizedRotationAngle}deg)`;
+            rotElement.style.transform = `rotate(${normalizedRotationAngleDeg}deg)`;
         });
     }
 

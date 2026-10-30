@@ -48,3 +48,6 @@ def station_map(request: HttpRequest, line_slug: str, station_slug: str) -> Http
 
 def not_found(request: HttpRequest) -> HttpResponseNotFound:
     return HttpResponseNotFound("<h3>This page doesn't exist currently, come back later<h3>")
+
+def geolocation_test(request: HttpRequest) -> HttpResponse:
+    return render(request, "platformpathapp/geolocation_test.html")

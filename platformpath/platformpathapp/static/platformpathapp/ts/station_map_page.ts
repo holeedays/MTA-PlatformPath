@@ -238,14 +238,13 @@ export class StationMapPage {
             stationsSelectionURL += i === 0? currentURLSplit[i]: "/" + currentURLSplit[i];
         }
 
-        // create our event handling logic here...
-        const handler: () => void = () => URLHandler.redirectTo(stationsSelectionURL);
-        // create out interface
-        const stationMapInteractionHandler: StationMapInteractionHandler = {
+        // create out interaction handler
+        const stationHeadingInteractionHandler: StationMapInteractionHandler = {
             element: stationHeading,
-            handler: handler
+            handler: () => URLHandler.redirectTo(stationsSelectionURL)
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        // then push it
+        this.stationMapInteractionHandlers.push(stationHeadingInteractionHandler);
     }
 
     // init the layer("levels") buttons 
@@ -263,30 +262,30 @@ export class StationMapPage {
         const {layerOptions, allLayersButton} = this.layerElements;
         
         // Setup button to display all layers of the station map and hook control to 
-        const handler: () => void = () => {
+        const allLayersHandler: () => void = () => {
             this.svgRenderer.showAllLayers(this.station?.layer_models || []);
             this.setActiveLayerButton(allLayersButton);
         };
-        const stationMapInteractionHandler: StationMapInteractionHandler = {
+        const allLayersBtnInteractionHandler: StationMapInteractionHandler = {
             element: allLayersButton,
-            handler: handler
+            handler: allLayersHandler
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(allLayersBtnInteractionHandler);
 
         // Create and setup buttons to show individual layers of the map of the station
         for (const layer of this.station.layer_models) {
             const layerButton: HTMLButtonElement = this.createLayerButton(layer.name, layer.color);
 
             // add the event logic here
-            const handler: () => void = () => {
+            const layersBtnHandler: () => void = () => {
                 this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
                 this.setActiveLayerButton(layerButton);
             };
-            const stationMapInteractionHandler: StationMapInteractionHandler = {
+            const layersBtnInteractionHandler: StationMapInteractionHandler = {
                 element: layerButton,
-                handler: handler
+                handler: layersBtnHandler
             };
-            this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+            this.stationMapInteractionHandlers.push(layersBtnInteractionHandler);
 
             layerOptions.appendChild(layerButton);
         }
@@ -347,11 +346,11 @@ export class StationMapPage {
         }
 
         // init our find route button event logic here
-        const stationMapInteractionHandler: StationMapInteractionHandler = {
+        const findRouteBtnInteractionHandler: StationMapInteractionHandler = {
             element: findRouteButton,
             handler: async () => await this.handleFormSubmit()        
         }
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(findRouteBtnInteractionHandler);
     }
 
     // add styling + event handling for the override toggle container and its override toggle buttons (e.g. like accessibility only 
@@ -398,7 +397,7 @@ export class StationMapPage {
             accessibilityNoneToggleButton.setAttribute("aria-selected", "false");
 
             // handle accessible only toggle button logic here 
-            const handlerAccessibilityOnly: () => void = () => {
+            const accessibilityOnlyBtnHandler: () => void = () => {
                 // if the accessibileNone button is toggled then we want to turn it off
                 if (isAccessibleNone) {
                     isAccessibleNone = false;
@@ -417,7 +416,7 @@ export class StationMapPage {
                 accessibilityOnlyToggleButton.setAttribute("aria-selected", ariaSelectedVal);
             };
             // handle accessible none toggle button logic here
-            const handlerAccessibilityNone: () => void = () => {
+            const accessibilityNoneBtnHandler: () => void = () => {
                 // if the accessibileOnly button is toggled then we want to turn it off
                 if (isAccessibleOnly) {
                     isAccessibleOnly = false;
@@ -436,18 +435,18 @@ export class StationMapPage {
                 accessibilityNoneToggleButton.setAttribute("aria-selected", ariaSelectedVal);
             };
 
-            const stationMapInteractionHandlerAcessibilityOnly: StationMapInteractionHandler = { 
+            const accessibilityOnlyBtnInteractionHandler: StationMapInteractionHandler = { 
                 element: accessibilityOnlyToggleButton, 
-                handler: handlerAccessibilityOnly
+                handler: accessibilityOnlyBtnHandler
             };
-            const stationMapInteractionHandlerAcessibilitNone: StationMapInteractionHandler = { 
+            const acessibilityNoneBtnInteractionHandler: StationMapInteractionHandler = { 
                 element: accessibilityNoneToggleButton, 
-                handler: handlerAccessibilityNone
+                handler: accessibilityNoneBtnHandler
             };
 
             this.stationMapInteractionHandlers.push(
-                stationMapInteractionHandlerAcessibilityOnly, 
-                stationMapInteractionHandlerAcessibilitNone
+                accessibilityOnlyBtnInteractionHandler, 
+                acessibilityNoneBtnInteractionHandler
             );
         }
         // if the station is not accessible
@@ -568,19 +567,23 @@ export class StationMapPage {
         const {startNavBtn, endNavBtn} = this.navigationElements.routePreview;
 
         // Handle start navigation logic
-        const stationMapInteractionHandlerStartButton: StationMapInteractionHandler = { 
+        const startNavBtnInteractionHandler: StationMapInteractionHandler = { 
             element: startNavBtn, 
-            handler: this.beginStepNavigation
+            // do remember that we need an arrow function to run functions that have "this" keyword
+            // whether that be creating a separate handler obj (e.g. const handler = () => func()) and setting it to the
+            // the handler property or creating the arrow function in the handler property (e.g. handler: () => func()) as seen
+            // below
+            handler: () => this.beginStepNavigation()
         };
         // Handle cancel route preview logic
-        const stationMapInteractionHandlerCancelButton: StationMapInteractionHandler = { 
+        const endNavBtnInteractionHandler: StationMapInteractionHandler = { 
             element: endNavBtn, 
-            handler: this.endNavigation
+            handler: () => this.endNavigation()
         };
 
         this.stationMapInteractionHandlers.push(
-            stationMapInteractionHandlerStartButton, 
-            stationMapInteractionHandlerCancelButton
+            startNavBtnInteractionHandler, 
+            endNavBtnInteractionHandler
         );
     }
 
@@ -694,7 +697,7 @@ export class StationMapPage {
 
     // function that starts the step by step navigation of the route
     public beginStepNavigation(): void {
-        if (!this.currentPath || this.currentIndex >= this.currentPath.length) {
+        if (this.currentPath === null || this.currentIndex >= this.currentPath.length) {
             console.warn('No valid step to navigate to');
             return;
         }
@@ -950,7 +953,7 @@ export class StationMapPage {
         dropdownButton.NodeOptions.push(nodeOption);
 
         // init our event handling logic here...
-        const handler: () => void = () => {
+        const nodeOptionHandler: () => void = () => {
             // this block deals with the selection of the item (mainly its own styling and some state changes)
             {
                 // check if there is an option already selected (depending on whether this node option is a start or end node option)
@@ -991,11 +994,11 @@ export class StationMapPage {
             }
         };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
+        const nodeOptionInteractionHandler: StationMapInteractionHandler = { 
             element: nodeOption.Self, 
-            handler: handler 
+            handler: nodeOptionHandler 
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(nodeOptionInteractionHandler);
 
         return nodeOption;
     } 
@@ -1295,30 +1298,30 @@ export class StationMapPage {
         }
 
         // now create handler for the toggle off button
-        const toggleOffButtonHandler: () => void = () => {
+        const toggleOffBtnHandler: () => void = () => {
             mobileRouteForm.classList.add("hidden");
             targetNodeSVG.selected?.Self.BaseElement.classList.remove("highlighted__static");
         }
 
         // create the station map interaction handlers for the start/end node option and toggle off button elements
-        const startNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
+        const startNodeOptionBtnInteractionHandler: StationMapInteractionHandler = {
             element: startNodeButton,
             handler: () => startEndNodeButtonHandler("start")
         };
-        const endNodeOptionButtonInteractionHandler: StationMapInteractionHandler = {
+        const endNodeOptionBtnInteractionHandler: StationMapInteractionHandler = {
             element: endNodeButton,
             handler: () => startEndNodeButtonHandler("end")
         };
-        const toggleOffButtonInteractionHandler: StationMapInteractionHandler = {
+        const toggleOffBtnInteractionHandler: StationMapInteractionHandler = {
             element: toggleOffButton,
-            handler: toggleOffButtonHandler
+            handler: toggleOffBtnHandler
         }
 
         // now push into the stationMapInteractionHandlers array
         this.stationMapInteractionHandlers.push(
-            startNodeOptionButtonInteractionHandler, 
-            endNodeOptionButtonInteractionHandler,
-            toggleOffButtonInteractionHandler
+            startNodeOptionBtnInteractionHandler, 
+            endNodeOptionBtnInteractionHandler,
+            toggleOffBtnInteractionHandler
         );
 
         // although it should be set in the html, make sure the mobile route form is hidden at the start
@@ -1647,7 +1650,7 @@ export class StationMapPage {
 
         // event logic for the map views toggle button (only styling for the map views container)
         let isPressed: boolean = false;
-        const mapViewsToggleButtonHandler: () => void = () => {
+        const mapViewsToggleBtnHandler: () => void = () => {
             if (!isPressed) 
                 mapViewsContainer.classList.remove("hidden");
             else
@@ -1656,22 +1659,22 @@ export class StationMapPage {
             isPressed = !isPressed;
         }
         // event logic for the map views toggle off button 
-        const mapViewsToggleOffButtonHandler: () => void = () => {
+        const mapViewsToggleOffBtnHandler: () => void = () => {
             isPressed = false;
             mapViewsContainer.classList.add("hidden");
         }
 
         // create station map interaction handlers for each element and its respective handle
-        const mapViewsToggleButtonInteractionHandler: StationMapInteractionHandler = {
+        const mapViewsToggleBtnInteractionHandler: StationMapInteractionHandler = {
             element: mapViewsToggleButton,
-            handler: mapViewsToggleButtonHandler
+            handler: mapViewsToggleBtnHandler
         };
-        const mapViewsToggleOffButtonInteractionHandler: StationMapInteractionHandler = {
+        const mapViewsToggleOffBtnInteractionHandler: StationMapInteractionHandler = {
             element: mapViewsToggleOffButton,
-            handler: mapViewsToggleOffButtonHandler
+            handler: mapViewsToggleOffBtnHandler
         };
         // push it into the array of station map interaction handlers
-        this.stationMapInteractionHandlers.push(mapViewsToggleButtonInteractionHandler, mapViewsToggleOffButtonInteractionHandler);
+        this.stationMapInteractionHandlers.push(mapViewsToggleBtnInteractionHandler, mapViewsToggleOffBtnInteractionHandler);
     }
 
     // init the map views block and the event logic surrounding it (e.g. switching between map views)
@@ -1726,24 +1729,24 @@ export class StationMapPage {
         // init the map view toggle buttons
 
         // create station map interaction handlers for each views toggle button
-        const defaultViewInteractionHandler: StationMapInteractionHandler = {
+        const defaultViewBtnInteractionHandler: StationMapInteractionHandler = {
             element: defaultMapViewToggleButton,
             handler: () => this.svgRenderer.setCurrentMapView(MapView.DEFAULT)
         };
-        const roadViewInteractionHandler: StationMapInteractionHandler = {
+        const roadViewBtnInteractionHandler: StationMapInteractionHandler = {
             element: roadMapViewToggleButton,
             handler: () => this.svgRenderer.setCurrentMapView(MapView.ROAD)
         };
-        const satelliteViewInteractionHandler: StationMapInteractionHandler = {
+        const satelliteViewBtnInteractionHandler: StationMapInteractionHandler = {
             element: satelliteMapViewToggleButton,
             handler: () => this.svgRenderer.setCurrentMapView(MapView.SATELLITE)
         };
 
         // push them into the station map interaction handlers array to be initialized later
         this.stationMapInteractionHandlers.push(
-            defaultViewInteractionHandler, 
-            roadViewInteractionHandler, 
-            satelliteViewInteractionHandler
+            defaultViewBtnInteractionHandler, 
+            roadViewBtnInteractionHandler, 
+            satelliteViewBtnInteractionHandler
         );
     }
 
@@ -1941,7 +1944,7 @@ export class StationMapPage {
 
         // toggle event handling here (just style changes currently)
         let isPressed = false;
-        const handler: () => void = () => {
+        const siteHeaderToggleBtnHandler: () => void = () => {
             if (siteHeaderButtonIsAnimating) 
                 return;
 
@@ -1957,11 +1960,11 @@ export class StationMapPage {
             isPressed = !isPressed;
         }
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
+        const siteHeaderToggleBtnInteractionHandler: StationMapInteractionHandler = { 
             element: siteHeaderToggleButton, 
-            handler: handler 
+            handler: siteHeaderToggleBtnHandler 
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(siteHeaderToggleBtnInteractionHandler);
 
         // also add event listener for animation end for the button
         siteHeaderToggleButton.addEventListener("animationend", (ev: AnimationEvent) => {
@@ -2031,7 +2034,7 @@ export class StationMapPage {
 
         // add event handler for the toggle button (mainly for styling)
         let isPressed: boolean = false;
-        const handler: () => void = () => {
+        const mapLegendToggleBtnHandler: () => void = () => {
             if (toggleButtonIsAnimating)
                 return;
 
@@ -2049,11 +2052,11 @@ export class StationMapPage {
             isPressed = !isPressed;
         };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
+        const mapLegendToggleBtnInteractionHandler: StationMapInteractionHandler = { 
             element: mapLegendToggleButton, 
-            handler: handler 
+            handler: mapLegendToggleBtnHandler 
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(mapLegendToggleBtnInteractionHandler);
 
         // event handling to remove the 'animating' class once the animation is done
         mapLegendToggleButton.addEventListener("animationend", (ev: AnimationEvent) => {
@@ -2114,7 +2117,7 @@ export class StationMapPage {
 
         // init our event handling here 
         let isPressed: boolean = false;
-        const handler: () => void = () => {
+        const elementDescriptionToggleBtnHandler: () => void = () => {
             elementDescriptions.forEach((elementDescription: HTMLDivElement) => elementDescription.classList.toggle("hidden", isPressed));
             elementDescriptionsToggleInfoButton.classList.toggle("enabled", !isPressed);
             elementDescriptionsToggleInfoButton.setAttribute("aria-pressed", (!isPressed).toString());
@@ -2122,11 +2125,11 @@ export class StationMapPage {
             isPressed = !isPressed;
         };
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
-        const stationMapInteractionHandler: StationMapInteractionHandler = { 
+        const elementDescriptionToggleBtnInteractionHandler: StationMapInteractionHandler = { 
             element: elementDescriptionsToggleInfoButton, 
-            handler: handler 
+            handler: elementDescriptionToggleBtnHandler 
         };
-        this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
+        this.stationMapInteractionHandlers.push(elementDescriptionToggleBtnInteractionHandler);
     }
 
     // inits some event logic for the element descriptions

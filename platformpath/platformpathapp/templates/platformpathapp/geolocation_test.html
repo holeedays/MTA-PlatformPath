@@ -1,0 +1,18 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation Test</title>
+
+    <link rel="stylesheet" href="{% static 'platformpathapp/css/geolocation_test.css' %}">
+</head>
+<body>
+    <canvas></canvas>
+
+    <div id="django_config" data-static-path="{% static '' %}"></div>
+    <script type="module" src="{% static 'platformpathapp/js/geolocation.js' %}"></script>
+</body>
+</html>
