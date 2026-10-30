@@ -881,6 +881,7 @@ to work properly; we use a custom keyframe animation */
 .map-views__view-toggle {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .step-ui__step-controls,
@@ -971,6 +972,15 @@ to work properly; we use a custom keyframe animation */
     bottom: 5%;
 }
 
+.view-toggle__button {
+    display: flex;
+    border: none;
+    width: fit-content;
+}
+.view-toggle__button > img {
+    width: 50px;
+    height: auto;
+}
 /* ======== map legend ======== */
 
 .map-legend {
