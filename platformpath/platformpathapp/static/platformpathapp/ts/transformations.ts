@@ -123,14 +123,11 @@ export class Vector2 {
 
     // (NON MUTATING) applies a rotation to this vector around the origin and returns it
     public rotate(angle: number, angleType: AngleType): Vector2 {
-        let x: number = this.x;
-        let y: number = this.y;
-
         // since sin/cos run in radians, we have to convert the angle to radians by default
         const angleInRad: number = angleType === AngleType.DEGREES ? angle * (Math.PI / 180): angle ; 
         // this is the formula for applying a rotation of an angle to a 2x1 vector around the origin  
-        x = x * Math.cos(angleInRad) - y * Math.sin(angleInRad);
-        y = x * Math.sin(angleInRad) + y * Math.cos(angleInRad);
+        const x = this.x * Math.cos(angleInRad) - this.y * Math.sin(angleInRad);
+        const y = this.x * Math.sin(angleInRad) + this.y * Math.cos(angleInRad);
 
         return new Vector2(x, y);
     }
@@ -197,4 +194,68 @@ export function boundingRectsAreIntersecting(
         elementOneBoundingRect.top < elementTwoBoundingRect.bottom &&
         elementOneBoundingRect.bottom > elementTwoBoundingRect.top
     );
+}
+
+// gets all the complete transformation matrix of an element (e.g. the product matrix of all transformation matrices of its parents 
+// (and itself) multiplied together in sequence)
+
+// NOTE: this only accounts for CSS transformations and does not include padding + margin offsets
+export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
+    let targetElement: HTMLElement | null = element;
+    // this will be our full matrix
+    let totalTransformMatrix: DOMMatrix = new DOMMatrix();
+    
+    while (targetElement !== document.body && targetElement !== null) {
+        // get the transform matrix of the current eleemnt
+        const style: CSSStyleDeclaration = window.getComputedStyle(targetElement);
+        const transformMatrix: DOMMatrix = new DOMMatrix(style.transform);
+        // add the matrix to our total transform matrix
+        totalTransformMatrix = transformMatrix.multiply(totalTransformMatrix);
+        // move onto the next element up in the hiearchy
+        targetElement = targetElement.parentElement;
+    }
+
+    return totalTransformMatrix;
+} 
+
+// transforms a point by a given matrix at the given pivot (transform origin)
+export function transformPoint(point: Vector2, matrix: DOMMatrix, pivot: Vector2): Vector2 {
+    // destructure the matrix to make it easier to access the matrix props
+    // a = horiz scale, b = vert scale, c = horiz skew, d = vert skew, e =  horiz translation, f = vert translation
+    const {a, b, c, d, e, f} = matrix;
+    // get the displacement between the point and the pivot we want it to apply its transformations against 
+    const displacement: Vector2 = point.subtract(pivot);
+    // apply the trasnformations to our displacement and then shift it back into place
+    const transformedCoords: Vector2 = (
+        // applys the matrix to the displacement
+        new Vector2(
+            a * displacement.x + c * displacement.y + e,
+            b * displacement.x + d * displacement.y + f
+        )
+        // shift it back to its original point
+        .add(pivot)
+    );
+
+    // essentially what we did was this (multiplying a 3x3 by a 3x1 matrix [multiplying a transform matrix by a point])
+    // the dummy coords (homogenous coords) there are to allow for translation and rotation:
+    // |a, c, e|   |x|    |a*x + c*y + e|
+    // |b, d, f| x |y| =  |b*x + d*y + f|
+    // |0, 0, 1|   |1|    |      1      |
+
+    // we could've also just use matrix.transformPoint(new DOMPoint(displacement.x, displacement.y)) and then add back the center
+    // it does the same thing
+
+    return transformedCoords;
+}
+
+// get the pivot (transform origin) of the element
+export function getPivot(element: HTMLElement): Vector2 {
+    const style: CSSStyleDeclaration = window.getComputedStyle(element);
+    const [originX, originY] = style.transformOrigin.split(" ");
+    const pivot: Vector2 = new Vector2(
+        parseFloat(originX || ""),
+        parseFloat(originY || "")
+    );
+
+    return pivot;
 }
