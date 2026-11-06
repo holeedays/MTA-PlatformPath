@@ -67,9 +67,8 @@ class GeoConverter {
             // transform this point
             relativeMappedCoords, 
             // we're getting the full sequence of transformations from parent --> our reference element
-            getTotalTransformationMatrix(this.referenceElement),
-            // get the transform origin of the reference element since the transformations happen around its pivot exclusively
-            getPivot(this.referenceElement)
+            // this includes pivots at each hiearchy of the transformation so no need to explicitly state a pivot
+            getTotalTransformationMatrix(this.referenceElement)
         );
 
         return transformedCoords;
@@ -81,11 +80,12 @@ class GeoConverter {
         // get the extents
         // this is in standard cartesian plane axes by the way, where y up is positive
         const {north, west, south, east} = this.extents; 
-
+        // get the lat and long coords relative to the extents
         const xRatio: number = (baseCoords.x - west) / (east - west);
         const yRatio: number = (north - baseCoords.y) / (north - south);
 
         return new Vector2(
+            // offset width and height do not get changed by transforms so we'll use this 
             xRatio*this.referenceElement.offsetWidth, 
             yRatio*this.referenceElement.offsetHeight
         );
@@ -105,8 +105,7 @@ class GeoConverter {
         // get the transformed pos of the screenPos with all transformations reversed
         const transformedPos: Vector2 = transformPoint(
             screenPos,
-            totalTransformMatrix.inverse(),
-            getPivot(this.referenceElement)
+            totalTransformMatrix.inverse()
         );
         // since the pos is now normalized, we can use it with the normalized dimensions of the reference element
         const xRatio: number = (transformedPos.x - this.referenceElement.offsetLeft) / this.referenceElement.offsetWidth;
@@ -131,23 +130,8 @@ class GeoConverter {
 
         // create the display element
         const latLongDisplay: HTMLDivElement = document.createElement("div");
-        latLongDisplay.classList.add("lat-long__display");
-        // going to be hard coded style attributes for now
-        latLongDisplay.setAttribute(
-            "style",
-            `
-                position: fixed;
-                right: 2%;
-                top: 2%;
-                text-align: center;
-                font-size: 20px;
-                font-family: Helvetica;
-                font-weight: bold;
-                padding: 5px 10px;
-                background: #ffffff;
-                border-radius: 100px;
-            `
-        );
+        // add styling
+        latLongDisplay.classList.add("lat-long-display");
         // add the element to the body
         document.body.append(latLongDisplay);
         
@@ -227,7 +211,7 @@ class GeoConverterTest {
     // handler for after an image is loaded 
     private onImageLoad(img: HTMLImageElement, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
         // set our canvas dimensions, I'm just doing very arbitrary values here
-        const canvasDimensions: Vector2 = new Vector2(800,800);
+        const canvasDimensions: Vector2 = new Vector2(800, 800);
         // NOTE: do not set the width and height through styling, using the explicit width and height attribute
         canvas.width = canvasDimensions.x;
         canvas.height = canvasDimensions.y;
@@ -279,21 +263,12 @@ class GeoConverterTest {
 
                 ///////////////// testing absolute coords here
                 const dummyPoint: HTMLDivElement = document.createElement("div");
-                dummyPoint.setAttribute(
-                    "style",
-                    `
-                        position: absolute;
-                        top: -5px;
-                        left: -5px;
-                        transform-origin: center;
-                        transform: translate(${absoluteMappedCoords.x}px, ${absoluteMappedCoords.y}px);
-                        width: 10px;
-                        height: 10px;
-                        border-radius: 50%;
-                        background: #ffff00;
-                        border: solid 3px #000000;
-                    `
-                );
+                // add style
+                dummyPoint.classList.add("dummy-point");
+                // set the position
+                dummyPoint.style.setProperty("--pos-x", `${absoluteMappedCoords.x}px`);
+                dummyPoint.style.setProperty("--pos-y", `${absoluteMappedCoords.y}px`);
+                // add the element to the document
                 document.body.append(dummyPoint);
 
 

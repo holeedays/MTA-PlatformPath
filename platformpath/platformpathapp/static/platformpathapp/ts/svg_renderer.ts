@@ -545,8 +545,8 @@ export class SvgRenderer {
         }
 
         // create two vectors to record the bounds of the largest bounding box that captures all the node SVG element's bounding boxes
-        let leftTopMostPoint: Vector2 = new Vector2(0, 0);
-        let rightBottomMostPoint: Vector2 = new Vector2(0, 0);
+        let leftTopMostPoint: Vector2 = new Vector2();
+        let rightBottomMostPoint: Vector2 = new Vector2();
         // we need this bool to initialize the first values of our vectors (or else the equality checks wouldn't work properly for
         // (0,0) assuming the group is translated at the x and y extremes)
         let isFirstComparison: boolean = true;
@@ -1008,6 +1008,7 @@ export class SvgRenderer {
                 // instantiate a new identity matrix
                 new DOMMatrix()
                 // do the standard for rotating a point around a matrix
+                // the order is actually read in reverse so you translate by negative pivot -> rotate -> add back the pivot
                 .translate(pivotX, pivotY)
                 .rotate(rotDeg)
                 .translate(-pivotX, -pivotY)

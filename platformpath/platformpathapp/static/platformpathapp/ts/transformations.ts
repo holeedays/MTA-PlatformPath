@@ -6,7 +6,7 @@ export class Vector2 {
     public x: number; 
     public y: number;
 
-    constructor(x: number, y: number) {
+    constructor(x: number = 0, y: number = 0) {
         this.x = x;
         this.y = y;
     }
@@ -197,9 +197,8 @@ export function boundingRectsAreIntersecting(
 }
 
 // gets all the complete transformation matrix of an element (e.g. the product matrix of all transformation matrices of its parents 
-// (and itself) multiplied together in sequence)
-
-// NOTE: this only accounts for CSS transformations and does not include padding + margin offsets
+// (and itself) multiplied together in sequence) including any padding and margin offsets
+// this converts a point in local space of the element to world space
 export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
     let targetElement: HTMLElement | null = element;
     // this will be our full matrix
@@ -209,8 +208,32 @@ export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
         // get the transform matrix of the current eleemnt
         const style: CSSStyleDeclaration = window.getComputedStyle(targetElement);
         const transformMatrix: DOMMatrix = new DOMMatrix(style.transform);
+        // get the pivot/transform origin of the targetElement in its local space (e.g. pivot is its origin (which is always top left));
+        // this is where the transform matrix does its transformations relative to
+        const pivot: Vector2 = getPivot(targetElement);
+        // get the offset from parent
+        // NOTE: the offset properties reference the offsetParent... the offsetParent is any ancestor with a transform or position 
+        // property (that's not the default "static"). also offset properties are not affected by transforms (like scale, skew, rot, translate)
+        // think of offset properties as the original layout of the child in the parent
+        // for this to work properly, probably add a transform identity matrix in the css to any ancestor of the current element 
+        const offsetFromParent: Vector2 = new Vector2(targetElement.offsetLeft, targetElement.offsetTop);
+
         // add the matrix to our total transform matrix
-        totalTransformMatrix = transformMatrix.multiply(totalTransformMatrix);
+        // operatrions are read like standard matrices where the rightmost operation (bottom here) is read first and in ascending order
+        totalTransformMatrix = (
+            new DOMMatrix()
+            // fifth, move back by the untransformed offset (we set it at the end so that the transformation matrix doesn't accidentally
+            // modify this offset)
+            .translate(offsetFromParent.x, offsetFromParent.y)
+            // fourth, translate back by the pivot
+            .translate(pivot.x, pivot.y)
+            // third, apply the target element's transforms
+            .multiply(transformMatrix)
+            // second, translate by the -pivot
+            .translate(-pivot.x, -pivot.y)
+            // first shift the element to the target element's local space
+            .multiply(totalTransformMatrix)
+        );
         // move onto the next element up in the hiearchy
         targetElement = targetElement.parentElement;
     }
@@ -218,8 +241,9 @@ export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
     return totalTransformMatrix;
 } 
 
-// transforms a point by a given matrix at the given pivot (transform origin)
-export function transformPoint(point: Vector2, matrix: DOMMatrix, pivot: Vector2): Vector2 {
+// transforms a point by a given matrix at the given pivot/transform origin (it's optional, you can bake the pivot into the matrix
+// or set the pivot if the matrix doesn't include these shifts)
+export function transformPoint(point: Vector2, matrix: DOMMatrix, pivot: Vector2 = new Vector2()): Vector2 {
     // destructure the matrix to make it easier to access the matrix props
     // a = horiz scale, b = vert scale, c = horiz skew, d = vert skew, e =  horiz translation, f = vert translation
     const {a, b, c, d, e, f} = matrix;
