@@ -1,3 +1,5 @@
+import { type Extents } from "./geolocation.ts";
+
 export interface LayerData {
     id: number;
     name: string;
@@ -30,15 +32,23 @@ export interface StationData {
     name: string,
     id: number,
     diagram_path: string,
-    road_map_high_res_grid_pic_paths: Record<string,string>,
-    satellite_map_high_res_grid_pic_paths: Record<string,string>,
     lines: string[],
     accessible_station: boolean
 }
 
+export interface StationMapData {
+    id: number,
+    extents: Extents,
+    road_map_low_res_imgs: Record<string,string>,
+    satellite_map_low_res_imgs: Record<string,string>,
+    road_map_high_res_imgs: Record<string,Record<string,string>>,
+    satellite_map_high_res_imgs: Record<string,Record<string,string>>
+}
+
 export interface StationResponse {
-    station_model: StationData;
-    edge_models: EdgeData[];
-    node_models: NodeData[];
-    layer_models: LayerData[];
+    station: StationData,
+    edges: EdgeData[],
+    nodes: NodeData[],
+    layers: LayerData[],
+    station_map: StationMapData
 }

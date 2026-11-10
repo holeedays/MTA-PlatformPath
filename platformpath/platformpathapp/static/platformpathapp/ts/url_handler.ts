@@ -5,7 +5,7 @@ export class URLHandler {
     }
 
     // get the current working URL path; e.g. https//:thisWebsite/thisPage1/thisPage2 <-- returns thisPage2
-    public static getCurrentWorkingURLRoute(): string | null {
+    public static getCurrentWorkingURLRoute(): string {
         const fullURL: string = document.URL;
         const URLSubstrings: string[] = fullURL.split("/");
 
@@ -24,12 +24,30 @@ export class URLHandler {
             }            
         }
 
-        return null;
+        return "";
+    }
+
+    // gets the part of the route after the base URL route
+    // for ex: my-site.com/cool-stuff/project-1 <-- cool-stuff is what we'll extract
+    public static getDirectiveURLRoute(): string {
+        const nonBaseURL: string = this.getNonBaseURLRoute();
+        const directiveURL: string | undefined = nonBaseURL.split("/")[0];
+        
+        return directiveURL === undefined ? "" : directiveURL;
     }
 
     // returns the current entire url
     public static getFullURLRoute(): string {
         return document.URL;
+    }
+
+    // gets the part of the URL that is not part of the base 
+    // for ex: my-site.com/page/1 <-- page/1 is the part we'll extract
+    public static getNonBaseURLRoute(): string {
+        const fullURL: string = this.getFullURLRoute();
+        const nonBaseURL: string | undefined = fullURL.split(window.location.origin + "/")[1];
+
+        return nonBaseURL === undefined ? "" : nonBaseURL;
     }
 
     // get only the query parameters of the URL (in a suitable URL format)

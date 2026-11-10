@@ -27,16 +27,19 @@ export class DataFetch {
 
     // fetch all available subway lines in the database
     public static async fetchLines(): Promise<any | null> {
-        const fetchURL: string = "/api/lines";
+        const fetchURL: string = "/api/lines/";
 
         try {
-            const response = await fetch(fetchURL, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": DataFetch.getCSRFToken()
+            const response: Response = await fetch(
+                fetchURL, 
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": DataFetch.getCSRFToken()
+                    }
                 }
-            }); 
+            ); 
 
             if (!response.ok) 
                 throw new Error("Failed to fetch lines");
@@ -52,16 +55,19 @@ export class DataFetch {
 
     // fetch stations based on the given line id
     public static async fetchStations(lineID: number): Promise<any | null> {
-        const fetchURL: string = `/api/lines/${lineID}/stations`;
+        const fetchURL: string = `/api/lines/${lineID}/stations/`;
 
         try {
-            const response = await fetch(fetchURL, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": DataFetch.getCSRFToken()
+            const response: Response = await fetch(
+                fetchURL, 
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": DataFetch.getCSRFToken()
+                    }
                 }
-            }); 
+            ); 
 
             if (!response.ok) 
                 throw new Error(`Failed to fetch stations for the subway line with id=${lineID}`);
@@ -75,18 +81,21 @@ export class DataFetch {
         }
     }
 
-    // fetch all edges/nodes/layers (all relevant metadata of the station) for the given station id
-    public static async fetchEdgesNodesLayers(stationID: number): Promise<any | null> {
-        const fetchURL: string = `/api/stations/${stationID}/edges_nodes_layers`;
+    // fetch all relevant metadata of the station (station/edges/nodes/layers/station_map) for the given station id
+    public static async fetchCompleteStation(stationID: number): Promise<any | null> {
+        const fetchURL: string = `/api/stations/${stationID}/complete-station/`;
 
         try {
-            const response = await fetch(fetchURL, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": DataFetch.getCSRFToken()
+            const response: Response = await fetch(
+                fetchURL, 
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": DataFetch.getCSRFToken()
+                    }
                 }
-            }); 
+            ); 
 
             if (!response.ok) 
                 throw new Error(`Failed to fetch the edges and nodes for station model with id=${stationID}`);
