@@ -1,6 +1,6 @@
 // Contains all functions related to rendering the svg diagrams
 
-import { type LayerData } from "./station_data.ts";
+import { type LayerData, type StationMapData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
@@ -23,35 +23,35 @@ export class SvgRenderer {
     public SVG: SVGSVGElement | null = null;
     public stationSVG: SVGGraphicsElement | null = null;
 
+    public GPSMarker: {GPSElement: SVGSVGElement, visionCone: SVGGraphicsElement} | null = null;
+    public GPSMarkerInstantiating: boolean = false;
+    public GPSMarkerSpawned: boolean = false;
+
     public currentMapView: MapView = MapView.DEFAULT;
 
     public dynamicElements: {
-        omnidirectionalRotationElements: SVGGraphicsElement[],
-        bidirectionalRotationElementsMap: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>,
+        omnidirectionalRotElements: SVGGraphicsElement[],
+        bidirectionalRotElementsMap: Map<number,SVGGraphicsElement[]>,
         scalarLogoElements: SVGGraphicsElement[],
         scalarLabelElements: SVGGraphicsElement[],
         otherScalarElements: SVGGraphicsElement[],
-        gridItemIDRoadMapImageMap: Map<string,SVGImageElement>,
-        gridItemIDSatelliteMapImageMap: Map<string,SVGImageElement>
+        allRotationOrScalarElements: SVGGraphicsElement[],
+        gridCellRoadMapImgCache: Map<SVGGraphicsElement,SVGImageElement>,
+        gridCellSatelliteMapImgCache: Map<SVGGraphicsElement,SVGImageElement>
     } | null = null;
-    public mapElements: {
-        parent: SVGGraphicsElement, 
-        grid: SVGGraphicsElement,
-        roadMap: SVGGraphicsElement, 
-        satelliteMap: SVGGraphicsElement
-    } | null = null;
-
-    public mapData: {
-        retrieved: {
-            roadMapHighResGridPicPaths: Record<string,string>,
-            satelliteMapHighResGridPicPaths: Record<string,string>
-        }
-        meta: {
-            cachedGridPicPaths: Set<string>  
-        }  
+    public map: {
+        elements: {
+            parent: SVGGraphicsElement, 
+            gridCells: [SVGGraphicsElement, SVGGraphicsElement[]][],
+            roadMapGroup: SVGGraphicsElement, 
+            satelliteMapGroup: SVGGraphicsElement
+        },
+        data: StationMapData
     } | null = null;
 
     public isPanning: boolean = false;
+    public rotOrScalarElementsDisabled: boolean = false;
+    public activeZoomingCalls: number = 0;
     public activeCenteringCalls: number = 0;
     public ignorePanzoomEvents: boolean = false;
 
@@ -113,11 +113,10 @@ export class SvgRenderer {
     // changes in the SVG)
     // also load this when the SVG element is loaded
     private initDynamicElementsField(): void {
-    
         // get our directional rotational elements
         const rotElements: {
-            omnidirectionalRotationalElements: SVGGraphicsElement[],
-            bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement, startingRotation: number}[]>
+            omnidirectionalRotElements: SVGGraphicsElement[],
+            bidirectionalRotElements: Map<number,SVGGraphicsElement[]>
         } | null = this.getDirectionalRotationalElements();
         // get our scalar elements
         const scalarElements: {
@@ -133,47 +132,50 @@ export class SvgRenderer {
             return;
         }
 
-        // add styling to the dynamic elements
-        // as for the grid items, the "dynamic-svg-element" class will be added when they are initialized and rendered
-        // see createImageGridItem() for that bit 
-        [
-            rotElements.omnidirectionalRotationalElements, 
-            scalarElements.scalarLogoElements, 
-            scalarElements.scalarLabelElements,
-            scalarElements.otherScalarElements
-        ].forEach((elements: SVGGraphicsElement[]) => {
-            elements.forEach((element: SVGGraphicsElement) => {
-                element.classList.add("dynamic-svg-element");
-            });
-        })
-        // since bidirectional rot elements is a map, we have to do this in a separate manner
-        rotElements.bidirectionalRotationalElements.forEach(
-            (rotIncrement: {element: SVGGraphicsElement, startingRotation: number}[]) => {
-            rotIncrement.forEach(
-                (rotItem: {element: SVGGraphicsElement, startingRotation: number}) => {
-                rotItem.element.classList.add("dynamic-svg-element");
-            });
-        });
+        // destructure the need elements for legibility purposes
+        const {scalarLogoElements, scalarLabelElements, otherScalarElements} = scalarElements;
+        const {omnidirectionalRotElements, bidirectionalRotElements} = rotElements;
 
+        // create an array to hold all rotation or scalar elements
+        const allRotOrScalarElements: SVGGraphicsElement[] = [
+            ...scalarLogoElements, 
+            ...scalarLabelElements,
+            ...otherScalarElements,
+            ...omnidirectionalRotElements
+        ];
+        // bidirectional rotational elements are in a different structure so we have to add it to the array like this
+        bidirectionalRotElements.forEach((rotElements: SVGGraphicsElement[], startingRotDegNormalized: number) => {
+            allRotOrScalarElements.push(...rotElements);
+        });
+        // now iterate thru the array and add styling (this certain class) to the dynamic elements
+        // as for the grid items, it's styiling will be added when they are initialized and rendered (it'll also be slightly different as
+        // well)
+        // see createGridImg() for that bit 
+        allRotOrScalarElements.forEach((rotOrScalarElement: SVGGraphicsElement) => {
+            // add the dynamic-svg-element class, this is applied to all dynamic elements
+            rotOrScalarElement.classList.add("dynamic-svg-element");
+        });
+        
         // assign all our initialized values
         this.dynamicElements = {
             // rotational elements
-            omnidirectionalRotationElements: rotElements.omnidirectionalRotationalElements,
-            bidirectionalRotationElementsMap: rotElements.bidirectionalRotationalElements,
+            omnidirectionalRotElements: omnidirectionalRotElements,
+            bidirectionalRotElementsMap: bidirectionalRotElements,
             // scalar elements
-            scalarLogoElements: scalarElements.scalarLogoElements,
-            scalarLabelElements: scalarElements.scalarLabelElements,
-            otherScalarElements: scalarElements.otherScalarElements,
-            // initialize empty maps to the gridItemIDMap fields... they will be dynamically updated in initDynamicImageBGLoad()
-            gridItemIDRoadMapImageMap: new Map(),
-            gridItemIDSatelliteMapImageMap: new Map()
+            scalarLogoElements: scalarLogoElements,
+            scalarLabelElements: scalarLabelElements,
+            otherScalarElements: otherScalarElements,
+            allRotationOrScalarElements: allRotOrScalarElements,
+            // initialize empty maps to the gridItemIDCache fields... they will be dynamically updated and handled in handleGridImageLoad()
+            gridCellRoadMapImgCache: new Map(),
+            gridCellSatelliteMapImgCache: new Map()
         }
     }
 
     // gets the directional rotational elements from the SVG
     private getDirectionalRotationalElements(): {
-        omnidirectionalRotationalElements: SVGGraphicsElement[],
-        bidirectionalRotationalElements: Map<number,{element: SVGGraphicsElement,startingRotation: number}[]>
+        omnidirectionalRotElements: SVGGraphicsElement[],
+        bidirectionalRotElements: Map<number,SVGGraphicsElement[]>
     } | null {
 
         if (this.SVG === null) {
@@ -182,27 +184,22 @@ export class SvgRenderer {
         }
 
         // get our omnidirectional rotational elements here
-        const omnidirectionalRotationalElements: NodeListOf<SVGGraphicsElement> = (
-            this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']")
+        const omnidirectionalRotElements: SVGGraphicsElement[] = (
+            Array.from(
+                this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']")
+            )
         );
 
         // create a bidirectional rotational elements hash map (used for later sorting)
-        const bidirectionalRotationalElementsMap: Map<number,{element: SVGGraphicsElement, startingRotation: number}[]> = new Map();
-        // crate a key for every 10 degrees of rotation (all the way up to a full circle and only in a counter clockwise direction
-        // (e.g. a positive rotation value))
-        for (let i=0; i<=360; i+=this.dynamicElementsRotationDegMapIncrement) 
-            bidirectionalRotationalElementsMap.set(i, []);
-        // actually fetch the bidirectional elements from the DOM... distinction here between omnidirectional and bidirectional rot elements
-        // is omnidirectional elements have '[FOLLOW_ROT]' in their id while bidirectional have '[ROT_-39.1]' where the number represents
-        // the starting rotation of the element in degrees, this can be anything technically
-        const bidirectionalRotationalElements: NodeListOf<SVGGraphicsElement> = (
+        const bidirectionalRotElementsMap: Map<number,SVGGraphicsElement[]> = new Map();
+        const bidirectionalRotElements: NodeListOf<SVGGraphicsElement> = (
             this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[ROT_']")
         );
         // iterate thru each element in the DOM
-        for (const rotElement of bidirectionalRotationalElements) {
+        for (const rotElement of bidirectionalRotElements) {
             // extract the starting rotation of the bidirectional rotational element and then sort it in into the map
 
-            // first extract the starting rotation
+            // extract the starting rotation
             // regex pattern to match anything between "[ROT_" and the next "], this should be the starting rotation of
             // the element found
             const regexFilter: RegExp = new RegExp(/\[ROT_([^\]]+)/);
@@ -217,64 +214,34 @@ export class SvgRenderer {
             // now parse the string into a number
             // match returns the full matched string in the 0th index and any captured group (the stuff in paranthesis) in 1st
             // index
-            let startingRotation: number = parseFloat(filteredID[1] ?? "");
-            if (isNaN(startingRotation)) {
+            let startingRotDeg: number = parseFloat(filteredID[1] ?? "");
+            if (isNaN(startingRotDeg)) {
                 console.warn(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
                 continue;
             }
 
-            // get the keys for our map
-
-            // there are a total of 2 keys, based on how far the object's starting rotation is from a vertical rotation
-            // (e.g. 90 degrees or 270d egrees [pi/2, 3pi/2])
-
-            // the idea is that the element changes its orientation when it's in a vertical position, which is either 270 or 180 deg
-            // since the objects are already displaced by a certain amount, we just have to find the difference between that
-            // displaced rotation (e.g. starting rotation) and the 2 vertical rotations
-            const displacementFrom90DegreeRot: number = 90 - startingRotation;
-            const displacementFrom270DegreeRot: number = 270 - startingRotation;
-            // the key will be represented as the floored value (by the given increment factor) of that displacement as a 
-            // normalized angle in range [0,360]
-            // for instance, a needed rotation of -135 degrees will be floored to -130 degrees then normalized to 230 degrees
-            const keyOne: number = normalizeAngle(
-                Math.floor(
-                    displacementFrom90DegreeRot/this.dynamicElementsRotationDegMapIncrement
-                )*this.dynamicElementsRotationDegMapIncrement,
-                AngleType.DEGREES
+            // normalize the value (now the angle is limited to 0-359)
+            const startingRotDegNormalized: number = normalizeAngle(startingRotDeg, AngleType.DEGREES);
+            // see if there are already a rot element array for this specific angle
+            let mappedRotElements: SVGGraphicsElement[] | undefined = (
+                bidirectionalRotElementsMap.get(startingRotDegNormalized)
             );
-            const keyTwo: number = normalizeAngle(
-                Math.floor(
-                    displacementFrom270DegreeRot/this.dynamicElementsRotationDegMapIncrement
-                )*this.dynamicElementsRotationDegMapIncrement,
-                AngleType.DEGREES
-            );
-            // retrieve the initialized array from this given keys
-            const elementsArrays: ({element: SVGGraphicsElement, startingRotation: number}[] | undefined)[] = [
-                bidirectionalRotationalElementsMap.get(keyOne),
-                bidirectionalRotationalElementsMap.get(keyTwo)
-            ]
-            for (const elementsArray of elementsArrays) {
-                // since compiler is strict, we have to run this undefined check though the value should never be undefined for 
-                // our use case (given that we properly configured the rotational values in the station map diagram)
-                if (elementsArray === undefined) {
-                    console.warn(`Element array doesn't exist for either keyOne: ${keyOne} or keyTwo: ${keyTwo}`);
-                    continue;
-                }
-
-                // create our new element 
-                const newElement: {element: SVGGraphicsElement, startingRotation: number} = {
-                    // for consistency, normalize the starting rotation angle so it's in the range [0,360]
-                    element: rotElement, startingRotation: normalizeAngle(startingRotation, AngleType.DEGREES)
-                };
-                // and append it to our array; since the array is a reference to the array stored in the map, modifying it like this will
-                // work perfectly fine
-                elementsArray.push(newElement);
+            // if not
+            if (mappedRotElements === undefined) {
+                // create an array with current rot element
+                mappedRotElements = [rotElement];
+                // and set it into the map
+                bidirectionalRotElementsMap.set(startingRotDegNormalized, mappedRotElements);
+            }
+            else {
+                // if the array was created, add the new rot element to array
+                mappedRotElements.push(rotElement);
             }
         }
 
         return {
-            omnidirectionalRotationalElements: Array.from(omnidirectionalRotationalElements), 
-            bidirectionalRotationalElements: bidirectionalRotationalElementsMap
+            omnidirectionalRotElements: omnidirectionalRotElements, 
+            bidirectionalRotElements: bidirectionalRotElementsMap
         };
     }
 
@@ -318,8 +285,9 @@ export class SvgRenderer {
         };
     }
 
-    // init the svg map elements field (do this when we have loaded in the SVG element)
-    private initMapElementsField(): void {
+    // init the map field
+    // this includes the map-related SVG elements + the station map data (basically anything map related)
+    private initMapField(stationMapData: StationMapData): void {
         if (this.SVG === null) {
             console.warn("The entire SVG doesn't exist");
             return;
@@ -358,33 +326,52 @@ export class SvgRenderer {
             return;
         }
 
-        this.mapElements = {parent: mapSVGParent, grid: mapGrid, roadMap: roadMapGroup, satelliteMap: satelliteMapGroup};
+        // doing some processing for the grid items to make it easier when using it for retrieving images from stationMapData
+        // a tuple in the field structure is like this:
+        // [macroGridCell, microGridCells] --> [11, [11, 12, 21, 22]] for a 2x2 grid 
+        const gridCells: [SVGGraphicsElement, SVGGraphicsElement[]][] = [];
+        // iterate through the macro group grid cells (they form a large 3x3 grid)
+        // then iterate through their children (the children also form a 3x3 grid but much smaller; in total there are 81 micro grid cells)
+        for (const macroGridCell of mapGrid.children) {
+            const macroGridCellAsSVG: SVGGraphicsElement = macroGridCell as SVGGraphicsElement;
+            // initialize attributes for the grid cell
+            this.initGridCell(macroGridCellAsSVG);
+            // create an array to hold the micro grid cells (children of the macro grid cell)
+            const microGridCells: SVGGraphicsElement[] = [];
+
+            // do the same logic for the children as well
+            for (const microGridCell of macroGridCell.children) {
+                const microGridCellAsSVG: SVGGraphicsElement = microGridCell as SVGGraphicsElement;
+                this.initGridCell(microGridCellAsSVG);
+                // also push these micro grid cells into the micro grid cell array
+                microGridCells.push(microGridCellAsSVG);
+            }
+            // push the tuple of the macro grid cell and its micro grid cells into the grid
+            gridCells.push([macroGridCellAsSVG, microGridCells]);
+        }
+
+        this.map = {
+            elements: {
+                parent: mapSVGParent, gridCells: gridCells, roadMapGroup: roadMapGroup, satelliteMapGroup: satelliteMapGroup
+            },
+            data: stationMapData
+        };
     }
 
-    // initializes the map data field (do this when we have loaded in the SVG element since we can actually access the station data
-    // from there)
-    private initMapDataField(
-        roadMapHighResGridPicPaths: Record<string,string>, 
-        satelliteMapHighResGridPicPaths: Record<string,string>
-    ): void {
-        // the following variables are essentially caches that record what pic paths we have loaded in
-        // using these variables would prevent redundant image loading when thing are already loaded in
-        const cachedGridPicPaths: Set<string> = new Set();
+    // initializes attribute configurations for the grid cell
+    private initGridCell(gridCell: SVGGraphicsElement): void {
+        // this is just to make it easier to call a specific grid image from the stationMapData fetched
+        // we can pass the grid key as the key and get the corresponding grid item from it
 
-        // map data is broken into 2 chunks
-        this.mapData = {
-            // retrieved describes data that was retreieved externally (e.g. when StationData is loaded from our API call in the
-            // StationMapPage class)
-            retrieved: {
-                roadMapHighResGridPicPaths,
-                satelliteMapHighResGridPicPaths
-            },
-            // meta pertains to any data that helps us in translating the retrieved data (hence the meta-data name)
-            // this includes caching and any other data descriptors, mostly caching for now 
-            meta: {
-                cachedGridPicPaths
-            }
+        // the SVG elements that have duplicate names usually have an underscore followed by which instance it is (e.g. id=element_7), 
+        // in order to get the actual label of the element, we check the value before the underscore
+        const gridKey: string | undefined = gridCell.id.split("_")[0];
+        if (gridKey === undefined) {
+            console.warn(`Could not get a valid id from grid item with id ${gridCell.id}`);
+            return;
         }
+        // set an attribute separate from the id, this will be the identifier for our images dicts
+        gridCell.setAttribute("data-grid-key", gridKey);
     }
 
     // NOTE: the min zoom is based on the starting position of the station so it might not fit too well based on the starting
@@ -416,9 +403,9 @@ export class SvgRenderer {
 
         // fetch our svg
         const response: Response = await fetch(svgPath);
-        const svgContent: string = await response.text();
+        const SVGContent: string = await response.text();
         // assign the svg into our diagram container
-        this.SVGWrapper.innerHTML = svgContent;
+        this.SVGWrapper.innerHTML = SVGContent;
         // save a ref to our full SVG and the actual station svg within it
         this.SVG = this.SVGWrapper.querySelector("svg");
         this.stationSVG = this.SVGWrapper.querySelector("#STATION");
@@ -532,9 +519,9 @@ export class SvgRenderer {
         const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
         // then center it, passing our zoom multiplier or manual zoom value (if needed)
         if (zoom === null)
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier, null, true);
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier);
         else
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom, true);
+            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom);
     }
 
     // (FOR ROUTE PREVIEW) Helper function to zoom in on the node SVG elements representing the path
@@ -619,7 +606,9 @@ export class SvgRenderer {
         boundingBox: DOMRect,
         zoomMultiplier: number = 1,
         zoomOverrideValue: number | null = null,
-        smoothCenter: boolean = false
+        smoothCenter: boolean = false,
+        centerSpeed: number = 3.5,
+        centerThresholdRatio: number = 0.001
     ): Promise<void> {
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
@@ -652,15 +641,14 @@ export class SvgRenderer {
             return;
         }
 
-        // prevent any listeners like panzoom.on("pan") or panzoom.on("zoom") from activating, which can mess with the 
-        // centering with this boolean guard
-        this.ignorePanzoomEvents = true;
+        // get panning limits
         const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits(zoom);
         if (panningLimits === null) {
             console.warn("Could not get panning limits");
             return;
         }
         const {offsetLimitTopLeft, offsetLimitBottomRight} = panningLimits;
+        // clamp our offset by the panning limits
         const clampedOffset: Vector2 = new Vector2(
             clamp(offset.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
             clamp(offset.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
@@ -670,30 +658,10 @@ export class SvgRenderer {
         // this value functions as a flag that prevents multiple async handlers (if smooth center is on) from fighting one
         // another causing weird visual behavior (i.e. delayed smooth centering or teleporting to one point and another)
         this.activeCenteringCalls++;
-
-        // create a handler to avoid redundant calls when updating the panzoom zoom and position
-        const updatePanzoom: (pos: Vector2, zoom: number) => void = (pos: Vector2, zoom: number) => {
-            // update the current panzoom with the position and scale
-
-            // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
-            // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
-            // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
-            // of currentPanZoom] is at 0,0).
-            this.currentPanZoom.zoomAbs(0, 0, zoom);
-            // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
-            this.currentPanZoom.moveTo(pos.x, pos.y);
-
-            // handle dynamic element scaling and image grid loading/deloading here
-            this.handleDynamicElementScaling();
-            this.handleHighResMapGridImageLoad();
-            this.handleExistingHighResMapGridImageLoad();
-        }
+        // set boolean flag to ignore panzoom events for the upcoming section
+        this.ignorePanzoomEvents = true;
         // if we want to center smoothly
         if (smoothCenter) {
-            // prevent any panzoom events from the user, this is important as we don't want any zooming or panning during
-            // this animation or things will break or get really janky
-            this.currentPanZoom.pause();
-
             // get the current pos and scale
             const currentPanzoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
             const currentPos: Vector2 = new Vector2(currentPanzoomTransform.x, currentPanzoomTransform.y);
@@ -703,18 +671,20 @@ export class SvgRenderer {
                 console.warn("Cannot get current zoom");
                 return;
             }
-
-            // just gonna hard code the lerp ratio for now
-            const lerpRatio: number = 0.05;
+            // also get the full dist between the current pos and the clamped offset as the determinant for when we break out of the 
+            // loop is when currentPos hits a certain ratio of the original full dist
+            const fullDist: number = currentPos.getDist(clampedOffset);
+            // create a var that holds the time at which the corresponding request animation frame below executes (this is used for
+            // measuring timeDelta or the time in between frames)
+            let prevTimeStampMS: number = 0;
             // this is our smoothing centering loop
             while (
-                currentPos.getDist(clampedOffset) > 1 || 
-                Math.abs(currentScale - zoom) > 0.001
+                currentPos.getDist(clampedOffset) > fullDist * centerThresholdRatio
             ) {
                 // essentially set a promise that sets a request animation frame (so that the updates are synced with the DOM refresh rate)
-                // should be approximately 1/60 seconds but could scale
+                // should be approximately 1/60 seconds but could scale depending on CPU/GPU load
                 await new Promise((resolve: (value?: any) => void) => {
-                    requestAnimationFrame(() => {
+                    requestAnimationFrame((timeStampMS: number) => {
                         if (this.currentPanZoom === null || currentScale === null)
                             return;
 
@@ -728,29 +698,31 @@ export class SvgRenderer {
                             return;
                         }
 
+                        // get the time delta to account for drops in frame rate
+                        const timeDeltaMS: number = prevTimeStampMS === 0 ? 0: timeStampMS - prevTimeStampMS; 
+                        // set the time stamp to the new time stamp
+                        prevTimeStampMS = timeStampMS;
+                        // get the ratio we're going to lerp at
+                        const lerpRatio: number = centerSpeed * timeDeltaMS / 1000;
                         // lerp the current scale and position
                         currentScale = lerp(currentScale, zoom, lerpRatio);
                         currentPos.m_lerp(clampedOffset, lerpRatio);
 
-                        //update our panzoom
-                        updatePanzoom(currentPos, currentScale);
+                        // update our panzoom
+                        this.updatePanZoom(currentPos, currentScale);
 
                         // resolve our promise
                         resolve();
                     });
                 });
             }
-
-            // now resume it
-            this.currentPanZoom.resume();
-            // decrement the active centering calls
-            this.activeCenteringCalls--;
         }
-        
-        // run our update panzoom handler one more time to put the map in the right position and zoom
-        updatePanzoom(clampedOffset, zoom);
 
-        // now turn it off
+        // decrement the active centering calls here 
+        this.activeCenteringCalls--;
+        // run our update panzoom handler one more time to put the map in the right position and zoom
+        this.updatePanZoom(clampedOffset, zoom);
+        // enable panzoom events again
         this.ignorePanzoomEvents = false;
     }
 
@@ -786,8 +758,7 @@ export class SvgRenderer {
     // Method to load the diagram and immediately attach controls
     public async loadDiagramWithControls(
         diagramPath: string, 
-        roadMapHighResGridPicPaths: Record<string,string>,
-        satelliteMapHighResGridPicPaths: Record<string,string>
+        stationMapData: StationMapData
     ): Promise<void> {
         // load the diagram into the container
         await this.loadDiagram(diagramPath);
@@ -803,18 +774,15 @@ export class SvgRenderer {
         this.initMinZoomField();
         // setup the panzoom instance and its controls
         this.setupPanzoomInstance(beforeMouseDownHandler);
-        // center the map to where the station is at
-        this.centerMap();
         // init the SVG Map Elements field (this field needs to be initialized before the last 2 methods in this function body since 
         // they depend on variables within this field)
-        this.initMapElementsField();
-        // init the map data field (must be initialized before initDynamicBGImageLoad() since it requires this field)
-        this.initMapDataField(roadMapHighResGridPicPaths, satelliteMapHighResGridPicPaths);
-        // init the dynamic elements field (also must be initalized before initDynamicBGImageLoad() cause it requires the field as
-        // well)
+        this.initMapField(stationMapData);
+        // init the dynamic elements field 
         this.initDynamicElementsField();
         // set the event logic related to panzoom events (e.g. event listeners for zooming and panning)
         this.initPanZoomControls();
+        // center the map to where the station is at
+        this.centerMap();
         // though already set by default upon construction; run the setCurrentMapView() method to update any relevant visual changes
         // on the map view
         this.setCurrentMapView(MapView.DEFAULT);
@@ -918,7 +886,7 @@ export class SvgRenderer {
 
     // set the event logic to allow us to rotate the svg and any logic tied to rotating the svg (e.g. logic for the rotational dynamic
     // elements) and returns any event logic we need to pass to our panzoom instance
-    private initRotationControls(): ((ev: MouseEvent) => boolean) | null {
+    private initRotationControls(rotationIntervalMS: number = 40): ((ev: MouseEvent) => boolean) | null {
 
         if (this.diagramContainer === null || this.SVGWrapper == null || this.SVG === null || this.stationSVG === null) {
             console.warn(
@@ -934,6 +902,7 @@ export class SvgRenderer {
         // init our booleans and numbers to store and check the state of our rotation logic
         let ctrlKeyPressed: boolean = false;
         let mouseIsDown: boolean = false;
+        let isRotating: boolean = false;
         let prevPosX: number = 0;
 
         // variables representing the translations of our SVG (for our matrix rotation transformation)
@@ -942,6 +911,10 @@ export class SvgRenderer {
 
         // this variable tells us how much has the map rotated (in deg, not normalized (e.g. can be a very large negative or positive num)) 
         let totalRotationDeg: number = 0;
+
+        // these vars are for checking time between event listeners callbacks, used primarily to limit "mousemove" events
+        let timeElapsedMS: number = 0;
+        let prevTimeStampMS: number = 0;
 
         // we're going to follow google's rotation method where you must hit control before allowing the user to rotate the map on pc
         window.addEventListener("keydown", (ev: KeyboardEvent) => {
@@ -981,19 +954,54 @@ export class SvgRenderer {
             prevPosX = ev.x;
             // signify the mouse is down
             mouseIsDown = true;
+            // set the previous time stamp
+            prevTimeStampMS = performance.now();
+
+            // if ctrl key is pressed
+            if (ctrlKeyPressed) {
+                // disable rot or scalar elements
+                this.enableDynamicRotOrScalarElements(false);
+                // set isRotating bool to true
+                isRotating = true;
+            }
         });
+        
         // both mouse up and mouse leave will disable mouseIsDown to prevent some funky behavior depending on where the user drags
         // (e.g. rotation spazzes out)
         this.diagramContainer.addEventListener("mouseup", (ev: MouseEvent) => {
             mouseIsDown = false;
+
+            // both mouse up and mouseleave will also reenable rot or scalar elements + and rotate the dynamic elements that do rotate
+            if (isRotating) {
+                this.enableDynamicRotOrScalarElements(true);
+                this.handleDynamicElementRotations(totalRotationDeg);
+                isRotating = false;
+            }
         });
         this.diagramContainer.addEventListener("mouseleave",  (ev: MouseEvent) => {
             mouseIsDown = false;
+
+            if (isRotating) {
+                this.enableDynamicRotOrScalarElements(true);
+                this.handleDynamicElementRotations(totalRotationDeg);
+                isRotating = false;
+            }
         });
         // deals with the actual rotation logic of the map
         this.diagramContainer.addEventListener("mousemove", (ev: MouseEvent) => {
             if (!ctrlKeyPressed || !mouseIsDown || this.SVG === null)
                 return;
+
+            // mousemove events can hundreds of times per second (this fluctuates based on browser specs and the polling rate of the mouse)
+            // anways, if this fired every 4 ms, this would cause serious lag, especially since we're transforming a huge DOM tree
+            // to avoid issues, we just limit the rate by the given rotationInterval
+            timeElapsedMS += performance.now() - prevTimeStampMS;
+            prevTimeStampMS = performance.now();
+            if (timeElapsedMS < rotationIntervalMS)
+                return;
+            // also we could use modulo but float overflow and precision reduction (> 2^53 ~ 15-17 digit precision) can occur in extreme cases 
+            // though again performance.now() could probably overflow...
+            timeElapsedMS = 0;
             
             // get our rotation from our initial mouse point and the new point
             const displacementX: number = prevPosX - ev.x;
@@ -1021,8 +1029,6 @@ export class SvgRenderer {
 
             // also update our total rotation
             totalRotationDeg -= rotDeg;
-            // and update our dynamic element's rotations relative to this total rotation
-            this.handleDynamicElementRotations(totalRotationDeg);
         });
 
         // also pass a closure function with passed reference of the ctrlKeyPressed bool to our panzoom setup so that panzoom 
@@ -1045,19 +1051,15 @@ export class SvgRenderer {
         // dynamically scale elements on initialization
         this.handleDynamicElementScaling();
 
-        // deals with loading high res images and caching them
         this.currentPanZoom.on("pan", (ev: any) => {
             // pan and zoom event listeners will not run when this boolean guard is triggered
             if (this.ignorePanzoomEvents)
                 return;
 
-            // handle the loading of our high res map images
-            this.handleHighResMapGridImageLoad();
-            // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
-            this.handleExistingHighResMapGridImageLoad();
+            // handle grid image loading
+            this.handleGridImageLoad();
             // prevent users from panning beyond a certain limit
             this.handlePanningLimit();
-
             // toggle boolean to indicate that user is currently panning 
             this.isPanning = true;
         });
@@ -1071,176 +1073,317 @@ export class SvgRenderer {
             if (this.ignorePanzoomEvents)
                 return;
 
-            // handle the loading of our high res map images
-            this.handleHighResMapGridImageLoad();
-            // handle loading and deloading (showing and hiding) of existing high res map images in the SVG
-            this.handleExistingHighResMapGridImageLoad();
-            // handle scaling of dynamic scalar elements here as well
-            this.handleDynamicElementScaling();
+            // handle grid image loading
+            this.handleGridImageLoad();
+            // disable all dynamic rot or scalar elements
+            this.enableDynamicRotOrScalarElements(false);
+            // equivalent to panzoom.on("zoomend"), queues a callback for when a zooming event stop
+            this.monitorForZoomEnd(() => {
+                // enable back the rot or scalar elements
+                this.enableDynamicRotOrScalarElements(true);
+                // and handle element scaling
+                this.handleDynamicElementScaling();
+            });
             // also handle panning limit here... this prevents zooming in/out from overshooting the panning limits
             // (which does translate the SVG wrapper so it centers at the point of zoom (e.g. where the cursor is))
             this.handlePanningLimit();
         });
+
+        // NOTE: this is strictly for touch pad pinch gestures, scroll and keyboard zoom events do not activate this
+        this.currentPanZoom.on("zoomend", (ev: any) => {
+            // enable the dynamic rot or scalar elements
+            this.enableDynamicRotOrScalarElements(true);
+            // handle scaling of dynamic scalar elements here 
+            this.handleDynamicElementScaling();
+        });
     }
 
-    // handler for loading the high res map images
-    private handleHighResMapGridImageLoad(): void {
-        if (this.mapElements === null || this.mapData === null || this.dynamicElements === null) {
+    // update panzoom's position and zoom with an optional flag to prevent callbacks like panzoom.on("pan") or panzoom.on("zoom") from
+    // occurring during this update
+    private updatePanZoom(pos: Vector2, zoom: number): void {
+        // update the current panzoom with the position and scale
+        if (this.currentPanZoom === null) {
+            console.warn("Current panzoom instance doesn't exist");
+            return;
+        }
+        
+        // NOTE: zoomAbs only scales the svg by the given factor (the 3rd param) with the anchor being the first and second
+        // it scales the svg size when it was originally set in the viewport (e.g. if it's 1920px by 1080px, zoomAbs would shrink
+        // the value to 1920x.9 1080*.9 with the top left still being at (0,0) (the diagram container's top-left) since we the anchor/transform origin [the first 2 params
+        // of currentPanZoom] is at 0,0).
+        this.currentPanZoom.zoomAbs(0, 0, zoom);
+        // NOTE: moveTo() is not based on the relative position of the panzoom element, it's relative from (0,0)
+        this.currentPanZoom.moveTo(pos.x, pos.y);
+
+        // handle dynamic elements styling here
+        // scale the element
+        this.handleDynamicElementScaling();
+        // handle grid image load
+        this.handleGridImageLoad();
+    }
+
+    // scroll + keyboard events don't work with panzoom.on("zoomend"), so this is the solution for triggering a zoomend callback
+    private monitorForZoomEnd(callback: () => void, checkRateMS: number = 200): void {
+        // increment the global var for amount of zoom callbacks that have been initiated
+        this.activeZoomingCalls++;
+
+        // queue a callback that will occur after the given check rate time
+        // you can think of the check rate as equivalent to how many seconds between per subsequent scroll event or keyboard event
+        // is considered "idle" or "non-zooming"
+        // set timeout is handle asynchronously... this isn't blocking
+        setTimeout(() => {
+            // decrement the call
+            this.activeZoomingCalls--;
+            // if there are no more zoom calls
+            if (this.activeZoomingCalls === 0)
+                // activate the callback
+                callback();
+        }, checkRateMS);          
+    }
+
+    // handler for loading low res and high res grid images for the station map
+    private handleGridImageLoad(): void {
+        if (this.diagramContainer === null || this.map === null || this.dynamicElements === null) {
             console.warn(
-                "Map elements, map data, and/or the dynamic elements field is not initialized",
-                `Map Elements Field Status: ${this.mapElements}`,
-                `Map Data Field Status: ${this.mapData}`,
+                "Diagram container, map elements and/or the dynamic elements field is not initialized",
+                `Diagram Container Status: ${this.diagramContainer}`,
+                `Map Elements Field Status: ${this.map}`,
                 `Dynamic Elements Field Status: ${this.dynamicElements}`
             );
             return;
         }
 
-        // only go through with image loading if the zoom threshold was met or the current SVG view isn't default
-        if (!this.zoomThresholdMet() || this.currentMapView === MapView.DEFAULT)
-            return;
+        // get the grid cell image maps + svg map groups
+        const {gridCellRoadMapImgCache: gridCellRoadMapImgMap, gridCellSatelliteMapImgCache: gridCellSatelliteMapImgMap} = this.dynamicElements;
+        const {roadMapGroup, satelliteMapGroup} = this.map.elements;
 
-        // iterate through our positioning items on our map grid SVG
-        for (const gridItem of this.mapElements.grid.children) {
-            const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
-
-            // determine which type of view we're at and get the path of our grid pic element and set these variables accordingly
-            let targetMapGroup: SVGGraphicsElement | null = null;
-            let targetHighResGridPicPaths: Record<string,string> | null = null;
-            let targetGridItemIDImageMap: Map<string,SVGImageElement> | null = null;
-
-            if (this.currentMapView === MapView.ROAD) {
-                targetMapGroup = this.mapElements.roadMap;
-                targetHighResGridPicPaths = this.mapData.retrieved.roadMapHighResGridPicPaths;
-                targetGridItemIDImageMap = this.dynamicElements.gridItemIDRoadMapImageMap;
-            }
-            else if (this.currentMapView === MapView.SATELLITE) {
-                targetMapGroup  = this.mapElements.satelliteMap;
-                targetHighResGridPicPaths = this.mapData.retrieved.satelliteMapHighResGridPicPaths;
-                targetGridItemIDImageMap = this.dynamicElements.gridItemIDSatelliteMapImageMap;
-            }
-
-            if (targetMapGroup === null || targetHighResGridPicPaths === null || targetGridItemIDImageMap === null) 
+        // set vars to hold the corresponding grid cell image map and svg map group we're using
+        let targetGridCellImgMap: Map<SVGGraphicsElement,SVGImageElement> | null = null;
+        let targetMapGroup: SVGGraphicsElement | null = null;
+        // set the values of these vars based on the current map view
+        switch (this.currentMapView) {
+            case MapView.ROAD:
+                targetGridCellImgMap = gridCellRoadMapImgMap;
+                targetMapGroup = roadMapGroup;
+                break;
+            case MapView.SATELLITE:
+                targetGridCellImgMap = gridCellSatelliteMapImgMap;
+                targetMapGroup = satelliteMapGroup;
+                break;
+            // do not check if the view is the default view, just exit 
+            case MapView.DEFAULT:
                 return;
-
-            // get our grid pic path from the target high rest grid pic path
-            const gridPicPath: string | undefined = targetHighResGridPicPaths[gridItemAsSVGElement.id];
-            // create an image grid item 
-            const imageGridItem: SVGImageElement | null = this.createImageGridItem(
-                    gridPicPath, this.mapData.meta.cachedGridPicPaths, gridItemAsSVGElement
-            );
-            // if the path is valid and the item is not null (the grid pic path check is redundant since an image grid item cannot
-            // be created without a valid path anyways)
-            if (gridPicPath !== undefined && imageGridItem !== null) {
-                // add the element to our SVG in the DOM
-                targetMapGroup.appendChild(imageGridItem);
-                // map the gridItem id to the image grid item
-                targetGridItemIDImageMap.set(gridItemAsSVGElement.id, imageGridItem);
-                // add the path to our cache to avoid repeatedly creating the same image grid items
-                this.mapData.meta.cachedGridPicPaths.add(gridPicPath);
-            }
-        }   
-                 
-    }
-
-    // creates an SVG image grid item (a supersampled version of one the high res map grid images) and returns it
-    private createImageGridItem(
-        gridPicPath: string | undefined, 
-        cachedGridPicPaths: Set<string>,
-        gridItem: SVGGraphicsElement 
-    ): SVGImageElement | null {
-        if (this.diagramContainer === null) {
-            console.warn("The diagram container element doesn't exist");
-            return null;
         }
 
-        // check if the gridPicPath exists and an image element hasn't been instantiated for this specific path
-        // and the element is within view of the viewport
-        if (
-            gridPicPath === undefined ||
-            cachedGridPicPaths.has(gridPicPath) ||
+        // if zoom threshold is met, render the high res images
+        // if zoom threshold is not met, render the low res images 
 
-            !boundingRectsAreIntersecting(this.diagramContainer, gridItem)
-        )
-            return null;
-                        
+        // loop through the grid cells
+        const {gridCells} = this.map.elements;
+        for (const cell of gridCells) {
+            // destructure the array just for legibility purposes
+            const [macroGridCell, microGridCells] = cell;
+            // if the zoom threshold is met
+            if (this.zoomThresholdMet()) {
+                // remove macro grid cell imgs and create/enable micro grid cell imgs
+
+                // remove the macro grid cell grid image from the dom layout (if it exists)
+                const macroGridImg: SVGImageElement | undefined = targetGridCellImgMap.get(macroGridCell);
+                if (macroGridImg !== undefined)
+                    macroGridImg.style.display = "none";
+
+                // then loop through the micro grid cells for this particular macro grid cell
+                for (const microGridCell of microGridCells) {
+                    // get the micro grid img for this grid cell from the map cache
+                    let microGridImg: SVGImageElement | null = (
+                        targetGridCellImgMap.get(microGridCell) ?? null
+                    );
+                    // check if the grid cell is in view
+                    if (boundingRectsAreIntersecting(microGridCell, this.diagramContainer)) {
+                        // if it does, check if the image is in the mapped cache
+                        if (microGridImg === null) {
+                            // if not, create the grid img
+                            microGridImg = this.createGridImg(macroGridCell, microGridCell);
+                            // add it to the corresponding map group
+                            targetMapGroup.append(microGridImg);
+                            // set the corresponding key value in the cache
+                            targetGridCellImgMap.set(microGridCell, microGridImg);
+                        }
+                       
+                        // put the micro grid img back into the layout
+                        microGridImg.style.display = "block";
+                    }
+                    else {
+                        // if the grid cell is not in view
+                        // remove the corresponding grid img from the DOM layout
+                        if (microGridImg !== null)
+                            microGridImg.style.display = "none";
+                    }
+                    
+                }
+            }       
+            else {
+                // else do the oppsite: remove micro cell imgs and remove macro grid cell imgs
+
+                // get the macro grid img corresponding to the macro grid cell from the cache
+                let macroGridImg: SVGImageElement | null = targetGridCellImgMap.get(macroGridCell) ?? null;
+                // check if the macro grid cell is in view
+                if (boundingRectsAreIntersecting(macroGridCell, this.diagramContainer)) {
+                    // if it is, check if the cache has an image element already
+                    if (macroGridImg === null) {
+                        // if it doesn't exist, create a grid img
+                        macroGridImg = this.createGridImg(macroGridCell);
+                        // add it to the corresponding map group
+                        targetMapGroup.append(macroGridImg);
+                        // set it as a key value pair into the cache
+                        targetGridCellImgMap.set(macroGridCell, macroGridImg);
+                    }
+                    // add the img back into the DOM layout
+                    macroGridImg.style.display = "block";
+                }
+                else {
+                    // if the grid img is not in view, remove it from the layout if it exists
+                    if (macroGridImg !== null)
+                        macroGridImg.style.display = "none";
+                }
+
+                // loop thru all the micro grid cells
+                for (const microGridCell of microGridCells) {
+                    // remove all of them fromt the layout if they exist
+                    const microGridImg: SVGGraphicsElement | undefined = targetGridCellImgMap.get(microGridCell);
+                    if (microGridImg !== undefined)
+                        microGridImg.style.display = "none";
+                }
+            }
+        }
+    }
+
+    // creates an SVG (low res or high res) image grid item and styles it
+    private createGridImg(
+        macroGridCell: SVGGraphicsElement,
+        microGridCell: SVGGraphicsElement | null = null
+    ): SVGImageElement {
+        // init a var that will hold the img path that the grid image will represent
+        let gridImgPath: string = "";
+        // and a var that refers to the corresponding bbox (either the macro or micro grid cell) that we'll use 
+        // to set the attributes of the created img grid item
+        let targetBBox: DOMRect | null = null;
+
+        // determine whether a micro grid cell was passed to determine whether we are creating an img grid item for a macro grid cell
+        // or a micro grid cell
+        if (microGridCell === null) {
+            // get the respective grid image path 
+            gridImgPath = this.getLowResGridImgPath(macroGridCell);
+            // get the (untransformed) bounds of the correct SVG grid item
+            // NOTE: BBox only exists for SVG elements
+            targetBBox = macroGridCell.getBBox();
+        }
+        else {
+            gridImgPath = this.getHighResGridImgPath(macroGridCell, microGridCell);
+            targetBBox = microGridCell.getBBox();
+        }
+
         // universal URL to add SVG elements onto a canvas or SVG
         const SVGURI: string = "http://www.w3.org/2000/svg";
         // create a new svg image element
-        const imageGridItem: SVGImageElement = document.createElementNS(SVGURI, "image") as unknown as SVGImageElement;
+        const gridImgItem: SVGImageElement = document.createElementNS(SVGURI, "image") as unknown as SVGImageElement;
         // set the corresponding attributes for the image
-        imageGridItem.setAttribute("href", gridPicPath);
-        const attributes: string[] = ["x", "y", "width", "height"];
-        attributes.forEach((attribute: string) => {
-            const attributeValue: string | null = gridItem.getAttribute(attribute);
-            if (attributeValue !== null)
-                imageGridItem.setAttribute(attribute, attributeValue);
-        });
-        // also add the dyanmic svg element class to the image grid item
-        imageGridItem.classList.add("dynamic-svg-element");
+        gridImgItem.setAttribute("href", gridImgPath);
+        // set the corresponding attributes to the grid img element
+        const {x, y, width, height} = targetBBox;
+        gridImgItem.setAttribute("x", x.toString());
+        gridImgItem.setAttribute("y", y.toString());
+        gridImgItem.setAttribute("width", width.toString());
+        gridImgItem.setAttribute("height", height.toString());
 
-        return imageGridItem;
+        // also add the dynamic svg element class to the grid img element
+        gridImgItem.classList.add("dynamic-svg-element");
+
+        return gridImgItem;
     }
 
-    // handler for dynamically loading and deloading (showing and hiding) already existing image grid items
-    private handleExistingHighResMapGridImageLoad(): void {    
-        if (
-            this.diagramContainer === null || 
-            this.mapElements === null || 
-            this.mapData === null || 
-            this.dynamicElements === null
-        ) {
+    // gets the low res grid img corresponding to the given macro grid cell
+    private getLowResGridImgPath(macroGridCell: SVGGraphicsElement): string {
+        if (this.map === null) {
+            console.warn("The map field hasn't been initialized");
+            return "";
+        }
+
+        // get the grid key from the macrogrid
+        const macroGridKey: string | undefined = macroGridCell.dataset.gridKey;
+        if (macroGridKey === undefined) {
+            console.warn(`Did not configure dataset attribute for grid item with id ${macroGridCell}`);
+            return "";
+        }
+
+        // get the low res img paths
+        const {road_map_low_res_imgs, satellite_map_low_res_imgs} = this.map.data;
+        // determine which path to use and return the corresponding img path
+        switch(this.currentMapView) {
+            case (MapView.ROAD):
+                return road_map_low_res_imgs[macroGridKey] ?? ""; 
+            case (MapView.SATELLITE):
+                return satellite_map_low_res_imgs[macroGridKey] ?? ""; 
+            case (MapView.DEFAULT):
+                return "";
+        }
+    }
+
+    // gets the high res grid image path corresponding to the given macro and micro grid cell
+    private getHighResGridImgPath(macroGridCell: SVGGraphicsElement, microGridCell: SVGGraphicsElement): string {
+        if (this.map === null) {
+            console.warn("The map field hasn't been initialized");
+            return "";
+        }
+
+        // get the grid keys from both the macro and micro grid elements
+        const macroGridKey: string | undefined = macroGridCell.dataset.gridKey;
+        const microGridKey: string | undefined = microGridCell.dataset.gridKey;
+
+        if (macroGridKey === undefined || microGridKey === undefined) {
             console.warn(
-                "Diagram container doesn't exist, map elements field, map data field, and/or dynamic elements field is not initialized",
-                `Diagram Container Status: ${this.diagramContainer}`,
-                `Map Elements Field Status: ${this.mapElements}`,
-                `Map Data Field Status: ${this.mapData}`,
-                `Dynamic Elements Field Status: ${this.dynamicElements}`
+                `
+                    Did not configure dataset attribute for macro grid cell with id ${macroGridCell.id} 
+                    and/or micro grid cell with id ${microGridCell.id}
+                `
             );
-            return;
+            return "";
         }
 
-        if (this.currentMapView === MapView.DEFAULT) 
-            return;
-
-        let targetGridIDImageMap: Map<string,SVGImageElement> | null = null;
-        if (this.currentMapView === MapView.ROAD)
-            targetGridIDImageMap = this.dynamicElements.gridItemIDRoadMapImageMap;
-        else if (this.currentMapView === MapView.SATELLITE)
-            targetGridIDImageMap = this.dynamicElements.gridItemIDSatelliteMapImageMap;
-        else 
-            return;
-            
-        // cycle through the grid item placeholders for our map grid
-        for (const gridItem of this.mapElements.grid.children) {
-            const gridItemAsSVGElement: SVGGraphicsElement = gridItem as SVGGraphicsElement;
-            // if zoomed too far out
-            if (!this.zoomThresholdMet())
-            {
-                // set all image grid items for this particular grid item to be hidden
-                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
-                if (imageGridElement !== undefined) 
-                    imageGridElement.style.display = "none";
-
-                continue;
-            }
-    
-            // if zoomed adequately close and the the grid item is within the viewport
-            if (boundingRectsAreIntersecting(this.diagramContainer, gridItemAsSVGElement)) 
-            {
-                // unhide the image grid items
-                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
-                if (imageGridElement !== undefined)
-                    imageGridElement.style.display = "block";
-            }
-            // if not in viewport
-            else {
-                // hide the target grid image item
-                const imageGridElement: SVGImageElement | undefined = targetGridIDImageMap.get(gridItemAsSVGElement.id);
-                if (imageGridElement !== undefined)
-                    imageGridElement.style.display = "none";
-            }
-            
+        // get the high res img paths
+        const {road_map_high_res_imgs, satellite_map_high_res_imgs} = this.map.data;
+        // see which map view we're in and assign the correct img paths accordingly
+        let microGridImgPaths: Record<string,string> | null = null;
+        switch(this.currentMapView) {
+            case (MapView.ROAD):
+                microGridImgPaths = road_map_high_res_imgs[macroGridKey] ?? null; 
+                break;
+            case (MapView.SATELLITE):
+                microGridImgPaths = satellite_map_high_res_imgs[macroGridKey] ?? null; 
+                break;
+            case (MapView.DEFAULT):
+                return "";
         }
+
+        if (microGridImgPaths === null) {
+            console.warn(`Couldn't get micro grid image path from macro grid key: ${macroGridKey}`);
+            return "";
+        }
+
+        // in the high res img paths, it's a dict inside a dict (larger cell being the key leading to the smaller cells as the value)
+        // structure is like this, hence we need the initial macro grid key first and then a micro grid key to get the actual path:
+        // {
+        //      "11": {"11": "../path", "12": "../path", "13": "../path"}
+        //      "12": { ... }
+        // }
+        const microGridImgPath: string | undefined = microGridImgPaths[microGridKey];
+
+        if (microGridImgPath === undefined) {
+            console.warn(`Couldn't get micro grid image path from micro grid key: ${microGridKey}`);
+            return "";
+        }
+
+        return microGridImgPath;
     }
 
     // a boolean that checks if the current zoom is equal to or surpasses the highResImgLoadZoomThreshold var
@@ -1378,6 +1521,25 @@ export class SvgRenderer {
         return offset;
     }
 
+    // disables/enables rot or scalar elements
+    private enableDynamicRotOrScalarElements(enable: boolean): void {
+        if (this.dynamicElements === null) {
+            console.warn("Dynamic elements field hasn't been initialized");
+            return;
+        }
+
+        // if the current status of the elements match the enable boolean (this means this function has been called with the same boolean
+        // before), return to avoid redundant looping
+        if (enable === !this.rotOrScalarElementsDisabled)
+            return;
+        // cycle through each scalar element and set its disabled class respective to the current enable boolean
+        this.dynamicElements.allRotationOrScalarElements.forEach((rotOrScalarElement: SVGGraphicsElement) => {
+            rotOrScalarElement.classList.toggle("disabled", !enable);
+        });
+        // update the global boolean to reflect the state of these elements
+        this.rotOrScalarElementsDisabled = !enable;
+    }
+
     // handles the rotation of the dynamic elements that rotate
     private handleDynamicElementRotations(mapRotationAngleDeg: number): void {
         if (this.dynamicElements === null) {
@@ -1385,54 +1547,35 @@ export class SvgRenderer {
             return;
         }
 
+        // destructure the rot elements from the field for legibility purposes
+        const {omnidirectionalRotElements, bidirectionalRotElementsMap} = this.dynamicElements;
         // deal with the bidirectional rotational elements here
         // make sure the rotation angle is in the range [0, 360]
         const normalizedRotationAngleDeg: number = normalizeAngle(mapRotationAngleDeg, AngleType.DEGREES);
-        // now get three keys, this is to avoid most if not all edge cases where the user rotates the map back and forth a large 
-        // degree (reliability scales with the size of the dynamicElementsRotationMapIncrement), which could cause our logic using 
-        // the increments of the map to gloss over elements that might need to rotate this keys here are the floored value (by 
-        // the given increment), an increment below the floored value (which is normalized to avoid a negative value [e.g. when the 
-        // map is rotated less than the increment value]), and the ceiling value
-
-        // I used this floor method here because the angle is normalized already so we won't be dealing with negative values
-        // in the case we do deal with negative rotations, do not use modulo (as it returns negative values in js which is no good in
-        // our case of normalized positive rotation angles) and use Math.floor(rot/increment)*increment instead
-        const rotationAngleDegFlr: number = normalizedRotationAngleDeg - normalizedRotationAngleDeg % this.dynamicElementsRotationDegMapIncrement;
-        const rotationAngleNextDegFlr: number = normalizeAngle(rotationAngleDegFlr - this.dynamicElementsRotationDegMapIncrement, AngleType.DEGREES);
-        const rotationAngleDegCeil: number = rotationAngleDegFlr + this.dynamicElementsRotationDegMapIncrement;
-
-        // get the values from the given keys
-        const elementsArrays: ({element: SVGGraphicsElement, startingRotation: number}[] | undefined)[] = [
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleDegFlr),
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleNextDegFlr),
-            this.dynamicElements.bidirectionalRotationElementsMap.get(rotationAngleDegCeil)
-        ];
-
-        // iterate thru the elements array and modify the elements accordingly
-        for (const elementsArray of elementsArrays) {
-            // make sure all that there are keys for each increment
-            if (elementsArray === undefined) {
-                console.warn(
-                    `Elements array doesn't exist for floor/next floor/ceiling of rotation angle: ${normalizedRotationAngleDeg}`
-                );
-                continue;
-            }
-        
-            for (const rotElement of elementsArray) {
-                // negative or positive starting rotation, this logic will work for all rotated elements
-                const vertFromStartRotDeg: number = normalizeAngle(90 - rotElement.startingRotation, AngleType.DEGREES);
-                if (normalizedRotationAngleDeg < vertFromStartRotDeg || normalizedRotationAngleDeg > vertFromStartRotDeg + 180) {
-                    rotElement.element.style.transform = "";
-                }
-                else {
-                    rotElement.element.style.transform = "rotate(180deg)";
-                }
-            }
-        }
 
         // deal with the omnidirectional rotational elements here
-        this.dynamicElements.omnidirectionalRotationElements.forEach((rotElement: SVGGraphicsElement) => {
+        omnidirectionalRotElements.forEach((rotElement: SVGGraphicsElement) => {
             rotElement.style.transform = `rotate(${normalizedRotationAngleDeg}deg)`;
+        });
+
+        // iterate thru the elements array and modify the elements accordingly
+        bidirectionalRotElementsMap.forEach((rotElements: SVGGraphicsElement[], startingRotDegNormalized: number) => {
+            rotElements.forEach((rotElement: SVGGraphicsElement) => {
+                // negative or positive starting rotation, this logic will work for all rotated elements
+
+                // this is basically checking how far away a starting rot is from a 90 degree counter clock wise rot
+                const vertFromStartRotDeg: number = normalizeAngle(90 - startingRotDegNormalized, AngleType.DEGREES);
+                // the element should rotate when it is an angle of 90 - 270 deg (this includes starting rot)
+                // so, since the angle is normalized to purely positive rotations, if the diff is greater than the current rotation angle 
+                // OR the diff + 180 is less than the rotation angle, dont the rotate the element
+                if (normalizedRotationAngleDeg < vertFromStartRotDeg || normalizedRotationAngleDeg > vertFromStartRotDeg + 180) {
+                    rotElement.style.transform = "";
+                }
+                // else rotate the element
+                else {
+                    rotElement.style.transform = "rotate(180deg)";
+                }
+                });
         });
     }
 
@@ -1541,25 +1684,7 @@ export class SvgRenderer {
                 clamp(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
                 clamp(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
         );
-        // if (smoothPan){
-        //     // in the case of smooth panning, turn of all panzoom capabilities aside from within the code
-        //     // the user should not able to zoom or pan here or else this entire sequence is broken
-        //     this.currentPanZoom.pause();
 
-        //     const lerpRatio: number = 0.05;
-        //     while (currentPos.getDist(targetPos) > 1) {
-        //         await new Promise((resolve: (value?: any) => void) => {
-        //             requestAnimationFrame(() => {
-        //                 currentPos.m_lerp(targetPos, lerpRatio);
-        //                 this.currentPanZoom.moveTo(currentPos.x, currentPos.y);
-
-        //                 resolve();
-        //             });
-        //         });
-        //     }
-
-        //     this.currentPanZoom.resume();
-        // }
         // now move the panzoom to the current location
         this.currentPanZoom.moveTo(targetPos.x, targetPos.y);
 
@@ -1661,7 +1786,7 @@ export class SvgRenderer {
 
     // adjusts the opacity of the map by given the percentage
     public adjustMapOpacity(targetPercentage: number): void {
-        if (this.mapElements === null) {
+        if (this.map === null) {
             console.warn("The SVG map elements field is initialized");
             return;
         }
@@ -1673,12 +1798,12 @@ export class SvgRenderer {
         // requires either a decimal value or the target percentage + % sign for it to work)
         targetPercentage = clamp(targetPercentage*0.01, minOpacity, maxOpacity);
         // we set the opacity of the entire map group by this opacity
-        this.mapElements.parent.style.opacity = targetPercentage.toString();
+        this.map.elements.parent.style.opacity = targetPercentage.toString();
     }
 
     // updates the state of the svg renderer (and sets any events accordingly)
     public setCurrentMapView(view: MapView): void {
-        if (this.mapElements === null) {
+        if (this.map === null) {
             console.warn("SVG map elements field is not initialized");
             return;
         }
@@ -1686,28 +1811,142 @@ export class SvgRenderer {
         // set our map view here (do this first because the dynamic image loading methods require the currentMapView to be
         // updated properly first)
         this.currentMapView = view;
+        // destructure the relevant properties (the map-related elements) from the map for legibility purposes
+        const {parent, roadMapGroup, satelliteMapGroup} = this.map.elements;
 
         // deal with the state change here
         switch(this.currentMapView) {
             case MapView.DEFAULT:
-                this.mapElements.parent.style.display = "none";
+                parent.style.display = "none";
                 break;
             case MapView.ROAD:
-                this.mapElements.parent.style.display = "block";
-                this.mapElements.roadMap.style.display = "block";
-                this.mapElements.satelliteMap.style.display = "none";
+                parent.style.display = "block";
+                roadMapGroup.style.display = "block";
+                satelliteMapGroup.style.display = "none";
                 // also run the dynamic image loading so the images can remain crisp if zoomed in already
-                this.handleHighResMapGridImageLoad();
-                this.handleExistingHighResMapGridImageLoad();
+                this.handleGridImageLoad();
                 break;
             case MapView.SATELLITE:
-                this.mapElements.parent.style.display = "block";
-                this.mapElements.roadMap.style.display = "none";
-                this.mapElements.satelliteMap.style.display = "block";
+                parent.style.display = "block";
+                roadMapGroup.style.display = "none";
+                satelliteMapGroup.style.display = "block";
                 // do the same for the satellite view as the road view in terms of dynamic image loading
-                this.handleHighResMapGridImageLoad();
-                this.handleExistingHighResMapGridImageLoad();
+                this.handleGridImageLoad();
                 break;
         }
+    }
+
+    // spawns a GPS marker at the given coords and heading and adds it to the DOM
+    public async spawnGPSMarker(
+        gpsMarkerSVGPath: string, 
+        coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+        heading: {absolute: number, relative: number, base: number} | null,
+        size: number = 10
+    ): Promise<void> {
+        if (this.SVG === null) {
+            console.warn("SVG doesn't exist");
+            return;
+        }
+
+        // since the spawnGPSMarker() will be put in a callback, we have to prevent desyncing issues where this function
+        // gets repeatedly called and repeatedly fetches multiple GPS marker instances (this happens because fetch is async)
+        if (this.GPSMarkerInstantiating) {
+            console.log("A GPS marker is already being instantiated");
+            return;
+        }
+
+        // if the GPS marker doesn't exist, create it
+        if (this.GPSMarker === null) {
+            // set the boolean guard here true before the fetching 
+            this.GPSMarkerInstantiating = true;
+
+            // start fetching the SVG
+            const res: Response = await fetch(gpsMarkerSVGPath);
+            const SVGContent: string = await res.text();
+
+            // turn off the boolean guard
+            this.GPSMarkerInstantiating = false;
+
+            // using a DOMParse is much safer than loading in through innerHTML or related methods because it could accidentally
+            // mess up event listeners and layouts
+            const parser: DOMParser = new DOMParser();
+            const SVGDocument: Document = parser.parseFromString(SVGContent, "image/svg+xml");
+            // get the actual element from the document
+            const GPSElement: SVGSVGElement = SVGDocument.documentElement as unknown as SVGSVGElement;
+
+            // also retrieve the vision cone from the newly loaded in SVG
+            const visionCone: SVGGraphicsElement | null = SVGDocument.querySelector("[id='Vision Cone']");
+            if (visionCone === null) {
+                console.warn("Vision cone doesn't exist");
+                return;
+            }
+
+            // assign it to our variable
+            this.GPSMarker = {GPSElement: GPSElement, visionCone: visionCone};
+        }
+
+        // destructure for legibility
+        const {GPSElement, visionCone} = this.GPSMarker;
+
+        // set the styling
+        GPSElement.setAttribute("width", size.toString());
+        GPSElement.setAttribute("height", size.toString());
+        // if there is no heading, just make the vision cone invisible
+        if (heading === null) 
+            visionCone.style.display = "none";
+        else 
+            visionCone.style.display = "block";
+
+        // append the element to the SVG
+        this.SVG.append(GPSElement);
+        // set the spawned boolean to true, do this before updateGPSMarker() as it requires this to be true
+        this.GPSMarkerSpawned = true;
+        // update the marker's positioning and orientation
+        this.updateGPSMarker(coords, heading);
+    }
+
+    // updates the positioning of the GPS marker
+    public updateGPSMarker(
+        coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+        heading: {absolute: number, relative: number, base: number} | null
+    ): void {
+        if (this.GPSMarker === null || !this.GPSMarkerSpawned) {
+            console.log(
+                "GPS marker doesn't exist or it hasn't spawned in",
+                `GPS Marker Status: ${this.GPSMarker}`,
+                `GPS Marker Spawned Status: ${this.GPSMarkerSpawned}`
+            );
+            return;
+        }
+        // get the coords (using relative coords for now)
+        const {x, y} = coords.relative;
+        // also destructure the GPS marker for legibility purposes
+        const {GPSElement, visionCone} = this.GPSMarker;
+
+        // set the SVG attributes that set its location and orientation
+        GPSElement.setAttribute("x", x.toString());
+        GPSElement.setAttribute("y", y.toString());
+        GPSElement.setAttribute("transform-origin", "center")
+        // also actively set styling for the vision cone depending on whether the heading obj is null or not
+        if (heading === null) {
+            visionCone.style.display = "none";
+        }
+        else {
+            visionCone.style.display = "block";
+            GPSElement.setAttribute("transform", `rotate(${heading.relative})`);
+        }
+    }
+
+    // despawns the GPS marker from the DOM
+    public despawnGPSMarker(): void {
+        if (this.GPSMarker === null) {
+            console.warn("GPS marker doesn't exist");
+            return;
+        }
+
+        // remove from the DOM
+        this.GPSMarker.GPSElement.remove();
+        // set the boolean to false
+        this.GPSMarkerSpawned = false;
     }
 }

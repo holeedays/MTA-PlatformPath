@@ -1,6 +1,7 @@
 import { SvgRenderer, MapView, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep, type AccessibilityOption } from "./path_finder.ts";
-import { type LayerData, type NodeData, type StationResponse } from "./station_data.ts";
+import { GeoConverter, type Extents } from "./geolocation.ts";
+import { type LayerData, type NodeData, type StationData, type StationMapData, type StationResponse } from "./station_data.ts";
 import { 
     NodeOption, FilterCheckBox, NodeSVG, SVGComponentElement, type StationMapInteractionHandler, NodeDropdownButton 
 } from "./station_custom_elements.ts";
@@ -9,9 +10,17 @@ import { DataFetch } from "./data_fetch.ts";
 import { Vector2 } from "./transformations.ts";
 
 export class StationMapPage {
+    protected station: StationResponse | null = null;
+    protected stationMap: StationMapData | null = null;
+    protected svgRenderer: SvgRenderer;
+
     protected pathFinder: PathFinder;
     protected currentPath: PathStep[] | null = null;
     protected currentPathNodeIDs: Set<string> = new Set();
+
+    protected staticPath: string | null = "";
+
+    protected geoConverter: GeoConverter | null = null;
 
     protected navigationElements: {
         routePreview: {
@@ -49,9 +58,7 @@ export class StationMapPage {
         endNode: NodeOption | null
     } = {startNode: null, endNode: null};
     protected currentIndex: number = 0;
-    protected station: StationResponse | null = null;
-    protected svgRenderer: SvgRenderer;
-    protected isPreviewingRoute:boolean = false;
+    protected isPreviewingRoute: boolean = false;
     protected accessibleOption: AccessibilityOption = "none";
 
     protected stationMapInteractionHandlers: StationMapInteractionHandler[] = [];
@@ -89,7 +96,7 @@ export class StationMapPage {
             console.warn("Cannot find valid station ID from the URL");
             return;
         }
-        this.station = await DataFetch.fetchEdgesNodesLayers(stationID) as StationResponse;
+        this.station = await DataFetch.fetchCompleteStation(stationID) as StationResponse;
 
         // Load the station information from database (The station's edges and nodes)
         if (!this.station) {
@@ -101,6 +108,8 @@ export class StationMapPage {
 
         ///// field initializers 
 
+        // init the static path field
+        this.initStaticPathField();
         // init the navigation elements field
         this.initNavigationElementsField();
         // init the layer elements field
@@ -127,9 +136,8 @@ export class StationMapPage {
         this.initStationHeading();
         // load the station diagram
         await this.svgRenderer.loadDiagramWithControls(
-            this.station.station_model.diagram_path, 
-            this.station.station_model.road_map_high_res_grid_pic_paths,
-            this.station.station_model.satellite_map_high_res_grid_pic_paths
+            this.station.station.diagram_path, 
+            this.station.station_map
         );
         // init the route direction labels
         this.svgRenderer.initRouteDirectionLabels();
@@ -152,6 +160,8 @@ export class StationMapPage {
         this.initNodeDropdownButtons();
         // init the event handling for our map views block
         this.initMapViews();
+        // init event handling for the gps toggle button
+        this.initGPSToggleButton();
 
         // init all our "click" and "touch"-like event listeners
         this.initInteractionHandlers();
@@ -159,16 +169,7 @@ export class StationMapPage {
 
     // initially enforce desktop dimensions as well as 
     // create an event handler that enforces desktop users to stick to specific website viewing dimensions for the desktop
-    private initDesktopDimensionsEnforcement(): void {
-        const djangoConfig: HTMLDivElement | null = document.querySelector("#django_config");
-        if (djangoConfig === null || djangoConfig.dataset.staticPath === undefined) {
-            console.warn("Django config element doesn't exist or 'data-static-path' attribute doesn't exist on it");
-            return;
-        }
-
-        // this is our threshold number (in pixels)
-        const horizontalResizeThreshold: number = 1270;
-
+    private initDesktopDimensionsEnforcement(horizontalResizeThresholdPx: number = 1270): void {
         // create our element and the base styling of it
         const dimensionEnforcementOverlay: HTMLDivElement = document.createElement("div");
         const enforcementTextBlock: HTMLSpanElement = document.createElement("span");
@@ -189,19 +190,19 @@ export class StationMapPage {
             Thank you for understanding.`
         // style the image block here
         enforcementImageBlock.src = (
-            djangoConfig.dataset.staticPath + "platformpathapp/decals/dimension_enforcement_window_expand_icon.svg"
+            this.staticPath + "platformpathapp/decals/dimension_enforcement_window_expand_icon.svg"
         );
         enforcementImageBlock.alt = "Dimension enforcement window expand icon"
 
         dimensionEnforcementOverlay.append(enforcementImageBlock, enforcementTextBlock);
         // do our initial check here
-        if (window.innerWidth < horizontalResizeThreshold) {
+        if (window.innerWidth < horizontalResizeThresholdPx) {
             document.body.prepend(dimensionEnforcementOverlay);
             dimensionEnforcementOverlay.classList.remove("hidden");
         }
         // add our event listener here (CSS queries are a lot more foolproof and efficient than doing a window resize
         // event listener here)
-        const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${horizontalResizeThreshold}px)`);
+        const mediaQuery: MediaQueryList = window.matchMedia(`(max-width: ${horizontalResizeThresholdPx}px)`);
         mediaQuery.addEventListener("change", (ev: MediaQueryListEvent) => {
             if (ev.matches) {
                 document.body.prepend(dimensionEnforcementOverlay);
@@ -228,7 +229,7 @@ export class StationMapPage {
             );
             return;
         }
-        stationHeading.innerText = this.station.station_model.name;
+        stationHeading.innerText = this.station.station.name;
         
         // add event logic for the station header (just redirects the user back to the stations selection page)
         const currentURL: string = URLHandler.getFullURLRoute();
@@ -263,7 +264,7 @@ export class StationMapPage {
         
         // Setup button to display all layers of the station map and hook control to 
         const allLayersHandler: () => void = () => {
-            this.svgRenderer.showAllLayers(this.station?.layer_models || []);
+            this.svgRenderer.showAllLayers(this.station?.layers || []);
             this.setActiveLayerButton(allLayersButton);
         };
         const allLayersBtnInteractionHandler: StationMapInteractionHandler = {
@@ -273,12 +274,12 @@ export class StationMapPage {
         this.stationMapInteractionHandlers.push(allLayersBtnInteractionHandler);
 
         // Create and setup buttons to show individual layers of the map of the station
-        for (const layer of this.station.layer_models) {
+        for (const layer of this.station.layers) {
             const layerButton: HTMLButtonElement = this.createLayerButton(layer.name, layer.color);
 
             // add the event logic here
             const layersBtnHandler: () => void = () => {
-                this.svgRenderer.showLayer(layer.svg_id, this.station?.layer_models || []);
+                this.svgRenderer.showLayer(layer.svg_id, this.station?.layers || []);
                 this.setActiveLayerButton(layerButton);
             };
             const layersBtnInteractionHandler: StationMapInteractionHandler = {
@@ -387,7 +388,7 @@ export class StationMapPage {
         }   
 
         // now checking whether to validate the accessibility only/none toggle buttons
-        if (this.station.station_model.accessible_station) {
+        if (this.station.station.accessible_station) {
             let isAccessibleOnly: boolean = false;
             let isAccessibleNone: boolean = false;
             
@@ -793,7 +794,7 @@ export class StationMapPage {
         instructionText.innerText =
             `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
         // set the correct layers
-        this.svgRenderer.showLayer(step.layer, this.station?.layer_models || []);
+        this.svgRenderer.showLayer(step.layer, this.station?.layers || []);
         this.setActiveLayerButtonByLayer(step.layer);
         // highlight nodes and center onto them
         this.svgRenderer.highlightNode(step.svgId);
@@ -872,7 +873,7 @@ export class StationMapPage {
         this.nodeDropdownButtons = { startNode: startNodeDropdownButton, endNode: endNodeDropdownButton };
 
         // initializing dropdown with node options
-        this.station.node_models.forEach((node: NodeData) => {
+        this.station.nodes.forEach((node: NodeData) => {
             const filters: Map<string,string> = new Map();
             // add these types into our type dict
             Object.entries(node.types_dict).forEach((dictPair: [string, string]) => {
@@ -930,7 +931,7 @@ export class StationMapPage {
     ): NodeOption | null {
 
         // check if the data exists and 
-        const layer: LayerData | undefined = this.station?.layer_models.find(
+        const layer: LayerData | undefined = this.station?.layers.find(
             (layer: LayerData) => layer.id === node.layer
         );
         if (layer === undefined) {
@@ -1589,7 +1590,7 @@ export class StationMapPage {
                 edge.to_node,
             ];
             for (const nodeId of endpointIds) {
-                const node: NodeData | undefined = this.station?.node_models.find(
+                const node: NodeData | undefined = this.station?.nodes.find(
                     (candidate: NodeData) => candidate.id === nodeId
                 );
 
@@ -1750,9 +1751,97 @@ export class StationMapPage {
         );
     }
 
+    // initializes the event logic for the gps toggle button
+    private initGPSToggleButton(): void {
+        const GPSToggleBtn: HTMLButtonElement | null = document.querySelector(".gps-toggle-button");
+        if (GPSToggleBtn === null || this.station === null || this.svgRenderer.SVG === null) {
+            console.warn(
+                "GPS toggle button, station response, and/or SVG doesn't exist",
+                `GPS Toggle Button Status: ${GPSToggleBtn}`,
+                `Station Response StatusL ${this.station}`,
+                `SVG Status: ${this.svgRenderer.SVG}`
+            );
+            return;
+        }
+
+        // NOTE: these extents are merely for testing purposes, they will be removed later on once the actual stationMapData has
+        // valid extents (extents are currently set at {0, 0, 0, 0} for Bay 50)
+        const extents: Extents = {
+            // EPSG:4326 (LAT LONG) | EPSG:6539 (NY LI (2011)) in US FT 
+            west: -74.0045413,        // 982988.204
+            south: 40.5659305,        // 145460.925
+            east: -73.9787201,        // 990160.640
+            north: 40.5856193         // 152633.361 
+        }
+
+        // create a geo converter instance
+        this.geoConverter = new GeoConverter(this.svgRenderer.SVG, extents);
+        // create a boolean for toggling GPS on and off
+        let isPressed: boolean = false;
+        // create the handler for the button
+        const GPSToggleBtnHandler: () => void = () => {
+            if (this.svgRenderer.SVG === null || this.geoConverter === null)
+                return;
+
+            // if toggled on
+            if (!isPressed) {
+                // init the geo converter and add an event listener
+                this.geoConverter.init();
+                this.geoConverter.addEventListener(
+                    "positionupdate", 
+                    (
+                        coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+                        heading: {absolute: number, relative: number, base: number} | null
+                    ) => {
+                        // destructure the marker and its associated boolean from SVG renderer
+                        const {GPSMarker, GPSMarkerSpawned} = this.svgRenderer;
+                        // if it doesn't create it, or if it hasn't spawned, spawn it
+                        if (GPSMarker === null || GPSMarkerSpawned === false) {
+                            const GPSMarkerSVGPath: string = this.staticPath + "platformpathapp/decals/GPS_marker.svg";
+                            this.svgRenderer.spawnGPSMarker(GPSMarkerSVGPath, coords, heading);
+                        }
+                        // else, update its position
+                        else {
+                            this.svgRenderer.updateGPSMarker(coords, heading);
+                        }
+                    }
+                );
+            }
+            // if toggled off
+            else {
+                // disable the geoconverter (removes all event listeners)
+                this.geoConverter.disable();
+                // and despawn the GPS marker
+                this.svgRenderer.despawnGPSMarker();
+            }
+
+            // toggle the boolean
+            isPressed = !isPressed;
+        };
+
+        // create an interaction handler of the toggle button and its handler
+        const GPSToggleBtnInteractionHandler: StationMapInteractionHandler = {
+            element: GPSToggleBtn,
+            handler: GPSToggleBtnHandler
+        };
+        // add it to the array of interaction handlers to be processed later
+        this.stationMapInteractionHandlers.push(GPSToggleBtnInteractionHandler);
+    }
+
     ////////////////////////////////////// FIELDS INITIALIZING/ELEMENT STYLING THAT DOESN'T REQUIRE API DATA
     
     //////////// FIELD INITIALIZERS
+
+    // initializes the static assets path field
+    private initStaticPathField(): void {
+        const djangoConfig: HTMLDivElement | null = document.querySelector("#django_config");
+        if (djangoConfig === null || djangoConfig.dataset.staticPath === undefined) {
+            console.warn("Django config element doesn't exist or 'data-static-path' attribute doesn't exist on it");
+            return;
+        }
+
+        this.staticPath = djangoConfig.dataset.staticPath;
+    }
 
     // initializes the navigation elements field
     private initNavigationElementsField(): void {

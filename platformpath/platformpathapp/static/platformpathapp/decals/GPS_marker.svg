@@ -1,0 +1,12 @@
+<svg width="66" height="121" viewBox="0 0 66 121" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="GPS Marker">
+<path id="Vision Cone" d="M0 31.5L33 89L66 31.5C66 13.2746 50.397 0 33 0C15.603 0 0 13.2746 0 31.5Z" fill="url(#paint0_linear_108_11)"/>
+<circle id="Marker Body" cx="33.5" cy="97" r="21.5" fill="#69CDFF" stroke-width="5" stroke="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_108_11" x1="33" y1="0" x2="33" y2="89" gradientUnits="userSpaceOnUse">
+<stop stop-color="#E9FDB5" stop-opacity="0"/>
+<stop offset="1" stop-color="#E9FDB5"/>
+</linearGradient>
+</defs>
+</svg>
