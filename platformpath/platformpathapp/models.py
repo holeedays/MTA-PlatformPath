@@ -21,15 +21,11 @@ class Station(models.Model):
     name = models.CharField(max_length=200)
     slug_name = models.CharField(max_length=200, null=True, blank=True)
     diagram_path = models.CharField(max_length=100)
-
-    # stores the paths for high res grid pictures of the road and satellite map for this specific station
-    road_map_high_res_grid_pic_paths = models.JSONField(default=dict)
-    satellite_map_high_res_grid_pic_paths = models.JSONField(default=dict)
-    
     lines = models.ManyToManyField(
         to=Line, 
         blank=True,
-        through="StationLine")
+        through="StationLine"
+    )
     # indicates whether the station is accessible as an option
     accessible_station = models.BooleanField(default=False)
 
@@ -41,6 +37,20 @@ class Station(models.Model):
         if not self.slug_name:
             self.slug_name = slugify(self.name)
         super().save(*args, **kwargs)
+
+
+class StationMap(models.Model):
+    # there's only one station map item per station and vice versa
+    station = models.OneToOneField(Station, models.CASCADE, related_name="station_maps")
+    # extents is the N, W, S, E (represented in EPSG:4326 (lat long)) bounds of the entire map
+    extents = models.JSONField(default=dict)
+    # low res images are about 9 images
+    # high res images are about 81 images 
+    road_map_low_res_imgs = models.JSONField(default=dict)
+    satellite_map_low_res_imgs = models.JSONField(default=dict)
+    road_map_high_res_imgs = models.JSONField(default=dict)
+    satellite_map_high_res_imgs = models.JSONField(default=dict)
+
     
 class StationLine(models.Model):
     # added related name for the foreign keys to allow direct access from Station/Line models to the through model
@@ -65,11 +75,11 @@ class StationLine(models.Model):
 
 class Layer(models.Model):
     # stations do not share layers
+    station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="layers")
     # each station will have its own set of layers
     name = models.CharField(max_length=100)
     layerOrder = models.IntegerField()
     color = models.CharField(max_length=7)  # For hex color codes (e.g., "#FF0000")
-    station = models.ForeignKey(Station, on_delete=models.CASCADE)
     svg_id = models.CharField(max_length=100)
 
     def __str__(self):

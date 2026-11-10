@@ -15,8 +15,8 @@ urlpatterns = [
     path('api/lines/', views_api_new.LinesFetchAPI.as_view(), name='lines_fetch'),
     path('api/lines/<int:line_id>/stations/', views_api_new.StationsFetchAPI.as_view(), name='stations_fetch'),
     path(
-        'api/stations/<int:station_id>/edges_nodes_layers/', 
-         views_api_new.EdgesNodesLayersFetchAPI.as_view(), 
+        'api/stations/<int:station_id>/complete-station/', 
+         views_api_new.completeStationFetchAPI.as_view(), 
          name='edges_nodes_layers_fetch'
     ),
 

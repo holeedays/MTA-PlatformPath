@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 from django.db.models import QuerySet
-from .models import Line, Station, Edge, Node, Layer
+from .models import Line, Station, Edge, Node, Layer, StationMap
 
 class LineSerializer(serializers.ModelSerializer[Line]):
     # here we state what information we want the API to serialize and send
@@ -42,8 +42,6 @@ class StationSerializer(serializers.ModelSerializer[Station]):
             "name", 
             "id", 
             "diagram_path", 
-            "road_map_high_res_grid_pic_paths",
-            "satellite_map_high_res_grid_pic_paths",
             "lines", 
             "station_order", 
             "accessible_station"
@@ -98,4 +96,22 @@ class EdgeSerializer(serializers.ModelSerializer[Edge]):
 class LayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Layer
-        fields = '__all__'
+        fields: str = '__all__'
+
+class StationMapSerializer(serializers.ModelSerializer[StationMap]):
+    station = serializers.SlugRelatedField(
+        slug_field="name", 
+        read_only=True 
+    )
+
+    class Meta: 
+        model = StationMap
+        fields: list[str] = [
+            "id", 
+            "station",
+            "extents",
+            "road_map_low_res_imgs", 
+            "satellite_map_low_res_imgs", 
+            "road_map_high_res_imgs", 
+            "satellite_map_high_res_imgs"
+        ]

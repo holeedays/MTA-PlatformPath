@@ -55,7 +55,7 @@ class Command(BaseCommand):
         self.reset_sequence("platformpathapp_station_lines")
         self.reset_sequence("platformpathapp_node")
         self.reset_sequence("platformpathapp_layer")
-        self.reset_sequence("platformpathapp_station_line")
+        self.reset_sequence("platformpathapp_station_map")
         self.reset_sequence("platformpathapp_station")
         self.reset_sequence("platformpathapp_line")
     

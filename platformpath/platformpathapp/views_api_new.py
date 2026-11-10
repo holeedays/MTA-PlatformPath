@@ -1,5 +1,12 @@
-from .models import Layer, Line, Station, Edge, Node, StationLine
-from .serializers import EdgeSerializer, LineSerializer, NodeSerializer, StationSerializer, LayerSerializer
+from .models import Layer, Line, Station, Edge, Node, StationLine, StationMap
+from .serializers import (
+    EdgeSerializer, 
+    LineSerializer, 
+    NodeSerializer, 
+    StationSerializer, 
+    LayerSerializer,
+    StationMapSerializer
+)
 
 from django.db.models import QuerySet, Count, OuterRef, Subquery, F
 from django.shortcuts import get_object_or_404
@@ -44,13 +51,15 @@ class StationsFetchAPI(APIView):
         ).values("order")[:1] # the list slice is required and forces the query to only fetch 1 row
 
         # get all our stations...
-        stations: QuerySet[Station] = (Station.objects.filter(lines=target_line)
-                                       .prefetch_related("lines")
-                                       # add an extra custom field that denotes order
-                                       .annotate(station_order=Subquery(order_subquery))
-                                       # order the stations chronologically
-                                       .order_by("station_order"))
-        
+        stations: QuerySet[Station] = (
+            Station.objects.filter(lines=target_line)
+            .prefetch_related("lines")
+            # add an extra custom field that denotes order
+            .annotate(station_order=Subquery(order_subquery))
+            # order the stations chronologically
+            .order_by("station_order")
+        )
+
         stations_data: dict[str, Any] = {
             "line_reference": LineSerializer(target_line).data,
             "stations": StationSerializer(stations, many=True).data
@@ -59,35 +68,40 @@ class StationsFetchAPI(APIView):
         return Response(stations_data)
     
 # fetch all edges/nodes/layers corresponding to the selected station and line
-class EdgesNodesLayersFetchAPI(APIView):
+class completeStationFetchAPI(APIView):
     
     def get(self, request: Request, station_id: int) -> Response:
         # get the station that has the right id and add a custom attribute
-        target_station: Station = get_object_or_404(Station.objects.filter(id=station_id)
-                                                    .prefetch_related("lines"))
+        target_station: Station = get_object_or_404(
+            Station.objects.filter(id=station_id)
+            # use prefetch related for Many to Many and One to Many 
+            # do note it makes a separate query for each prefetched related but it avoid querying every model when you try to
+            # access it from this one (e.g. using target_station.lines.all() makes another query hit)
+            .prefetch_related("lines")
+            .prefetch_related("layers")
+            .select_related("station_maps")
+            .select_related("station_maps__station")
+        )
 
-        # get all edges related to our target station
-        edges: QuerySet[Edge] = (Edge.objects.filter(station=target_station)
-                                 .select_related("station",
-                                                 "from_node",
-                                                 "to_node",
-                                                 "from_node__station",
-                                                 "to_node__station",
-                                                 "from_node__layer",
-                                                 "to_node__layer"))
-        # get all possible unique nodes -- do union with from & to nodes of the edge model to avoid missing any nodes
-        # then cast it back to a list because remember, non-indexable stuff for serializers are a big no no
-        nodes: list[Node] = list({edge.from_node for edge in edges} | {edge.to_node for edge in edges})
-
-        layers = Layer.objects.filter(station=target_station).order_by('layerOrder')
+        # get all edges and nodes related to our target station
+        nodes: QuerySet[Node] = (
+            Node.objects
+            .filter(station=target_station)
+            .select_related("station")
+        )
+        edges: QuerySet[Edge] = (
+            Edge.objects
+            .filter(station=target_station)
+            .select_related("station")
+        )
         
         # get our data arranged in a structure that we can fit into our compound model serializer
         edges_nodes_data: dict[str, Any] = {
-            "station_model": StationSerializer(target_station).data,
-            "edge_models": EdgeSerializer(edges, many=True).data,
-            "layer_models": LayerSerializer(layers, many=True).data,
-            # django rest framework usually requires an indexable item (sets cannot ofc...)
-            "node_models": NodeSerializer(list(nodes), many=True).data
+            "station": StationSerializer(target_station).data,
+            "edges": EdgeSerializer(edges, many=True).data,
+            "nodes": NodeSerializer(nodes, many=True).data,
+            "layers": LayerSerializer(target_station.layers, many=True).data,
+            "station_map": StationMapSerializer(target_station.station_maps).data
         }
 
         return Response(edges_nodes_data)
