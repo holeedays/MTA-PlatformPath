@@ -20,6 +20,9 @@
     font-family: Helvetica;
     margin: 0;
     padding: 0;
+    /* configure each element with the identity matrix so that offset properties like offsetLeft reference the immediate parent
+       and not the ancestor */
+    transform: matrix(1, 0, 0, 1, 0, 0);
 }
 
 a {
