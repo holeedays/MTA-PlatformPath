@@ -2,13 +2,6 @@ This is where we add stuff we did and things to do...
 
 CURRENT BUGS:
 -----------------------
-> Need to figure out centering and panning limit working in tandem... occassional buggy behavior where the centering goes out of view which
-is definitely caused by conflicting things happening in the logic (which are overriding one another)
-> Weird issue where the boundingRectsAreIntersecting() detection doesn't work properly when a zoom event is triggered in rapid succession
-    - The problem is that although some parts of the map grid are in view when zoomed to a certain point, the function doesn't work
-    properly and returns that a grid cell is not in view although it is
-    - To replicate the error: press the zoom in symbol then zoom out immediately afterwards
-    - Not an imminent issue but it is suggested to look into it
 
 
 PLANS FOR THE FUTURE:
@@ -17,8 +10,11 @@ PLANS FOR THE FUTURE:
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport) <-- completed for now until the 2 features below are added
 
-> Add decals and image assets for map views, mobile route form, and step ui toggle off button elements
+> Test GPS mapping 
+> Add QR code hash mapping logic for the station maps <-- Might be the solution to navigating thru the map...
+> Test QR hash mapping
 > Add a directional widget (e.g. a compass)
+> Add decals and image assets for map views, mobile route form, and step ui toggle off button elements
 > Find ways to optimize CSS rendering for the station map (map uses a lot of RAM when it is being rotated in rapid succession)
 > Do a full redesign and refactor of existing elements
     - make the map legend assets interactable
