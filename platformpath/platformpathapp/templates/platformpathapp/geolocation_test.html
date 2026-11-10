@@ -13,6 +13,8 @@
     <canvas></canvas>
 
     <div id="django_config" data-static-path="{% static '' %}"></div>
-    <script type="module" src="{% static 'platformpathapp/js/geolocation.js' %}"></script>
+    
+	<script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+    <script type="module" src="{% static 'platformpathapp/js/app.js' %}"></script>
 </body>
 </html>

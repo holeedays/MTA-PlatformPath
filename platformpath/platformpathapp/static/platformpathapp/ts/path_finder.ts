@@ -39,8 +39,8 @@ export class PathFinder {
         // user for the particular step
         // Example: database layer 3 -> SVG group "MEZZANINE"
         const layerMap: Record<number, string> = {};
-        if (station.layer_models) {
-            station.layer_models.forEach(layer => {
+        if (station.layers) {
+            station.layers.forEach(layer => {
                 layerMap[layer.id] = layer.svg_id;
             });
         } else {
@@ -141,7 +141,7 @@ export class PathFinder {
         
         // Build node lookup map by looping through every node in the station
         const nodeMap: Record<number, NodeData> = {};
-        station.node_models.forEach(node => {
+        station.nodes.forEach(node => {
             nodeMap[node.id] = node;
         });
 
@@ -149,7 +149,7 @@ export class PathFinder {
         // and organizing them based on the fromNode of the edge
         const adjacency: Record<number, EdgeData[]> = {};
 
-        station.edge_models.forEach((edge) => {
+        station.edges.forEach((edge) => {
             // inactive edges are will not be considered for the route
             if (!edge.is_active) return null;
 

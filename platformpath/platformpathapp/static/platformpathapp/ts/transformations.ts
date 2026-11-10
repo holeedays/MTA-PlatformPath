@@ -199,8 +199,9 @@ export function boundingRectsAreIntersecting(
 // gets all the complete transformation matrix of an element (e.g. the product matrix of all transformation matrices of its parents 
 // (and itself) multiplied together in sequence) including any padding and margin offsets
 // this converts a point in local space of the element to world space
+// NOTE: this only works for HTMLElements not SVGElements due to them not having dedicated offsets properties
 export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
-    let targetElement: HTMLElement | null = element;
+    let targetElement: HTMLElement | SVGElement | null = element;
     // this will be our full matrix
     let totalTransformMatrix: DOMMatrix = new DOMMatrix();
     
@@ -216,7 +217,7 @@ export function getTotalTransformationMatrix(element: HTMLElement): DOMMatrix {
         // property (that's not the default "static"). also offset properties are not affected by transforms (like scale, skew, rot, translate)
         // think of offset properties as the original layout of the child in the parent
         // for this to work properly, probably add a transform identity matrix in the css to any ancestor of the current element 
-        const offsetFromParent: Vector2 = new Vector2(targetElement.offsetLeft, targetElement.offsetTop);
+        const offsetFromParent: Vector2 = new Vector2(element.offsetLeft, element.offsetTop);
 
         // add the matrix to our total transform matrix
         // operatrions are read like standard matrices where the rightmost operation (bottom here) is read first and in ascending order
@@ -273,7 +274,7 @@ export function transformPoint(point: Vector2, matrix: DOMMatrix, pivot: Vector2
 }
 
 // get the pivot (transform origin) of the element
-export function getPivot(element: HTMLElement): Vector2 {
+export function getPivot(element: HTMLElement | SVGElement): Vector2 {
     const style: CSSStyleDeclaration = window.getComputedStyle(element);
     const [originX, originY] = style.transformOrigin.split(" ");
     const pivot: Vector2 = new Vector2(

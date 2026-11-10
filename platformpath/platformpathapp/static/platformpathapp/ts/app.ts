@@ -1,26 +1,40 @@
-import { DataFetch } from "./data_fetch.ts";
 import { LinesSelectionPage } from "./lines_selection_page.ts";
 import { StationsSelectionPage } from "./stations_selection_page.ts";
 import { StationMapPage } from "./station_map_page.ts";
 import { StationMapPageMobile } from "./station_map_page_mobile.ts";
 import { URLHandler } from "./url_handler.ts";
+import { GeoConverterTestPage } from "./geolocation.ts";
 
+// this is the script that actually runs the other pages
 class App {
-    public stationCache: any;
-    public linesSelectionPage: LinesSelectionPage | null;
-    public stationsSelectionPage: StationsSelectionPage | null;
-    public stationMapPage: StationMapPage | null;
-    public stationMapPageMobile: StationMapPageMobile | null;
+    // discover routes pages
+    public linesSelectionPage: LinesSelectionPage | null = null;
+    public stationsSelectionPage: StationsSelectionPage | null = null;
+    public stationMapPage: StationMapPage | null = null;
+    public stationMapPageMobile: StationMapPageMobile | null = null;
+
+    // test routes pages
+    public geoConverterTestPage: GeoConverterTestPage | null = null;
 
     constructor() {
-        this.stationCache = {};
-        this.linesSelectionPage = null;
-        this.stationsSelectionPage = null;
-        this.stationMapPage = null;
-        this.stationMapPageMobile = null;
     }
 
-    public async init(): Promise<void> {
+    // checks which page should be initialized and initializes it
+    public init(): void {
+        switch (URLHandler.getDirectiveURLRoute()) {
+            // choose discover routes here
+            case "discover":
+                this.initDiscoverRoutes();
+                break;
+            // choose test routes here
+            case "test":
+                this.initTestRoutes();
+                break;
+        }
+    }
+
+    // determines which page on the discover route we'll be setting up and initializes it
+    public initDiscoverRoutes(): void {
         switch(URLHandler.getCurrentWorkingURLRoute()) {
             case "lines":
                 this.linesSelectionPage = new LinesSelectionPage();
@@ -42,6 +56,16 @@ class App {
                     this.stationMapPage = new StationMapPage();
                     this.stationMapPage.init();
                 }
+                break;
+        }
+    }
+
+    // determines which page on the discover route we'll be setting up and initializes it
+    public initTestRoutes(): void {
+        switch(URLHandler.getCurrentWorkingURLRoute()) {
+            case "geolocation":
+                this.geoConverterTestPage = new GeoConverterTestPage();
+                this.geoConverterTestPage.init();
                 break;
         }
     }

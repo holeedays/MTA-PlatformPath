@@ -1,8 +1,10 @@
 import { Vector2 } from "./transformations.ts";
-import { getTotalTransformationMatrix, transformPoint, getPivot } from "./transformations.ts";
+import { normalizeAngle, AngleType } from "./numeric_utils.ts";
+import { getTotalTransformationMatrix, transformPoint } from "./transformations.ts";
+// import panzoom from "panzoom";
 
 // extents is just like DOMRect but for coordinate systems and lacking the methods
-interface Extents {
+export interface Extents {
     west: number,
     south: number
     east: number,
@@ -10,21 +12,23 @@ interface Extents {
 }
 
 // types of geo converter callbacks here
-type GeoConverterCallBack = "positionupdate";
+export type GeoConverterCallBack = "positionupdate";
 
-class GeoConverter {
-    private referenceElement: HTMLElement;
+export class GeoConverter {
+    private referenceElement: HTMLElement | SVGSVGElement;
     private extents: Extents;
     private latLongDisplay: {
         element: HTMLDivElement,
         fn: (ev: MouseEvent) => void
     } | null = null;
+    private watchPositonID: number | null = null;
 
-    private onPositionUpdateCallbacks: (
-        (absoluteMappedCoords: Vector2, relativeMappedCoords: Vector2, baseCoords: Vector2) => void
-    )[] = [];
+    private onPositionUpdateCallbacks: ((
+            coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+            heading: {absolute: number, relative: number, base: number} | null
+    ) => void)[] = [];
 
-    constructor(referenceElement: HTMLElement, extents: Extents) {
+    constructor(referenceElement: HTMLElement | SVGSVGElement, extents: Extents) {
         this.referenceElement = referenceElement;
         this.extents = extents;
     }
@@ -34,32 +38,90 @@ class GeoConverter {
         console.log("Attempting to geolocate...");
 
         // just doing this to make it easier for syntax wise
-        const geolocationObj: Geolocation =  navigator.geolocation;
+        const geolocationObj: Geolocation = navigator.geolocation;
         if (!geolocationObj) {
             console.log("User has denied permission to utilize their location");
             return;
         }
 
         // this is fired whenever the users position's changes
-        geolocationObj.watchPosition((pos: GeolocationPosition) => {
-            const coords: GeolocationCoordinates  = pos.coords;
-            console.log(coords.latitude, coords.longitude);
+        // also get the id, so it could be used later to remove any event listeners that were added for watchPosition()
+        this.watchPositonID = geolocationObj.watchPosition((pos: GeolocationPosition) => {
+            // get the coords object from the geolocation position
+            const geoCoords: GeolocationCoordinates = pos.coords;
+            console.log(geoCoords.latitude, geoCoords.longitude, geoCoords.heading);
 
             // get the lat and long in a vector2 format
-            const baseCoords: Vector2 = new Vector2(coords.longitude, coords.latitude);
+            const baseCoords: Vector2 = new Vector2(geoCoords.longitude, geoCoords.latitude);
             // cycle through all the onPositionUpdateCallbacks and trigger them, passing the updated positions 
             this.onPositionUpdateCallbacks.forEach(
-                (callback: (absoluteMappedCoords: Vector2, relativeMappedCoords: Vector2, baseCoords: Vector2) => void) => {
-                    callback(
-                        this.getAbsoluteMappedCoords(baseCoords), this.getRelativeMappedCoords(baseCoords), baseCoords
+                (callback: (
+                    coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+                    heading: {absolute: number, relative: number, base: number} | null
+                ) => void) => {
+                    // create a coords and heading objs
+                    const coords: {absolute: Vector2, relative: Vector2, base: Vector2} = {
+                        // both absolute and relative coords are calculated differently depending on whether the reference
+                        // element is an SVG element or a HTML element
+                        absolute: (        
+                            this.referenceElement instanceof HTMLElement ? 
+                            this.getAbsoluteMappedCoords(baseCoords) :
+                            this.getAbsoluteMappedCoordsSVG(baseCoords)
+                        ), 
+                        relative: (  
+                            this.referenceElement instanceof HTMLElement ? 
+                            this.getRelativeMappedCoords(baseCoords) :
+                            this.getRelativeMappedCoordsSVG(baseCoords)
+                        ), 
+                        base: baseCoords
+                    };
+                    const heading: {absolute: number, relative: number, base: number} | null = (
+                        geoCoords.heading === null ?
+                        null :
+                        {
+                            // as for heading, absolute heading is also dependent on whether the reference element is a SVG
+                            // element or a HTML element
+                            absolute: (
+                                this.referenceElement instanceof HTMLElement ? 
+                                this.getAbsoluteHeading(geoCoords.heading) :
+                                this.getAbsoluteHeadingSVG(geoCoords.heading)
+                            ), 
+                            relative: this.getRelativeHeading(geoCoords.heading), 
+                            base: geoCoords.heading ?? 0
+                        }
                     );
+
+                    // pass it to the callback
+                    callback(coords, heading);
                 }
             );
         });
     }
 
+    // disables any geolocation event listeners
+    public disable(): void {
+        // check if geolocation is allowed by the user
+        const geolocationObj: Geolocation = navigator.geolocation;
+        if (!geolocationObj) {
+            console.log("User has denied permission to utilize their location");
+            return;
+        }
+        // check if an event listener has been set
+        if (this.watchPositonID === null) {
+            console.warn("There are no event listeners set");
+            return;
+        }
+        // if there are, clear the event listener
+        geolocationObj.clearWatch(this.watchPositonID);
+    }
+
     // get what the coordinates of the point in latitude and longitude would be in browser space
     private getAbsoluteMappedCoords(baseCoords: Vector2): Vector2 {
+        if (this.referenceElement instanceof SVGSVGElement) {
+            console.warn("Cannot use this method for an SVG element");
+            return new Vector2();
+        }
+
         // get the mapped coords in the reference element's local space
         const relativeMappedCoords: Vector2 = this.getRelativeMappedCoords(baseCoords);
         // get the coords after the total transformation matrix has been applied to it
@@ -74,26 +136,89 @@ class GeoConverter {
         return transformedCoords;
     }
 
+    // the SVG variation of getAbsoluteMappedCoords()
+    private getAbsoluteMappedCoordsSVG(baseCoords: Vector2): Vector2 {
+        if (this.referenceElement instanceof HTMLElement) {
+            console.warn("Cannot use this method for an HTML element");
+            return new Vector2();
+        }
+
+        // get the relative mapped coords
+        const relativeMappedCoords: Vector2 = this.getRelativeMappedCoordsSVG(baseCoords);
+        // get the transform matrix that converts SVG local space to global space
+        const transformMatrix: DOMMatrix | null = this.referenceElement.getScreenCTM();
+        if (transformMatrix === null) {
+            console.warn("Could not retrieve transform matrix from SVG element: ", this.referenceElement);
+            return new Vector2();
+        }
+
+        // get the coords after the total transformation matrix has been applied to it
+        const transformedCoords: Vector2 = transformPoint(
+            // transform this point
+            relativeMappedCoords, 
+            // apply the SVG matrix
+            transformMatrix
+        );
+
+        return transformedCoords;
+    }
+
     // get the mapped coords of a lat and long coordinate in the relative space of the reference element (we do not apply any transformations
     // here)
     private getRelativeMappedCoords(baseCoords: Vector2): Vector2 {
+        if (this.referenceElement instanceof SVGSVGElement) {
+            console.warn("Cannot use this method for an SVG element");
+            return new Vector2();
+        }
+
         // get the extents
         // this is in standard cartesian plane axes by the way, where y up is positive
         const {north, west, south, east} = this.extents; 
         // get the lat and long coords relative to the extents
         const xRatio: number = (baseCoords.x - west) / (east - west);
         const yRatio: number = (north - baseCoords.y) / (north - south);
+        // get the offset dimensions (untransformed dimensions) of the ref element
+        const offsetDimensions: Vector2 = new Vector2(this.referenceElement.offsetWidth, this.referenceElement.offsetHeight);
 
         return new Vector2(
-            // offset width and height do not get changed by transforms so we'll use this 
-            xRatio*this.referenceElement.offsetWidth, 
-            yRatio*this.referenceElement.offsetHeight
+            // these width and height dimensions represent the untransformed widths and height of an element
+            xRatio*offsetDimensions.x, 
+            yRatio*offsetDimensions.y
+        );
+    }
+
+    // the SVG variation of getRelativeMappedCoords()
+    private getRelativeMappedCoordsSVG(baseCoords: Vector2): Vector2 {
+        if (this.referenceElement instanceof HTMLElement) {
+            console.warn("Cannot use this method for an HTML element");
+            return new Vector2();
+        }
+
+        // get the extents
+        // this is in standard cartesian plane axes by the way, where y up is positive
+        const {north, west, south, east} = this.extents; 
+        // get the lat and long coords relative to the extents
+        const xRatio: number = (baseCoords.x - west) / (east - west);
+        const yRatio: number = (north - baseCoords.y) / (north - south);
+        // get the viewbox of the SVG (the dimensions can be found in the attributes of the root of the SVG [the one with xmlns])
+        // also bbox is drastically different from viewBox so use viewBox for more consistent layouts
+        const viewBox: DOMRect = this.referenceElement.viewBox.baseVal;
+
+        return new Vector2(
+            // these width and height dimensions represent the local space of the SVG, unaffected by transforms
+            xRatio*viewBox.width, 
+            yRatio*viewBox.height
         );
     }
     
     // convert a pos on the browser to lat and long
     // this is mainly for debugging purposes
     private getScreenPosToCoords(screenPos: Vector2): Vector2 {
+        if (this.referenceElement instanceof SVGSVGElement) {
+            console.warn("Cannot use this method for an SVG element");
+            return new Vector2();
+        }
+
         // pos * inverse matrix --> normalized pos
         // mapTopLeft * inverse matrix, mapBottomRight * inverseMatrix --> normalized topLeft & bottomRight
         // calculate normalized pos relative to normalized topLeft and bottomRight
@@ -102,14 +227,52 @@ class GeoConverter {
 
         // get the total transform matrix of the ref element
         const totalTransformMatrix: DOMMatrix = getTotalTransformationMatrix(this.referenceElement);
-        // get the transformed pos of the screenPos with all transformations reversed
+        // get the transformed pos of the screenPos with all transformations reversed (global to local)
         const transformedPos: Vector2 = transformPoint(
             screenPos,
             totalTransformMatrix.inverse()
         );
-        // since the pos is now normalized, we can use it with the normalized dimensions of the reference element
-        const xRatio: number = (transformedPos.x - this.referenceElement.offsetLeft) / this.referenceElement.offsetWidth;
-        const yRatio: number = (transformedPos.y - this.referenceElement.offsetTop) / this.referenceElement.offsetHeight;
+        // get the offset dimensions of the element
+        const {offsetWidth, offsetHeight} = this.referenceElement;
+        // since the pos is now in the ref element's local space, we treat the top left as (0,0) and calculate the ratio from there
+        const xRatio: number = transformedPos.x / offsetWidth;
+        const yRatio: number = transformedPos.y / offsetHeight;
+
+        // get the extents
+        const {north, west, south, east} = this.extents; 
+        
+        // get the coords (remember, it's (longitude, latitude) right now)
+        const coords: Vector2 = new Vector2(
+            west + xRatio * (east - west),
+            north - yRatio * (north - south)
+        );
+
+        return coords;
+    }
+
+    // the SVG variation of getScreenPosToCoords()
+    private getScreenPosToCoordsSVG(screenPos: Vector2): Vector2 {
+        if (this.referenceElement instanceof HTMLElement) {
+            console.warn("Cannot use this method for an HTML element");
+            return new Vector2();
+        }
+
+        // get the transform matrix that converts SVG local space to global space
+        const transformMatrix: DOMMatrix | null = this.referenceElement.getScreenCTM();
+        if (transformMatrix === null) {
+            console.warn("Could not retrieve transform matrix from SVG element: ", this.referenceElement);
+            return new Vector2();
+        }
+
+        // apply the inverse of the transform matrix to convert global space to SVG local space
+        const transformedPos: Vector2 = transformPoint(screenPos, transformMatrix.inverse());
+        // get the viewBox for the local, untransformed dimensions of the element
+        const viewBox: DOMRect = this.referenceElement.viewBox.baseVal;
+
+        // since the pos is now in the ref element's local space, we treat the top left viewBox.x & viewBox.y and calculate the 
+        // ratio from there
+        const xRatio: number = (transformedPos.x - viewBox.x) / viewBox.width;
+        const yRatio: number = (transformedPos.y - viewBox.y) / viewBox.height;
 
         // get the extents
         const {north, west, south, east} = this.extents; 
@@ -137,7 +300,7 @@ class GeoConverter {
         
         // create a handler for the mouse move event
         const handler : (ev: MouseEvent) => void = (ev: MouseEvent) => {
-            const mousePos: Vector2 = new Vector2(ev.pageX, ev.pageY);
+            const mousePos: Vector2 = new Vector2(ev.clientX, ev.clientY);
             const coords: Vector2 = this.getScreenPosToCoords(mousePos);
             // coords are usually read latitude (y) and then longitude (x)
             // however, the coords we use standardize it to long (x) and lat (y) 
@@ -163,17 +326,98 @@ class GeoConverter {
         this.latLongDisplay = null;
     }
 
+    // get the heading given (in degrees) to a positive angle in global space (this is equivalent to 
+    // reference element's rot in world space + heading)
+    private getAbsoluteHeading(headingDeg: number): number {
+        // for improper function calls, just return 0
+        if (this.referenceElement instanceof SVGSVGElement) {
+            console.warn("Cannot use this method for an SVG element");
+            return 0;
+        }
+
+        // atan2(b, a) gives the angle of the transformed X axis, but doesn't capture
+        // how other directions change under nonuniform scaling or skew.
+        // For example, [a=2, b=0, c=0, d=1, e=0, f=0] scales X by 2:
+        // atan2(b, a) = 0 rad (rot over x axis) yet vector (1, 1), when multiplied by the matrix, becomes (2, 1), 
+        // changing its angle from PI/4 to atan2(1, 2) ~ 0.464 rad
+        // therefore, we transform the actual heading vector and calculate its resulting angle, excluding translation because 
+        // directions have no position.
+        // the method below does just that
+
+        // get the heading in radians and refer to relative to the x axis (heading is relative to y axis (true North) by default)
+        const headingRad: number = headingDeg * Math.PI / 180 - Math.PI / 2;
+        // get a directional vector that represents the angle
+        const directionalVector: Vector2 = new Vector2(
+            Math.cos(headingRad),  // adj
+            Math.sin(headingRad)   // opposite
+        );
+        // get the scalar and skew (the rotation componenets) components from the total transform matrix that converts child 
+        // space to world space 
+        const {a, b, c, d} = getTotalTransformationMatrix(this.referenceElement);
+        // transform our directional vector by the total transform matrix
+        const newDirectionalVector: Vector2 = transformPoint(directionalVector, new DOMMatrix([a, b, c, d, 0, 0]));
+        // get our rotation in degrees, change the rotation back being relative to the y axis
+        const totalRotDeg: number = Math.atan2(newDirectionalVector.y, newDirectionalVector.x) * 180 / Math.PI + 90;
+
+        // normalize the angle
+        return normalizeAngle(totalRotDeg, AngleType.DEGREES);
+    }
+
+    // the SVG variation of getAbsoluteHeading()
+    private getAbsoluteHeadingSVG(headingDeg: number): number {
+        if (this.referenceElement instanceof HTMLElement) {
+            console.warn("Cannot use this method for an HTML element");
+            return 0;
+        }
+
+        // get the heading in radians and refer to relative to the x axis (heading is relative to y axis (true North) by default)
+        const headingRad: number = headingDeg * Math.PI / 180 - Math.PI / 2;
+        // get a directional vector that represents the angle
+        const directionalVector: Vector2 = new Vector2(
+            Math.cos(headingRad),  // adj
+            Math.sin(headingRad)   // opposite
+        );
+        // get the scalar and skew (the rotation componenets) components from the total transform matrix that converts child 
+        // space to world space 
+
+        // get the transform matrix that converts SVG local space to global space
+        const transformMatrix: DOMMatrix | null = this.referenceElement.getScreenCTM();
+        if (transformMatrix === null) {
+            console.warn("Could not retrieve transform matrix from SVG element: ", this.referenceElement);
+            return 0;
+        }
+        // get the non translation components from the matrix
+        const {a, b, c, d} = transformMatrix;
+        // transform our directional vector by the total transform matrix
+        const newDirectionalVector: Vector2 = transformPoint(directionalVector, new DOMMatrix([a, b, c, d, 0, 0]));
+        // get our rotation in degrees, change the rotation back being relative to the y axis
+        const totalRotDeg: number = Math.atan2(newDirectionalVector.y, newDirectionalVector.x) * 180 / Math.PI + 90;
+
+        // normalize the angle
+        return normalizeAngle(totalRotDeg, AngleType.DEGREES);
+    }
+
+    // normalizes the heading given (in degrees) to a positive angle in local space of the reference element
+    private getRelativeHeading(headingDeg: number): number {
+        // heading rotation is read clockwise from true north (e.g. 30 degrees = 30 degrees clockwise), this aligns with browser rot
+        // which has the y axis flipped over the x axis, no need for degree change here
+        return normalizeAngle(headingDeg, AngleType.DEGREES);
+    }
+
     // adds an event listener to the geoconverter
     public addEventListener(
         geoConverterCallback: GeoConverterCallBack, 
-        callback: (absoluteMappedCoords: Vector2, relativeMappedCoords: Vector2, baseCoords: Vector2) => void
+        callback: (
+            coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+            heading: {absolute: number, relative: number, base: number} | null
+        ) => void
     ): void {
         if (geoConverterCallback === "positionupdate")
             this.onPositionUpdateCallbacks.push(callback);
     }
 }
 
-class GeoConverterTest {
+export class GeoConverterTestPage {
     constructor() {
     }
 
@@ -217,7 +461,10 @@ class GeoConverterTest {
         canvas.height = canvasDimensions.y;
 
         // this is to test absolute coords, non essential set up
-        canvas.style.transform = "rotate(0deg) translateX(400px) scale(1.5)";
+        // canvas.style.transform = "rotate(0deg) translateX(400px) scale(1.5)";
+        // creating a panzoom to test this
+        // @ts-ignore
+        panzoom(canvas, {minZoom: 0.1, maxZoom: 2000, smoothScroll: false});
 
         // copy the image onto the canvas
         ctx.drawImage(img, 0, 0, canvasDimensions.x, canvasDimensions.y);
@@ -256,9 +503,8 @@ class GeoConverterTest {
         geoConverter.addEventListener(
             "positionupdate", 
             (
-                absoluteMappedCoords: Vector2, 
-                relativeMappedCoords: Vector2, 
-                baseCoords: Vector2
+                coords: {absolute: Vector2, relative: Vector2, base: Vector2},
+                heading: {absolute: number, relative: number, base: number} | null
             ) => {
 
                 ///////////////// testing absolute coords here
@@ -266,8 +512,8 @@ class GeoConverterTest {
                 // add style
                 dummyPoint.classList.add("dummy-point");
                 // set the position
-                dummyPoint.style.setProperty("--pos-x", `${absoluteMappedCoords.x}px`);
-                dummyPoint.style.setProperty("--pos-y", `${absoluteMappedCoords.y}px`);
+                dummyPoint.style.setProperty("--pos-x", `${coords.absolute.x}px`);
+                dummyPoint.style.setProperty("--pos-y", `${coords.absolute.y}px`);
                 // add the element to the document
                 document.body.append(dummyPoint);
 
@@ -276,7 +522,7 @@ class GeoConverterTest {
                 // draw our circle to indicate where the person is in the picture
                 ctx.beginPath();
                 // ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle)
-                ctx.ellipse(relativeMappedCoords.x, relativeMappedCoords.y, 10, 10, 0, 0, 2 * Math.PI);
+                ctx.ellipse(coords.relative.x, coords.relative.y, 10, 10, 0, 0, 2 * Math.PI);
                 // set fill
                 ctx.fillStyle = "#0000ff";
                 ctx.fill();
@@ -284,9 +530,7 @@ class GeoConverterTest {
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = "#000000";
                 ctx.stroke();
-        });
+            }
+        );
     }
 }
-
-const geoConverterTest: GeoConverterTest = new GeoConverterTest();
-geoConverterTest.init();
