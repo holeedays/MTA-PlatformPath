@@ -11,7 +11,7 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
         # 1. Create station
         station = Station.objects.create(
             name="Bay 50 St",
-            diagram_path="/static/platformpathapp/diagrams/Bay50/Station_SVGs/Bay50_v5.svg",
+            diagram_path="/static/platformpathapp/diagrams/Bay_50/Station_SVGs/Bay_50_v6.svg",
             accessible_station=False
         )
 
@@ -42,134 +42,134 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
 
         # 4. Create Station Map
 
-        ROAD_MAP_LOW_RES_IMGS_PATH: str = "static/platformpathapp/diagrams/Bay50/road_map/low_res/"
-        SATELLITE_MAP_LOW_RES_IMGS_PATH: str = "static/platformpathapp/diagrams/Bay50/satellite_map_map/low_res/"
-        ROAD_MAP_HIGH_RES_IMGS_PATH: str = "static/platformpathapp/diagrams/Bay50/road_map/high_res/"
-        SATELLITE_MAP_HIGH_RES_IMGS_PATH: str = "static/platformpathapp/diagrams/Bay50/satellite_map_map/high_res/"
+        ROAD_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/road_map/low_res/"
+        SATELLITE_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/satellite_map/low_res/"
+        ROAD_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/road_map/high_res/"
+        SATELLITE_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/satellite_map/high_res/"
 
         # --- LOW RES MAP PIC PATHS ---
         road_map_low_res_imgs: HashGrid = HashGrid(3, 3, (
-            (ROAD_MAP_LOW_RES_IMGS_PATH + "11", ROAD_MAP_LOW_RES_IMGS_PATH + "12", ROAD_MAP_LOW_RES_IMGS_PATH + "13"),
-            (ROAD_MAP_LOW_RES_IMGS_PATH + "21", ROAD_MAP_LOW_RES_IMGS_PATH + "22", ROAD_MAP_LOW_RES_IMGS_PATH + "23"),
-            (ROAD_MAP_LOW_RES_IMGS_PATH + "31", ROAD_MAP_LOW_RES_IMGS_PATH + "32", ROAD_MAP_LOW_RES_IMGS_PATH + "33")
+            (ROAD_MAP_LOW_RES_IMGS_PATH + "11.png", ROAD_MAP_LOW_RES_IMGS_PATH + "12.png", ROAD_MAP_LOW_RES_IMGS_PATH + "13.png"),
+            (ROAD_MAP_LOW_RES_IMGS_PATH + "21.png", ROAD_MAP_LOW_RES_IMGS_PATH + "22.png", ROAD_MAP_LOW_RES_IMGS_PATH + "23.png"),
+            (ROAD_MAP_LOW_RES_IMGS_PATH + "31.png", ROAD_MAP_LOW_RES_IMGS_PATH + "32.png", ROAD_MAP_LOW_RES_IMGS_PATH + "33.png")
         ))
         satellite_map_low_res_imgs: HashGrid = HashGrid(3, 3, (
-            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "11", SATELLITE_MAP_LOW_RES_IMGS_PATH + "12", SATELLITE_MAP_LOW_RES_IMGS_PATH + "13"),
-            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "21", SATELLITE_MAP_LOW_RES_IMGS_PATH + "22", SATELLITE_MAP_LOW_RES_IMGS_PATH + "23"),
-            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "31", SATELLITE_MAP_LOW_RES_IMGS_PATH + "32", SATELLITE_MAP_LOW_RES_IMGS_PATH + "33")
+            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "11.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "12.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "13.png"),
+            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "21.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "22.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "23.png"),
+            (SATELLITE_MAP_LOW_RES_IMGS_PATH + "31.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "32.png", SATELLITE_MAP_LOW_RES_IMGS_PATH + "33.png")
         ))
 
         # --- HIGH RES MAP PIC PATHS ---
         road_map_high_res_imgs: HashGrid = HashGrid(3, 3, (
             (
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "11_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "11_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "12_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "12_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "13_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "13_33.png")
                 ))
             ),
             (
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "21_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "21_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "22_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "22_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "23_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "23_33.png")
                 ))
             ),
             (
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "31_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "31_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "32_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "32_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_11", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_12", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_13"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_21", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_22", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_23"),
-                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_31", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_32", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_33")
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_11.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_12.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_13.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_21.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_22.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_23.png"),
+                    (ROAD_MAP_HIGH_RES_IMGS_PATH + "33_31.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_32.png", ROAD_MAP_HIGH_RES_IMGS_PATH + "33_33.png")
                 ))
             )
         ))
         satellite_map_high_res_imgs: HashGrid = HashGrid(3, 3, (
             (
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "11_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "12_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "13_33.png")
                 ))
             ),
             (
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "21_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "22_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "23_33.png")
                 ))
             ),
             (
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "31_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "32_33.png")
                 )), 
                 HashGrid(3, 3, (
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_11", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_12", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_13"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_21", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_22", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_23"),
-                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_31", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_32", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_33")
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_11.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_12.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_13.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_21.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_22.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_23.png"),
+                    (SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_31.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_32.png", SATELLITE_MAP_HIGH_RES_IMGS_PATH + "33_33.png")
                 ))
             )
         ))
 
         station_map = StationMap.objects.create(
             station=station,
-            extents={"north": 0, "south": 0, "west": 0, "east": 0},
+            extents={"north": 40.5989735, "south": 40.5783913, "west": -73.9973, "east": -73.9702918},
             road_map_low_res_imgs = road_map_low_res_imgs.hash_map,
             satellite_map_low_res_imgs = satellite_map_low_res_imgs.hash_map,
             road_map_high_res_imgs = road_map_high_res_imgs.hash_map,
