@@ -2,9 +2,10 @@ This is where we add stuff we did and things to do...
 
 CURRENT BUGS:
 -----------------------
-Some functions in station map page use .click() on certain node options and filter checklist buttons. This works perfectly fine on desktop 
+> Some functions in station map page use .click() on certain node options and filter checklist buttons. This works perfectly fine on desktop 
 (where most handlers are initialized with click event listeners) but for the mobile page, this doesn't work at all. We need to find an 
 alternative to calling .click() on the buttons and activate the handler directly.
+> Also, the GPS marker head isn't changing orientation (even when heading is available for geolocating), fix that
 
 PLANS FOR THE FUTURE:
 ------------------------------
