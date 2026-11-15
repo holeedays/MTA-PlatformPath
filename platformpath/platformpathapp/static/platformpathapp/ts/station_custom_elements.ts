@@ -1,6 +1,6 @@
 import type { PathStep } from "./path_finder.ts";
 import { type LayerData } from "./station_data.ts";
-import { SvgRenderer, type SelectionRole } from "./svg_renderer.ts";
+import { SVGRenderer, type SelectionRole } from "./svg_renderer.ts";
 
 // a node option class used to house various proprties pertaining to an option for the node dropdown
 export class NodeOption {

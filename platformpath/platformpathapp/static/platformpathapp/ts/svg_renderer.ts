@@ -3,7 +3,7 @@
 import { type LayerData, type StationMapData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
-import { getCurrentTransformMatrix, getElementCentersOffset, boundingRectsAreIntersecting, Vector2 } from "./transformations.ts";
+import { getElementCentersOffset, boundingRectsAreIntersecting, getCurrentTransformMatrix, Vector2 } from "./transformations.ts";
 import { clamp, normalizeAngle, lerp, AngleType } from "./numeric_utils.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
@@ -14,7 +14,7 @@ export enum MapView {
     SATELLITE
 }
 
-export class SvgRenderer {
+export class SVGRenderer {
     // @ts-ignore
     public currentPanZoom: PanZoom | null = null;
 
@@ -42,6 +42,7 @@ export class SvgRenderer {
     public map: {
         elements: {
             parent: SVGGraphicsElement, 
+            symbols: SVGGraphicsElement,
             gridCells: [SVGGraphicsElement, SVGGraphicsElement[]][],
             roadMapGroup: SVGGraphicsElement, 
             satelliteMapGroup: SVGGraphicsElement
@@ -62,9 +63,21 @@ export class SvgRenderer {
     // sure the value is initialized when called for use
     public minZoom: number | null = null;
 
+    // just have a universal reference to the SVG namespace for creating SVG elements
+    public static SVGURI: string = "http://www.w3.org/2000/svg";
+    public static STANDARD_SMOOTH_CENTER_ATTRIB: {
+        centerSpeed: number, 
+        centerThresholdRatio: number, 
+        hideElementsWhileCentering: boolean
+    } = {
+        centerSpeed: 3.5,
+        centerThresholdRatio: 0.001,
+        hideElementsWhileCentering: false
+    };
+
     constructor(
-        mapRotationalSensitivity: number = 0.5, 
-        highResImgLoadZoomThreshold: number = 2, 
+        mapRotationalSensitivity: number = 5, 
+        highResImgLoadZoomThreshold: number = 1.5, 
         dynamicElementsRotationDegMapIncrement: number = 10
     ) {
         // init some variables that we can modify during constructor creation
@@ -177,67 +190,110 @@ export class SvgRenderer {
         omnidirectionalRotElements: SVGGraphicsElement[],
         bidirectionalRotElements: Map<number,SVGGraphicsElement[]>
     } | null {
-
-        if (this.SVG === null) {
-            console.warn("The entire SVG doesn't exist");
+        if (this.stationSVG === null || this.map === null) {
+            console.warn(
+                "The station SVG doesn't exist and/or map field hasn't been initialized",
+                `Station SVG Status: ${this.stationSVG}`,
+                `Map Field Status: ${this.map}`
+            );
             return null;
         }
 
-        // get our omnidirectional rotational elements here
-        const omnidirectionalRotElements: SVGGraphicsElement[] = (
-            Array.from(
-                this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']")
-            )
-        );
+        // get our omnidirectional rotational elements here...
 
-        // create a bidirectional rotational elements hash map (used for later sorting)
+        // init an array to hold all the omnidirectional rot elements
+        const omnidirectionalRotElements: SVGGraphicsElement[] = [];
+
+        // station and map rot elements are structured differently so we have to push them into the rot element array in a different manner
+        const stationOmniRotElements: NodeListOf<SVGGraphicsElement> = this.stationSVG.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']");
+        const mapOmniRotGroups: NodeListOf<SVGGraphicsElement> = this.map.elements.symbols.querySelectorAll<SVGGraphicsElement>("[id*='[FOLLOW_ROT]']");
+
+        // directional elements in the station SVG have the actual rot string stored in their id, this means we can just push the element itself
+        // into the array
+        omnidirectionalRotElements.push(...stationOmniRotElements);
+        // meanwhile, directional elements in the map SVG are grouped together; it is the group element that holds the actual rot string hence we need
+        // to push the children of the group into the array instead of the group itself
+        mapOmniRotGroups.forEach((rotGroup: SVGGraphicsElement) => {
+            // cast the children into a SVGGraphicsElement array 
+            const rotChildren: SVGGraphicsElement[] = Array.from(rotGroup.children) as SVGGraphicsElement[];
+            // spread the contents and push it into the omnidirectionalRotElements array
+            omnidirectionalRotElements.push(...rotChildren);
+        });
+
+        // handle bidrectional rotational elements here...
+
+        // the way the directional elements are handled are very similar to how bidirectional rotational elements do so
+
+        // create a bidirectional rotational elements hash map (used for sorting below)
         const bidirectionalRotElementsMap: Map<number,SVGGraphicsElement[]> = new Map();
-        const bidirectionalRotElements: NodeListOf<SVGGraphicsElement> = (
-            this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[ROT_']")
-        );
-        // iterate thru each element in the DOM
-        for (const rotElement of bidirectionalRotElements) {
-            // extract the starting rotation of the bidirectional rotational element and then sort it in into the map
+        // create a regex filter that returns the value between ROT_ and the next ending bracket
+        // (ex: [ROT_-32.1] ==> -32.1)
+        const regexFilter: RegExp = new RegExp(/\[ROT_([^\]]+)/);
 
-            // extract the starting rotation
-            // regex pattern to match anything between "[ROT_" and the next "], this should be the starting rotation of
-            // the element found
-            const regexFilter: RegExp = new RegExp(/\[ROT_([^\]]+)/);
-            // this should match and return us the string containing the rotation value
-            const filteredID: RegExpMatchArray | null = rotElement.id.match(regexFilter);
+        // create a function that allows us to handle different bidirectional rot elements (thru the callback)
+        const processBidirectionalRotElement: (
+            rotElementOrGroup: SVGGraphicsElement, 
+            callbackFn: (mapRotElementsArray: SVGGraphicsElement[]) => void
+        ) => void = (rotElementOrGroup: SVGGraphicsElement, callbackFn: (mapRotElements: SVGGraphicsElement[]) => void) => {
 
+            // compare the id of the element against the regex filter 
+            const filteredID: RegExpMatchArray | null = rotElementOrGroup.id.match(regexFilter);
             if (filteredID === null) {
-                console.warn(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
-                continue;
+                console.warn(`Rotation element or group with id '${rotElementOrGroup.id}' doesn't have the id name set properly`);
+                return;
             }
 
             // now parse the string into a number
-            // match returns the full matched string in the 0th index and any captured group (the stuff in paranthesis) in 1st
-            // index
+            // match returns the full matched string in the 0th index and any captured group (the stuff in paranthesis) in the 1st index
             let startingRotDeg: number = parseFloat(filteredID[1] ?? "");
             if (isNaN(startingRotDeg)) {
-                console.warn(`Rotation element with id '${rotElement.id}' doesn't have the id name set properly`);
-                continue;
+                console.warn(`Rotation element or group with id '${rotElementOrGroup.id}' doesn't have the id name set properly`);
+                return;
             }
 
             // normalize the value (now the angle is limited to 0-359)
             const startingRotDegNormalized: number = normalizeAngle(startingRotDeg, AngleType.DEGREES);
             // see if there are already a rot element array for this specific angle
-            let mappedRotElements: SVGGraphicsElement[] | undefined = (
+            let mappedRotElementsArray: SVGGraphicsElement[] | undefined = (
                 bidirectionalRotElementsMap.get(startingRotDegNormalized)
             );
+
             // if not
-            if (mappedRotElements === undefined) {
+            if (mappedRotElementsArray === undefined) {
                 // create an array with current rot element
-                mappedRotElements = [rotElement];
+                mappedRotElementsArray = [];
                 // and set it into the map
-                bidirectionalRotElementsMap.set(startingRotDegNormalized, mappedRotElements);
+                bidirectionalRotElementsMap.set(startingRotDegNormalized, mappedRotElementsArray);
             }
-            else {
-                // if the array was created, add the new rot element to array
-                mappedRotElements.push(rotElement);
-            }
-        }
+
+            // handle the new mapped array in the callback function
+            callbackFn(mappedRotElementsArray);
+        };
+
+        // get the corresponding rot groups from the station SVG and the map SVG
+        const stationBiRotElements: NodeListOf<SVGGraphicsElement> = this.stationSVG.querySelectorAll<SVGGraphicsElement>("[id*='ROT_']");
+        const mapBiRotGroups: NodeListOf<SVGGraphicsElement> = this.map.elements.symbols.querySelectorAll<SVGGraphicsElement>("[id*='ROT_']");
+
+        // directional elements in the station SVG have the actual rot value stored in their id, this means we can just push the element itself
+        // into the mapped array
+        stationBiRotElements.forEach((rotElement: SVGGraphicsElement) => {
+            processBidirectionalRotElement(rotElement, (mapRotElementsArray: SVGGraphicsElement[]) => {
+                mapRotElementsArray.push(rotElement);
+            });
+        });
+        // directional elements in the map are slightly different; directional elements are grouped into <g> SVG tags whose id actually stores the rot
+        // value instead of the directional elements themselves
+        // as such, we need to push the children into the mapped array instead of the group
+        mapBiRotGroups.forEach((rotGroup: SVGGraphicsElement) => {
+            processBidirectionalRotElement(rotGroup, (mapRotElementsArray: SVGGraphicsElement[]) => {
+                // cast the children into a SVGGraphicsElement array 
+                const rotGroupChildren: SVGGraphicsElement[] = Array.from(rotGroup.children) as SVGGraphicsElement[];
+                // spread the array to push its contents into the target array
+                // the contents will automatically get updated since arrays are reference types and since the array is mapped into the map already
+                // from processBidirectionalRotElement(), we don't have to add mapp the array or anything
+                mapRotElementsArray.push(...rotGroupChildren);
+            });
+        });
 
         return {
             omnidirectionalRotElements: omnidirectionalRotElements, 
@@ -251,8 +307,12 @@ export class SvgRenderer {
         scalarLabelElements: SVGGraphicsElement[],
         otherScalarElements: SVGGraphicsElement[]
     } | null {
-        if (this.SVG === null) {
-            console.warn("The svg doesn't exist");
+        if (this.stationSVG === null || this.map === null) {
+            console.warn(
+                "The station SVG doesn't exist and/or map field hasn't been initialized",
+                `Station SVG Status: ${this.stationSVG}`,
+                `Map Field Status: ${this.map}`
+            );
             return null;
         }
 
@@ -260,22 +320,48 @@ export class SvgRenderer {
         let scalarLabelElements: SVGGraphicsElement[] = [];
         let otherScalarElements: SVGGraphicsElement[] =[];
 
-        // get all scalar elements from the SVG (they should have a matching string of '[SCALE' within them)
-        this.SVG.querySelectorAll<SVGGraphicsElement>("[id*='[SCALE']").forEach((scalarElement: SVGGraphicsElement) => {
-            // check which elements are logos and labels and sort them accordingly
-            const logoRegexFilter: RegExp = new RegExp(/\[SCALE_LOGO\]/);   
-            const labelRegexFilter: RegExp = new RegExp(/\[SCALE_LABEL\]/);
+        // check which elements are logos and labels and sort them accordingly
+        const logoRegexFilter: RegExp = new RegExp(/\[SCALE_LOGO\]/);   
+        const labelRegexFilter: RegExp = new RegExp(/\[SCALE_LABEL\]/);
 
+        // create a function that allows us to handle different scalar elements respectively
+        const processScalarElement: (
+            scalarElementOrGroup: SVGGraphicsElement,
+            callbackFn: (targetArray: SVGGraphicsElement[]) => void
+        ) => void = (scalarElementOrGroup: SVGGraphicsElement, callbackFn: (targetArray: SVGGraphicsElement[]) => void) => {
             // scalar logo elements (logo icons) have '[SCALE_LOGO]' in their id
             // scalar label elements (platform direction labels + exit labels) have '[SCALE_LABEL]' in their id
             // other label elements (mostly street names) have '[SCALE]' in their id
 
-            if (logoRegexFilter.test(scalarElement.id))
-                scalarLogoElements.push(scalarElement);
-            else if (labelRegexFilter.test(scalarElement.id))
-                scalarLabelElements.push(scalarElement);
+            if (logoRegexFilter.test(scalarElementOrGroup.id))
+                callbackFn(scalarLogoElements);
+            else if (labelRegexFilter.test(scalarElementOrGroup.id))
+                callbackFn(scalarLabelElements);
             else
-                otherScalarElements.push(scalarElement);
+                callbackFn(otherScalarElements);
+        };
+
+        // scalar elements in the station SVG and the map SVG are structured differently, as such we have to process them slightly differently
+        const stationScalarElements: NodeListOf<SVGGraphicsElement> = this.stationSVG.querySelectorAll("[id*='SCALE']");
+        const mapScalarGroups: NodeListOf<SVGGraphicsElement> = this.map.elements.symbols.querySelectorAll("[id*='SCALE']");
+
+        // much like how elements were processed in getDirectionalRotationalElements() above, station SVG scalar elements already have the scale identifier
+        // string on their id so we just push them into the target array
+        stationScalarElements.forEach((scalarElement: SVGGraphicsElement) => {
+            processScalarElement(scalarElement, (targetArray: SVGGraphicsElement[]) => {
+                targetArray.push(scalarElement);
+            });
+        });
+        // however, for map SVG scalar elements, the identifier is on the group element that groups the scalar elements together
+        // as such, we want to push the contents of the children instead of the group
+        mapScalarGroups.forEach((scalarGroup: SVGGraphicsElement) => {
+            processScalarElement(scalarGroup, (targetArray: SVGGraphicsElement[]) => {
+                // cast the children into a SVGGraphicsElement array 
+                const scalarChildren: SVGGraphicsElement[] = Array.from(scalarGroup.children) as SVGGraphicsElement[];
+                // spread the array to push its contents into the target array
+                // the contents will automatically get updated since arrays are reference types
+                targetArray.push(...scalarChildren);
+            });
         });
 
         return {
@@ -298,33 +384,27 @@ export class SvgRenderer {
 
         // parent group container of all the map related SVG elements
         const mapSVGParent: SVGGraphicsElement | null = this.SVG.querySelector("[id='MAP']");
+        // contains all the vector paths (street + park + misc names) for the map
+        const mapSymbols: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Symbols']");
         // template for placing our grid pics onto the svg
-        const mapGrid: SVGGraphicsElement | null = this.SVG.querySelector("[id='Map Grid']");
-        // the SVG groups that actually hold the map pictures (for the satellite and road map views)
-        const roadMapGroup: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Road Map Group']");
-        const satelliteMapGroup: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Satellite Map Group']");
+        const mapGrid: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Grid']");
 
         if (
-            mapSVGParent === null ||
-
-            mapGrid === null ||
-            mapGrid === undefined || 
-
-            roadMapGroup === null ||
-            roadMapGroup === undefined ||
-
-            satelliteMapGroup === null ||
-            satelliteMapGroup === undefined
+            mapSVGParent === null || 
+            mapGrid === null || mapGrid === undefined ||
+            mapSymbols === null || mapSymbols === undefined
         ) {
             console.warn(
-                "Map SVG parent, map grid, and/or road/satellite map groups don't exist",
+                "Map SVG parent, map symbols, and/or map grid doesn't exist",
                 `Map Grid Status: ${mapGrid}`,
-                `Map SVG Parent Status: ${mapSVGParent}`,
-                `Road Map Group Status: ${roadMapGroup}`,
-                `Satellite Map Group Status: ${satelliteMapGroup}`
+                `Symbols Group Status: ${mapSymbols}`,
+                `Map SVG Parent Status: ${mapSVGParent}`
             );
             return;
         }
+
+        // also retrieve or create map groups corresponding the road map/satellite map from the mapSVGParent
+        const {roadMap, satelliteMap} = this.getOrCreateMapGroups(mapSVGParent);
 
         // doing some processing for the grid items to make it easier when using it for retrieving images from stationMapData
         // a tuple in the field structure is like this:
@@ -352,10 +432,34 @@ export class SvgRenderer {
 
         this.map = {
             elements: {
-                parent: mapSVGParent, gridCells: gridCells, roadMapGroup: roadMapGroup, satelliteMapGroup: satelliteMapGroup
+                parent: mapSVGParent, symbols: mapSymbols, gridCells: gridCells, roadMapGroup: roadMap, satelliteMapGroup: satelliteMap
             },
             data: stationMapData
         };
+    }
+
+    // gets or create the road/satellite map groups in the SVG
+    private getOrCreateMapGroups(mapSVGParent: SVGGraphicsElement): {roadMap: SVGGraphicsElement, satelliteMap: SVGGraphicsElement} {
+        // get the SVG map groups for the mapSVGParent
+        let roadMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Road Map Group']");
+        let satelliteMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Satellite Map Group']");
+
+        // check if the road map exists
+        if (roadMap === null) {
+            // if not, create it and prepend (prepend because the Symbols group should be on top) it to the map SVG parent
+            roadMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
+            roadMap.id = "Road Map Group";
+            mapSVGParent.prepend(roadMap);
+        }
+        // check if the satellite map exists
+        if (satelliteMap === null) {
+            // do the same thing as the road map if isn't created
+            satelliteMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
+            satelliteMap.id = "Road Map Group";
+            mapSVGParent.prepend(satelliteMap);
+        }
+
+        return {roadMap: roadMap, satelliteMap: satelliteMap};
     }
 
     // initializes attribute configurations for the grid cell
@@ -509,7 +613,18 @@ export class SvgRenderer {
     }
 
     // Helper method to center on the entire station map
-    public centerMap(zoomMultiplier: number = 0.8, zoom: number | null = null): void {
+    public centerMap(
+        smoothCenter: {
+            centerSpeed: number, 
+            centerThresholdRatio: number, 
+            hideElementsWhileCentering: boolean
+        } | null = null,
+        zoom: {
+            multiplier: number, 
+            override: {value: number, includeMinZoom: boolean} | null
+        } = {multiplier: 0.8, override: null}
+    ): void {
+
         if (this.stationSVG === null) {
             console.warn("Station SVG doesn't exist");
             return;
@@ -517,15 +632,24 @@ export class SvgRenderer {
 
         // retreive the station SVG's bounding rect
         const stationSVGBoundingRect: DOMRect = this.stationSVG.getBoundingClientRect();
-        // then center it, passing our zoom multiplier or manual zoom value (if needed)
-        if (zoom === null)
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, zoomMultiplier);
-        else
-            this.centerBoundingBoxInViewport(stationSVGBoundingRect, 1, zoom);
+        // then center it, passing our zoom related and smooth center values (if needed)
+        this.centerBoundingBoxInViewport(stationSVGBoundingRect, smoothCenter, zoom);
     }
 
     // (FOR ROUTE PREVIEW) Helper function to zoom in on the node SVG elements representing the path
-    public centerOnPath(pathNodes: SVGGraphicsElement[], zoomMultiplier: number = 0.5, zoom: number | null = null): void {
+    public centerOnPath(
+        pathNodes: SVGGraphicsElement[], 
+        smoothCenter: {
+            centerSpeed: number, 
+            centerThresholdRatio: number, 
+            hideElementsWhileCentering: boolean
+        } | null = null,
+        zoom: {
+            multiplier: number, 
+            override: {value: number, includeMinZoom: boolean} | null
+        } = {multiplier: 0.5, override: null}
+    ): void {
+
         if (this.stationSVG === null) {
             console.warn("Station SVG doesn't exist");
             return;
@@ -571,14 +695,26 @@ export class SvgRenderer {
             rightBottomMostPoint.y - leftTopMostPoint.y
         );
         // and pass this bounding box to center it
-        this.centerBoundingBoxInViewport(nodeGroupBoundingBox, zoomMultiplier, zoom, true);
+        this.centerBoundingBoxInViewport(nodeGroupBoundingBox, smoothCenter, zoom);
     }
 
     // BIG NOTE: The zoom value right now is only adequate for the station maps with the road/satellite maps, the zoom is very 
     // big for the default stations without any map so don't be alarmed too much about the uber zoom on the nodes for those stations
     // currently
     // Helper function to zoom on on a node based on svgId
-    public centerOnNode(SVGID: string, zoomMultiplier: number = 1, zoom: number = 8): void {
+    public centerOnNode(
+        SVGID: string,
+        smoothCenter: {
+            centerSpeed: number, 
+            centerThresholdRatio: number, 
+            hideElementsWhileCentering: boolean
+        } | null = null,
+        zoom: {
+            multiplier: number, 
+            override: {value: number, includeMinZoom: boolean} | null
+        } = {multiplier: 1, override: {value: 20, includeMinZoom: true}}
+    ): void {
+
         if (this.stationSVG === null) {
             console.warn("Station SVG doesn't exist");
             return;
@@ -592,33 +728,45 @@ export class SvgRenderer {
         // get the bounding rect
         const nodeBoundingRect: DOMRect = node.getBoundingClientRect();
         // then center it
-        this.centerBoundingBoxInViewport(nodeBoundingRect, zoomMultiplier, zoom, true);
+        this.centerBoundingBoxInViewport(nodeBoundingRect, smoothCenter, zoom);
     }
     
     // base function for centering any bounding box (e.g. the client rect of a target SVG element/HTML element or a custom DOMRect)
-    // zoomMultiplier scales the computed zoom for the bounding box (which is equivalent to the diagram container (viewport's) height
-    // or width divided by the normalized value of the target bounding box (normalized value = bounding box / panzoom scale))
+    // the smooth center obj allows the centering to animate if set 
+    // the zoom obj is composed of the multiplier, which scales the computed zoom for the bounding box (which is equivalent to the diagram container 
+    // (viewport's) height or width divided by the normalized value of the target bounding box (normalized value = bounding box / panzoom scale)) 
+    // IF the zoom override value is omitted else the zoom override value becomes the explicit zoom instead of the the computed value * multiplier
     // DO NOTE that the zoom is limited to min zoom only
 
-    // by the way, centering is a misnomer because the center is bounded by the panning limit (which is based relative to dimensions 
-    // observed in min zoom); either way, it'll work for now
+    // by the way, centering is is bounded by the panning limit (which is based relative to dimensions based on min zoom)
     private async centerBoundingBoxInViewport(
         boundingBox: DOMRect,
-        zoomMultiplier: number = 1,
-        zoomOverrideValue: number | null = null,
-        smoothCenter: boolean = false,
-        centerSpeed: number = 3.5,
-        centerThresholdRatio: number = 0.001
+        smoothCenter: {
+            centerSpeed: number,
+            centerThresholdRatio: number,
+            hideElementsWhileCentering: boolean 
+        } | null = null, 
+        zoom: {
+            multiplier: number,
+            override: {value: number, includeMinZoom: boolean} | null
+        } = {
+            multiplier: 1,
+            override: null
+        }
     ): Promise<void> {
-        if (this.currentPanZoom === null) {
-            console.warn("Panzoom instance doesn't exist");
+        if (this.currentPanZoom === null || this.minZoom === null) {
+            console.warn(
+                "Panzoom instance doesn't exist and/or min zoom field is not initialized",
+                `Panzoom Instance Status: ${this.currentPanZoom}`,
+                `Min Zoom Status: ${this.minZoom}`
+            );
             return;
         }
 
         // initialize a field to hold the value of the target zoom
-        let zoom: number = 1;
+        let targetZoom: number = 1;
         // determine whether we want an explicit zoom value (the zoomOverride var) or not
-        if (zoomOverrideValue === null) {
+        if (zoom.override === null) {
             // if not determine the adequate zoom for which the element's bounding rect would just fit into the browser viewport
             const zoomFactorToFit: number | null = this.getZoomFactorToFit(boundingBox);
             if (zoomFactorToFit === null) {
@@ -626,23 +774,27 @@ export class SvgRenderer {
                 return;
             }
             // and multiply it by the zoom multiplier to zoom out slightly
-            zoom = zoomFactorToFit * zoomMultiplier;
+            targetZoom = zoomFactorToFit * zoom.multiplier;
         }
         else {
-            // if yes, then include the zoom value as is
-            zoom = zoomOverrideValue;
+            // if yes, then include the explicit zoom value
+
+            // destructure the components from the override obj
+            const {value, includeMinZoom} = zoom.override;
+            // do determine to set the zoom value as is or to add it to min zoom 
+            targetZoom = includeMinZoom ? value + this.minZoom : value;
         }
         // since we specifically provided a minimum zoom for our panzoom instance, we have to clamp our target zoom to be no smaller than minZoom
-        zoom = clamp(zoom, this.minZoom);
+        targetZoom = clamp(targetZoom, this.minZoom);
         // now get the offset of this bounding box from our viewport center
-        const offset: Vector2 | null = this.getBoundingBoxOffsetFromViewportCenter(boundingBox, zoom);
+        const offset: Vector2 | null = this.getBoundingBoxOffsetFromViewportCenter(boundingBox, targetZoom);
         if (offset === null) {
             console.warn("Failed to retrieve offset");
             return;
         }
 
         // get panning limits
-        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits(zoom);
+        const panningLimits: {offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2} | null = this.getPanningLimits(targetZoom);
         if (panningLimits === null) {
             console.warn("Could not get panning limits");
             return;
@@ -660,8 +812,12 @@ export class SvgRenderer {
         this.activeCenteringCalls++;
         // set boolean flag to ignore panzoom events for the upcoming section
         this.ignorePanzoomEvents = true;
+
         // if we want to center smoothly
-        if (smoothCenter) {
+        if (smoothCenter !== null) {
+            // destructure the fields from the smoothCenter obj
+            const {centerSpeed, centerThresholdRatio, hideElementsWhileCentering} = smoothCenter;
+
             // get the current pos and scale
             const currentPanzoomTransform: {x: number, y: number, scale: number} = this.currentPanZoom.getTransform();
             const currentPos: Vector2 = new Vector2(currentPanzoomTransform.x, currentPanzoomTransform.y);
@@ -677,6 +833,11 @@ export class SvgRenderer {
             // create a var that holds the time at which the corresponding request animation frame below executes (this is used for
             // measuring timeDelta or the time in between frames)
             let prevTimeStampMS: number = 0;
+
+            // if the hideElementWhileCentering boolean was set to true, disable the dynamic rot or scalar elements
+            if (hideElementsWhileCentering)
+                this.enableDynamicRotOrScalarElements(false);
+
             // this is our smoothing centering loop
             while (
                 currentPos.getDist(clampedOffset) > fullDist * centerThresholdRatio
@@ -705,11 +866,17 @@ export class SvgRenderer {
                         // get the ratio we're going to lerp at
                         const lerpRatio: number = centerSpeed * timeDeltaMS / 1000;
                         // lerp the current scale and position
-                        currentScale = lerp(currentScale, zoom, lerpRatio);
+                        currentScale = lerp(currentScale, targetZoom, lerpRatio);
                         currentPos.m_lerp(clampedOffset, lerpRatio);
 
                         // update our panzoom
                         this.updatePanZoom(currentPos, currentScale);
+
+                        // if the hideElementsWhileCentering boolean was enabled, check the progress of the lerp and see if it is close enough to the final
+                        // point (this will be determined by an arbitrary ratio that'll be manually adjusted in the code to make the transition seem natural)
+                        // then enable the dyanmic elements again at this point
+                        if (hideElementsWhileCentering && currentPos.getDist(clampedOffset) < fullDist * 0.1)
+                            this.enableDynamicRotOrScalarElements(true);
 
                         // resolve our promise
                         resolve();
@@ -721,7 +888,7 @@ export class SvgRenderer {
         // decrement the active centering calls here 
         this.activeCenteringCalls--;
         // run our update panzoom handler one more time to put the map in the right position and zoom
-        this.updatePanZoom(clampedOffset, zoom);
+        this.updatePanZoom(clampedOffset, targetZoom);
         // enable panzoom events again
         this.ignorePanzoomEvents = false;
     }
@@ -783,6 +950,8 @@ export class SvgRenderer {
         this.initPanZoomControls();
         // center the map to where the station is at
         this.centerMap();
+        // create a SVG bounds placeholder
+        this.createStationSVGBoundsPlaceholder();
         // though already set by default upon construction; run the setCurrentMapView() method to update any relevant visual changes
         // on the map view
         this.setCurrentMapView(MapView.DEFAULT);
@@ -872,7 +1041,14 @@ export class SvgRenderer {
         }
 
         // zoom onto the path items now that we have all the path nodes
-        this.centerOnPath(pathNodes);
+
+        // smooth centering will be enabled for the route preview
+        // get the standard smooth centering attributes
+        const {centerSpeed, centerThresholdRatio} = SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB;
+        this.centerOnPath(
+            pathNodes,
+            {centerSpeed: centerSpeed, centerThresholdRatio: centerThresholdRatio, hideElementsWhileCentering: true}
+        );
     }
 
     // Function that removes all the styling applied on the path nodes for the preview
@@ -903,7 +1079,6 @@ export class SvgRenderer {
         let ctrlKeyPressed: boolean = false;
         let mouseIsDown: boolean = false;
         let isRotating: boolean = false;
-        let prevPosX: number = 0;
 
         // variables representing the translations of our SVG (for our matrix rotation transformation)
         let pivotX: number = 0;
@@ -950,8 +1125,6 @@ export class SvgRenderer {
             pivotX = offset.x/scale;
             pivotY = offset.y/scale;
 
-            // init the previous position
-            prevPosX = ev.x;
             // signify the mouse is down
             mouseIsDown = true;
             // set the previous time stamp
@@ -1003,13 +1176,12 @@ export class SvgRenderer {
             // though again performance.now() could probably overflow...
             timeElapsedMS = 0;
             
-            // get our rotation from our initial mouse point and the new point
-            const displacementX: number = prevPosX - ev.x;
+            // by the way... we don't have to track delta by measuring displacement from the prev and current pos, movementX and movementY do the
+            // the same thing already
+
             // the rounding here is just to optimize memory allocation when applying transform rotations
             // whole numbers good, floating point numbers not so much
-            const rotDeg = Math.round(displacementX * this.mapRotationSensitivity);
-            // update our previous position
-            prevPosX = ev.x;
+            const rotDeg = Math.round(ev.movementX * this.mapRotationSensitivity);
 
             // create an identity matrix
             const rotMatrix: DOMMatrix = (
@@ -1027,8 +1199,11 @@ export class SvgRenderer {
             const productMatrix: DOMMatrix = rotMatrix.multiply(SVGMatrix);
             this.SVG.style.setProperty("--transformation-matrix", productMatrix.toString());
 
-            // also update our total rotation
+            // update our total rotation
             totalRotationDeg -= rotDeg;
+
+            // handle grid image load here as well
+            this.handleGridImageLoad();
         });
 
         // also pass a closure function with passed reference of the ctrlKeyPressed bool to our panzoom setup so that panzoom 
@@ -1084,6 +1259,8 @@ export class SvgRenderer {
                 // and handle element scaling
                 this.handleDynamicElementScaling();
             });
+            // DO NOTE THE FUNCTION ABOVE CHANGES LAYOUT WHICH AFFECTS HANDLEPANNINGLIMIT() SINCE IT USES BOUNDING RECTS
+
             // also handle panning limit here... this prevents zooming in/out from overshooting the panning limits
             // (which does translate the SVG wrapper so it centers at the point of zoom (e.g. where the cursor is))
             this.handlePanningLimit();
@@ -1123,7 +1300,7 @@ export class SvgRenderer {
     }
 
     // scroll + keyboard events don't work with panzoom.on("zoomend"), so this is the solution for triggering a zoomend callback
-    private monitorForZoomEnd(callback: () => void, checkRateMS: number = 200): void {
+    private monitorForZoomEnd(callbackFn: () => void, checkRateMS: number = 200): void {
         // increment the global var for amount of zoom callbacks that have been initiated
         this.activeZoomingCalls++;
 
@@ -1136,8 +1313,8 @@ export class SvgRenderer {
             this.activeZoomingCalls--;
             // if there are no more zoom calls
             if (this.activeZoomingCalls === 0)
-                // activate the callback
-                callback();
+                // activate the callback function
+                callbackFn();
         }, checkRateMS);          
     }
 
@@ -1283,10 +1460,8 @@ export class SvgRenderer {
             targetBBox = microGridCell.getBBox();
         }
 
-        // universal URL to add SVG elements onto a canvas or SVG
-        const SVGURI: string = "http://www.w3.org/2000/svg";
         // create a new svg image element
-        const gridImgItem: SVGImageElement = document.createElementNS(SVGURI, "image") as unknown as SVGImageElement;
+        const gridImgItem: SVGImageElement = document.createElementNS(SVGRenderer.SVGURI, "image") as unknown as SVGImageElement;
         // set the corresponding attributes for the image
         gridImgItem.setAttribute("href", gridImgPath);
         // set the corresponding attributes to the grid img element
@@ -1388,8 +1563,13 @@ export class SvgRenderer {
 
     // a boolean that checks if the current zoom is equal to or surpasses the highResImgLoadZoomThreshold var
     private zoomThresholdMet(): boolean {
+        if (this.minZoom === null) {
+            console.warn("Min zoom field as not been initialized");
+            return false;
+        }
+
         const currentZoom: number | null = this.getMostCurrentZoom();
-        return currentZoom !== null? currentZoom >= this.highResImgLoadZoomThreshold : false;
+        return currentZoom !== null ? currentZoom >= this.minZoom * this.highResImgLoadZoomThreshold : false;
     }
 
     // gets the current zoom from the target panzoom element (which is our SVG wrapper) as it appears in the DOM
@@ -1465,7 +1645,7 @@ export class SvgRenderer {
             return null;
         }
 
-        // get the current scale of the panzoom element 
+        // get the current scale of the panzoom element in the DOM
         const scale: number | null = this.getCurrentZoomInDOM();
         if (scale === null) {
             console.warn("Cannot get the current zoom");
@@ -1496,7 +1676,7 @@ export class SvgRenderer {
         // recalculations; panzoom transformations do not happen instantly since it's a CSS sided transformation) 
 
         // get local center — essentially target's center relative to the SVG wrapper it is inside of unscaled; 
-        // this gives the position as if we aligned the top lefts of the SVG wrapper and the viewport/diagram container 
+        // this gives the position of the target center point as if we aligned the top lefts of the SVG wrapper and the viewport/diagram container 
         // (assuming the wrapper’s untransformed top-left aligns with the diagram container’s top-left)
 
         // NOTE: remember getBoundingClientRect() is always screen point based... if the viewport's transform origin was shifted x 
@@ -1508,17 +1688,63 @@ export class SvgRenderer {
             .subtract(SVGWrapperTopLeft)
             .divide(scale)
         );
-        // now scale that local center by the target zoom 
+        // now scale that local center by the target zoom
         const scaledTargetCenter: Vector2 = localCenter.multiply(zoom);
+        // calculate the offset the scaled target center is from the viewport center
         const offset: Vector2 = (
-            // get the offset of the center from the top left
+            // get the offset of the viewport center from its top left
             diagramContainerCenter
             .subtract(diagramContainerTopLeft)
             // subtract that from the scaled target center
             .subtract(scaledTargetCenter)
-        )
+        );
 
         return offset;
+    }
+
+    // scaling/rotating/enabling dynamic elements changes the layout, which can cause issues with bounding rects if done
+    // in rapid succession (for instance, zooming in constantly removes the scale/rot dynamic elements completely changing the layout)
+    // to avoid this issue, we can create a temp station SVG placeholder obj that holds the initial bounding rect of the element multiplied by an error of
+    // margin to account for dynamic element scaling + rotating
+    // the alternative is to build a stationSVGBoundsPlaceHolder's whose dimensions dynamically expand based on css transforms but its heavily impractical
+    // and super convoluted (already tried converting bbox to world position but it still suffers the same fallacy with the layout changing)
+    private createStationSVGBoundsPlaceholder(marginMultiplier: number = 1.1): void {
+        if (this.stationSVG === null) {
+            console.warn("Station SVG doesn't exist");
+            return;
+        }
+
+        // get the bbox of the station SVG (this is good because it's in SVG local space and ignores CSS transforms)
+        const stationBBox: SVGRect = this.stationSVG.getBBox();
+        // calculate the dimensions of the placeholder
+        const stationBBoxDimensions: Vector2 = new Vector2(stationBBox.width, stationBBox.height);
+        const placeHolderDimensions: Vector2 = stationBBoxDimensions.multiply(marginMultiplier);
+        // since we scaled the width and height by the marginMultiplier, the rect would be offset from the center of the station SVG if
+        // we place the x and y pos; this is because SVG x and y pos refers to the SVG root origin, not the localized space of the parent
+        const placeHolderPos: Vector2 = (
+            // so we have to get the original x and y
+            new Vector2(stationBBox.x, stationBBox.y)
+            // and translate it back by half of how much the dimensions increased from the base dimensions 
+            // also the x and y represents the top left of the placeholder/bbox rect
+            .subtract(
+                stationBBoxDimensions
+                .multiply(marginMultiplier - 1)
+                .divide(2)
+            )
+        );
+
+        // create the element
+        const placeholderRect = document.createElementNS(SVGRenderer.SVGURI, "rect") as SVGRectElement;
+
+        // and set/update its attributes
+        placeholderRect.setAttribute("x", placeHolderPos.x.toString());
+        placeholderRect.setAttribute("y", placeHolderPos.y.toString());
+        placeholderRect.setAttribute("width", placeHolderDimensions.x.toString());
+        placeholderRect.setAttribute("height", placeHolderDimensions.y.toString());
+        placeholderRect.id = "Bounds Placeholder";
+
+        // add to the stationSVG
+        this.stationSVG.append(placeholderRect);
     }
 
     // disables/enables rot or scalar elements
@@ -1581,36 +1807,47 @@ export class SvgRenderer {
 
     // handles the scaling of scalar dynamic elements based on the current zoom
     private handleDynamicElementScaling(
-        zooms: {
+        zoomLimitMultiplier: number = 4,
+        scales: {
             logoMin: number, logoMax: number,
             labelMin: number, labelMax: number,
             otherMin: number, otherMax: number 
         } = {
-            logoMin: 1, logoMax: 2.2,
+            logoMin: 1, logoMax: 4,
             labelMin: 1, labelMax: 2,
-            otherMin: 0.4, otherMax: 0.8
+            otherMin: 0.4, otherMax: 1.3
         }
     ): void {
         // get the most current zoom, not the DOM's zoom
         const currentZoom: number | null = this.getMostCurrentZoom();
-        if (currentZoom === null || this.dynamicElements === null) {
+        if (currentZoom === null || this.dynamicElements === null || this.minZoom === null) {
             console.warn(
-                "Current zoom cannot be retrieved and/or the dynamic elements field is not initialized",
+                "Current zoom cannot be retrieved and/or the dynamic elements and/or min zoom field is not initialized",
                 `Current Zoom Status: ${currentZoom}`,
-                `Dynamic Elements Field Status: ${this.dynamicElements}`
+                `Dynamic Elements Field Status: ${this.dynamicElements}`,
+                `Min Zoom Field Status: ${this.minZoom}`
             );
             return;
         }
 
-        // this is to normalize our current zoom so that it goes from 0-1
+        // get the scale values from the scale oject
+        const {logoMin, logoMax, labelMin, labelMax, otherMin, otherMax} = scales;
+
+        // the zoom limit is the max zoom that would actually affect the dynamic scaling of the scalar elements; anything past that zoom 
+        // (e.g. you're zoomed into the SVG super close) will not change their scale at all 
+        // since min zoom is technically the smallest zoom value we can have, the zoom limit = minzoom * some multiplier
+        const zoomLimit: number = this.minZoom * zoomLimitMultiplier;
+        // this is to normalize our current zoom so that it goes from 0-1 (all animation curves operate from x=[0,1]; the equations listed below operate
+        // on that principle)
+        const currentZoomNormalized: number = clamp(currentZoom, this.minZoom, zoomLimit) / zoomLimit;
+
         // this function here is a *sine ease-out function* that is flipped along the x axis
         // the function is represented by this:
-        // y = (a - 1)((cos(pi* x)) - 1)/2 + 1 + (a - 1)/c
-        // where x = zoomNormalized; y = scaleRatio; a = maxLogoZoom; c = minLogoZoom
-        const zoomLimit: number = 8.5;
-        const zoomNormalized: number = clamp(currentZoom, Number.EPSILON, zoomLimit)/zoomLimit;
+        // y = -(a - c) * sin((pi * x) / 2) + a
+        // where y = scale, x = currentZoomNormalized; y = scaleRatio; a = maxLogoZoom; c = minLogoZoom
+        // ** think of a as the max scale and c as the min scale
         const logoScaleRatio: number = (
-            (zooms.logoMax - 1) * (Math.cos(Math.PI * zoomNormalized) - 1) / 2 + 1 + (zooms.logoMax - 1)/zooms.logoMin
+            -(logoMax - logoMin) * Math.sin((Math.PI * currentZoomNormalized) / 2) + logoMax
         );
 
         // function for scalar label elements will be an *exponenetial ease-out* function flipped along the y axis
@@ -1618,11 +1855,11 @@ export class SvgRenderer {
         // PIECEWISE FUNCTION
         // x == 0 {y = a}
         // x > 0 {y = -(a - c)*2^(10 * (x - 1)) + a}
-        // where x = zoomNormalized; y = scaleRatio; a = maxLabelZoom; c = minLabelZoom
+        // where y = scale, x = currentZoomNormalized; y = scaleRatio; a = maxLabelZoom; c = minLabelZoom
         const labelScaleRatio: number = (
-            zoomNormalized === 0?
-            zooms.labelMax:
-            -(zooms.labelMax - zooms.labelMin) * Math.pow(2, 10 * (zoomNormalized-1)) + zooms.labelMax
+            currentZoomNormalized === 0?
+            labelMax:
+            -(labelMax - labelMin) * Math.pow(2, 10 * (currentZoomNormalized-1)) + labelMax
         );
 
         // function for the other scalar elements will be a *cubic ease-in-out* function flipped along the y axis
@@ -1630,11 +1867,11 @@ export class SvgRenderer {
         // PIECEWISE FUNCTION
         // x < 0.5 {y = -4(a -c)(x^3) + a}
         // x >= 0.5 {y = -4(a - c)(x-1)^3 + c}
-        // where x = zoomNormalized; y = scaleRatio; a = maxOtherZoom; c = minOtherZoom
+        // where y = scale, x = currentZoomNormalized; y = scaleRatio; a = maxOtherZoom; c = minOtherZoom
         const otherScaleRatio: number = (
-            zoomNormalized < 0.5 ?
-            -4 * (zooms.otherMax - zooms.otherMin) * Math.pow(zoomNormalized, 3) + zooms.otherMax:
-            -4 * (zooms.otherMax - zooms.otherMin) * Math.pow((zoomNormalized - 1), 3) + zooms.otherMin
+            currentZoomNormalized < 0.5 ?
+            -4 * (otherMax - otherMin) * Math.pow(currentZoomNormalized, 3) + otherMax:
+            -4 * (otherMax - otherMin) * Math.pow((currentZoomNormalized - 1), 3) + otherMin
         );
 
         this.dynamicElements.scalarLogoElements.forEach((scalarElement: SVGGraphicsElement) => {
@@ -1650,6 +1887,7 @@ export class SvgRenderer {
 
     // limits users from panning beyond a given certain limit when they either zoom or pan
     private handlePanningLimit(): void {
+
         if (this.currentPanZoom === null) {
             console.warn("Panzoom instance doesn't exist");
             return;
@@ -1681,8 +1919,8 @@ export class SvgRenderer {
 
         // clamp the x and y to the offset limits
         const targetPos: Vector2 = new Vector2(
-                clamp(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
-                clamp(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
+            clamp(currentPos.x, offsetLimitBottomRight.x, offsetLimitTopLeft.x),
+            clamp(currentPos.y, offsetLimitBottomRight.y, offsetLimitTopLeft.y)
         );
 
         // now move the panzoom to the current location
@@ -1693,6 +1931,9 @@ export class SvgRenderer {
     }
 
     // gets the top left and bottom right limits for how much the user can pan (these limits are influenced by the min zoom scale)
+    // NOTE: these are translation limits, meaning offsetLimitTopLeft is how much the SVG wrapper has to translate for its top left corner of its bounding box
+    // to hit the boundary while offsetLimitBottomRight means how much the SVG wrapper has to translate for its bottom right corner of its bounding box
+    // to hit the boundary
     private getPanningLimits(scaleOverride: number | null = null): {
         offsetLimitTopLeft: Vector2, offsetLimitBottomRight: Vector2
     } | null {

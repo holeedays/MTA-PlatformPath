@@ -106,11 +106,13 @@ export class GeoConverter {
             console.log("User has denied permission to utilize their location");
             return;
         }
+
         // check if an event listener has been set
         if (this.watchPositonID === null) {
             console.warn("There are no event listeners set");
             return;
         }
+
         // if there are, clear the event listener
         geolocationObj.clearWatch(this.watchPositonID);
     }
@@ -201,7 +203,8 @@ export class GeoConverter {
         const xRatio: number = (baseCoords.x - west) / (east - west);
         const yRatio: number = (north - baseCoords.y) / (north - south);
         // get the viewbox of the SVG (the dimensions can be found in the attributes of the root of the SVG [the one with xmlns])
-        // also bbox is drastically different from viewBox so use viewBox for more consistent layouts
+        // also bbox is drastically different from viewBox so use viewBox since we're not mapping space WITHIN an element in the SVG, just the SVG
+        // root itself
         const viewBox: DOMRect = this.referenceElement.viewBox.baseVal;
 
         return new Vector2(
@@ -266,7 +269,7 @@ export class GeoConverter {
 
         // apply the inverse of the transform matrix to convert global space to SVG local space
         const transformedPos: Vector2 = transformPoint(screenPos, transformMatrix.inverse());
-        // get the viewBox for the local, untransformed dimensions of the element
+        // get the viewBox for the local, untransformed dimensions of the SVG root element
         const viewBox: DOMRect = this.referenceElement.viewBox.baseVal;
 
         // since the pos is now in the ref element's local space, we treat the top left viewBox.x & viewBox.y and calculate the 

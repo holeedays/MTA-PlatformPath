@@ -20,8 +20,10 @@
     font-family: Helvetica;
     margin: 0;
     padding: 0;
+}
+*:not(svg *) {
     /* configure each element with the identity matrix so that offset properties like offsetLeft reference the immediate parent
-       and not the ancestor */
+    and not the ancestor... something currently breaks when that is specified... */
     transform: matrix(1, 0, 0, 1, 0, 0);
 }
 
@@ -194,7 +196,7 @@ body {
 .svg-wrapper svg {
     --transformation-matrix: matrix(1, 0, 0, 1, 0, 0); /* initialize with identity matrix for now, .ts file will manipulate */
 
-    content-visibility: auto;
+    content-visibility: auto; /* optimization here, prevents svg children nodes from rendering off screen */
     max-width: none;
     max-height: none;
     display: block;
@@ -214,8 +216,6 @@ body {
     transform-box: fill-box;
 
     pointer-events: none; /* prevent any mouse/touch action on these items */
-
-    content-visibility: auto; /* performance optimization, prevents items outside of viewport from being rendered */
     will-change: transform ; /* force GPU acceleration instead of the CPU (inline SVG elements (especially <g> and <path> tags 
                                 apparently utilize CPU by default) */
     transition:

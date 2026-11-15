@@ -1,4 +1,4 @@
-import { SvgRenderer, MapView, type SelectionRole } from "./svg_renderer.ts";
+import { SVGRenderer, MapView, type SelectionRole } from "./svg_renderer.ts";
 import { PathFinder, type PathStep, type AccessibilityOption } from "./path_finder.ts";
 import { GeoConverter, type Extents } from "./geolocation.ts";
 import { type LayerData, type NodeData, type StationData, type StationMapData, type StationResponse } from "./station_data.ts";
@@ -12,7 +12,7 @@ import { Vector2 } from "./transformations.ts";
 export class StationMapPage {
     protected station: StationResponse | null = null;
     protected stationMap: StationMapData | null = null;
-    protected svgRenderer: SvgRenderer;
+    protected svgRenderer: SVGRenderer;
 
     protected pathFinder: PathFinder;
     protected currentPath: PathStep[] | null = null;
@@ -63,10 +63,9 @@ export class StationMapPage {
 
     protected stationMapInteractionHandlers: StationMapInteractionHandler[] = [];
 
-
     constructor() {
         this.pathFinder = new PathFinder();
-        this.svgRenderer = new SvgRenderer();
+        this.svgRenderer = new SVGRenderer();
     }
 
     // umbrella function for all init methods (desktop specific and general init methods)
@@ -718,7 +717,7 @@ export class StationMapPage {
         // make the stepui insvisible
         stepUI.self.classList.remove("hidden");
         // render the current style
-        this.renderCurrentStep(stepUI.instructionText, stepUI.btnPrev, stepUI.btnNext);
+        this.renderCurrentStep(stepUI.instructionText, stepUI.btnPrev, stepUI.btnNext, true);
     }
 
     // end the navigation process (the opposite of StartNavigation)
@@ -781,7 +780,8 @@ export class StationMapPage {
     private renderCurrentStep(
         instructionText: HTMLElement, 
         btnPrev: HTMLButtonElement, 
-        btnNext: HTMLButtonElement
+        btnNext: HTMLButtonElement,
+        isInitializationStep: boolean = false
     ): void {
         if (!this.currentPath) return;
         const step = this.currentPath[this.currentIndex];
@@ -793,12 +793,35 @@ export class StationMapPage {
         // update instructions
         instructionText.innerText =
             `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
+
         // set the correct layers
         this.svgRenderer.showLayer(step.layer, this.station?.layers || []);
         this.setActiveLayerButtonByLayer(step.layer);
+
         // highlight nodes and center onto them
         this.svgRenderer.highlightNode(step.svgId);
-        this.svgRenderer.centerOnNode(step.svgId);
+
+        // now center on the node
+
+        // centering will be done smoothly, however we also want the centering to be different depending on whether this is the first time 
+        // renderCurrentStep is called (like when the user clicks "start navigation" vs when they are just looking through the steps)
+        // in the case, we include a boolean to determine whether this is the case
+        if (isInitializationStep) {
+            // if it is the initialization step, change the smooth centering overloads to hide certain elements in the SVG while centering
+            const {centerSpeed, centerThresholdRatio} = SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB;
+            this.svgRenderer.centerOnNode(
+                step.svgId,
+                {centerSpeed: centerSpeed, centerThresholdRatio: centerThresholdRatio, hideElementsWhileCentering: true}
+            );
+        }
+        else {
+            // if it isn't the initialization step, pass the standard smootj centering overloads to the function
+            this.svgRenderer.centerOnNode(
+                step.svgId,
+                SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB
+            );
+        }
+
 
         // prevent more clicks depending on what current index we have on the prev btn and next btn
         btnPrev.disabled = (this.currentIndex === 0);
@@ -1764,18 +1787,8 @@ export class StationMapPage {
             return;
         }
 
-        // NOTE: these extents are merely for testing purposes, they will be removed later on once the actual stationMapData has
-        // valid extents (extents are currently set at {0, 0, 0, 0} for Bay 50)
-        const extents: Extents = {
-            // EPSG:4326 (LAT LONG) | EPSG:6539 (NY LI (2011)) in US FT 
-            west: -74.0045413,        // 982988.204
-            south: 40.5659305,        // 145460.925
-            east: -73.9787201,        // 990160.640
-            north: 40.5856193         // 152633.361 
-        }
-
         // create a geo converter instance
-        this.geoConverter = new GeoConverter(this.svgRenderer.SVG, extents);
+        this.geoConverter = new GeoConverter(this.svgRenderer.SVG, this.station.station_map.extents);
         // create a boolean for toggling GPS on and off
         let isPressed: boolean = false;
         // create the handler for the button

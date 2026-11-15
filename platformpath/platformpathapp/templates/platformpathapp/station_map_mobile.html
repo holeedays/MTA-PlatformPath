@@ -491,6 +491,66 @@
 				>
 			</button>
 
+			<!-- ################## ADDED STUFF HERE TEMPORARILY FOR TESTING ################## -->
+
+			<!-- ================= MOBILE ROUTE FORM  ================= -->
+			<aside class="map-overlay mobile-route-form hidden" aria-label="Mobile nodes selection container">
+				<div class="mobile-route-form__node-display">
+					<strong>Node Selected:</strong>
+					<span class="node-display__description"></span>
+				</div>
+				<div class="mobile-route-form__node-buttons">				
+					<button class="node-buttons__start-node">SET AS START POINT</button>
+					<button class="node-buttons__end-node">SET AS END POINT</button>
+				</div>
+				<button class="mobile-route-form__toggle-off-button">CLOSE</button>
+			</aside>
+
+			<!-- ================= MAP VIEWS BLOCK ================= -->
+			<aside class="map-views map-overlay hidden">
+				<button class="map-views__toggle-off-button">
+					TOGGLE OFF MAP VIEWS BLOCK
+				</button>
+				<div class="map-views__opacity-adjust">
+					<strong>Adjust opacity</strong>
+					<input type="range" min="0" max="100" value="70" class="opacity-adjust__slider">
+				</div>
+				<div class="map-views__view-toggles">
+					<div class="map-views__view-toggle views-toggle__default">
+						<strong>DEFAULT</strong>
+						<button class="views-toggle__default-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/default_map_view_icon.svg' %}">
+						</button>
+					</div>
+					<div class="map-views__view-toggle views-toggle__road">
+						<strong>ROAD</strong>
+						<button class="views-toggle__road-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/road_map_view_icon.svg' %}">
+						</button>
+					</div>
+					<div class="map-views__view-toggle views-toggle__satellite">
+						<strong>SATELLITE</strong>
+						<button class="views-toggle__satellite-button view-toggle__button">
+							<img src="{% static 'platformpathapp/decals/map_views/satellite_map_view_icon.svg' %}">
+						</button>
+					</div>
+				</div>
+			</aside>
+
+			<!-- ================= MAP VIEWS TOGGLE BUTTON ================= -->
+			<button class="map-overlay map-views__toggle-button">
+				TOGGLE MAP VIEW
+			</button>
+
+			<!-- ================= GPS TOGGLE BUTTON ================= -->
+			<button class="map-overlay gps-toggle-button">
+			ENABLE GPS
+			</button>
+
+			<div id="django_config" data-static-path="{% static '' %}"></div>
+
+			<!-- ################## ADDED STUFF HERE TEMPORARILY FOR TESTING ################## -->
+
 		</section>
 	</main>
 
