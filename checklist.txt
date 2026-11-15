@@ -2,7 +2,9 @@ This is where we add stuff we did and things to do...
 
 CURRENT BUGS:
 -----------------------
-
+Some functions in station map page use .click() on certain node options and filter checklist buttons. This works perfectly fine on desktop 
+(where most handlers are initialized with click event listeners) but for the mobile page, this doesn't work at all. We need to find an 
+alternative to calling .click() on the buttons and activate the handler directly.
 
 PLANS FOR THE FUTURE:
 ------------------------------
@@ -10,7 +12,7 @@ PLANS FOR THE FUTURE:
 PRIORITIES (in order of priority):
 > Complete the station map view page (specifically mobile viewport) <-- completed for now until the 2 features below are added
 
-> Test GPS mapping 
+> Slightly refactor Bay 50 St layout (After GPS testing)
 > Add QR code hash mapping logic for the station maps <-- Might be the solution to navigating thru the map...
 > Test QR hash mapping
 > Add a directional widget (e.g. a compass)
@@ -75,6 +77,7 @@ Add a street view to each station map (and the corresponding logic for it)
 Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
 Added a map views container and initialized the event logic for it
 Converted nodes into interactable buttons (added mobile route form as well in conjunction)
+Test GPS mapping 
 
 FIXED THE BUGS BELOW:
     > Bay Parkway Svg Label Directions not working properly (they do not show arrows sometimes for stairs and arrows do not ever show for
