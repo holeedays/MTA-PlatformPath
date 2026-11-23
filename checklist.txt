@@ -2,9 +2,6 @@ This is where we add stuff we did and things to do...
 
 CURRENT BUGS:
 -----------------------
-> Some functions in station map page use .click() on certain node options and filter checklist buttons. This works perfectly fine on desktop 
-(where most handlers are initialized with click event listeners) but for the mobile page, this doesn't work at all. We need to find an 
-alternative to calling .click() on the buttons and activate the handler directly.
 > Also, the GPS marker head isn't changing orientation (even when heading is available for geolocating), fix that
 
 PLANS FOR THE FUTURE:
@@ -54,31 +51,36 @@ different nodes based on exits and wall separations, platforms are broken to dif
 
 Edmond ----
 DONE:
-Color code the dropdown options based on layer
-Fix zoom for different aspect ratios
-Color code the layer buttons to match the color of the actual layer
-Add additional functions to data_fetch class
-Register data fetching functions (frontend and backend) for station line tables
-Refactor existing pathfinder/app class
+> Color code the dropdown options based on layer
+> Fix zoom for different aspect ratios
+> Color code the layer buttons to match the color of the actual layer
+> Add additional functions to data_fetch class
+> Register data fetching functions (frontend and backend) for station line tables
+> Refactor existing pathfinder/app class
     - Make the code moore compartmentalized (unspaghetti the spaghetti code)
-Finish frontend function to fetch stations, line, and related metadata (see data_fetch.ts)
-Create separate web pages for user input 
+> Finish frontend function to fetch stations, line, and related metadata (see data_fetch.ts)
+> Create separate web pages for user input 
     - initial page to show all available subway lines (***done at this point)
     - second page to show all available stations given that line selected (**)
     - provide proper transfer of data in coresponding pages (via query params and session storage) 
-Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
-with slugs and ids together or just use ids in the API routing + user routing.
-Connect second page (station selections page) seamlessly to the third page (ivan's page)
-Do a visual rework and logical refactor of the home page, line selection page, and station selection page (basically done with all of it for now)
-Finished lines selection/station selections styling and logic
-Add filters to limit the node selections (for user simplicity)
-Added a map rotation button
-Remove rotated view and instead allow users to be able to fully rotate the map (along with dynamic text response to the map rotation)
-Add a street view to each station map (and the corresponding logic for it)
-Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
-Added a map views container and initialized the event logic for it
-Converted nodes into interactable buttons (added mobile route form as well in conjunction)
-Test GPS mapping 
+> Fix API url routing for the fetching edges and nodes. Either choose to use a hybrid field
+> with slugs and ids together or just use ids in the API routing + user routing.
+> Connect second page (station selections page) seamlessly to the third page (ivan's page)
+> Do a visual rework and logical refactor of the home page, line selection page, and station selection page (basically done with all of it for now)
+> Finished lines selection/station selections styling and logic
+> Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
+    - Modify pathfinder to ignore ADA accessible nodes unless toggled
+    - Add checkbox to look for an accessible route if the station is accessible
+> Add a legend (map elements + coloring explanation)
+> Add a button (maybe to the station heading) to return back to the station selection part of the website
+> Add filters to limit the node selections (for user simplicity)
+> Added a map rotation button
+> Remove rotated view and instead allow users to be able to fully rotate the map (along with dynamic text response to the map rotation)
+> Add a street view to each station map (and the corresponding logic for it)
+> Changing the path visualization (leaning towards greyed out nodes aside from the pathing and a highlighted step by step path) <== currently changed but need more deliberation
+> Added a map views container and initialized the event logic for it
+> Converted nodes into interactable buttons (added mobile route form as well in conjunction)
+> Create and test GPS mapping 
 
 FIXED THE BUGS BELOW:
     > Bay Parkway Svg Label Directions not working properly (they do not show arrows sometimes for stairs and arrows do not ever show for
@@ -90,17 +92,15 @@ FIXED THE BUGS BELOW:
     )
     > Weird bug when step ui is visible (and a step is pressed) and the map legend is enabled... the clip path + transform css looks
     very choppy and doesn't work normally. <-- fixed it by using alternative overflow: hidden and wrapper method
-- Add an accessibility option (prioritizes ramps/elevators/ADA accessible nodes)
-    - Modify pathfinder to ignore ADA accessible nodes unless toggled
-    - Add checkbox to look for an accessible route if the station is accessible
-- Add a legend (map elements + coloring explanation)
-- Add a button (maybe to the station heading) to return back to the station selection part of the website
-- Weird unfocus bug with buttons (in mobile view):
-If the pull up container was interacted with (or the scrollable elements within it), users have to double click each button
-for it to activate. Evidently, this is hella annoying. Setting the event listeners to pointerdown works however.
-Though we should explore possible solutions before heading for that one specifically.
-Evidently, it came to using "pointerdown/up" events to solve the issue. "click" should really remain on desktop and more static sites
-that don't require a lot of "focus" events.
+    > Weird unfocus bug with buttons (in mobile view):
+        If the pull up container was interacted with (or the scrollable elements within it), users have to double click each button
+        for it to activate. Evidently, this is hella annoying. Setting the event listeners to pointerdown works however.
+        Though we should explore possible solutions before heading for that one specifically.
+        Evidently, it came to using "pointerdown/up" events to solve the issue. "click" should really remain on desktop and more static sites
+        that don't require a lot of "focus" events.
+    > Some functions in station map page use .click() on certain node options and filter checklist buttons. This works perfectly fine on desktop 
+    (where most handlers are initialized with click event listeners) but for the mobile page, this doesn't work at all. We need to find an 
+    alternative to calling .click() on the buttons and activate the handler directly.
 
 Ivan ----
 TO DO:
