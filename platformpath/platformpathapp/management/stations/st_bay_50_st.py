@@ -42,10 +42,10 @@ def seed(stdout: OutputWrapper | None = None, style: Style | None = None):
 
         # 4. Create Station Map
 
-        ROAD_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/road_map/low_res/"
-        SATELLITE_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/satellite_map/low_res/"
-        ROAD_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/road_map/high_res/"
-        SATELLITE_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay50/satellite_map/high_res/"
+        ROAD_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay_50/road_map/low_res/"
+        SATELLITE_MAP_LOW_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay_50/satellite_map/low_res/"
+        ROAD_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay_50/road_map/high_res/"
+        SATELLITE_MAP_HIGH_RES_IMGS_PATH: str = "/static/platformpathapp/diagrams/Bay_50/satellite_map/high_res/"
 
         # --- LOW RES MAP PIC PATHS ---
         road_map_low_res_imgs: HashGrid = HashGrid(3, 3, (
