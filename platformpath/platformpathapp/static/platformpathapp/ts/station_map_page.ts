@@ -3,7 +3,7 @@ import { PathFinder, type PathStep, type AccessibilityOption } from "./path_find
 import { GeoConverter, type Extents } from "./geolocation.ts";
 import { type LayerData, type NodeData, type StationData, type StationMapData, type StationResponse } from "./station_data.ts";
 import { 
-    NodeOption, FilterCheckBox, NodeSVG, SVGComponentElement, type StationMapInteractionHandler, NodeDropdownButton 
+    NodeOption, FilterCheckBox, LayerOption, NodeSVG, SVGComponentElement, type StationMapInteractionHandler, NodeDropdownButton 
 } from "./station_custom_elements.ts";
 import { URLHandler } from "./url_handler.ts";
 import { DataFetch } from "./data_fetch.ts";
@@ -37,15 +37,14 @@ export class StationMapPage {
             instructionText: HTMLDivElement
         }
     } | null = null;
-    protected layerElements: {
-        layerOptions: HTMLDivElement,
-        allLayersButton: HTMLButtonElement
+    protected layerOptions: {
+        allOption: LayerOption,
+        otherOptionsMap: Map<LayerData,LayerOption>
     } | null = null;
 
-    protected nodeSVGs: NodeSVG[] = [];
     protected filterCheckboxes: {
-        all: FilterCheckBox, 
-        other: FilterCheckBox[]
+        allOption: FilterCheckBox, 
+        otherOptions: FilterCheckBox[]
     } | null = null;
     protected activeFilters: Set<string> = new Set();
 
@@ -57,6 +56,9 @@ export class StationMapPage {
         startNode: NodeOption | null, 
         endNode: NodeOption | null
     } = {startNode: null, endNode: null};
+
+    protected nodeSVGs: NodeSVG[] = [];
+
     protected currentIndex: number = 0;
     protected isPreviewingRoute: boolean = false;
     protected accessibleOption: AccessibilityOption = "none";
@@ -111,8 +113,6 @@ export class StationMapPage {
         this.initStaticPathField();
         // init the navigation elements field
         this.initNavigationElementsField();
-        // init the layer elements field
-        this.initLayerElementsField();
 
         ///// element Initializers
 
@@ -134,8 +134,9 @@ export class StationMapPage {
         // init the station heading (name of station) on top of the page
         this.initStationHeading();
         // load the station diagram
-        await this.svgRenderer.loadDiagramWithControls(
+        await this.svgRenderer.initDiagram(
             this.station.station.diagram_path, 
+            this.station.nodes,
             this.station.station_map
         );
         // init the route direction labels
@@ -247,82 +248,119 @@ export class StationMapPage {
         this.stationMapInteractionHandlers.push(stationHeadingInteractionHandler);
     }
 
-    // init the layer("levels") buttons 
+    // init the layer buttons
     private initLayerControls(): void {
-        if (this.station === null || this.layerElements === null) {
+        // get the layer options panel 
+        const layerOptionsPanel: HTMLDivElement | null = document.querySelector("#layer-options");
+
+        if (this.station === null || layerOptionsPanel === null ) {
             console.warn(
-                "Station data and/or layer elements field is not initialized",
+                "Station data field not initialized, and/or layer options panel doesn't exist",
                 `Station Data Status: ${this.station}`,
-                `Layer Elements Field Status: ${this.layerElements}`
+                `Layer Options Panel Status: ${layerOptionsPanel}`
             );
             return;
         }
 
-        // destructure layerElements to make the properties calls slightly more legible 
-        const {layerOptions, allLayersButton} = this.layerElements;
-        
-        // Setup button to display all layers of the station map and hook control to 
-        const allLayersHandler: () => void = () => {
-            this.svgRenderer.showAllLayers(this.station?.layers || []);
-            this.setActiveLayerButton(allLayersButton);
-        };
-        const allLayersBtnInteractionHandler: StationMapInteractionHandler = {
-            element: allLayersButton,
-            handler: allLayersHandler
-        };
-        this.stationMapInteractionHandlers.push(allLayersBtnInteractionHandler);
+        // create the all layers option 
+        const allLayersOption: LayerOption = this.initLayerOptions(layerOptionsPanel, "ALL LAYERS", "#ff0000", this.station.layers);
 
-        // Create and setup buttons to show individual layers of the map of the station
-        for (const layer of this.station.layers) {
-            const layerButton: HTMLButtonElement = this.createLayerButton(layer.name, layer.color);
+        // for the other layer options, each layer data will map to a different layer option instance (for later use)
+        // hence we initialize an empty hash map here for that 
+        const otherLayerOptionsMap: Map<LayerData,LayerOption> = new Map();
+        // for each individual station layer
+        this.station.layers.forEach((layer: LayerData) => {
+            // create and setup buttons to show  each individual layers of the map of the station
+            const layerOption: LayerOption = this.initLayerOptions(layerOptionsPanel, layer.name, layer.color, [layer]);
+            // also set the layer to the newly created layeroption in the hashmap as well
+            otherLayerOptionsMap.set(layer, layerOption);
+        });
 
-            // add the event logic here
-            const layersBtnHandler: () => void = () => {
-                this.svgRenderer.showLayer(layer.svg_id, this.station?.layers || []);
-                this.setActiveLayerButton(layerButton);
-            };
-            const layersBtnInteractionHandler: StationMapInteractionHandler = {
-                element: layerButton,
-                handler: layersBtnHandler
-            };
-            this.stationMapInteractionHandlers.push(layersBtnInteractionHandler);
-
-            layerOptions.appendChild(layerButton);
+        // also initialize the layer options field with the all layers option button and the other layer options map
+        this.layerOptions = {
+            allOption: allLayersOption,
+            otherOptionsMap: otherLayerOptionsMap
         }
 
-        // activate the all layers button by default
-        allLayersButton.click();
+        // finally get the handler from the all layers option once everything is set up (it requires the layerOptions field 
+        // to be set up)
+        const allLayersOptionHandler: (() => void) | null =  allLayersOption.Handler;
+        if (allLayersOptionHandler === null) {
+            console.warn("All layers option doesn't have a handler");
+            return;
+        }
+        // activate the all layers button once everything is done initializing (this is default behavior)
+        allLayersOptionHandler();
     }
 
-    // Creates a button with the specified label and background color
-    private createLayerButton(label: string, color: string): HTMLButtonElement {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.classList.add("layer-option");
-        button.innerText = label;
-        // this is to allow access to the color in the css
-        button.style.setProperty("--bg-color", color);
-        return button;
-    }
-
-    // Helper function to clear active state from previous button and sets active state for current button
-    private setActiveLayerButton(activeButton: HTMLButtonElement): void {
-        document.querySelectorAll(".layer-option, .all-layers-button").forEach((button) => {
-            button.classList.remove("active");
-        });
-        activeButton.classList.add("active");
-    }
-
-    // Function to set the active layer button by its ID
-    private setActiveLayerButtonByLayer(layerId: string): void {
-        const layerButtons = document.querySelectorAll<HTMLButtonElement>(".layer-option, .all-layers-button");
-        for (const button of layerButtons) {
-            if (button.innerText === layerId) {
-                this.setActiveLayerButton(button);
+    // creates a layer option, sets up the event/styling logic, and returns the instance
+    private initLayerOptions(
+        parent: HTMLDivElement, name: string, color: string, layers: LayerData[]
+    ): LayerOption {
+        // since a layer option can be tied to multiple layer SVGs (e.g. the "all layers option") and each LayerOption instance requires
+        // a reference to the layer SVGs, we will create an array to hold all of these layerSVGs to be added later when constructing the
+        // LayerOption instance
+        const layerSVGs: SVGGraphicsElement[] = [];
+        layers.forEach((layer: LayerData) => {
+            // get the layer based on its SVG ID
+            const layerSVG: SVGGraphicsElement | null = document.querySelector(`[id='${layer.svg_id}']`);
+            if (layerSVG === null) {
+                console.warn("Can't find the corresponding SVG for the given layer data:", layer);
                 return;
             }
+            // and push it to the layerSVGs array
+            layerSVGs.push(layerSVG);
+        });
+
+        // create a new layer option
+        const layerOption: LayerOption = new LayerOption(parent, layerSVGs, name, color);
+        // add the event logic here
+        const layerOptionHandler: () => void = () => this.enableLayers(layers);
+        // initialize addtional event and styling logic for the layer option
+        layerOption.init(layerOptionHandler);
+
+        // create a station interaction handler for the given layer option
+        const layerOptionInteractionhandler: StationMapInteractionHandler = {
+            element: layerOption.Self,
+            handler: layerOptionHandler
         }
+        // push it into the queue of station map interaction handlers
+        this.stationMapInteractionHandlers.push(layerOptionInteractionhandler);
+
+        return layerOption;
     }
+
+    // handles the styling and SVG logic of the a given layer
+    private enableLayers(layers: LayerData[]): void {
+        if (this.station === null || this.layerOptions === null) {
+            console.warn(
+                "There is no station data and/or the layer options field hasn't been initialized",
+                `Station Data Status: ${this.station}`,
+                `Layer Options Field Status: ${this.layerOptions}`
+            );
+            return;
+        }
+
+        const {allOption, otherOptionsMap} = this.layerOptions;
+        const allLayers: LayerData[] = this.station.layers;
+        const allLayersActive: boolean = allLayers.length === layers.length;
+
+        allOption.Self.classList.toggle("active", allLayersActive);
+    
+        const layerDataSet: Set<LayerData> | null = !allLayersActive ? new Set(layers.values()) : null;
+        allLayers.forEach((layer: LayerData) => {
+            const layerOption: LayerOption | undefined = otherOptionsMap.get(layer);
+            if (layerOption === undefined) {
+                console.warn("There is no layer option set for the given layer data: ", layer);
+                return;
+            }
+
+            const enableLayer: boolean = layerDataSet !== null && layerDataSet.has(layer);
+            layerOption.Self.classList.toggle("active", enableLayer);
+            this.svgRenderer.enableLayerSVGs(layerOption.LayerSVGs, enableLayer || layerDataSet === null);
+        });
+    }
+
     
     // Reads from the form and delegates to startNavigation (NOTE: id here is not svgID, it's actual databse ID of the node)
     private async handleFormSubmit(): Promise<void> {
@@ -331,8 +369,12 @@ export class StationMapPage {
             return;
         }
 
-        const startNodeID: number | undefined = this.selectedNodeOptions.startNode.ID;
-        const endNodeID: number | undefined = this.selectedNodeOptions.endNode.ID;
+        // destructure the start and end nodes (fore readability purposes)
+        const {startNode, endNode} = this.selectedNodeOptions;
+
+        // retrive the start and end node IDs
+        const startNodeID: number | undefined = startNode.Node.id;
+        const endNodeID: number | undefined = endNode.Node.id;
 
         await this.startNavigation(startNodeID, endNodeID);
     }
@@ -646,7 +688,7 @@ export class StationMapPage {
         this.currentPathNodeIDs.clear();
         // add the new values
         this.currentPath.forEach((step: PathStep) => {
-            this.currentPathNodeIDs.add(step.svgId);
+            this.currentPathNodeIDs.add(step.node.svg_id);
         });
 
         // render the entire path
@@ -663,36 +705,40 @@ export class StationMapPage {
 
     // Function that sets up the UI elements for the preview and makes them visible
     private startRoutePreview(): void {
-        if (!this.currentPath || this.currentPath.length === 0) {
+        if (this.currentPath === null || this.currentPath.length === 0) {
             console.warn('No path available for preview');
             return;
         }
 
-        if (this.navigationElements === null || this.layerElements === null) {
+        if (this.navigationElements === null || this.layerOptions === null) {
             console.warn(
                 "Navigation elements and/or layer elements field are not initialized",
                 `Navigation Elements Field Status: ${this.navigationElements}`,
-                `Layer Elements Field Status: ${this.layerElements}`
+                `Layer Elements Field Status: ${this.layerOptions}`
             );
             return;
         }
 
-        // destructure the corresponding properties from layer elements/navigation elements
-        const {allLayersButton} = this.layerElements;
+        // destructure the corresponding properties from layer options/navigation elements
+        const {allOption} = this.layerOptions;
         const {routePreview} = this.navigationElements;
 
         // toggle global boolean that we are previewing the route
         this.isPreviewingRoute = true;
         // Keep the full map visible during preview
-        allLayersButton.click();
+        const allLayersOptionHandler: (() => void) | null = allOption.Handler;
+        if (allLayersOptionHandler === null) {
+            console.warn("There is no handler for the all layer options");
+            return;
+        }
+        allLayersOptionHandler();
+
         // style the preview elements
         const movementCount: number = Math.max(this.currentPath.length, 0);
         routePreview.previewDescription.innerHTML = `There are <b>${movementCount} step${movementCount === 1 ? "" : "s"}</b> in this route`;
         routePreview.self.classList.remove("hidden");
         // start our route preview for the svg
-        this.svgRenderer.startRoutePreview(
-            this.currentPath.map((step: PathStep) => step.svgId)
-        );
+        this.svgRenderer.startRoutePreview(this.currentPath);
     }
 
     // function that starts the step by step navigation of the route
@@ -722,11 +768,11 @@ export class StationMapPage {
 
     // end the navigation process (the opposite of StartNavigation)
     public endNavigation(): void {
-        if (this.navigationElements === null || this.layerElements === null) {
+        if (this.navigationElements === null || this.layerOptions === null) {
             console.warn(
                 "Navigation elements and/or layer elements field is not initialized",
                 `Navigation Elements Field Status: ${this.navigationElements}`,
-                `Layer Elements Field Status: ${this.layerElements}`
+                `Layer Elements Field Status: ${this.layerOptions}`
             );
             return;
         }
@@ -735,7 +781,7 @@ export class StationMapPage {
 
         // destructure the required fields 
         const {stepUI, routePreview} = this.navigationElements;
-        const {allLayersButton} = this.layerElements;
+        const {allOption} = this.layerOptions;
 
         // clear the current path
         this.currentPath = null;
@@ -753,8 +799,13 @@ export class StationMapPage {
         // remove the step ui + preview ui from view
         stepUI.self.classList.add("hidden");
         routePreview.self.classList.add("hidden");
-        // click the all layers button to reveal all layers again
-        allLayersButton.click();
+        // activate the all layers option to reveal all layers again
+        const allLayersOptionHandler: (() => void) | null = allOption.Handler;
+        if (allLayersOptionHandler === null) {
+            console.warn("There is no handler for the all layer options");
+            return;
+        }
+        allLayersOptionHandler();
     }
 
     // renders the entirety of the path 
@@ -791,15 +842,14 @@ export class StationMapPage {
         }
 
         // update instructions
-        instructionText.innerText =
-            `Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}`;
+        instructionText.innerText = `
+            Step ${this.currentIndex + 1} of ${this.currentPath.length}: ${step.instruction}
+        `;
 
-        // set the correct layers
-        this.svgRenderer.showLayer(step.layer, this.station?.layers || []);
-        this.setActiveLayerButtonByLayer(step.layer);
+        this.enableLayers([step.layer]);
 
         // highlight nodes and center onto them
-        this.svgRenderer.highlightNode(step.svgId);
+        this.svgRenderer.highlightNode(step);
 
         // now center on the node
 
@@ -809,15 +859,15 @@ export class StationMapPage {
         if (isInitializationStep) {
             // if it is the initialization step, change the smooth centering overloads to hide certain elements in the SVG while centering
             const {centerSpeed, centerThresholdRatio} = SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB;
-            this.svgRenderer.centerOnNode(
-                step.svgId,
+            this.svgRenderer.centerOnPathStep(
+                step,
                 {centerSpeed: centerSpeed, centerThresholdRatio: centerThresholdRatio, hideElementsWhileCentering: true}
             );
         }
         else {
             // if it isn't the initialization step, pass the standard smootj centering overloads to the function
-            this.svgRenderer.centerOnNode(
-                step.svgId,
+            this.svgRenderer.centerOnPathStep(
+                step,
                 SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB
             );
         }
@@ -966,10 +1016,8 @@ export class StationMapPage {
         const nodeOption: NodeOption = new NodeOption(
             dropdownButton.LinkedDropdown,
             dropdownButton.Self,
-            node.label, 
-            node.id,
-            node.svg_id,
             nodeSVG,
+            node,
             layer,
             filters
         );
@@ -977,23 +1025,51 @@ export class StationMapPage {
         dropdownButton.NodeOptions.push(nodeOption);
 
         // init our event handling logic here...
-        const nodeOptionHandler: () => void = () => {
+        const handler: () => void = () => {
             // this block deals with the selection of the item (mainly its own styling and some state changes)
             {
                 // check if there is an option already selected (depending on whether this node option is a start or end node option)
                 // and if it matches our current nodeOption
                 const role: SelectionRole = nodeOption.selectionRole();
+                const {startNode, endNode} = this.selectedNodeOptions;
                 if (role === "start") {
                     // if the start node doesn't match this node option, remove the .selected class from it
-                    if (this.selectedNodeOptions.startNode !== null && this.selectedNodeOptions.startNode !== nodeOption)
-                        this.selectedNodeOptions.startNode.Self.classList.remove("selected");
+                    // as well as unhighlight the previous selected start node
+                    if (startNode !== null && startNode !== nodeOption) {
+                        startNode.Self.classList.remove("selected");
+                        this.svgRenderer.unhighlightSelectedNode(startNode);
+                    }
+
+                    // in the case that the start node's associated nodeSVG matches with the end node's nodeSVG
+                    // do some styling changes to "deactivate" the end node and then set the end node property
+                    // of the selected node options to null
+                    if (endNode !== null && endNode.NODESVG === nodeOption.NODESVG) {
+                        endNode.Self.classList.remove("selected");
+                        endNode.ParentToggleButton.classList.remove("option-selected");
+
+                        this.svgRenderer.unhighlightSelectedNode(endNode);
+
+                        this.selectedNodeOptions.endNode = null;
+                    }
+
                     // and then set the start node option as this one
                     this.selectedNodeOptions.startNode = nodeOption;
                 }
                 // do the same for the end node
                 else if (role === "end") {
-                    if (this.selectedNodeOptions.endNode !== null && this.selectedNodeOptions.endNode !== nodeOption)
-                        this.selectedNodeOptions.endNode.Self.classList.remove("selected");
+                    if (endNode !== null && endNode !== nodeOption) {
+                        endNode.Self.classList.remove("selected");
+                        this.svgRenderer.unhighlightSelectedNode(endNode);
+                    }
+
+                    if (startNode !== null && startNode.NODESVG === nodeOption.NODESVG) {
+                        startNode.Self.classList.remove("selected");
+                        startNode.ParentToggleButton.classList.remove("option-selected");
+
+                        this.svgRenderer.unhighlightSelectedNode(startNode);
+
+                        this.selectedNodeOptions.startNode = null;
+                    }
 
                     this.selectedNodeOptions.endNode = nodeOption;
                 }
@@ -1017,10 +1093,14 @@ export class StationMapPage {
                 }
             }
         };
+        
+        // init styling and event logic of the node option 
+        nodeOption.init(handler);
+
         // store our event handler here (we'll init the click logic in a dedicated function for all station map handlers)
         const nodeOptionInteractionHandler: StationMapInteractionHandler = { 
             element: nodeOption.Self, 
-            handler: nodeOptionHandler 
+            handler: handler 
         };
         this.stationMapInteractionHandlers.push(nodeOptionInteractionHandler);
 
@@ -1096,7 +1176,7 @@ export class StationMapPage {
             mobileRouteForm: HTMLDivElement, nodeDisplayDescription: HTMLDivElement
         } | null = this.initMobileRouteForm(targetNodeSVG, nodeOptionsMap);
         if (mobileRouteFormElements === null) {
-            console.warn("Mobile route form elements were not initialized properly");
+            console.warn("Mobile route form elements were not initialized");
             return;
         }
         // for readability, will destructure the indiivudal components from the mobileRouteFormElements obj
@@ -1210,7 +1290,8 @@ export class StationMapPage {
                 mobileRouteForm.classList.remove("hidden");
                 // set the nodeOption label to the mobile route form's node display description
                 // the label should exist for both nodeOptions but we'll just set it to either or label for the sake of it
-                nodeDisplayDescription.innerHTML = nodeOptions.startOption.Label || nodeOptions.endOption.Label;
+                const {startOption, endOption} = nodeOptions;
+                nodeDisplayDescription.innerHTML = startOption.Node.label || endOption.Node.label;
                 // add highlighted__static class to the target element of the node SVG and remove the highlighted__hover class
                 parentNodeSVG.Self.BaseElement.classList.add("highlighted__static");
             }
@@ -1310,13 +1391,24 @@ export class StationMapPage {
             }
 
             // if no filters are matched
-            if (!filterMatched) {
-                // just run the all filter checkbox handle
-                this.filterCheckboxes.all.ButtonElement.click();
+            if (!filterMatched) {                
+                // just call the all filter checkbox handler
+                const allOptionFilterCheckboxHandler: (() => void) | null = this.filterCheckboxes.allOption.Handler;
+                if (allOptionFilterCheckboxHandler === null) {
+                    console.warn("All option filter checkbox's handler has not been initialized");
+                    return;
+                }
+                allOptionFilterCheckboxHandler();
             }              
 
-            // activate the handler the the selected node option
-            targetNodeOption.Self.click();
+            // activate the handler for the selected node option
+            const targetNodeOptionHandler: (() => void) | null = targetNodeOption.Handler;
+            if (targetNodeOptionHandler === null) {
+                console.warn("The target node option doesn't have a handler:", targetNodeOption);
+                return;
+            }
+            targetNodeOptionHandler();
+            
             // now the hide the mobile route form
             mobileRouteForm.classList.add("hidden");
         }
@@ -1372,10 +1464,7 @@ export class StationMapPage {
         ) => pairA.value.localeCompare(pairB.value));
 
         // create a filter checkbox that reveals all options
-        const allOptionFilterCheckboxAndHandler: { 
-            checkbox: FilterCheckBox, 
-            handler: () => void 
-        } = (
+        const allOptionFilterCheckbox: FilterCheckBox = (
             this.createAllOptionFilterCheckbox(
                 filterCheckboxesContainer, 
                 nodeOptions
@@ -1383,53 +1472,36 @@ export class StationMapPage {
         );
 
         // create individual filter checkboxes for the various other node types
-        const otherOptionFilterCheckboxesAndHandlers: {
-            checkbox: FilterCheckBox, 
-            handler: () => void 
-        }[] = this.createOtherFilterCheckboxes(
-            filterCheckboxesContainer,
-            allOptionFilterCheckboxAndHandler,
-            nodeTypesAlphabetized,
-            nodeOptions
+        const otherOptionFilterCheckboxes: FilterCheckBox[] = (
+            this.createOtherFilterCheckboxes(
+                filterCheckboxesContainer,
+                allOptionFilterCheckbox,
+                nodeTypesAlphabetized,
+                nodeOptions
+            )
         );
 
-        // create a handler to create a station map interaction handler and push it to the array of station map interaction handlers
-        const initAndPushNewStationMapInteractionHandler: (
-            element: HTMLElement, handler: () => void
-        ) => void = (element: HTMLElement, handler: () => void) => {
-            const stationMapInteractionHandler: StationMapInteractionHandler = {
-                element: element,
+        // now iterate through each filter checkbox and create a station map interaction handler for each one
+        [allOptionFilterCheckbox, ...otherOptionFilterCheckboxes].forEach((filterCheckbox: FilterCheckBox) => {
+            // get the handler
+            const handler: (() => void) | null = filterCheckbox.Handler;
+            if (handler === null) {
+                console.warn("The current filter checkbox doesn't have a handler");
+                return;
+            }
+            // create the station map interaction handler with the checkbox's element and its handler
+            const filterChecboxInteractionHandler: StationMapInteractionHandler = {
+                element: filterCheckbox.Self,
                 handler: handler
             };
-
-            this.stationMapInteractionHandlers.push(stationMapInteractionHandler);
-        }
-
-        // run this handler for the all option filter checkbox
-        initAndPushNewStationMapInteractionHandler(
-            allOptionFilterCheckboxAndHandler.checkbox.ButtonElement, 
-            allOptionFilterCheckboxAndHandler.handler
-        );
-        // create an array to hold all the other option filter checkboxes
-        const otherOptionFilterCheckboxes: FilterCheckBox[] = [];
-        // iterate thru each other filter checkbox and their respective handler
-        otherOptionFilterCheckboxesAndHandlers.forEach((checkboxAndHandler: {
-            checkbox: FilterCheckBox, 
-            handler: () => void 
-        }) => {
-            // run the create station map interaciton handler for each of these checkboxes and their handlers
-            initAndPushNewStationMapInteractionHandler(
-                checkboxAndHandler.checkbox.ButtonElement, 
-                checkboxAndHandler.handler
-            );
-            // as well as append the checkbox handlers to the other option filter checkboxes
-            otherOptionFilterCheckboxes.push(checkboxAndHandler.checkbox);
+            // push it to the array of station map interaction handlers
+            this.stationMapInteractionHandlers.push(filterChecboxInteractionHandler);
         });
-
+        
         // now initialize the filter checkboxes field
         this.filterCheckboxes = {
-            all: allOptionFilterCheckboxAndHandler.checkbox, 
-            other: otherOptionFilterCheckboxes
+            allOption: allOptionFilterCheckbox, 
+            otherOptions: otherOptionFilterCheckboxes
         }
     }
 
@@ -1437,12 +1509,13 @@ export class StationMapPage {
     private createAllOptionFilterCheckbox(
         filterChecklist: HTMLDivElement, 
         nodeOptions: NodeOption[]
-    ): {checkbox: FilterCheckBox, handler: () => void}
+    ): FilterCheckBox
     {
         // create our filter checkbox
         const filterCheckbox: FilterCheckBox = new FilterCheckBox("All Nodes", "ALL", filterChecklist);
 
-        // init the logic for our all filter checkbox
+        // init the logic and styling for our all filter checkbox (the arrow fn created below is to initialize the handler property of the 
+        // filter checkbox (which is done through the .init() fn of the created filter checkbox))
         const handler: () => void = () => {
             // clear our active filters list
             this.activeFilters.clear();
@@ -1458,33 +1531,24 @@ export class StationMapPage {
                 
             // also indicate this filter check box has been clicked
             filterCheckbox.Self.classList.add("enabled");
-        };
-
-        // activate the handler at the start (since it is the default option)
+        }
+        // this is what actually initializes the logic and styling
+        filterCheckbox.init(() => handler());
+        // call the handler 
         handler();
 
-        return { checkbox: filterCheckbox, handler: handler};
+        return filterCheckbox;
     }   
 
     // create all the other checkboxes (for the different node types)
     private createOtherFilterCheckboxes(
         filterCheckboxesContainer: HTMLDivElement,
-        allOptionFilterCheckboxAndHandler: {checkbox: FilterCheckBox, handler: () => void},
+        allOptionFilterCheckbox: FilterCheckBox,
         nodeTypesAlphabetized: {value: string, readableLabel: string}[] = [],
         nodeOptions: NodeOption[]
-    ): {
-        checkbox: FilterCheckBox,
-        handler: () => void
-    }[] {
-        // extract our checkbox and associated handler (to make the items more legible)
-        const allOptionFilterCheckbox: FilterCheckBox = allOptionFilterCheckboxAndHandler.checkbox;
-        const allOptionFilterCheckboxHandler: () => void = allOptionFilterCheckboxAndHandler.handler;
-
-        // initialize an empty array that will hold all the other filter checkboxes and their respective handlers
-        const otherFilterCheckboxesAndHandlers: {
-            checkbox: FilterCheckBox,
-            handler: () => void
-        }[] = [];
+    ): FilterCheckBox[] {
+        // initialize an empty array that will hold all the other filter checkboxes 
+        const otherFilterCheckboxes: FilterCheckBox[] = [];
 
         // iterate through our alphabetized node types
         nodeTypesAlphabetized.forEach((type: {value: string, readableLabel: string}) => {
@@ -1514,7 +1578,15 @@ export class StationMapPage {
                 // now check if any other active filters are enabled
                 if (this.activeFilters.size === 0) {
                     // if not, activate our all option filter checkbox handler (e.g. enable all node options again)
+                    const allOptionFilterCheckboxHandler: (() => void) | null = allOptionFilterCheckbox.Handler;
+                    if (allOptionFilterCheckboxHandler === null) {
+                        console.warn("All option filter checkbox doesn't have a handler");
+                        return;
+                    }
                     allOptionFilterCheckboxHandler();
+
+                    // and then return since we don't need to do the logic below if the allOptionsFilterCheckbox
+                    // is enabled
                     return;
                 }
 
@@ -1542,25 +1614,27 @@ export class StationMapPage {
                         // also remove it from the selected node options (since it won't be seen anymore if it doesn't match a filter)
                         // and remove highlighting and other styling attributes from it
                         const role: SelectionRole = nodeOption.selectionRole();
+                        const {startNode, endNode} = this.selectedNodeOptions;
                         if (
                             role === "start" && 
-                            this.selectedNodeOptions.startNode !== null && 
-                            this.selectedNodeOptions.startNode === nodeOption 
+                            startNode !== null && 
+                            startNode === nodeOption 
                         ) {
+                            // unhighlight the start node
+                            this.svgRenderer.unhighlightSelectedNode(startNode);
                             // set our selected node option for this start node as null
                             this.selectedNodeOptions.startNode = null;
                         }
                         // same logic as for the start node goes for the end node
                         else if (
                             role === "end" && 
-                            this.selectedNodeOptions.endNode !== null &&
-                            this.selectedNodeOptions.endNode === nodeOption
+                            endNode !== null &&
+                            endNode === nodeOption
                         ) {
+                            this.svgRenderer.unhighlightSelectedNode(endNode);
                             this.selectedNodeOptions.endNode = null;
                         }
 
-                        // unhighlight the node
-                        this.svgRenderer.unhighlightSelectedNode(role);
                         // remove this class on the dropdown parent's toggle button (mainly just for styling 
                         // (removing this class removes an image indicator that signals an option has been selected on the button))
                         nodeOption.ParentToggleButton.classList.remove("option-selected");
@@ -1572,14 +1646,14 @@ export class StationMapPage {
                 });
             };
 
+            // initialize the filter checkbox with the given handler
+            filterCheckbox.init(handler);
+
             // store our newly created filter checkbox and handler here
-            otherFilterCheckboxesAndHandlers.push({
-                checkbox: filterCheckbox,
-                handler: handler
-            });
+            otherFilterCheckboxes.push(filterCheckbox);
         });
 
-        return otherFilterCheckboxesAndHandlers;
+        return otherFilterCheckboxes;
     }
 
     // creates a new nodeSVG item given a nodeData obj
@@ -1928,27 +2002,6 @@ export class StationMapPage {
                 instructionText: instructionText
             }
         }
-    }
-
-    // initializes the layerElements field
-    // it's a bit of a misnomer because the layer elements field only includes the layer options (the container that holds all the 
-    // layer buttons that isn't the all layers button) and the all layers button but it'll suffice for now
-    private initLayerElementsField(): void {
-        // get the layer options and the all layers button
-        const layerOptions: HTMLDivElement | null = document.querySelector("#layer-options");
-        const allLayersButton: HTMLButtonElement | null = document.querySelector("#show-all-layers");
-
-        if (layerOptions === null || allLayersButton === null) {
-            console.warn(
-                "Layer options container and/or the all layers button doesn't exist",
-                `Layer Options Status: ${layerOptions}`,
-                `All Layers Button Status: ${allLayersButton}`
-            );
-            return;
-        }
-
-        // initialize the layer elements field
-        this.layerElements = {layerOptions: layerOptions, allLayersButton: allLayersButton};
     }
 
     //////////// STYLING INITIALIZERS8

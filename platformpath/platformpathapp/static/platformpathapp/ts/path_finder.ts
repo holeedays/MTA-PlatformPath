@@ -1,8 +1,8 @@
-import { type StationResponse, type NodeData, type EdgeData } from "./station_data.ts"
+import { type StationResponse, type NodeData, type EdgeData, type LayerData } from "./station_data.ts"
 
 export interface PathStep {
-    svgId: string;
-    layer: string;
+    node: NodeData;
+    layer: LayerData;
     instruction: string;
     incomingEdge?: EdgeData; // The edge that leads to this step
 }
@@ -24,24 +24,28 @@ export class PathFinder {
         isAccessible: AccessibilityOption = "none"
     ): PathStep[] | null {
         
-        // Get adjacency map and node maps
-        // The adjacency map shows the neighbors of each node
-        // The node map contains the data for each node in the station
-        const adjAndNode = this.getAdjacencyAndNodeMap(station, isAccessible);
+        /*
+            Get adjacency map and node maps
+            The adjacency map shows the neighbors of each node
+            The node map contains the data for each node in the station
+        */
+        const adjAndNode: [
+            Record<number,EdgeData[]>, Record<number,NodeData>
+        ] | null = this.getAdjacencyAndNodeMap(station, isAccessible);
         if (adjAndNode === null)
             return null;
 
-        const adjacencyMap = adjAndNode[0];
-        const nodeMap = adjAndNode[1];
+        const adjacencyMap: Record<number,EdgeData[]> = adjAndNode[0];
+        const nodeMap: Record<number,NodeData> = adjAndNode[1];
 
-        // Build a layer lookup map to translate integer Layer IDs to string svg
-        // This is information is used to indicate which layer of the map to show to the
-        // user for the particular step
-        // Example: database layer 3 -> SVG group "MEZZANINE"
-        const layerMap: Record<number, string> = {};
+        /* 
+            Build a layer lookup map to translate the Layer ID (which is an int) to the layer data obj 
+            Example: database layer 3 -> layer data obj: {id: 3, SVG group "MEZZANINE", order: 1, ...}
+        */
+        const layerMap: Record<number, LayerData> = {};
         if (station.layers) {
-            station.layers.forEach(layer => {
-                layerMap[layer.id] = layer.svg_id;
+            station.layers.forEach((layer: LayerData)=> {
+                layerMap[layer.id] = layer;
             });
         } else {
             console.error('Layer models not found in station data');
@@ -50,18 +54,19 @@ export class PathFinder {
 
         // Breadth-first Search algorithm used to find a path between the two nodes
         
-        // Keeps track of nodes that have already been visited to prevent loops
-        const visited   = new Set<number>();
+        // create a hash set to track nodes that have already been visited to prevent loops
+        const visited = new Set<number>();
         
-        // Get starting node's information to create the first step of the path
-        const startNode = nodeMap[fromNodeId];
-        if (!startNode) {
-            console.error(`Start node not found: ${fromNodeId}`);
+        // Get starting node's information to create the first step of the path as well as the corresponding layer 
+        const startNode: NodeData | undefined = nodeMap[fromNodeId];
+        const layer: LayerData | undefined = layerMap[startNode?.layer || 0];
+        if (startNode === undefined || layer === undefined) {
+            console.error(`Start node not found: ${fromNodeId} and/or layer not found: ${startNode?.layer}`);
             return null;
         }
         const initialStep: PathStep = {
-            svgId:       startNode.svg_id,
-            layer:       layerMap[startNode.layer] || "",
+            node:       startNode,
+            layer:       layer,
             instruction: 'Start here'
         };
 
@@ -97,24 +102,27 @@ export class PathFinder {
             // Mark this node as searched
             visited.add(currentNodeId);
 
-            // Get the outgoing edges for the current node and prepare them to
-            // be searched by creating a new step for them and adding it to the path
-            // Once they are properly prepared, they are added to the queue
+            /*
+                Get the outgoing edges for the current node and prepare them to
+                be searched by creating a new step for them and adding it to the path
+                Once they are properly prepared, they are added to the queue
+            */
             const outgoingEdges = adjacencyMap[currentNodeId] || [];
-            outgoingEdges.forEach((edge) => {
+            outgoingEdges.forEach((edge: EdgeData) => {
                 // Edges that have already been searched are not added
                 if (visited.has(edge.to_node)) {
                     return;
                 }
 
-                const targetNode = nodeMap[edge.to_node];
-                if (!targetNode) {
+                const targetNode: NodeData | undefined = nodeMap[edge.to_node];
+                const targetLayer: LayerData | undefined = layerMap[targetNode?.layer || 0];
+                if (targetNode === undefined || targetLayer === undefined) {
                     return;
                 }
 
                 const nextStep: PathStep = {
-                    svgId: targetNode.svg_id,
-                    layer: layerMap[targetNode.layer] || "",
+                    node: targetNode,
+                    layer: targetLayer,
                     instruction: edge.instruction,
                     incomingEdge: edge,
                 };
@@ -131,9 +139,13 @@ export class PathFinder {
         return null;
     }
 
-    // A helper function to build the adjacency map and node map
-    // Adjacencey map: A dictionary mapping each node to its outgoing edges
-    // Node map: A dictionary mapping each node ID to its corresponding node data
+    /*
+        A helper function to build the adjacency map and node map
+
+        Definitions:
+            Adjacency map - A dictionary mapping each node to its outgoing edges
+            Node map - A dictionary mapping each node ID to its corresponding node data
+    */
     private getAdjacencyAndNodeMap(
         station: StationResponse,
         isAccessible: AccessibilityOption = "none"
@@ -145,36 +157,47 @@ export class PathFinder {
             nodeMap[node.id] = node;
         });
 
-        // Build adjacency map by looping thorugh every edge in the station
-        // and organizing them based on the fromNode of the edge
+        /*
+            Build adjacency map by looping thorugh every edge in the station
+            and organizing them based on the fromNode of the edge
+        */
         const adjacency: Record<number, EdgeData[]> = {};
 
-        station.edges.forEach((edge) => {
+        station.edges.forEach((edge: EdgeData) => {
             // inactive edges are will not be considered for the route
             if (!edge.is_active) return null;
 
-            const fromNode = nodeMap[edge.from_node];
-            const toNode   = nodeMap[edge.to_node];
+            // get the nodes corresponding to the edge
+            const fromNode: NodeData | undefined = nodeMap[edge.from_node];
+            const toNode: NodeData | undefined = nodeMap[edge.to_node];
 
-            // By default all nodes are considered for the route, 
-            // so if the user has not selected any accessibility options, 
-            // then all edges are considered
+            // checks if the nodes exist; if not exit the fn and return null
+            if (fromNode === undefined || toNode === undefined) 
+                return null;
+
+            /*
+                By default all nodes are considered for the route, 
+                so if the user has not selected any accessibility options, 
+                then all edges are considered
+            */
             
-            // If the user wants to avoid accessible nodes, then if either 
-            // the fromNode or toNode is accessible infrastructure, this edge is skipped
-            if (isAccessible ===  "avoid-accessible") {
-                if(fromNode?.is_accessible_infrastructure) return;
-                if(toNode?.is_accessible_infrastructure) return;
-            }
-
-            // checks if the nodes exist
-            if (!fromNode || !toNode) return null;
+            /*
+                If the user wants to avoid accessible nodes, then if either 
+                the fromNode or toNode is accessible infrastructure, this edge is skipped
+            */
+            if (
+                isAccessible === "avoid-accessible" &&
+                (fromNode.is_accessible_infrastructure || toNode.is_accessible_infrastructure) 
+            )
+                return;
 
             // check if node is accessible if accessible option is enabled
             // if it is not and the accessible option is enabled this iteration of the loop is skipped
-            if (isAccessible === "accessible-only") {
-                if(this.isNotAccessible(fromNode)) return;
-                if(this.isNotAccessible(toNode)) return;
+            if (
+                isAccessible === "accessible-only" &&
+                (this.isNotAccessible(fromNode) || this.isNotAccessible(toNode))
+            ) {
+                return;
             }
 
             const outgoingEdges = adjacency[edge.from_node] ?? [];

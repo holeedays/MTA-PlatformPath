@@ -1,16 +1,14 @@
-import type { PathStep } from "./path_finder.ts";
-import { type LayerData } from "./station_data.ts";
-import { SVGRenderer, type SelectionRole } from "./svg_renderer.ts";
+import { type LayerData, type NodeData } from "./station_data.ts";
+import { type SelectionRole } from "./svg_renderer.ts";
 
 // a node option class used to house various proprties pertaining to an option for the node dropdown
 export class NodeOption {
-    private label: string;
-    private id: number;
-    private svgID: string;
     private nodeSVG: NodeSVG;
+    private node: NodeData;
     private layer: LayerData; 
     // NOTE: filters is in the structure {value: readableLabel}
     private filters: Map<string,string>;
+    private handler: (() => void) | null = null;
 
     private parent: HTMLDivElement;
     private parentToggleButton: HTMLButtonElement;
@@ -19,18 +17,13 @@ export class NodeOption {
     constructor(
         parent: HTMLDivElement,
         parentToggleButton: HTMLButtonElement,
-        label: string,
-        id: number,
-        svgID: string,
         nodeSVG: NodeSVG,
+        node: NodeData,
         layer: LayerData,
-        filters: Map<string,string>
+        filters: Map<string,string>,
     ) {
-        
-        this.label = label;
-        this.id = id;
-        this.svgID = svgID;
         this.nodeSVG = nodeSVG;
+        this.node = node
         this.layer = layer;
 
         this.filters = filters;
@@ -38,29 +31,29 @@ export class NodeOption {
         this.parent = parent;
         this.parentToggleButton = parentToggleButton;
         this.self = document.createElement("button");
-
-        this.setStyling();
     }
 
     // we're using getters to access the private members since we want the data to be immutable after construction
-    get Label(): string {
-        return this.label;
-    }
-    get ID(): number {
-        return this.id;
-    }
-    get SVGID(): string {
-        return this.svgID;
-    }
     get NODESVG(): NodeSVG {
         return this.nodeSVG;
+    }
+    get Node(): NodeData {
+        return this.node;
     }
     get Layer(): LayerData {
         return this.layer;
     }
+
     get Filters(): Map<string, string> {
         return this.filters;
     }
+    get Handler(): (() => void) | null {
+        if (this.handler === null)
+            console.warn("The node option has not been initialized, there is no handler");
+
+        return this.handler;
+    }
+
     get Parent(): HTMLDivElement {
         return this.parent;
     }
@@ -71,7 +64,15 @@ export class NodeOption {
         return this.self;
     }
 
-    // set the styling/visual look of the element
+    // initializes this node options (configuring additional event/styling logic post constructor)
+    public init(handler: () => void): void {
+        // set the handler to the given property
+        this.handler = handler;
+        // set the styling of the element in the DOM
+        this.setStyling();
+    }
+
+    // set the styling/visual look of the element and add it to the DOM
     private setStyling(): void {
         this.self.classList.add("route-field__dropdown-option");
 
@@ -99,7 +100,7 @@ export class NodeOption {
         const labelComponent: HTMLElement = document.createElement("strong");
         const filterDescriptionComponent: HTMLSpanElement = document.createElement("span");
         
-        labelComponent.innerHTML = this.label;
+        labelComponent.innerHTML = this.node.label;
         filterDescriptionComponent.innerHTML = descriptionFilters;
 
         // append the label componenets to the node option
@@ -122,6 +123,7 @@ export class FilterCheckBox {
     private label: string;
     private value: string;
     private logicHasBeenInit: boolean = false;
+    private handler: (() => void) | null = null;
 
     private parent: HTMLDivElement;
     private self: HTMLDivElement;
@@ -146,6 +148,12 @@ export class FilterCheckBox {
     get Value(): string {
         return this.value;
     }
+    get Handler(): (() => void) | null {
+        if (this.handler === null)
+            console.warn("The filter checkbox has not been initialized, there is no handler");
+
+        return this.handler;
+    }
 
     get Self(): HTMLDivElement {
         return this.self;
@@ -161,6 +169,14 @@ export class FilterCheckBox {
         return this.logicHasBeenInit;
     }
 
+    // same as node options, initializes additional event/styling logic of the filter check box
+    public init(handler: () => void): void {
+        // set this property to the given handler
+        this.handler = handler;
+        // set the styling/structure of the element
+        this.setStyling();
+    }
+
     // like node option, sets the styling/visual look of element and anything extraneous involving the html part of the element
     private setStyling(): void {
         this.self.classList.add("filter-checklist__checkbox");
@@ -174,6 +190,104 @@ export class FilterCheckBox {
         // and then append this container to the parent that holds all the other filters
         this.parent.append(this.self);
     }
+}
+
+// a class used to hold the various layers/levels/floors (they all mean the same thing) of the given station
+export class LayerOption {
+    private label: string;
+    private color: string;
+    private handler: (() => void) | null = null;
+
+    private parent: HTMLDivElement;
+    private layerSVGs: SVGGraphicsElement[];
+    private self: HTMLButtonElement;
+
+    constructor (parent: HTMLDivElement, layerSVGs: SVGGraphicsElement[], label: string, color: string) {
+        this.label = label;
+        this.color = color;
+
+        this.parent = parent;
+        this.layerSVGs = layerSVGs;
+        this.self = document.createElement("button");
+    }
+
+    get Label(): string {
+        return this.label;
+    }
+    get Color(): string {
+        return this.color;
+    }
+    get Handler(): (() => void) | null {
+        if (this.handler === null)
+            console.warn("The node option has not been initialized, there is no handler");
+
+        return this.handler;
+    }
+
+    get Parent(): HTMLDivElement {
+        return this.parent;
+    }
+    get LayerSVGs(): SVGGraphicsElement[] {
+        return this.layerSVGs;
+    }
+    get Self(): HTMLButtonElement {
+        return this.self;
+    } 
+
+    // like node options and filter checkbox, the .init() fn configures additional event/styling logic of the layer options
+    public init(handler: () => void): void {
+        // set the given handler to the handler property
+        this.handler = handler;
+        // set the styling of the element
+        this.setStyling();
+    }
+
+    // sets the styling and layout of this layer options
+    private setStyling(): void {
+        this.self.type = "button";
+        this.self.classList.add("layer-option");
+        this.self.innerText = this.label;
+        // this is to allow access to the color in the css
+        this.self.style.setProperty("--bg-color", this.color);
+        // append self to the DOM
+        this.parent.append(this.self);
+    }
+}
+
+// another related class to NodeOptions, except has the dropdown button as the basis and different logic associated with it
+export class NodeDropdownButton {
+    private nodeOptions: NodeOption[];
+    private linkedDropdown: HTMLDivElement;
+    private self: HTMLButtonElement;
+
+    private isToggled: boolean;
+
+    constructor(self: HTMLButtonElement, linkedDropdown: HTMLDivElement) {
+        this.nodeOptions = [];
+        this.linkedDropdown = linkedDropdown;
+        this.self = self;
+
+        this.isToggled = false;
+    }
+
+    get NodeOptions(): NodeOption[] {
+        return this.nodeOptions;
+    }
+    get LinkedDropdown(): HTMLDivElement {
+        return this.linkedDropdown;
+    }
+    get Self(): HTMLButtonElement {
+        return this.self;
+    }
+
+    get IsToggled(): boolean {
+        return this.isToggled;
+    }
+
+    set IsToggled(value: boolean) {
+        this.isToggled = value;
+        this.linkedDropdown.classList.toggle("hidden", !this.isToggled);
+    } 
 }
 
 // a class to hold all *colored* svgs of a node together and apply certain methods to them accordingly
@@ -263,40 +377,4 @@ export class SVGComponentElement {
 export interface StationMapInteractionHandler {
     element: HTMLElement,
     handler: () => void; 
-}
-
-// another related class to NodeOptions, except has the dropdown button as the basis and different logic associated with it
-export class NodeDropdownButton {
-    private nodeOptions: NodeOption[];
-    private linkedDropdown: HTMLDivElement;
-    private self: HTMLButtonElement;
-
-    private isToggled: boolean;
-
-    constructor(self: HTMLButtonElement, linkedDropdown: HTMLDivElement) {
-        this.nodeOptions = [];
-        this.linkedDropdown = linkedDropdown;
-        this.self = self;
-
-        this.isToggled = false;
-    }
-
-    get NodeOptions(): NodeOption[] {
-        return this.nodeOptions;
-    }
-    get LinkedDropdown(): HTMLDivElement {
-        return this.linkedDropdown;
-    }
-    get Self(): HTMLButtonElement {
-        return this.self;
-    }
-
-    get IsToggled(): boolean {
-        return this.isToggled;
-    }
-
-    set IsToggled(value: boolean) {
-        this.isToggled = value;
-        this.linkedDropdown.classList.toggle("hidden", !this.isToggled);
-    } 
 }

@@ -1,10 +1,11 @@
 // Contains all functions related to rendering the svg diagrams
 
-import { type LayerData, type StationMapData } from "./station_data.ts";
+import { type LayerData, type NodeData, type StationMapData } from "./station_data.ts";
 import { NodeSVG } from "./station_custom_elements.ts";
 import { NodeOption } from "./station_custom_elements.ts"
 import { getElementCentersOffset, boundingRectsAreIntersecting, getCurrentTransformMatrix, Vector2 } from "./transformations.ts";
 import { clamp, normalizeAngle, lerp, AngleType } from "./numeric_utils.ts";
+import type { PathStep } from "./path_finder.ts";
 // import panzoom, {type PanZoom} from "panzoom"; // toggle this off when running server since panzoom has a problem with es6 modules
 
 export type SelectionRole = "start" | "end";
@@ -49,6 +50,9 @@ export class SVGRenderer {
         },
         data: StationMapData
     } | null = null;
+
+    public nodeDataSVGMap: Map<NodeData,SVGGraphicsElement> = new Map();
+    public currentPathNodes: SVGGraphicsElement[] = [];
 
     public isPanning: boolean = false;
     public rotOrScalarElementsDisabled: boolean = false;
@@ -120,6 +124,129 @@ export class SVGRenderer {
         this.SVGWrapper = document.querySelector('.svg-wrapper');
         if (this.SVGWrapper === null)
             console.warn("There is no svg wrapper element on the current page");
+    }
+
+       // init the map field
+    // this includes the map-related SVG elements + the station map data (basically anything map related)
+    private initMapField(stationMapData: StationMapData): void {
+        if (this.SVG === null) {
+            console.warn("The entire SVG doesn't exist");
+            return;
+        }
+
+        // get all the elements relevant to the Map elements field (they are all just SVG elements that group certain items related to the map, 
+        // they arent a specific SVG element like a street icon SVG)
+
+        // parent group container of all the map related SVG elements
+        const mapSVGParent: SVGGraphicsElement | null = this.SVG.querySelector("[id='MAP']");
+        // contains all the vector paths (street + park + misc names) for the map
+        const mapSymbols: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Symbols']");
+        // template for placing our grid pics onto the svg
+        const mapGrid: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Grid']");
+
+        if (
+            mapSVGParent === null || 
+            mapGrid === null || mapGrid === undefined ||
+            mapSymbols === null || mapSymbols === undefined
+        ) {
+            console.warn(
+                "Map SVG parent, map symbols, and/or map grid doesn't exist",
+                `Map Grid Status: ${mapGrid}`,
+                `Symbols Group Status: ${mapSymbols}`,
+                `Map SVG Parent Status: ${mapSVGParent}`
+            );
+            return;
+        }
+
+        // also retrieve or create map groups corresponding the road map/satellite map from the mapSVGParent
+        const {roadMap, satelliteMap} = this.getOrCreateMapGroups(mapSVGParent);
+
+        // doing some processing for the grid items to make it easier when using it for retrieving images from stationMapData
+        // a tuple in the field structure is like this:
+        // [macroGridCell, microGridCells] --> [11, [11, 12, 21, 22]] for a 2x2 grid 
+        const gridCells: [SVGGraphicsElement, SVGGraphicsElement[]][] = [];
+        // iterate through the macro group grid cells (they form a large 3x3 grid)
+        // then iterate through their children (the children also form a 3x3 grid but much smaller; in total there are 81 micro grid cells)
+        for (const macroGridCell of mapGrid.children) {
+            const macroGridCellAsSVG: SVGGraphicsElement = macroGridCell as SVGGraphicsElement;
+            // initialize attributes for the grid cell
+            this.initGridCell(macroGridCellAsSVG);
+            // create an array to hold the micro grid cells (children of the macro grid cell)
+            const microGridCells: SVGGraphicsElement[] = [];
+
+            // do the same logic for the children as well
+            for (const microGridCell of macroGridCell.children) {
+                const microGridCellAsSVG: SVGGraphicsElement = microGridCell as SVGGraphicsElement;
+                this.initGridCell(microGridCellAsSVG);
+                // also push these micro grid cells into the micro grid cell array
+                microGridCells.push(microGridCellAsSVG);
+            }
+            // push the tuple of the macro grid cell and its micro grid cells into the grid
+            gridCells.push([macroGridCellAsSVG, microGridCells]);
+        }
+
+        this.map = {
+            elements: {
+                parent: mapSVGParent, symbols: mapSymbols, gridCells: gridCells, roadMapGroup: roadMap, satelliteMapGroup: satelliteMap
+            },
+            data: stationMapData
+        };
+    }
+
+    // gets or create the road/satellite map groups in the SVG
+    private getOrCreateMapGroups(mapSVGParent: SVGGraphicsElement): {roadMap: SVGGraphicsElement, satelliteMap: SVGGraphicsElement} {
+        // get the SVG map groups for the mapSVGParent
+        let roadMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Road Map Group']");
+        let satelliteMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Satellite Map Group']");
+
+        // check if the road map exists
+        if (roadMap === null) {
+            // if not, create it and prepend (prepend because the Symbols group should be on top) it to the map SVG parent
+            roadMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
+            roadMap.id = "Road Map Group";
+            mapSVGParent.prepend(roadMap);
+        }
+        // check if the satellite map exists
+        if (satelliteMap === null) {
+            // do the same thing as the road map if isn't created
+            satelliteMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
+            satelliteMap.id = "Road Map Group";
+            mapSVGParent.prepend(satelliteMap);
+        }
+
+        return {roadMap: roadMap, satelliteMap: satelliteMap};
+    }
+
+    // initializes attribute configurations for the grid cell
+    private initGridCell(gridCell: SVGGraphicsElement): void {
+        // this is just to make it easier to call a specific grid image from the stationMapData fetched
+        // we can pass the grid key as the key and get the corresponding grid item from it
+
+        // the SVG elements that have duplicate names usually have an underscore followed by which instance it is (e.g. id=element_7), 
+        // in order to get the actual label of the element, we check the value before the underscore
+        const gridKey: string | undefined = gridCell.id.split("_")[0];
+        if (gridKey === undefined) {
+            console.warn(`Could not get a valid id from grid item with id ${gridCell.id}`);
+            return;
+        }
+        // set an attribute separate from the id, this will be the identifier for our images dicts
+        gridCell.setAttribute("data-grid-key", gridKey);
+    }
+    
+    // inits the node data to SVG field
+    private initNodeDataSVGField(nodeData: NodeData[]): void {
+        // iterate through each nodeData obj
+        nodeData.forEach((node: NodeData) => {
+            // get the SVG based on the nodeData's svg_id property
+            const nodeSVG: SVGGraphicsElement | null = document.querySelector(`[id='${node.svg_id}']`);
+            if (nodeSVG === null) {
+                console.warn("Couldn't find the given SVG with the corresponding ID: ", node.svg_id);
+                return;
+            }
+
+            // set nodeData to the SVG reference in the global nodeDataSVGMap
+            this.nodeDataSVGMap.set(node, nodeSVG);
+        });
     }
 
     // inits the dynamic elements field (SVG elements that change dynamically in response to 
@@ -371,113 +498,6 @@ export class SVGRenderer {
         };
     }
 
-    // init the map field
-    // this includes the map-related SVG elements + the station map data (basically anything map related)
-    private initMapField(stationMapData: StationMapData): void {
-        if (this.SVG === null) {
-            console.warn("The entire SVG doesn't exist");
-            return;
-        }
-
-        // get all the elements relevant to the Map elements field (they are all just SVG elements that group certain items related to the map, 
-        // they arent a specific SVG element like a street icon SVG)
-
-        // parent group container of all the map related SVG elements
-        const mapSVGParent: SVGGraphicsElement | null = this.SVG.querySelector("[id='MAP']");
-        // contains all the vector paths (street + park + misc names) for the map
-        const mapSymbols: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Symbols']");
-        // template for placing our grid pics onto the svg
-        const mapGrid: SVGGraphicsElement | null | undefined = mapSVGParent?.querySelector("[id='Grid']");
-
-        if (
-            mapSVGParent === null || 
-            mapGrid === null || mapGrid === undefined ||
-            mapSymbols === null || mapSymbols === undefined
-        ) {
-            console.warn(
-                "Map SVG parent, map symbols, and/or map grid doesn't exist",
-                `Map Grid Status: ${mapGrid}`,
-                `Symbols Group Status: ${mapSymbols}`,
-                `Map SVG Parent Status: ${mapSVGParent}`
-            );
-            return;
-        }
-
-        // also retrieve or create map groups corresponding the road map/satellite map from the mapSVGParent
-        const {roadMap, satelliteMap} = this.getOrCreateMapGroups(mapSVGParent);
-
-        // doing some processing for the grid items to make it easier when using it for retrieving images from stationMapData
-        // a tuple in the field structure is like this:
-        // [macroGridCell, microGridCells] --> [11, [11, 12, 21, 22]] for a 2x2 grid 
-        const gridCells: [SVGGraphicsElement, SVGGraphicsElement[]][] = [];
-        // iterate through the macro group grid cells (they form a large 3x3 grid)
-        // then iterate through their children (the children also form a 3x3 grid but much smaller; in total there are 81 micro grid cells)
-        for (const macroGridCell of mapGrid.children) {
-            const macroGridCellAsSVG: SVGGraphicsElement = macroGridCell as SVGGraphicsElement;
-            // initialize attributes for the grid cell
-            this.initGridCell(macroGridCellAsSVG);
-            // create an array to hold the micro grid cells (children of the macro grid cell)
-            const microGridCells: SVGGraphicsElement[] = [];
-
-            // do the same logic for the children as well
-            for (const microGridCell of macroGridCell.children) {
-                const microGridCellAsSVG: SVGGraphicsElement = microGridCell as SVGGraphicsElement;
-                this.initGridCell(microGridCellAsSVG);
-                // also push these micro grid cells into the micro grid cell array
-                microGridCells.push(microGridCellAsSVG);
-            }
-            // push the tuple of the macro grid cell and its micro grid cells into the grid
-            gridCells.push([macroGridCellAsSVG, microGridCells]);
-        }
-
-        this.map = {
-            elements: {
-                parent: mapSVGParent, symbols: mapSymbols, gridCells: gridCells, roadMapGroup: roadMap, satelliteMapGroup: satelliteMap
-            },
-            data: stationMapData
-        };
-    }
-
-    // gets or create the road/satellite map groups in the SVG
-    private getOrCreateMapGroups(mapSVGParent: SVGGraphicsElement): {roadMap: SVGGraphicsElement, satelliteMap: SVGGraphicsElement} {
-        // get the SVG map groups for the mapSVGParent
-        let roadMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Road Map Group']");
-        let satelliteMap: SVGGraphicsElement | null = mapSVGParent.querySelector("[id='Satellite Map Group']");
-
-        // check if the road map exists
-        if (roadMap === null) {
-            // if not, create it and prepend (prepend because the Symbols group should be on top) it to the map SVG parent
-            roadMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
-            roadMap.id = "Road Map Group";
-            mapSVGParent.prepend(roadMap);
-        }
-        // check if the satellite map exists
-        if (satelliteMap === null) {
-            // do the same thing as the road map if isn't created
-            satelliteMap = document.createElementNS(SVGRenderer.SVGURI, "g") as SVGGraphicsElement;
-            satelliteMap.id = "Road Map Group";
-            mapSVGParent.prepend(satelliteMap);
-        }
-
-        return {roadMap: roadMap, satelliteMap: satelliteMap};
-    }
-
-    // initializes attribute configurations for the grid cell
-    private initGridCell(gridCell: SVGGraphicsElement): void {
-        // this is just to make it easier to call a specific grid image from the stationMapData fetched
-        // we can pass the grid key as the key and get the corresponding grid item from it
-
-        // the SVG elements that have duplicate names usually have an underscore followed by which instance it is (e.g. id=element_7), 
-        // in order to get the actual label of the element, we check the value before the underscore
-        const gridKey: string | undefined = gridCell.id.split("_")[0];
-        if (gridKey === undefined) {
-            console.warn(`Could not get a valid id from grid item with id ${gridCell.id}`);
-            return;
-        }
-        // set an attribute separate from the id, this will be the identifier for our images dicts
-        gridCell.setAttribute("data-grid-key", gridKey);
-    }
-
     // NOTE: the min zoom is based on the starting position of the station so it might not fit too well based on the starting
     // orientation of the station; to aid this, a zoom multiplier is configured to adjust the min zoom slightly 
     // inits the min zoom field (to limit zooming on the panzoom element)
@@ -539,15 +559,17 @@ export class SVGRenderer {
     }
 
     // Highlight function used to highlight the node at each step of the directions
-    public highlightNode(nodeId: string): void {
+    public highlightNode(pathStep: PathStep): void {
+        // unhighlight all other nodes
         this.unhighlightNodes();
-
-        const el = document.getElementById(nodeId);
-        if (el) {
-            el.classList.add('highlighted');
-        } else {
-            console.warn('Node not found:', nodeId);
+        // get the SVG corresponding to the node in this path step
+        const nodeSVG: SVGGraphicsElement | undefined = this.nodeDataSVGMap.get(pathStep.node);
+        if (nodeSVG === undefined) {
+            console.warn("Node Data SVG Map doesn't have the following node data as a key: ", pathStep.node);
+            return;
         }
+        // add the highlighted class to it
+        nodeSVG.classList.add("highlighted");
     }
 
     // gets the highlight class depending on the role given (of a node)
@@ -557,9 +579,8 @@ export class SVGRenderer {
 
     // Seperate highlight function to highlight the start and the end of the selected path
     public highlightSelectedNode(nodeOption: NodeOption): void {
+        // get the role of the node option
         const role: SelectionRole = nodeOption.selectionRole();
-        // unhighlight all current instances of that selected node
-        this.unhighlightSelectedNode(role);
         // get the highlight class 
         const highlightClass: string = this.getHighlightClass(role);
         // get the svg that we will highlight
@@ -570,45 +591,28 @@ export class SVGRenderer {
 
     // Removes all highlighted nodes, excluding the selected nodes (e.g. start and end nodes)
     public unhighlightNodes(): void {
-        document.querySelectorAll(".highlighted").forEach((element: Element) => {
-            element.classList.remove("highlighted");   
-        })
+        // by design, start/end nodes have a different highlight class than other highlighted nodes
+        // hence those nodes will be unaffected
+        this.nodeDataSVGMap.forEach((nodeSVG: SVGGraphicsElement, node: NodeData) => {
+            nodeSVG.classList.remove("highlighted");
+        });
     }
 
-    // Removes the highlighted node given the current role (either a start or end node)
-    public unhighlightSelectedNode(role: SelectionRole): void {
+    // Removes the highlighted node given the current node option
+    public unhighlightSelectedNode(nodeOption: NodeOption): void {
+        // get the role of the node option
+        const role: SelectionRole = nodeOption.selectionRole();
         // get the highlight class
         const highlightClass: string = this.getHighlightClass(role);
-        // remove selection class from previous nodes
-        document.querySelectorAll(`.${highlightClass}`).forEach((element) => {
-            element.classList.remove(highlightClass);   
-        });
+        // remove the provided highlight class from the corresponding SVG to the given node option
+        nodeOption.NODESVG.Self.BaseElement.classList.remove(highlightClass, "highlighted__static");
     }
 
     // Passed a layer id and an array of all unique layers, shows the layer with the given id and hides all other layers
-    public showLayer(layerSvgId: string, layers: LayerData[]): void {
-        layers.forEach((layer) => {
-            const layerElement = document.getElementById(layer.svg_id);
-            if (layerElement) {
-                if (layer.svg_id === layerSvgId) {
-                    layerElement.style.opacity = "1.0";
-                    layerElement.style.pointerEvents = "auto";
-                } else {
-                    layerElement.style.opacity = "0.0";
-                    layerElement.style.pointerEvents = "none";
-                }
-            }
-        });
-    }
-
-    // Shows the entire map
-    public showAllLayers(layers: LayerData[]): void {
-        layers.forEach((layer) => {
-            const layerElement = document.getElementById(layer.svg_id);
-            if (layerElement) {
-                layerElement.style.opacity = "1.0";
-                layerElement.style.pointerEvents = "auto";
-            }
+    public enableLayerSVGs(targetLayerSVGs: SVGGraphicsElement[], enable: boolean): void {
+        targetLayerSVGs.forEach((layerSVG: SVGGraphicsElement) => {
+            layerSVG.style.display = enable ? "block" : "none";
+            layerSVG.style.pointerEvents = enable ? "auto" : "none";
         });
     }
 
@@ -701,9 +705,9 @@ export class SVGRenderer {
     // BIG NOTE: The zoom value right now is only adequate for the station maps with the road/satellite maps, the zoom is very 
     // big for the default stations without any map so don't be alarmed too much about the uber zoom on the nodes for those stations
     // currently
-    // Helper function to zoom on on a node based on svgId
-    public centerOnNode(
-        SVGID: string,
+    // Helper function to zoom on on the node of a path step 
+    public centerOnPathStep(
+        pathStep: PathStep,
         smoothCenter: {
             centerSpeed: number, 
             centerThresholdRatio: number, 
@@ -714,19 +718,15 @@ export class SVGRenderer {
             override: {value: number, includeMinZoom: boolean} | null
         } = {multiplier: 1, override: {value: 20, includeMinZoom: true}}
     ): void {
-
-        if (this.stationSVG === null) {
-            console.warn("Station SVG doesn't exist");
+        // get the SVG from the nodeDataSVGMap
+        const nodeSVG: SVGGraphicsElement | undefined = this.nodeDataSVGMap.get(pathStep.node);
+        if (nodeSVG === undefined) {
+            console.warn("There is no key for the following nodeData: ", pathStep.node);
             return;
         }
-        // retrieve our node SVG element
-        const node: SVGGraphicsElement | null = this.stationSVG.querySelector(`[id='${SVGID}']`);
-        if (node === null) {
-            console.warn(`Node with "${SVGID}" cannot be found on the SVG`);
-            return;
-        }
+        
         // get the bounding rect
-        const nodeBoundingRect: DOMRect = node.getBoundingClientRect();
+        const nodeBoundingRect: DOMRect = nodeSVG.getBoundingClientRect();
         // then center it
         this.centerBoundingBoxInViewport(nodeBoundingRect, smoothCenter, zoom);
     }
@@ -922,30 +922,33 @@ export class SVGRenderer {
         });
     }
 
-    // Method to load the diagram and immediately attach controls
-    public async loadDiagramWithControls(
+    // initializes the diagram (loading, controls setup, misc methods)
+    public async initDiagram(
         diagramPath: string, 
+        nodeData: NodeData[],
         stationMapData: StationMapData
     ): Promise<void> {
         // load the diagram into the container
         await this.loadDiagram(diagramPath);
         // init some macro styling for the SVG
         this.initSVGStyling();
+        // init the SVG Map Elements field (this field needs to be initialized before 
+        // setCurrentMapView() cause that fn requires this field)
+        this.initMapField(stationMapData);
+        // init the node Data SVG field
+        this.initNodeDataSVGField(nodeData);
+        // init the dynamic elements field 
+        this.initDynamicElementsField();
+        // init the min zoom field to initialize the constraints for our panzoom instance (must do this before setuppanzoom instance)
+        this.initMinZoomField();
         // init the rotation controls of the map and get the handler that we need to pass to our panzoom instance
         const beforeMouseDownHandler: ((ev: MouseEvent) => boolean) | null = this.initRotationControls();
         if (beforeMouseDownHandler === null) {
             console.warn("There was a problem initiating rotation controls");
             return;
         }
-        // init the min zoom field to initialize the constraints for our panzoom instance
-        this.initMinZoomField();
         // setup the panzoom instance and its controls
         this.setupPanzoomInstance(beforeMouseDownHandler);
-        // init the SVG Map Elements field (this field needs to be initialized before the last 2 methods in this function body since 
-        // they depend on variables within this field)
-        this.initMapField(stationMapData);
-        // init the dynamic elements field 
-        this.initDynamicElementsField();
         // set the event logic related to panzoom events (e.g. event listeners for zooming and panning)
         this.initPanZoomControls();
         // center the map to where the station is at
@@ -1008,7 +1011,7 @@ export class SVGRenderer {
     // Function to start the route preview given the svgId of
     // all nodes that are part of the route by setting their styles
     // and relevant properties (preview-index, preview-duration)
-    public startRoutePreview(pathNodeIds: string[]): void {
+    public startRoutePreview(pathSteps: PathStep[]): void {
         if (this.stationSVG === null) {
             console.warn("The station SVG doesn't exist");
             return;
@@ -1017,43 +1020,45 @@ export class SVGRenderer {
         // reset map
         this.stopRoutePreview();
         // calculate how long the prewview path animation should last (the glowing lines)
-        const previewDurationSeconds = Math.max(pathNodeIds.length, 1);
-
-        const pathNodes: SVGGraphicsElement[] = [];
-        // Sets the style for all nodes on the path and adds the node to our path nodes array
-        for (let index=0; index<pathNodeIds.length; index++) {
-            const nodeID: string | undefined = pathNodeIds[index];
-            if (nodeID === undefined)
+        const previewDurationSeconds = Math.max(pathSteps.length, 1);
+        // sets the style for all nodes on the path and adds the node to our path nodes array
+        for (let i=0; i<pathSteps.length; i++) {
+            // fetch the node from a pathstep
+            const node: NodeData | undefined = pathSteps[i]?.node;
+            // this shouldn't happen but will be here for now
+            if (node === undefined) 
                 return;
-            const node: SVGGraphicsElement | null = this.stationSVG.querySelector(`[id='${nodeID}']`);
-            if (!node) {
-                console.warn("Preview node not found:", nodeID);
+            // get the SVG from the map
+            const nodeSVG: SVGGraphicsElement | undefined = this.nodeDataSVGMap.get(node);
+            if (nodeSVG === undefined) {
+                console.warn("Cannot retrieve SVG using the following nodeData as the key: ", node);
                 return;
-            }
+            } 
 
-            // push the path nodes into the array 
-            pathNodes.push(node);
-
+            // push the SVG into the array of current path nodes
+            this.currentPathNodes.push(nodeSVG);
             // add styling for the node
-            node.classList.add("route-preview-node");
-            node.style.setProperty("--preview-index", index.toString());
-            node.style.setProperty("--preview-duration", (previewDurationSeconds.toString() + "s"));
+            nodeSVG.classList.add("route-preview-node");
+            nodeSVG.style.setProperty("--preview-index", i.toString());
+            nodeSVG.style.setProperty("--preview-duration", (previewDurationSeconds.toString() + "s"));
         }
 
-        // zoom onto the path items now that we have all the path nodes
+        // zoom onto the path items now that we have all the path node SVGs
 
-        // smooth centering will be enabled for the route preview
-        // get the standard smooth centering attributes
+        /*
+            smooth centering will be enabled for the route preview
+            as such, we need to get the standard smooth centering attributes
+        */
         const {centerSpeed, centerThresholdRatio} = SVGRenderer.STANDARD_SMOOTH_CENTER_ATTRIB;
         this.centerOnPath(
-            pathNodes,
+            this.currentPathNodes,
             {centerSpeed: centerSpeed, centerThresholdRatio: centerThresholdRatio, hideElementsWhileCentering: true}
         );
     }
 
-    // Function that removes all the styling applied on the path nodes for the preview
+    // function that removes all the styling applied on the path nodes for the preview
     public stopRoutePreview(): void {
-        document.querySelectorAll<SVGGraphicsElement>(".route-preview-node").forEach((node) => {
+        this.currentPathNodes.forEach((node: SVGGraphicsElement) => {
             node.classList.remove("route-preview-node");
             node.style.removeProperty("--preview-index");
             node.style.removeProperty("--preview-duration");

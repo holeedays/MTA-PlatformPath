@@ -303,7 +303,6 @@ body {
     gap: 5px;
 }
 
-.all-layers-button,
 .layer-option {
     /* This is altered in the station_map.ts files for the other layer buttons (not all layers button) */
     --bg-color: #ff4a4a;
@@ -324,12 +323,10 @@ body {
         transform 0.25s ease-in-out,
         background 0.25s ease-in-out;
 }
-.all-layers-button:active,
 .layer-option:active {
     transform: scale(1.02);
 }
 @media (hover:hover) {
-    .all-layers-button:hover,
     .layer-option:hover {
         background: color-mix(in srgb, var(--bg-color), #000000 20%);
         transform: scale(1.02);
@@ -353,7 +350,6 @@ body {
     text-align: center;
 }
 
-.all-layers-button.active,
 .layer-option.active {
     transform: scale(1.05);
     background-color: color-mix(in srgb, var(--bg-color), #ffffff 20%);
